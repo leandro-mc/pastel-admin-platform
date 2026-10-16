@@ -34,3 +34,17 @@ jobs:
       - run: npm install --no-audit --no-fund
       - run: npm run build
       - run: npm run lint
+
+  container-build:
+    runs-on: ubuntu-latest
+    env:
+      # Disposable placeholders used only for Compose interpolation during image builds.
+      POSTGRES_PASSWORD: ci-only-Postgres-Password-2026!
+      JWT_SIGNING_KEY: ci-only-not-a-real-signing-key-keep-over-32-bytes-2026
+      BOOTSTRAP_ADMIN_PASSWORD: ci-only-Bootstrap-Password-2026!
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate Compose configuration
+        run: docker compose config --quiet
+      - name: Build API and web images
+        run: docker compose build
