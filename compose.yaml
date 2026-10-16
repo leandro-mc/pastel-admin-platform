@@ -28,7 +28,7 @@ services:
     environment:
       ASPNETCORE_ENVIRONMENT: Production
       ASPNETCORE_URLS: http://+:8080
-      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-pastel};Username=${POSTGRES_USER:-pastel};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-pastel};Username=${POSTGRES_USER:-pastel};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD};GSS Encryption Mode=Disable
       Database__ApplyMigrationsAtStartup: ${DATABASE_APPLY_MIGRATIONS_AT_STARTUP:-true}
       Jwt__Issuer: PastelAdmin
       Jwt__Audience: PastelAdmin.Web
