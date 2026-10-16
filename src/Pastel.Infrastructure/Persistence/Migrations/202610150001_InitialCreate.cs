@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
+using Pastel.Domain.Entities;
 using Pastel.Infrastructure.Persistence;
 
 #nullable disable
