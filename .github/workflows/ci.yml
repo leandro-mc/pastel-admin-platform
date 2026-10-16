@@ -1,9 +1,9 @@
 name: CI
 on:
   push:
-    branches: [main, develop]
+    branches: [main, dev]
   pull_request:
-    branches: [main, develop]
+    branches: [main, dev]
 
 permissions:
   contents: read
@@ -17,7 +17,6 @@ jobs:
         with:
           dotnet-version: 10.0.x
       - run: dotnet restore Pastel.slnx
-      # Explicit build catches compilation failures in non-test projects such as the API.
       - run: dotnet build Pastel.slnx --configuration Release --no-restore
       - run: dotnet test Pastel.slnx --configuration Release --no-build --no-restore
 
