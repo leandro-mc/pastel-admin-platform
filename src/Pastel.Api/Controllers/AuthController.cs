@@ -9,6 +9,7 @@ using Microsoft.Extensions.Options;
 using Pastel.Application.Abstractions;
 using Pastel.Application.Contracts;
 using Pastel.Infrastructure.Security;
+using Pastel.Domain.Entities;
 
 namespace Pastel.Api.Controllers;
 
