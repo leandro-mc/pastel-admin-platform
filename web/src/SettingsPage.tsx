@@ -60,7 +60,7 @@ export default function SettingsPage({ permissions, notify }: { permissions: str
   const openUserEditor = async (user: User) => {
     setUserEditor(user);
     setUserRoleIds(roles.filter((role) => user.roles.includes(role.name)).map((role) => role.id));
-    setUserOverrides({);
+    setUserOverrides({});
     try {
       const values = await api<{ permissionId: string; effect: 'Grant' | 'Deny' }[]>(`/api/admin/users/${user.id}/permissions`);
       setUserOverrides(Object.fromEntries(values.map((x) => [x.permissionId, x.effect])));
