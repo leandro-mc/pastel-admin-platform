@@ -28,7 +28,8 @@ builder.Services.AddOptions<JwtOptions>().Validate(x => Encoding.UTF8.GetByteCou
 
 var connectionString = builder.Configuration.GetConnectionString("Default")
     ?? throw new InvalidOperationException("ConnectionStrings:Default is required.");
-builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString));
+builder.Services.AddDbContext<AppDbContext>(options => options.UseNpgsql(connectionString,
+    npgsql => npgsql.MigrationsAssembly(typeof(AppDbContext).Assembly.GetName().Name!)));
 builder.Services.AddScoped<IAppDbContext>(services => services.GetRequiredService<AppDbContext>());
 builder.Services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
 builder.Services.Configure<PasswordHasherOptions>(options => options.IterationCount = 600_000);
@@ -125,6 +126,14 @@ await using (var scope = app.Services.CreateAsyncScope())
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
     var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher<AppUser>>();
     var logger = scope.ServiceProvider.GetRequiredService<ILoggerFactory>().CreateLogger("DatabaseStartup");
+    var migrationIds = db.Database.GetMigrations().ToArray();
+    if (migrationIds.Length == 0)
+    {
+        var migrationsAssembly = typeof(AppDbContext).Assembly.GetName().Name;
+        throw new InvalidOperationException($"No EF Core migrations were discovered in '{migrationsAssembly}'. Ensure migrations are compiled into the infrastructure assembly and runtime EF Core versions are aligned.");
+    }
+
+    logger.LogInformation("Discovered {MigrationCount} EF Core migration(s): {MigrationIds}", migrationIds.Length, string.Join(", ", migrationIds));
     if (app.Configuration.GetValue("Database:ApplyMigrationsAtStartup", true))
     {
         await db.Database.MigrateAsync();
