@@ -1,24 +1,38 @@
-# Publicar y trabajar con el repositorio
+# Desarrollo y publicación
 
-El repositorio remoto es `https://github.com/leandro-mc/pastel-admin-platform`. Para clonar el proyecto en una computadora:
+Repositorio: `https://github.com/leandro-mc/pastel-admin-platform`.
+
+## Clonar o actualizar
 
 ```powershell
 git clone https://github.com/leandro-mc/pastel-admin-platform.git
 cd pastel-admin-platform
+git fetch origin
+git switch dev
+git pull --ff-only origin dev
 ```
 
-Después de los cambios, trabajá en una rama enfocada y subila mediante la autenticación oficial de Git Credential Manager:
+Si ya tenés una copia local, no vuelvas a clonarla. Verifica antes `git status --short --branch` y guarda cualquier cambio propio.
+
+## Añadir una funcionalidad o corrección
+
+Parte siempre de la punta más reciente de `dev`, crea una sola rama coherente (`feat/...`, `fix/...`, `refactor/...`, `docs/...`, `test/...` o `chore/...`), valida y abre un PR hacia `dev`.
 
 ```powershell
+git switch dev
+git pull --ff-only origin dev
 git switch -c feat/nombre-del-cambio
-# editar y probar
- git add .
-git commit -m "feat: describir cambio"
+# editar y ejecutar pruebas
+git diff --check
+git add ruta/archivo1 ruta/archivo2
+git commit -m "feat: describir el cambio"
 git push -u origin feat/nombre-del-cambio
 ```
 
-Abrí un Pull Request contra `main`. No incluyás `.env`, tokens, contraseñas reales ni datos personales. Nunca usés `git push --force` sobre `main`.
+Abre el PR con base `dev`. No fusiones directamente a `main`; sólo se promueve `dev` a `main` cuando el usuario lo autoriza expresamente. Para cada versión publicada, usa un PR revisado y crea un tag `vMAJOR.MINOR.PATCH` en el commit aprobado. Consulta `docs/AI_WORKFLOW.md` para el procedimiento completo.
 
-## Levantar el entorno local
+No subas `.env`, tokens, contraseñas reales, dumps, ni datos personales. Nunca uses `git push --force` en ramas compartidas.
 
-Copiá `.env.example` a `.env`, cambiá las claves y contraseñas locales, y seguí el README. Los valores de `.env.example` son sólo para desarrollo local y no deben reutilizarse en despliegues accesibles desde la red.
+## Entorno Docker
+
+Los pasos de preparación de `.env`, URL web, conexión pgAdmin, logs, reinicios y apagado están en la sección **Uso diario de Docker** del `README.md`.

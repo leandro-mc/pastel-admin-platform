@@ -2,69 +2,132 @@
 
 Base modular para construir aplicaciones administrativas con autenticación, autorización por roles y permisos, PostgreSQL y una interfaz React con temas claro y oscuro. La interfaz está en español y utiliza una paleta suave de verdes, azules, arena y neutros.
 
-> **Estado:** versión inicial de arquitectura. El CI de GitHub está configurado para compilar y probar el backend y frontend. Antes de producción, ejecutar las comprobaciones, añadir pruebas de integración y realizar una revisión de seguridad independiente.
+> **Estado:** base de arquitectura en evolución. CI compila/prueba backend y frontend y valida el arranque Docker con PostgreSQL. Antes de producción se necesitan revisión de seguridad independiente, observabilidad, backups y pruebas de integración adicionales.
 
-## Stack
+## Tecnologías
 
-- **Backend:** .NET 10, ASP.NET Core Web API, capas Domain / Application / Infrastructure / API.
-- **Datos:** PostgreSQL + Entity Framework Core con migraciones.
-- **Frontend:** React, TypeScript, Vite y Lucide.
-- **Local:** Docker Compose, Nginx como servidor estático y proxy de API.
-- **Calidad:** xUnit, GitHub Actions y Dependabot.
+- **Backend:** .NET 10, ASP.NET Core Web API; capas Domain / Application / Infrastructure / API.
+- **Datos:** PostgreSQL 17, Entity Framework Core 10 y Npgsql.
+- **Frontend:** React 19, TypeScript 5.9, Vite 8 y Lucide.
+- **Web/proxy:** Nginx.
+- **Local/CI:** Docker Compose, xUnit, GitHub Actions y Dependabot.
 
-## Capacidades de la base
+## Funcionalidades base
 
-- Registro e inicio de sesión con hash de contraseñas, bloqueo temporal por intentos fallidos y limitación de solicitudes.
-- JWT de acceso de corta duración en cookie `HttpOnly` / `Secure`, refresh token opaco almacenado sólo como hash y rotación de sesiones.
-- Protección CSRF, cabeceras defensivas, errores JSON homogéneos y auditoría administrativa.
-- Gestión de usuarios: creación, asignación de roles, excepciones individuales de permisos, bloqueo/desbloqueo y restablecimiento de contraseña temporal.
-- Gestión de roles y catálogo dinámico de módulos y permisos. Un módulo deshabilitado deniega sus permisos incluso si un rol los concede.
-- Panel de inicio, perfil, configuración, búsqueda de usuarios, estados de cuenta, bitácora y temas claro/oscuro.
+- Inicio de sesión/registro, hash de contraseñas, bloqueo temporal por intentos fallidos y rate limiting.
+- JWT corto en cookie protegida, refresh token opaco almacenado sólo como hash y rotación de sesiones.
+- Protección CSRF, cabeceras defensivas, errores JSON homogéneos y auditoría.
+- Administración de usuarios, roles, permisos, bloqueos y restablecimiento de contraseña temporal.
+- Catálogo dinámico de módulos/permisos; los módulos deshabilitados deniegan sus permisos incluso si un rol los concede.
+- Panel principal, perfil, configuración y temas claro/oscuro.
 
 ## Arquitectura
 
 ```text
-web (React/Vite) ──same-origin── Nginx ── /api ── ASP.NET Core
-                                                  │
-                         Domain ← Application ← Infrastructure
-                                                  │
-                                              PostgreSQL
+web (React/Vite) → Nginx → /api → ASP.NET Core
+                                ↓
+           Domain ← Application ← Infrastructure → PostgreSQL
 ```
 
-`Pastel.Domain` define las entidades e invariantes. `Pastel.Application` contiene contratos y políticas independientes de infraestructura. `Pastel.Infrastructure` implementa EF Core, acceso a datos, hash de contraseñas, JWT, sesiones y autorización. `Pastel.Api` expone HTTP, middleware y composición de dependencias. La SPA sólo adapta la navegación a los permisos devueltos por el servidor; **toda autorización se aplica en el backend**.
-
-## Requisitos
-
-Para ejecución en contenedores: Docker Desktop con Docker Compose v2. Para ejecución individual: .NET SDK 10 y Node.js 24 o una versión compatible.
+`Pastel.Domain` contiene entidades; `Pastel.Application`, contratos; `Pastel.Infrastructure`, persistencia y servicios de seguridad; `Pastel.Api`, endpoints y composición de dependencias. La autorización se aplica en el backend. Consulta `docs/ARCHITECTURE.md` y `docs/SECURITY.md` antes de modificar estas áreas.
 
 ## Arranque local con Docker
 
-1. Cloná el repositorio y entrá al directorio raíz.
-2. Copiá el archivo de ejemplo de entorno:
+Requisito: Docker Desktop con Docker Compose v2.
 
-   ```powershell
-   Copy-Item .env.example .env
-   ```
+1. Clona el repositorio y entra a la carpeta.
+2. Copia el archivo de configuración:
 
-3. Editá `.env`: sustituí **todas** las claves y contraseñas por valores aleatorios propios. No uses los valores de ejemplo en un entorno compartido o productivo. La clave JWT debe tener al menos 32 bytes UTF-8.
-4. Iniciá los servicios:
+```powershell
+Copy-Item .env.example .env
+```
 
-   ```powershell
-   docker compose up --build -d
-   ```
+3. Edita `.env`. Cambia `POSTGRES_PASSWORD`, `JWT_SIGNING_KEY` y `BOOTSTRAP_ADMIN_PASSWORD` por valores aleatorios propios. La clave JWT necesita al menos 32 bytes UTF-8. No uses los valores de ejemplo fuera de una máquina de desarrollo.
+4. Construye y levanta los servicios:
 
-5. Abrí `http://localhost:8080`. Si configuraste `BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD` antes de la primera ejecución, usá esa cuenta para ingresar y cambiá la contraseña temporal al entrar.
-6. Revisá el estado con `docker compose ps`; logs con `docker compose logs -f api web db`; detené con `docker compose down`.
+```powershell
+docker compose up --build -d
+```
 
-La base de datos persiste en el volumen `postgres_data`. `docker compose down -v` también elimina los datos persistidos; utilizalo sólo cuando realmente querás borrar la base local.
+## Uso diario de Docker
+
+### Abrir la aplicación
+
+- URL local: **http://localhost:8080** (o `http://localhost:<WEB_PORT>` si cambiaste `WEB_PORT` en `.env`).
+- El servidor se publica sólo en `127.0.0.1`; desde otro equipo de la red no será accesible por defecto.
+- Al primer inicio, si se creó la cuenta bootstrap, entra con `BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD` de `.env`; la aplicación fuerza el cambio de contraseña.
+
+### Conectarse a PostgreSQL desde pgAdmin 4
+
+El servicio de base publica el puerto local `127.0.0.1:${POSTGRES_PORT:-5432}:5432`. Si pgAdmin está instalado en Windows, registra un servidor con:
+
+| Campo de pgAdmin | Valor predeterminado |
+| --- | --- |
+| General → Name | `Pastel Admin Local` |
+| Connection → Host name/address | `localhost` |
+| Port | `5432` (o el valor de `POSTGRES_PORT`) |
+| Maintenance database | `pastel` (o `POSTGRES_DB`) |
+| Username | `pastel` (o `POSTGRES_USER`) |
+| Password | valor de `POSTGRES_PASSWORD` en `.env` |
+
+El puerto está ligado a `127.0.0.1` por seguridad y no expone PostgreSQL a toda la red. Si el puerto 5432 está ocupado, cambia `POSTGRES_PORT=5433` en `.env` y vuelve a crear el servicio `db` con `docker compose up -d db`; en pgAdmin usa el puerto 5433.
+
+### Comandos comunes
+
+```powershell
+# Estado de todos los servicios
+docker compose ps
+
+# Logs en tiempo real de todo el stack
+docker compose logs -f
+
+# Logs de un servicio específico
+docker compose logs -f api
+docker compose logs -f web
+docker compose logs -f db
+
+# Últimas 100 líneas del backend
+docker compose logs --tail 100 api
+
+# Reconstruir API y web tras cambios de código
+docker compose up --build -d api web
+
+# Reiniciar sólo el backend
+docker compose restart api
+
+# Abrir psql dentro del contenedor de PostgreSQL
+docker compose exec db psql -U pastel -d pastel
+
+# Detener los servicios conservando los datos
+docker compose down
+```
+
+Si cambiaste `POSTGRES_USER` o `POSTGRES_DB`, sustituye `pastel` en el comando `psql` por los valores de `.env`.
+
+**No ejecutes `docker compose down -v` a menos que quieras borrar también el volumen y todos los datos de la base local.**
+
+### Si algo falla
+
+```powershell
+docker compose ps
+docker compose logs --tail 150 api db web
+docker compose config --quiet
+```
+
+Después de actualizar código, usa `git switch dev` y `git pull --ff-only origin dev`, y vuelve a construir los servicios. No borres el volumen como primer paso de diagnóstico.
+
+## Desarrollo y ramas
+
+El trabajo diario va en ramas nuevas creadas desde `dev`, con un PR de regreso a `dev`. `main` se reserva para versiones estables y no se actualiza sin autorización explícita del usuario. Lee `AGENTS.md`, `docs/AI_WORKFLOW.md` y `docs/ARCHITECTURE.md` antes de trabajar. La promoción estable usa un PR revisado y un tag `vMAJOR.MINOR.PATCH`.
 
 ## Desarrollo sin Docker
 
-Iniciá PostgreSQL, configurá `ConnectionStrings__Default`, `Jwt__SigningKey`, `Bootstrap__AdminEmail` y `Bootstrap__AdminPassword` mediante variables de entorno o User Secrets. Luego:
+Con PostgreSQL disponible, configura `ConnectionStrings__Default`, `Jwt__SigningKey`, `Bootstrap__AdminEmail` y `Bootstrap__AdminPassword` mediante variables de entorno o User Secrets:
 
 ```powershell
 dotnet restore Pastel.slnx
-dotnet test Pastel.slnx
+dotnet build Pastel.slnx --configuration Release
+dotnet test Pastel.slnx --configuration Release
 ```
 
 En otra terminal:
@@ -75,33 +138,16 @@ npm install
 npm run dev
 ```
 
-Vite sirve el frontend en `http://localhost:5173` y usa un proxy a `http://localhost:5080` para la API. Configurá `ASPNETCORE_URLS=http://localhost:5080` y las variables anteriores al ejecutar el backend. Las cookies `__Host-` requieren HTTPS, por lo que el flujo completo de sesión debe probarse a través del origen servido en HTTPS o mediante el entorno Docker local, con sus certificados de desarrollo correctamente configurados.
+Vite sirve el frontend en `http://localhost:5173` y utiliza un proxy a `http://localhost:5080` para la API. Define `ASPNETCORE_URLS=http://localhost:5080` al ejecutar el backend. Las cookies `__Host-` requieren HTTPS para probar el flujo de sesión completo.
 
-## Módulos nuevos
+## Añadir un módulo
 
-Desde **Configuración → Módulos**, un administrador puede registrar un módulo mediante un código estable (minúsculas, números y guiones) y una lista de acciones. El servidor genera permisos del tipo `inventario.read`, `inventario.create` y los registra en el catálogo. Es necesario implementar el comportamiento real del nuevo módulo, proteger cada endpoint con `permission:<codigo>`, y crear pruebas para permisos concedidos, denegados y módulo deshabilitado. Registrar un módulo no genera automáticamente sus pantallas o lógica de negocio.
+Registrar un módulo desde Configuración crea metadatos y permisos en la base, no genera automáticamente la lógica ni las pantallas. Para un módulo incluido por defecto, actualiza el catálogo `PermissionCatalog` de `DatabaseSeeder.cs`, protege cada endpoint con el permiso dinámico adecuado, actualiza la SPA, agrega pruebas y genera una migración si cambia el esquema. Sigue la lista de `docs/ARCHITECTURE.md`.
 
-Principios para mantener la base extensible:
+## Comprobaciones de CI
 
-- Cada feature nueva va en una rama y en commits enfocados.
-- No mezclar reglas de negocio con componentes de presentación.
-- No confiar en controles visuales para proteger endpoints.
-- Acompañar migraciones y cambios de autorización con pruebas.
-- Revisar el diff y ejecutar backend, frontend y Docker antes de fusionar.
-
-## Comandos de validación
-
-```powershell
-dotnet test Pastel.slnx --configuration Release
-cd web
-npm run build
-npm run lint
-cd ..
-docker compose build
-```
-
-GitHub Actions corre comprobaciones del backend y frontend en `main`, `develop` y Pull Requests. Que el workflow esté configurado no implica que haya pasado: consultá la pestaña **Actions** del repositorio.
+GitHub Actions verifica backend, frontend y arranque Docker con PostgreSQL en `dev`, `main` y PRs hacia esas ramas. Consulta la pestaña **Actions** del repositorio; tener un workflow configurado no significa que ya pasó.
 
 ## Seguridad y limitaciones
 
-Leé [`docs/SECURITY.md`](docs/SECURITY.md) para el modelo y los límites conocidos. Esta base no incluye MFA, recuperación de contraseña por correo, confirmación de correo, SSO/OIDC o monitoreo avanzado de amenazas. Para producción se requieren HTTPS real, gestión de secretos, backups, observabilidad, revisión independiente, pruebas de integración y un plan de respuesta a incidentes. Los ejemplos de `.env.example` son exclusivamente para desarrollo.
+Consulta `docs/SECURITY.md`. La base no incluye MFA, recuperación por correo, confirmación de correo, SSO/OIDC ni monitoreo avanzado de amenazas. Producción requiere HTTPS, gestión de secretos, backups, observabilidad, pruebas de integración y una revisión de seguridad independiente. Los valores de `.env.example` son exclusivamente para desarrollo local.
