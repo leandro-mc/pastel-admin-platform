@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="src/Pastel.Domain/Pastel.Domain.csproj" />
+  <Project Path="src/Pastel.Application/Pastel.Application.csproj" />
+  <Project Path="src/Pastel.Infrastructure/Pastel.Infrastructure.csproj" />
+  <Project Path="src/Pastel.Api/Pastel.Api.csproj" />
+  <Project Path="tests/Pastel.Application.Tests/Pastel.Application.Tests.csproj" />
+</Solution>

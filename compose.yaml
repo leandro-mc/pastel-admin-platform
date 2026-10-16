@@ -1,0 +1,76 @@
+name: pastel-admin
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-pastel}
+      POSTGRES_USER: ${POSTGRES_USER:-pastel}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Copy .env.example to .env and set POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pastel} -d ${POSTGRES_DB:-pastel}"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    networks:
+      pastel_net:
+        ipv4_address: 172.30.0.3
+    security_opt:
+      - no-new-privileges:true
+
+  api:
+    build:
+      context: .
+      dockerfile: src/Pastel.Api/Dockerfile
+    restart: unless-stopped
+    environment:
+      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_URLS: http://+:8080
+      ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-pastel};Username=${POSTGRES_USER:-pastel};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      Database__ApplyMigrationsAtStartup: ${DATABASE_APPLY_MIGRATIONS_AT_STARTUP:-true}
+      Jwt__Issuer: PastelAdmin
+      Jwt__Audience: PastelAdmin.Web
+      Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
+      Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-10}
+      Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
+      Bootstrap__AdminEmail: ${BOOTSTRAP_ADMIN_EMAIL:-admin@pastel.local}
+      Bootstrap__AdminPassword: ${BOOTSTRAP_ADMIN_PASSWORD:?Set BOOTSTRAP_ADMIN_PASSWORD in .env}
+      ReverseProxy__TrustedAddress: 172.30.0.2
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      pastel_net:
+        ipv4_address: 172.30.0.4
+    read_only: true
+    tmpfs:
+      - /tmp:size=32m,noexec,nosuid,nodev
+    security_opt:
+      - no-new-privileges:true
+
+  web:
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8080}:8080"
+    networks:
+      pastel_net:
+        ipv4_address: 172.30.0.2
+    security_opt:
+      - no-new-privileges:true
+
+volumes:
+  postgres_data:
+
+networks:
+  pastel_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.30.0.0/24
