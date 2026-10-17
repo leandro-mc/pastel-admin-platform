@@ -12,8 +12,9 @@ Este archivo es la puerta de entrada obligatoria para cualquier persona o agente
 ## Reglas obligatorias
 - `dev` es la rama de integración y la base de todo trabajo nuevo. `main` se reserva para versiones estables publicadas.
 - Nunca fusiones ni publiques en `main` hasta que el usuario lo autorice explícitamente.
-- Para cada tarea coherente, crea una sola rama desde `dev`, con prefijo y nombre descriptivo. No crees ramas para cada archivo o pequeño ajuste.
-- Al terminar, ejecuta las validaciones pertinentes, crea commits convencionales y abre un PR con base `dev`. Integra en `dev` sólo tras revisar cambios y resultados de CI.
+- Para cada tarea coherente, usa una sola rama de trabajo. Si el usuario pide continuar en una rama existente, reutilízala; no crees ramas por archivo o pequeño ajuste.
+- **No abras PR ni integres a `dev` automáticamente.** Primero entrega el nombre de la rama, el commit y los comandos para probar. Espera a que el usuario valide el cambio en su entorno y autorice expresamente enviarlo a `dev`; sólo entonces prepara la integración y CI.
+- En cambios de UI iterativos, no consideres terminado el trabajo con una revisión del código solamente: solicita validación visual del usuario antes de integrar. `main` siempre requiere autorización explícita independiente.
 - No cambies tecnología, arquitectura, formato de permisos, modelo de sesión ni convenciones de ramas por iniciativa propia. Consulta `docs/ARCHITECTURE.md` y mantén la coherencia.
 - Todo cambio estructural o de permisos debe incluir pruebas y actualizar la documentación pertinente.
 - No uses `EnsureCreated` como sustituto de migraciones. No almacenes tokens en localStorage/sessionStorage ni registres secretos.
