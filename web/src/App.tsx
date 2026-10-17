@@ -109,7 +109,6 @@ export default function App() {
     };
   }, [loadProfile, notify]);
 
-  const currentUser = profile?.user;
 
   const authenticate = async (
     event: FormEvent<HTMLFormElement>,
@@ -248,6 +247,8 @@ export default function App() {
       />
     );
   }
+
+  const currentUser = profile.user;
 
   if (currentUser?.mustChangePassword) {
     return (
