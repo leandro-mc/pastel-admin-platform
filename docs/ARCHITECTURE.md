@@ -85,11 +85,13 @@ La vista **Configuración → Módulos** puede registrar códigos y acciones en 
 
 La interfaz está en español y conserva accesibilidad, diseño responsive, foco visible y temas claro/oscuro. La paleta base es Brisa: modo claro en marfil cálido (#F7F6F0 / #FFFEFA), verde bosque (#315B4A), salvia (#789987), arena (#F2E5B5) y coral suave (#E7A58D). El modo oscuro conserva el fondo grafito #191B20, superficies de carbón diferenciadas, texto marfil/gris claro, salvia reservada para acciones primarias/selección y arena/coral para estados secundarios o de alerta.
 
-### Diálogos y formularios administrativos
+### Administración de accesos y permisos
 
-- Los diálogos con catálogos extensos deben limitar su altura al viewport y permitir scroll únicamente en el contenido, conservando encabezado, cierre y acciones visibles.
-- Deben poder cerrarse mediante un control visible y `Escape`, bloquear el scroll de fondo mientras estén abiertos y ofrecer búsqueda cuando el catálogo sea largo.
-- En móviles, respetar la altura dinámica del viewport y mantener los botones de acción accesibles sin tener que recorrer toda la lista.
+- La edición de accesos de usuarios y la administración de permisos de roles son tareas complejas: deben mostrarse como una vista dedicada dentro de Configuración, no como un modal ni como una subventana con scroll propio.
+- Mostrar breadcrumb/contexto del usuario o rol, búsqueda por nombre/código/módulo y permisos agrupados por módulo. Indicar selecciones y excepciones con texto y estados visuales claros; no depender únicamente del color.
+- Mantener una barra de acciones sticky debajo de la barra superior global, con Guardar y Cancelar accesibles mientras se recorre la página. No crear scroll anidado para la lista de permisos; la página es la superficie principal de desplazamiento.
+- En roles, permitir selección por permiso y operaciones por grupo sin romper el estado existente. En accesos de usuarios, distinguir explícitamente Heredar, Conceder y Denegar y preservar la precedencia del modelo de autorización.
+- Reservar modales para tareas breves y acotadas como crear un usuario/rol/módulo o confirmar una operación. En pantallas pequeñas, apilar paneles y controles, manteniendo la barra de acciones visible.
 
 ### Tailwind CSS 4
 
