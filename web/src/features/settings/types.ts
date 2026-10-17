@@ -45,3 +45,23 @@ export type Audit = {
 export type Tab = "users" | "roles" | "modules" | "audit";
 
 export type { User };
+
+export type NewUserForm = {
+  email: string;
+  displayName: string;
+  temporaryPassword: string;
+  roleIds: string[];
+};
+
+export type NewRoleForm = {
+  name: string;
+  description: string;
+  permissionIds: string[];
+};
+
+export type NewModuleForm = {
+  code: string;
+  name: string;
+  description: string;
+  actions: string;
+};
