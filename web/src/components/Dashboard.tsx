@@ -9,7 +9,7 @@ import {
   Sun,
   UsersRound,
 } from "lucide-react";
-import type { Notice, Notify, User } from "../types";
+import type { Notify, User } from "../types";
 
 type DashboardProps = {
   user: User;
