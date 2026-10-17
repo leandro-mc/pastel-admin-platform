@@ -152,7 +152,7 @@ export default function SettingsPage({ permissions, notify }: { permissions: str
   ];
   const visibleTabs = tabs.filter((x) => x.permitted);
   useEffect(() => { if (!visibleTabs.some((x) => x.id === tab) && visibleTabs[0]) setTab(visibleTabs[0].id); }, [visibleTabs, tab]);
-
+  const permissionGroups = catalog.reduce<Record<string, Permission[]>>((acc, item) => { (acc[item.moduleName] ??= []).push(item); return acc; }, {});
 
   if (userEditor) {
     return <AccessEditorPage
