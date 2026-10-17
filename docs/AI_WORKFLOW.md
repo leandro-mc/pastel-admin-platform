@@ -67,6 +67,8 @@ Por defecto, termina el trabajo en `dev`. Nunca interpretes que pedir una funcio
 
 ## 5. Validación mínima
 
+La CI se ejecuta tanto en `dev`/`main` como al hacer push a ramas de trabajo `feat/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*` y `test/*`. Esto permite validar una rama sin abrir un PR y deja al usuario probarla antes de autorizar la integración.
+
 Ejecuta lo aplicable y reporta exactamente qué pasó y qué no pudo ejecutarse:
 
 ```powershell
