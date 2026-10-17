@@ -1,8 +1,6 @@
 import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
-  Check,
-  CircleHelp,
   Flower2,
   Eye,
   EyeOff,
@@ -11,11 +9,8 @@ import {
   ShieldCheck,
   Sun,
 } from "lucide-react";
-import type {
-  Notice,
-  PasswordChangeValues,
-  User,
-} from "../types";
+import Toast from "./Toast";
+import type { Notice, PasswordChangeValues, User } from "../types";
 
 type ChangePasswordScreenProps = {
   user: User;
@@ -215,25 +210,7 @@ export default function ChangePasswordScreen({
         </span>
       </footer>
 
-      {notice && (
-        <div role="status" className={`toast ${notice.tone}`}>
-          <span className="toast-symbol">
-            {notice.tone === "success" ? (
-              <Check size={17} />
-            ) : (
-              <CircleHelp size={17} />
-            )}
-          </span>
-          <span>{notice.message}</span>
-          <button
-            className="toast-close"
-            onClick={dismissNotice}
-            aria-label="Cerrar aviso"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <Toast notice={notice} onDismiss={dismissNotice} />
     </div>
   );
 }
