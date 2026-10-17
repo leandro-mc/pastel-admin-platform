@@ -131,11 +131,11 @@ export default function App() {
         <div className="workspace-selector"><div className="workspace-icon"><Command size={16} /></div><div><strong>Mi espacio</strong><small>Plan esencial</small></div><ChevronDown size={15} /></div>
         <span className="sidebar-label">MENÚ PRINCIPAL</span>
         <nav className="sidebar-nav" aria-label="Navegación principal">
-          {visibleNav.map((item) => { const Icon = item.icon; return <button key={item.id} className={screen === item.id ? 'nav-item active' : 'nav-item'} data-tooltip={collapsed ? item.label : undefined} title={collapsed ? item.label : undefined} aria-label={collapsed ? item.label : undefined} onClick={() => setScreen(item.id)}><Icon size={19} strokeWidth={1.8} /><span><strong>{item.label}</strong><small>{item.caption}</small></span>{item.id === 'settings' && <span className="nav-dot" />}</button>; })}
+          {visibleNav.map((item) => { const Icon = item.icon; return <button key={item.id} className={screen === item.id ? 'nav-item active' : 'nav-item'} data-tooltip={collapsed ? item.label : undefined} aria-label={collapsed ? item.label : undefined} onClick={() => setScreen(item.id)}><Icon size={19} strokeWidth={1.8} /><span><strong>{item.label}</strong><small>{item.caption}</small></span>{item.id === 'settings' && <span className="nav-dot" />}</button>; })}
         </nav>
         <div className="sidebar-spacer" />
         <div className="security-note"><div className="security-note-icon"><ShieldCheck size={18} /></div><div><strong>Tu espacio, protegido</strong><p>Accesos administrados de forma segura.</p></div></div>
-        <button className="help-link" data-tooltip={collapsed ? 'Centro de ayuda' : undefined} title={collapsed ? 'Centro de ayuda' : undefined} aria-label={collapsed ? 'Centro de ayuda' : undefined} onClick={() => notify('La documentación se encuentra en el README del proyecto.')}><CircleHelp size={17} /><span>Centro de ayuda</span><ArrowRight size={15} /></button>
+        <button className="help-link" data-tooltip={collapsed ? 'Centro de ayuda' : undefined} aria-label={collapsed ? 'Centro de ayuda' : undefined} onClick={() => notify('La documentación se encuentra en el README del proyecto.')}><CircleHelp size={17} /><span>Centro de ayuda</span><ArrowRight size={15} /></button>
         <div className="sidebar-bottom"><span className="online-pip" /> Sistema operativo <span className="version">v0.1</span></div>
       </aside>
 
