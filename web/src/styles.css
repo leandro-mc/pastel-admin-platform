@@ -795,10 +795,10 @@
     @apply text-[10px] font-semibold;
   }
   .modal-backdrop {
-    @apply fixed inset-[0] z-[30] [background:rgba(23,_31,_26,_.52)] grid [place-items:center] p-[16px] overflow-y-auto overscroll-contain [backdrop-filter:blur(4px)] animate-[soft-in_.16s_ease_both];
+    @apply fixed inset-[0] z-[30] [background:rgba(23,_31,_26,_.52)] flex justify-center items-start p-[16px] overflow-y-auto overflow-x-hidden overscroll-contain [backdrop-filter:blur(4px)] animate-[soft-in_.16s_ease_both];
   }
   .modal {
-    @apply w-[min(100%,_490px)] [background:var(--surface)] [color:var(--text)] [border:1px_solid_var(--border)] rounded-[17px] overflow-hidden shadow-[0_30px_90px_rgba(0,_0,_0,_.2)] max-h-[calc(100vh_-_32px)] min-h-0 flex flex-col;
+    @apply [margin-block:auto] w-[min(100%,_490px)] [background:var(--surface)] [color:var(--text)] [border:1px_solid_var(--border)] rounded-[17px] overflow-hidden shadow-[0_30px_90px_rgba(0,_0,_0,_.2)] max-h-[calc(100dvh_-_32px)] min-h-0 flex flex-col;
   }
   .modal-wide {
     @apply w-[min(100%,_710px)];
@@ -816,7 +816,7 @@
     @apply text-[10px] leading-[1.5] [color:var(--text-secondary)] m-0;
   }
   .modal-content {
-    @apply min-h-0 flex-1 p-[20px_23px] overflow-y-auto overscroll-contain;
+    @apply min-h-0 [flex:1_1_auto] p-[20px_23px] overflow-y-auto overscroll-contain;
   }
   .modal-content h3,
   .permission-group h3 {
@@ -1691,7 +1691,7 @@
   }
   @media (max-width: 720px) {
     .modal-backdrop {
-      @apply p-[10px] [align-items:end];
+      @apply p-[10px] items-start;
     }
   }
   @media (max-width: 720px) {

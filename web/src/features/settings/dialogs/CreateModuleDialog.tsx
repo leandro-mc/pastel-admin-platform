@@ -19,11 +19,17 @@ export function CreateModuleDialog({
 }: CreateModuleDialogProps) {
   return (
     <div className="modal-backdrop">
-      <form className="modal" onSubmit={onSubmit}>
+      <form
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-module-title"
+        onSubmit={onSubmit}
+      >
         <div className="modal-head">
           <div>
             <span className="eyebrow">EXTENDER LA PLATAFORMA</span>
-            <h2>Registrar módulo</h2>
+            <h2 id="create-module-title">Registrar módulo</h2>
             <p>Se crearán permisos por cada acción indicada.</p>
           </div>
           <button

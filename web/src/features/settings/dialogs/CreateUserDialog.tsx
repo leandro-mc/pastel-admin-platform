@@ -21,11 +21,17 @@ export function CreateUserDialog({
 }: CreateUserDialogProps) {
   return (
     <div className="modal-backdrop">
-      <form className="modal" onSubmit={onSubmit}>
+      <form
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-user-title"
+        onSubmit={onSubmit}
+      >
         <div className="modal-head">
           <div>
             <span className="eyebrow">NUEVA CUENTA</span>
-            <h2>Crear usuario</h2>
+            <h2 id="create-user-title">Crear usuario</h2>
             <p>
               La persona deberá reemplazar su contraseña temporal al ingresar.
             </p>

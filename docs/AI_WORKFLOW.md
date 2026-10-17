@@ -44,9 +44,15 @@ No crees ramas por archivo, clase o commit. Agrupa cambios dependientes en una s
 ## 3. Commits y Pull Requests
 
 - Usa Conventional Commits en español o inglés consistente con el área: `feat: ...`, `fix: ...`, `refactor: ...`, `docs: ...`, `test: ...`, `chore: ...`.
-- Mantén cada commit enfocado. Ajustes pequeños de una misma corrección pueden compartir commit.
+- Mantén cada commit enfocado, pero no confundas “un commit por idea” con “un commit por archivo”. Ajustes dependientes de una misma corrección se agrupan.
+- **No publiques commits intermedios que sabes que están incompletos o que no compilan.** En refactorizaciones de varios archivos, termina un conjunto coherente, formatea y ejecuta las validaciones locales aplicables antes de crear el commit que vas a subir.
+- GitHub Actions se ejecuta por cada push a una rama cubierta por el workflow. No hagas un push por cada archivo o paso del refactoring: cada push innecesario crea una ejecución adicional y puede dejar una lista larga de fallos previsibles.
+- Cuando trabajes directamente mediante herramientas GitHub, no uses el endpoint de contenido para actualizar cada archivo en serie si la tarea es multiarchivo: prepara todos los blobs, crea un árbol y publica **un solo commit atómico** con Git Data API. En un checkout local, reúne los cambios y haz un push después de las comprobaciones.
+- Si una refactorización extensa necesita puntos intermedios, mantenlos locales y sin publicar hasta que el estado compile y las pruebas mínimas pasen. No desactives la CI para esconder fallos: conserva las comprobaciones automáticas en la versión que se comparte.
+- Si la CI falla, reúne los errores del mismo run, corrige el conjunto y vuelve a publicar una vez; evita una cadena de commits/pushes previsiblemente fallidos.
 - Antes del commit, revisa `git diff --check`, `git diff` y `git status`; confirma que no haya `.env`, claves, contraseñas, tokens, dumps o datos personales.
 - Antes de terminar, revisa el diff y las validaciones que realmente se pudieron ejecutar; no afirmes pruebas no realizadas.
+- No borres ejecuciones históricas de CI solo para ocultar fallos válidos. La prevención se hace publicando estados coherentes; cualquier limpieza de historial debe ser deliberada y autorizada.
 - **No abras PR ni hagas merge automáticamente.** Entrega al usuario el nombre de la rama existente, el SHA del commit, el resumen de cambios y comandos exactos para que ejecute y valide la versión.
 - Espera una confirmación explícita del usuario antes de enviar el trabajo a `dev`. Tras su autorización, abre un único PR para la tarea validada, espera CI y revisa el diff. Las iteraciones de corrección permanecen en la misma rama; no abras un PR por cada intento.
 - Tras la integración autorizada, actualiza tu copia de `dev` y elimina la rama sólo cuando ya no se necesite.
@@ -77,6 +83,7 @@ dotnet build Pastel.slnx --configuration Release --no-restore
 dotnet test Pastel.slnx --configuration Release --no-build --no-restore
 Push-Location web
 npm install --no-audit --no-fund
+npm run format:check
 npm run build
 npm run lint
 Pop-Location

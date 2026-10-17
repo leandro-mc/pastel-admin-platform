@@ -21,11 +21,17 @@ export function CreateRoleDialog({
 }: CreateRoleDialogProps) {
   return (
     <div className="modal-backdrop">
-      <form className="modal modal-wide" onSubmit={onSubmit}>
+      <form
+        className="modal modal-wide"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="create-role-title"
+        onSubmit={onSubmit}
+      >
         <div className="modal-head">
           <div>
             <span className="eyebrow">CONTROL DE ACCESO</span>
-            <h2>Crear rol</h2>
+            <h2 id="create-role-title">Crear rol</h2>
             <p>
               Un rol agrupa permisos que se pueden asignar a varias cuentas.
             </p>
