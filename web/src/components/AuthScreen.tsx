@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
-  Check,
-  CircleHelp,
+  Eye,
+  EyeOff,
   Flower2,
   KeyRound,
   LockKeyhole,
@@ -10,10 +10,8 @@ import {
   ShieldCheck,
   Sun,
 } from "lucide-react";
-import type {
-  AuthenticationValues,
-  Notice,
-} from "../types";
+import Toast from "./Toast";
+import type { AuthenticationValues, Notice } from "../types";
 
 type AuthScreenProps = {
   mode: "login" | "register";
@@ -198,9 +196,9 @@ export default function AuthScreen({
                   onClick={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <KeyRound size={17} />
+                    <EyeOff size={17} />
                   ) : (
-                    <LockKeyhole size={17} />
+                    <Eye size={17} />
                   )}
                 </button>
               </div>
@@ -262,25 +260,7 @@ export default function AuthScreen({
         </span>
       </footer>
 
-      {notice && (
-        <div role="status" className={`toast ${notice.tone}`}>
-          <span className="toast-symbol">
-            {notice.tone === "success" ? (
-              <Check size={17} />
-            ) : (
-              <CircleHelp size={17} />
-            )}
-          </span>
-          <span>{notice.message}</span>
-          <button
-            className="toast-close"
-            onClick={dismissNotice}
-            aria-label="Cerrar aviso"
-          >
-            ×
-          </button>
-        </div>
-      )}
+      <Toast notice={notice} onDismiss={dismissNotice} />
     </div>
   );
 }
