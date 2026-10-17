@@ -3,7 +3,7 @@ import {
   LockKeyhole,
   UserRoundCog,
 } from "lucide-react";
-import type { User } from "../../types";
+import type { User } from "../../../types";
 
 type UsersTabProps = {
   users: User[];
