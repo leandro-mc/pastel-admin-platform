@@ -85,6 +85,12 @@ La vista **Configuración → Módulos** puede registrar códigos y acciones en 
 
 La interfaz está en español y conserva accesibilidad, diseño responsive, foco visible y temas claro/oscuro. La paleta base es Brisa: modo claro en marfil cálido (#F7F6F0 / #FFFEFA), verde bosque (#315B4A), salvia (#789987), arena (#F2E5B5) y coral suave (#E7A58D). El modo oscuro conserva el fondo grafito #191B20, superficies de carbón diferenciadas, texto marfil/gris claro, salvia reservada para acciones primarias/selección y arena/coral para estados secundarios o de alerta.
 
+### Diálogos y formularios administrativos
+
+- Los diálogos con catálogos extensos deben limitar su altura al viewport y permitir scroll únicamente en el contenido, conservando encabezado, cierre y acciones visibles.
+- Deben poder cerrarse mediante un control visible y `Escape`, bloquear el scroll de fondo mientras estén abiertos y ofrecer búsqueda cuando el catálogo sea largo.
+- En móviles, respetar la altura dinámica del viewport y mantener los botones de acción accesibles sin tener que recorrer toda la lista.
+
 ### Tailwind CSS 4
 
 - Tailwind se integra mediante `@tailwindcss/vite` en `web/vite.config.ts`; `web/src/styles.css` importa `tailwindcss` y declara la variante `dark` ligada a `data-theme="dark"`.
