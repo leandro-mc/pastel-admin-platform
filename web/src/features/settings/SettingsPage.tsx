@@ -138,7 +138,11 @@ export default function SettingsPage({
           </button>
         </div>
 
-        <div className="settings-tabs" role="tablist" aria-label="Configuración">
+        <div
+          className="settings-tabs"
+          role="tablist"
+          aria-label="Configuración"
+        >
           {visibleTabs.map((item) => {
             const Icon = item.icon;
 
