@@ -1,5 +1,5 @@
 import { KeyRound, X } from "lucide-react";
-import type { Notify } from "../../types";
+import type { Notify } from "../../../types";
 
 type TemporaryPasswordDialogProps = {
   password: string;
