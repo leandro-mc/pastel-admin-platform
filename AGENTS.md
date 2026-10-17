@@ -18,6 +18,11 @@ Este archivo es la puerta de entrada obligatoria para cualquier persona o agente
 - Todo cambio estructural o de permisos debe incluir pruebas y actualizar la documentación pertinente.
 - No uses `EnsureCreated` como sustituto de migraciones. No almacenes tokens en localStorage/sessionStorage ni registres secretos.
 
+## Estilos y Tailwind CSS
+- El frontend usa Tailwind CSS 4 con el plugin nativo de Vite. Antes de tocar estilos, revisa `docs/ARCHITECTURE.md` y los tokens/variantes de `web/src/styles.css`.
+- Para nuevos estilos, usa clases de utilidad en JSX; utiliza `dark:`, `hover:`, `focus-visible:` y variantes responsive según corresponda.
+- `@apply` se reserva para patrones semánticos reutilizados o selectores complejos. No añadas reglas de componentes con propiedades CSS crudas. Mantén variables de tema en `:root` / `:root[data-theme='dark']` y keyframes personalizados en CSS.
+
 ## Fuentes de contexto
 - Flujo de trabajo, ramas, commits, PRs y releases: `docs/AI_WORKFLOW.md`.
 - Arquitectura, tecnologías, ubicación de funcionalidades y cómo agregar módulos: `docs/ARCHITECTURE.md`.

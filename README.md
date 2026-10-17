@@ -8,9 +8,14 @@ Base modular para construir aplicaciones administrativas con autenticación, aut
 
 - **Backend:** .NET 10, ASP.NET Core Web API; capas Domain / Application / Infrastructure / API.
 - **Datos:** PostgreSQL 17, Entity Framework Core 10 y Npgsql.
-- **Frontend:** React 19, TypeScript 5.9, Vite 8 y Lucide.
+- **Frontend:** React 19, TypeScript 5.9, Vite 8, Tailwind CSS 4 (plugin nativo de Vite) y Lucide.
 - **Web/proxy:** Nginx.
 - **Local/CI:** Docker Compose, xUnit, GitHub Actions y Dependabot.
+
+
+### Estilos del frontend
+
+La interfaz usa Tailwind CSS 4 con `@tailwindcss/vite`; la integración es CSS-first y no requiere `tailwind.config.js` para el tema base. Los tokens compartidos (incluidos los temas claro y oscuro) se definen en `web/src/styles.css`. Para nuevas pantallas y cambios visuales, prioriza clases de utilidad Tailwind directamente en JSX. Usa `@apply` solo para estilos semánticos reutilizados o patrones complejos que necesiten selectores descendientes/estados; evita agregar reglas con propiedades CSS crudas salvo tokens globales, normalización y keyframes.
 
 ## Funcionalidades base
 
