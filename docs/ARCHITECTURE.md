@@ -27,7 +27,7 @@ No agregues un segundo framework o biblioteca para resolver un problema que ya t
 - `web/src/App.tsx`: composición y rutas principales de la SPA.
 - `web/src/SettingsPage.tsx`: vistas de configuración/administración existentes.
 - `web/src/lib/api.ts`: cliente HTTP y manejo común de API; úsalo en vez de duplicar fetch/configuración.
-- `web/src/styles.css`: sistema visual, temas y estilos compartidos.
+- `web/src/styles.css`: entrada de Tailwind CSS 4, tokens de diseño, variantes de tema y estilos base; los componentes existentes usan `@apply` cuando requieren selectores semánticos complejos.
 - `compose.yaml`, `web/Dockerfile`, `src/Pastel.Api/Dockerfile` y `deploy/nginx/default.conf`: ejecución contenerizada y proxy same-origin.
 
 ## Dirección de dependencias
@@ -83,4 +83,13 @@ La vista **Configuración → Módulos** puede registrar códigos y acciones en 
 
 ## Cambios visuales
 
-El idioma de interfaz es español. Conserva diseño accesible, responsive, foco de teclado y temas claro/oscuro. La referencia de color es la paleta Brisa: modo claro en marfil cálido (#F7F6F0 / #FFFEFA), verde bosque (#315B4A), salvia (#789987), contenedores salvia muy suaves (#E6EEE5 / #E9F0EC) y arena mantequilla (#F2E5B5), con coral suave (#E7A58D) para acentos puntuales. El modo oscuro debe ser neutral y cómodo para sesiones largas: conserva el fondo grafito #191B20 sin dominante verde ni azul, separa con claridad el lienzo, sidebar, paneles y tarjetas elevadas usando niveles de carbón distintos, y usa texto marfil/gris claro en lugar de blanco puro. Reserva la salvia desaturada para acciones primarias y selección activa; los botones secundarios deben tener un tono de superficie y borde reconociblemente distinto. Las tarjetas importantes y los controles seleccionados necesitan un cambio perceptible de superficie, borde y/o marca lateral, mientras arena y coral distinguen estados secundarios y de alerta. No tiñas de verde todo el lienzo, sidebar ni banners grandes; evita también el negro puro, el contraste excesivamente duro, y los acentos brillantes. No agregues morado, violeta ni tonos similares. Para texto pequeño, etiquetas y estados sobre fondos pastel, usa versiones de primer plano con contraste suficiente, aunque sean algo más oscuras que las muestras decorativas; las muestras pastel no deben usarse directamente como color de texto. Antes de añadir otra librería visual, revisa lo que ya proveen React, Lucide y los estilos.
+La interfaz está en español y conserva accesibilidad, diseño responsive, foco visible y temas claro/oscuro. La paleta base es Brisa: modo claro en marfil cálido (#F7F6F0 / #FFFEFA), verde bosque (#315B4A), salvia (#789987), arena (#F2E5B5) y coral suave (#E7A58D). El modo oscuro conserva el fondo grafito #191B20, superficies de carbón diferenciadas, texto marfil/gris claro, salvia reservada para acciones primarias/selección y arena/coral para estados secundarios o de alerta.
+
+### Tailwind CSS 4
+
+- Tailwind se integra mediante `@tailwindcss/vite` en `web/vite.config.ts`; `web/src/styles.css` importa `tailwindcss` y declara la variante `dark` ligada a `data-theme="dark"`.
+- Los tokens de color y tipografía se mantienen como variables CSS en `:root` y `:root[data-theme='dark']`, y se consumen desde utilidades Tailwind. Evita duplicar los valores de la paleta en componentes.
+- **Preferencia para código nuevo:** escribe las clases de utilidad directamente en `className`, incluyendo variantes responsive, hover, focus y `dark:`.
+- Usa `@apply` solo cuando haya un patrón visual semántico compartido o selectores complejos/pseudo-elementos que resultarían poco legibles en JSX. No agregues reglas de componentes con declaraciones CSS crudas; las únicas excepciones son tokens globales, normalización y keyframes personalizados.
+- No incorpores Tailwind CSS 3 ni un `tailwind.config.js` innecesario; la configuración normal usa CSS-first de la versión 4.
+- No agregues morado, violeta ni tonos similares. Los textos pequeños deben conservar contraste suficiente sobre los fondos correspondientes.
