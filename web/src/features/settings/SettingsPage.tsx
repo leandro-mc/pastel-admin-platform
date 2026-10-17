@@ -198,7 +198,6 @@ export default function SettingsPage({
         {tab === "audit" && can("settings.audit.read") && (
           <AuditTab audit={audit} />
         )}
-
       </section>
 
       {/* Keep fixed overlays outside the animated settings section. */}
