@@ -83,4 +83,4 @@ La vista **Configuración → Módulos** puede registrar códigos y acciones en 
 
 ## Cambios visuales
 
-El idioma de interfaz es español. Conserva diseño accesible, responsive, foco de teclado y temas claro/oscuro. Usa la paleta existente de verdes/salvia, azules suaves, arena, coral y neutros; no agregues morado, violeta, índigo ni tonos similares. Antes de añadir otra librería visual, revisa lo que ya proveen React, Lucide y los estilos.
+El idioma de interfaz es español. Conserva diseño accesible, responsive, foco de teclado y temas claro/oscuro. Usa neutros claros en el tema diurno y grafito/slate en el nocturno; reserva el azul pizarra desaturado para el acento primario, y arena/coral para acentos secundarios. Evita que grandes superficies o estados ordinarios dependan de tonos verdes; reserva el verde únicamente para señales semánticas puntuales cuando corresponda. No agregues morado, violeta, índigo ni tonos similares. Antes de añadir otra librería visual, revisa lo que ya proveen React, Lucide y los estilos.
