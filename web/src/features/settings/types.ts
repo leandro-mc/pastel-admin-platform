@@ -65,3 +65,10 @@ export type NewModuleForm = {
   description: string;
   actions: string;
 };
+
+export type PermissionGroup = {
+  name: string;
+  permissions: Permission[];
+};
+
+export type PermissionEffect = "Grant" | "Deny" | "Inherit";
