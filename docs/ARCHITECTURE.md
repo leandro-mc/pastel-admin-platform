@@ -26,10 +26,12 @@ No agregues un segundo framework o biblioteca para resolver un problema que ya t
 - `src/Pastel.Api/Middleware/`: manejo transversal de errores, protección CSRF y cabeceras de seguridad.
 - `web/src/App.tsx`: bootstrap de sesión, autenticación y composición del contenido de la SPA.
 - `web/src/components/`: pantallas y piezas compartidas: `AuthScreen.tsx`, `ChangePasswordScreen.tsx`, `Dashboard.tsx`, `ProfilePage.tsx`, `WorkspaceLayout.tsx` y `Toast.tsx`. Mantén su lógica acotada a la interfaz que representan.
-- `web/src/features/settings/SettingsPage.tsx`: coordinación del estado y acciones de configuración; compone las vistas ubicadas en `tabs/`, los diálogos breves en `dialogs/`, los tipos del feature y `AccessEditorPage.tsx`.
+- `web/src/features/settings/SettingsPage.tsx`: composición de las vistas de configuración y de los editores.
+- `web/src/features/settings/useSettingsAdmin.ts`: estado del feature, operaciones de API, formularios, permisos de usuario y selección de pestaña. Mantén JSX fuera de este hook.
 - `web/src/features/settings/tabs/`: vistas independientes para usuarios, roles, módulos y auditoría.
 - `web/src/features/settings/dialogs/`: formularios acotados para crear usuario, rol, módulo y mostrar una contraseña temporal.
-- `web/src/features/settings/AccessEditorPage.tsx`: vista dedicada de pantalla completa para editar accesos de usuarios y permisos de roles; no vuelvas a encapsular esta tarea dentro de un modal.
+- `web/src/features/settings/AccessEditorPage.tsx`: composición de la vista dedicada de pantalla completa para editar accesos de usuarios y permisos de roles.
+- `web/src/features/settings/access-editor/`: componentes de las secciones de roles de usuario, excepciones directas y selección de permisos por rol. No vuelvas a meter estas listas en un modal ni a reunirlas en un único componente grande.
 - `web/src/types.ts`: tipos transversales de sesión y pantallas; `web/src/features/settings/types.ts` contiene tipos del feature de configuración.
 - `web/src/lib/api.ts`: cliente HTTP y manejo común de API; úsalo en vez de duplicar fetch/configuración.
 - `web/src/styles.css`: entrada de Tailwind CSS 4, tokens de diseño, variantes de tema y estilos base; los componentes usan `@apply` cuando requieren patrones semánticos reutilizables.
