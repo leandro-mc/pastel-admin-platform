@@ -5,7 +5,7 @@ import ChangePasswordScreen from "./components/ChangePasswordScreen";
 import Dashboard from "./components/Dashboard";
 import ProfilePage from "./components/ProfilePage";
 import WorkspaceLayout from "./components/WorkspaceLayout";
-import SettingsPage from "./SettingsPage";
+import SettingsPage from "./features/settings/SettingsPage";
 import { api, ApiError, ensureCsrf } from "./lib/api";
 import type {
   AuthenticationValues,
