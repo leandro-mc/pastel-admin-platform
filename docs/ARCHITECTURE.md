@@ -24,10 +24,17 @@ No agregues un segundo framework o biblioteca para resolver un problema que ya t
 - `src/Pastel.Api/Program.cs`: composición de dependencias, autenticación, middlewares, políticas y migraciones al iniciar.
 - `src/Pastel.Api/Controllers/`: endpoints HTTP. `AuthController.cs` gestiona sesión; `AdminUsersController.cs` y `AdminSettingsController.cs` cubren administración.
 - `src/Pastel.Api/Middleware/`: manejo transversal de errores, protección CSRF y cabeceras de seguridad.
-- `web/src/App.tsx`: composición y rutas principales de la SPA.
-- `web/src/SettingsPage.tsx`: vistas de configuración/administración existentes.
+- `web/src/App.tsx`: bootstrap de sesión, autenticación y composición del contenido de la SPA.
+- `web/src/components/`: pantallas y piezas compartidas: `AuthScreen.tsx`, `ChangePasswordScreen.tsx`, `Dashboard.tsx`, `ProfilePage.tsx`, `WorkspaceLayout.tsx` y `Toast.tsx`. Mantén su lógica acotada a la interfaz que representan.
+- `web/src/features/settings/SettingsPage.tsx`: composición de las vistas de configuración y de los editores.
+- `web/src/features/settings/useSettingsAdmin.ts`: estado del feature, operaciones de API, formularios, permisos de usuario y selección de pestaña. Mantén JSX fuera de este hook.
+- `web/src/features/settings/tabs/`: vistas independientes para usuarios, roles, módulos y auditoría.
+- `web/src/features/settings/dialogs/`: formularios acotados para crear usuario, rol, módulo y mostrar una contraseña temporal.
+- `web/src/features/settings/AccessEditorPage.tsx`: composición de la vista dedicada de pantalla completa para editar accesos de usuarios y permisos de roles.
+- `web/src/features/settings/access-editor/`: componentes de las secciones de roles de usuario, excepciones directas y selección de permisos por rol. No vuelvas a meter estas listas en un modal ni a reunirlas en un único componente grande.
+- `web/src/types.ts`: tipos transversales de sesión y pantallas; `web/src/features/settings/types.ts` contiene tipos del feature de configuración.
 - `web/src/lib/api.ts`: cliente HTTP y manejo común de API; úsalo en vez de duplicar fetch/configuración.
-- `web/src/styles.css`: entrada de Tailwind CSS 4, tokens de diseño, variantes de tema y estilos base; los componentes existentes usan `@apply` cuando requieren selectores semánticos complejos.
+- `web/src/styles.css`: entrada de Tailwind CSS 4, tokens de diseño, variantes de tema y estilos base; los componentes usan `@apply` cuando requieren patrones semánticos reutilizables.
 - `compose.yaml`, `web/Dockerfile`, `src/Pastel.Api/Dockerfile` y `deploy/nginx/default.conf`: ejecución contenerizada y proxy same-origin.
 
 ## Dirección de dependencias
@@ -85,17 +92,22 @@ La vista **Configuración → Módulos** puede registrar códigos y acciones en 
 
 La interfaz está en español y conserva accesibilidad, diseño responsive, foco visible y temas claro/oscuro. La paleta base es Brisa: modo claro en marfil cálido (#F7F6F0 / #FFFEFA), verde bosque (#315B4A), salvia (#789987), arena (#F2E5B5) y coral suave (#E7A58D). El modo oscuro conserva el fondo grafito #191B20, superficies de carbón diferenciadas, texto marfil/gris claro, salvia reservada para acciones primarias/selección y arena/coral para estados secundarios o de alerta.
 
-### Diálogos y formularios administrativos
+### Administración de accesos y permisos
 
-- Los diálogos con catálogos extensos deben limitar su altura al viewport y permitir scroll únicamente en el contenido, conservando encabezado, cierre y acciones visibles.
-- Deben poder cerrarse mediante un control visible y `Escape`, bloquear el scroll de fondo mientras estén abiertos y ofrecer búsqueda cuando el catálogo sea largo.
-- En móviles, respetar la altura dinámica del viewport y mantener los botones de acción accesibles sin tener que recorrer toda la lista.
+- La edición de accesos de usuarios y la administración de permisos de roles son tareas complejas: deben mostrarse como una vista dedicada dentro de Configuración, no como un modal ni como una subventana con scroll propio.
+- Mostrar breadcrumb/contexto del usuario o rol, búsqueda por nombre/código/módulo y permisos agrupados por módulo. Indicar selecciones y excepciones con texto y estados visuales claros; no depender únicamente del color.
+- Mantener una barra de acciones sticky debajo de la barra superior global, con Guardar y Cancelar accesibles mientras se recorre la página. No crear scroll anidado para la lista de permisos; la página es la superficie principal de desplazamiento.
+- En roles, permitir selección por permiso y operaciones por grupo sin romper el estado existente. En accesos de usuarios, distinguir explícitamente Heredar, Conceder y Denegar y preservar la precedencia del modelo de autorización.
+- Reservar modales para tareas breves y acotadas como crear un usuario/rol/módulo o confirmar una operación. En pantallas pequeñas, apilar paneles y controles, manteniendo la barra de acciones visible.
 
 ### Tailwind CSS 4
 
 - Tailwind se integra mediante `@tailwindcss/vite` en `web/vite.config.ts`; `web/src/styles.css` importa `tailwindcss` y declara la variante `dark` ligada a `data-theme="dark"`.
 - Los tokens de color y tipografía se mantienen como variables CSS en `:root` y `:root[data-theme='dark']`, y se consumen desde utilidades Tailwind. Evita duplicar los valores de la paleta en componentes.
-- **Preferencia para código nuevo:** escribe las clases de utilidad directamente en `className`, incluyendo variantes responsive, hover, focus y `dark:`.
-- Usa `@apply` solo cuando haya un patrón visual semántico compartido o selectores complejos/pseudo-elementos que resultarían poco legibles en JSX. No agregues reglas de componentes con declaraciones CSS crudas; las únicas excepciones son tokens globales, normalización y keyframes personalizados.
+- **Preferencia para código nuevo:** escribe las clases de utilidad directamente en `className`, incluyendo variantes responsive, hover y `focus-visible:`.
+- Usa `@apply` solo para patrones visuales compartidos o selectores complejos. No agregues reglas de componentes con propiedades CSS crudas; las excepciones son tokens globales, normalización y keyframes.
 - No incorpores Tailwind CSS 3 ni un `tailwind.config.js` innecesario; la configuración normal usa CSS-first de la versión 4.
-- No agregues morado, violeta ni tonos similares. Los textos pequeños deben conservar contraste suficiente sobre los fondos correspondientes.
+- **No se permiten tonos morados, violetas ni púrpuras, incluidos matices cercanos, degradados o variantes.** No dupliques tokens; consume la paleta Brisa y las variables del tema.
+- No uses iconos de destellos, estrellas decorativas ni equivalentes; usa `Flower2` como icono de marca y selecciona otros iconos Lucide por significado semántico.
+- Formatea siempre el frontend con Prettier: `npm run format` aplica el formato y `npm run format:check` lo valida. Evita JSX comprimido o líneas enormes.
+- Mantén un archivo/componente enfocado; extrae pantallas, vistas de administración y diálogos a módulos separados según `web/src/components/` y `web/src/features/settings/`.
