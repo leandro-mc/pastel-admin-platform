@@ -72,8 +72,8 @@ export default function AuthScreen({
             <span>Todo fluye mejor.</span>
           </h1>
           <p>
-            Una forma más tranquila de gestionar tu equipo, organizar accesos
-            y construir algo grande.
+            Una forma más tranquila de gestionar tu equipo, organizar accesos y
+            construir algo grande.
           </p>
 
           <div className="auth-feature-list">
@@ -132,9 +132,7 @@ export default function AuthScreen({
               <KeyRound size={21} />
             </span>
             <span className="eyebrow">
-              {isRegister
-                ? "CREÁ TU ESPACIO"
-                : "QUÉ BUENO TENERTE DE VUELTA"}
+              {isRegister ? "CREÁ TU ESPACIO" : "QUÉ BUENO TENERTE DE VUELTA"}
             </span>
             <h2>{isRegister ? "Crear una cuenta" : "Iniciar sesión"}</h2>
             <p className="auth-subtitle">
@@ -175,7 +173,9 @@ export default function AuthScreen({
               Contraseña
               <div className="password-field">
                 <input
-                  autoComplete={isRegister ? "new-password" : "current-password"}
+                  autoComplete={
+                    isRegister ? "new-password" : "current-password"
+                  }
                   type={showPassword ? "text" : "password"}
                   required
                   minLength={isRegister ? 12 : 1}
@@ -194,11 +194,7 @@ export default function AuthScreen({
                   }
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff size={17} />
-                  ) : (
-                    <Eye size={17} />
-                  )}
+                  {showPassword ? <EyeOff size={17} /> : <Eye size={17} />}
                 </button>
               </div>
               {isRegister && (
@@ -225,9 +221,7 @@ export default function AuthScreen({
             </button>
 
             <div className="auth-switch">
-              {isRegister
-                ? "¿Ya tenés una cuenta?"
-                : "¿Es tu primera vez acá?"}
+              {isRegister ? "¿Ya tenés una cuenta?" : "¿Es tu primera vez acá?"}
               <button
                 type="button"
                 onClick={() => setMode(isRegister ? "login" : "register")}

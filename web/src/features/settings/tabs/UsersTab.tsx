@@ -1,8 +1,4 @@
-import {
-  KeyRound,
-  LockKeyhole,
-  UserRoundCog,
-} from "lucide-react";
+import { KeyRound, LockKeyhole, UserRoundCog } from "lucide-react";
 import type { User } from "../../../types";
 
 type UsersTabProps = {
@@ -53,10 +49,7 @@ export default function UsersTab({
             aria-label="Buscar usuarios"
           />
           {can("settings.users.create") && (
-            <button
-              className="button button-primary"
-              onClick={onCreateUser}
-            >
+            <button className="button button-primary" onClick={onCreateUser}>
               Nuevo usuario
             </button>
           )}
@@ -105,9 +98,7 @@ export default function UsersTab({
                     {user.isActive ? "Activo" : "Bloqueado"}
                   </span>
                   {user.mustChangePassword && (
-                    <span className="status status-pending">
-                      Cambiar clave
-                    </span>
+                    <span className="status status-pending">Cambiar clave</span>
                   )}
                 </td>
                 <td>

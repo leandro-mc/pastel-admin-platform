@@ -103,8 +103,8 @@ export function CreateModuleDialog({
               }
             />
             <small>
-              Ejemplo: read, create, update, delete, export. Se crearán
-              permisos como inventario.read.
+              Ejemplo: read, create, update, delete, export. Se crearán permisos
+              como inventario.read.
             </small>
           </label>
         </div>

@@ -31,10 +31,7 @@ export default function RolesTab({
           </p>
         </div>
         {can("settings.roles.create") && (
-          <button
-            className="button button-primary"
-            onClick={onCreateRole}
-          >
+          <button className="button button-primary" onClick={onCreateRole}>
             <CirclePlus size={16} /> Crear rol
           </button>
         )}

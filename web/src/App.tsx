@@ -81,12 +81,10 @@ export default function App() {
               setProfile(refreshedProfile);
             }
           } catch (refreshError) {
-            if (
-              !(
-                refreshError instanceof ApiError &&
-                [400, 401].includes(refreshError.status)
-              )
-            ) {
+            if (!(
+              refreshError instanceof ApiError &&
+              [400, 401].includes(refreshError.status)
+            )) {
               throw refreshError;
             }
           }
@@ -108,7 +106,6 @@ export default function App() {
       active = false;
     };
   }, [loadProfile, notify]);
-
 
   const authenticate = async (
     event: FormEvent<HTMLFormElement>,
@@ -215,9 +212,7 @@ export default function App() {
   };
 
   const toggleTheme = () => {
-    setTheme((currentTheme) =>
-      currentTheme === "light" ? "dark" : "light",
-    );
+    setTheme((currentTheme) => (currentTheme === "light" ? "dark" : "light"));
   };
 
   if (busy) {

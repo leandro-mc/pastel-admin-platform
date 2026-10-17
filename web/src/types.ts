@@ -34,7 +34,4 @@ export type PasswordChangeValues = {
   confirmation: string;
 };
 
-export type Notify = (
-  message: string,
-  tone?: "success" | "error",
-) => void;
+export type Notify = (message: string, tone?: "success" | "error") => void;

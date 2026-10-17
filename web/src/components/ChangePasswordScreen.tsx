@@ -126,9 +126,7 @@ export default function ChangePasswordScreen({
             <button
               type="button"
               className="password-eye"
-              aria-label={
-                visible ? "Ocultar contraseña" : "Mostrar contraseña"
-              }
+              aria-label={visible ? "Ocultar contraseña" : "Mostrar contraseña"}
               onClick={() => setVisible(!visible)}
             >
               {visible ? <EyeOff size={17} /> : <Eye size={17} />}

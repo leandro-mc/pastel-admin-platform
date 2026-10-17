@@ -1,8 +1,4 @@
-import {
-  CirclePlus,
-  ToggleLeft,
-  ToggleRight,
-} from "lucide-react";
+import { CirclePlus, ToggleLeft, ToggleRight } from "lucide-react";
 import type { Module } from "../types";
 
 type ModulesTabProps = {
@@ -29,10 +25,7 @@ export default function ModulesTab({
           </p>
         </div>
         {can("settings.modules.manage") && (
-          <button
-            className="button button-primary"
-            onClick={onCreateModule}
-          >
+          <button className="button button-primary" onClick={onCreateModule}>
             <CirclePlus size={16} /> Registrar módulo
           </button>
         )}
@@ -58,9 +51,7 @@ export default function ModulesTab({
             </div>
             <h3>{module.name}</h3>
             <div className="module-code">{module.code}</div>
-            <p>
-              {module.description || "Módulo registrado en la plataforma."}
-            </p>
+            <p>{module.description || "Módulo registrado en la plataforma."}</p>
 
             <div className="module-permissions">
               <strong>{module.permissions.length} permisos</strong>
@@ -71,9 +62,7 @@ export default function ModulesTab({
                   </span>
                 ))}
                 {module.permissions.length > 4 && (
-                  <span className="chip">
-                    +{module.permissions.length - 4}
-                  </span>
+                  <span className="chip">+{module.permissions.length - 4}</span>
                 )}
               </div>
             </div>

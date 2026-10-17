@@ -36,11 +36,7 @@ export function TemporaryPasswordDialog({
               volverá a mostrar.
             </p>
           </div>
-          <button
-            className="icon-button"
-            onClick={onClose}
-            aria-label="Cerrar"
-          >
+          <button className="icon-button" onClick={onClose} aria-label="Cerrar">
             <X size={19} />
           </button>
         </div>

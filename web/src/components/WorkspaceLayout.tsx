@@ -222,11 +222,7 @@ export default function WorkspaceLayout({
               title={theme === "light" ? "Modo oscuro" : "Modo claro"}
               onClick={toggleTheme}
             >
-              {theme === "light" ? (
-                <Moon size={18} />
-              ) : (
-                <Sun size={18} />
-              )}
+              {theme === "light" ? <Moon size={18} /> : <Sun size={18} />}
             </button>
             <div className="topbar-divider" />
             <button

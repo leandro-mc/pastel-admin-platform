@@ -30,9 +30,7 @@ export default function Dashboard({
     {
       label: "Tu acceso",
       value: user.isActive ? "Activo" : "Bloqueado",
-      detail: user.roles.length
-        ? user.roles.join(", ")
-        : "Sin roles asignados",
+      detail: user.roles.length ? user.roles.join(", ") : "Sin roles asignados",
       icon: ShieldCheck,
       tint: "accent",
     },
@@ -48,8 +46,7 @@ export default function Dashboard({
       value: permissions
         .filter(
           (permission) =>
-            permission.endsWith(".read") ||
-            permission === "dashboard.view",
+            permission.endsWith(".read") || permission === "dashboard.view",
         )
         .length.toString(),
       detail: "Acciones que podés utilizar",
@@ -65,17 +62,19 @@ export default function Dashboard({
           <span className="eyebrow">TU ESPACIO, A TU RITMO</span>
           <h1>¡Qué bueno verte, {firstName}!</h1>
           <p>
-            Todo lo importante para tu equipo, en un espacio claro, tranquilo
-            y seguro.
+            Todo lo importante para tu equipo, en un espacio claro, tranquilo y
+            seguro.
           </p>
 
           <div className="welcome-actions">
             <button
               className="button button-dark"
               onClick={openSettings}
-              disabled={!permissions.some((permission) =>
-                permission.startsWith("settings."),
-              )}
+              disabled={
+                !permissions.some((permission) =>
+                  permission.startsWith("settings."),
+                )
+              }
             >
               Ir a configuración <ArrowRight size={16} />
             </button>
