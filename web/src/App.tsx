@@ -1,26 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from "react";
-import {
-  ArrowRight,
-  ChevronDown,
-  CircleHelp,
-  Command,
-  Flower2,
-  Gauge,
-  LogOut,
-  Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Settings2,
-  ShieldCheck,
-  Sun,
-  UserRound,
-  type LucideIcon,
-} from "lucide-react";
+import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { Flower2 } from "lucide-react";
 import AuthScreen from "./components/AuthScreen";
 import ChangePasswordScreen from "./components/ChangePasswordScreen";
 import Dashboard from "./components/Dashboard";
 import ProfilePage from "./components/ProfilePage";
-import Toast from "./components/Toast";
+import WorkspaceLayout from "./components/WorkspaceLayout";
 import SettingsPage from "./SettingsPage";
 import { api, ApiError, ensureCsrf } from "./lib/api";
 import type {
@@ -30,37 +14,6 @@ import type {
   Profile,
   Screen,
 } from "./types";
-
-type NavigationItem = {
-  id: Screen;
-  label: string;
-  caption: string;
-  icon: LucideIcon;
-  permission?: string;
-};
-
-const navigationItems: NavigationItem[] = [
-  {
-    id: "dashboard",
-    label: "Resumen",
-    caption: "Vista general",
-    icon: Gauge,
-    permission: "dashboard.view",
-  },
-  {
-    id: "settings",
-    label: "Configuración",
-    caption: "Usuarios y accesos",
-    icon: Settings2,
-    permission: "settings.users.read",
-  },
-  {
-    id: "profile",
-    label: "Mi cuenta",
-    caption: "Perfil y seguridad",
-    icon: UserRound,
-  },
-];
 
 function messageFrom(error: unknown): string {
   if (error instanceof Error) {
@@ -155,23 +108,6 @@ export default function App() {
       active = false;
     };
   }, [loadProfile, notify]);
-
-  const canSettings = useMemo(
-    () =>
-      Boolean(
-        profile?.permissions.some((permission) =>
-          permission.startsWith("settings."),
-        ),
-      ),
-    [profile],
-  );
-
-  const visibleNavigation = navigationItems.filter(
-    (item) =>
-      !item.permission ||
-      profile?.permissions.includes(item.permission) ||
-      (item.id === "settings" && canSettings),
-  );
 
   const currentUser = profile?.user;
 
@@ -331,208 +267,45 @@ export default function App() {
   }
 
   return (
-    <div className={collapsed ? "app-shell sidebar-collapsed" : "app-shell"}>
-      <aside className="sidebar">
-        <button
-          className="brand-lockup"
-          onClick={() => setScreen("dashboard")}
-          aria-label="Ir al inicio"
-          title={collapsed ? "Ir al inicio" : undefined}
-        >
-          <span className="brand-mark">
-            <Flower2 size={22} />
-          </span>
-          <span className="brand-wordmark">
-            <strong>pastel</strong>
-            <small>WORKSPACE</small>
-          </span>
-        </button>
-
-        <div className="workspace-selector">
-          <div className="workspace-icon">
-            <Command size={16} />
-          </div>
-          <div>
-            <strong>Mi espacio</strong>
-            <small>Plan esencial</small>
-          </div>
-          <ChevronDown size={15} />
-        </div>
-
-        <span className="sidebar-label">MENÚ PRINCIPAL</span>
-        <nav className="sidebar-nav" aria-label="Navegación principal">
-          {visibleNavigation.map((item) => {
-            const Icon = item.icon;
-            const isActive = screen === item.id;
-
-            return (
-              <button
-                key={item.id}
-                className={isActive ? "nav-item active" : "nav-item"}
-                data-tooltip={collapsed ? item.label : undefined}
-                aria-label={collapsed ? item.label : undefined}
-                onClick={() => setScreen(item.id)}
-              >
-                <Icon size={19} strokeWidth={1.8} />
-                <span>
-                  <strong>{item.label}</strong>
-                  <small>{item.caption}</small>
-                </span>
-                {item.id === "settings" && <span className="nav-dot" />}
-              </button>
-            );
-          })}
-        </nav>
-
-        <div className="sidebar-spacer" />
-
-        <div className="security-note">
-          <div className="security-note-icon">
-            <ShieldCheck size={18} />
-          </div>
-          <div>
-            <strong>Tu espacio, protegido</strong>
-            <p>Accesos administrados de forma segura.</p>
-          </div>
-        </div>
-
-        <button
-          className="help-link"
-          data-tooltip={collapsed ? "Centro de ayuda" : undefined}
-          aria-label={collapsed ? "Centro de ayuda" : undefined}
-          onClick={() =>
-            notify("La documentación se encuentra en el README del proyecto.")
+    <WorkspaceLayout
+      currentUser={currentUser}
+      permissions={profile.permissions}
+      screen={screen}
+      setScreen={setScreen}
+      collapsed={collapsed}
+      setCollapsed={setCollapsed}
+      theme={theme}
+      toggleTheme={toggleTheme}
+      notify={notify}
+      onLogout={logout}
+      notice={notice}
+      dismissNotice={() => setNotice(null)}
+    >
+      {screen === "dashboard" && (
+        <Dashboard
+          user={currentUser}
+          permissions={profile.permissions}
+          openSettings={() => setScreen("settings")}
+          notify={notify}
+        />
+      )}
+      {screen === "settings" && (
+        <SettingsPage permissions={profile.permissions} notify={notify} />
+      )}
+      {screen === "profile" && (
+        <ProfilePage
+          user={currentUser}
+          permissions={profile.permissions}
+          onChangePassword={() =>
+            notify(
+              "Para cambiar tu contraseña, completá el formulario que se abre a continuación.",
+            )
           }
-        >
-          <CircleHelp size={17} />
-          <span>Centro de ayuda</span>
-          <ArrowRight size={15} />
-        </button>
-
-        <div className="sidebar-bottom">
-          <span className="online-pip" />
-          Sistema operativo
-          <span className="version">v0.1</span>
-        </div>
-      </aside>
-
-      <div className="main-column">
-        <header className="topbar">
-          <div className="topbar-left">
-            <button
-              className="icon-button collapse-button"
-              onClick={() => setCollapsed(!collapsed)}
-              aria-label={collapsed ? "Expandir menú" : "Contraer menú"}
-            >
-              {collapsed ? (
-                <PanelLeftOpen size={19} />
-              ) : (
-                <PanelLeftClose size={19} />
-              )}
-            </button>
-            <span className="breadcrumb">
-              Workspace <span>/</span>{" "}
-              <strong>
-                {screen === "dashboard"
-                  ? "Resumen"
-                  : screen === "settings"
-                    ? "Configuración"
-                    : "Mi cuenta"}
-              </strong>
-            </span>
-          </div>
-
-          <div className="topbar-actions">
-            <span className="today-label">Tu espacio de trabajo</span>
-            <button
-              className="icon-button theme-switch"
-              aria-label={
-                theme === "light" ? "Activar modo oscuro" : "Activar modo claro"
-              }
-              title={theme === "light" ? "Modo oscuro" : "Modo claro"}
-              onClick={toggleTheme}
-            >
-              {theme === "light" ? (
-                <Moon size={18} />
-              ) : (
-                <Sun size={18} />
-              )}
-            </button>
-            <div className="topbar-divider" />
-            <button
-              className="account-menu"
-              onClick={() => setScreen("profile")}
-            >
-              <span className="avatar">
-                {(currentUser.displayName ?? "U")
-                  .split(" ")
-                  .map((part) => part[0])
-                  .slice(0, 2)
-                  .join("")
-                  .toUpperCase()}
-              </span>
-              <span className="account-copy">
-                <strong>{currentUser.displayName}</strong>
-                <small>
-                  {currentUser.roles.includes("Administrator")
-                    ? "Administrador"
-                    : "Mi cuenta"}
-                </small>
-              </span>
-              <ChevronDown size={15} />
-            </button>
-            <button
-              className="icon-button logout-button"
-              title="Cerrar sesión"
-              aria-label="Cerrar sesión"
-              onClick={() => void logout()}
-            >
-              <LogOut size={18} />
-            </button>
-          </div>
-        </header>
-
-        <main className="main-content">
-          {screen === "dashboard" && (
-            <Dashboard
-              user={currentUser}
-              permissions={profile.permissions}
-              openSettings={() => setScreen("settings")}
-              notify={notify}
-            />
-          )}
-          {screen === "settings" && (
-            <SettingsPage permissions={profile.permissions} notify={notify} />
-          )}
-          {screen === "profile" && (
-            <ProfilePage
-              user={currentUser}
-              permissions={profile.permissions}
-              onChangePassword={() =>
-                notify(
-                  "Para cambiar tu contraseña, completá el formulario que se abre a continuación.",
-                )
-              }
-              onSubmitChangePassword={changePassword}
-              loading={authLoading}
-              notify={notify}
-            />
-          )}
-        </main>
-
-        <footer className="app-footer">
-          <span>© {new Date().getFullYear()} Pastel Workspace</span>
-          <span className="footer-center">
-            <span className="online-pip" />
-            Todos los sistemas en funcionamiento
-          </span>
-          <span>
-            Hecho para crecer con vos <Flower2 size={14} />
-          </span>
-        </footer>
-      </div>
-
-      <Toast notice={notice} onDismiss={() => setNotice(null)} />
-    </div>
+          onSubmitChangePassword={changePassword}
+          loading={authLoading}
+          notify={notify}
+        />
+      )}
+    </WorkspaceLayout>
   );
 }
