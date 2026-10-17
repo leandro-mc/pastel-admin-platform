@@ -484,8 +484,6 @@ tbody tr:hover { background: color-mix(in srgb, var(--accent-subtle) 55%, var(--
   .auth-orbit-art { transform: scale(.8); transform-origin: bottom left; }
 }
 @media (max-width: 720px) {
-  .sidebar-collapsed .nav-item[data-tooltip]::after,
-  .sidebar-collapsed .help-link[data-tooltip]::after { display: none; }
   .app-shell, .app-shell.sidebar-collapsed { display: flex; flex-direction: column; }
   .sidebar, .sidebar-collapsed .sidebar { position: sticky; top: 0; width: 100%; height: auto; min-height: 0; flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 15px; border-right: 0; border-bottom: 1px solid var(--border); }
   .brand-mark { width: 35px; height: 35px; }
