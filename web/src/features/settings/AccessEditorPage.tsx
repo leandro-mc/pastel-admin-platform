@@ -48,17 +48,17 @@ type RolePermissionEditorPageProps = {
 };
 
 type AccessEditorPageProps =
-  | UserAccessEditorPageProps
-  | RolePermissionEditorPageProps;
+  UserAccessEditorPageProps | RolePermissionEditorPageProps;
 
 export default function AccessEditorPage(props: AccessEditorPageProps) {
   const query = props.permissionSearch.trim().toLocaleLowerCase("es-CR");
-  const permissionGroups = props.catalog.reduce<
-    Record<string, Permission[]>
-  >((groups, permission) => {
-    (groups[permission.moduleName] ??= []).push(permission);
-    return groups;
-  }, {});
+  const permissionGroups = props.catalog.reduce<Record<string, Permission[]>>(
+    (groups, permission) => {
+      (groups[permission.moduleName] ??= []).push(permission);
+      return groups;
+    },
+    {},
+  );
 
   const visibleGroups: PermissionGroup[] = Object.entries(permissionGroups)
     .sort(([first], [second]) => first.localeCompare(second, "es-CR"))
@@ -155,7 +155,11 @@ export default function AccessEditorPage(props: AccessEditorPageProps) {
         </div>
       </header>
 
-      <div className="access-editor-actions" role="group" aria-label="Acciones del editor">
+      <div
+        className="access-editor-actions"
+        role="group"
+        aria-label="Acciones del editor"
+      >
         <div className="access-editor-action-copy">
           <strong>
             {props.mode === "user"
@@ -183,8 +187,7 @@ export default function AccessEditorPage(props: AccessEditorPageProps) {
             className="button button-primary"
             onClick={props.onSave}
             disabled={
-              props.saving ||
-              (props.mode === "role" && props.role.isSystemRole)
+              props.saving || (props.mode === "role" && props.role.isSystemRole)
             }
           >
             <Save size={16} />
@@ -220,10 +223,7 @@ export default function AccessEditorPage(props: AccessEditorPageProps) {
             {props.mode === "user" ? "excepciones directas" : "seleccionados"}
           </span>
           {props.permissionSearch && (
-            <button
-              type="button"
-              onClick={() => props.setPermissionSearch("")}
-            >
+            <button type="button" onClick={() => props.setPermissionSearch("")}>
               Limpiar búsqueda
             </button>
           )}

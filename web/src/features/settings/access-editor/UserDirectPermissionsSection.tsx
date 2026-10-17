@@ -1,9 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import type { Dispatch, SetStateAction } from "react";
-import type {
-  PermissionEffect,
-  PermissionGroup,
-} from "../types";
+import type { PermissionEffect, PermissionGroup } from "../types";
 
 type UserDirectPermissionsSectionProps = {
   userHasAdministratorRole: boolean;
@@ -31,8 +28,8 @@ export default function UserDirectPermissionsSection({
         <div>
           <strong>Acceso de administrador</strong>
           <p>
-            Esta cuenta tiene el rol Administrator. Las excepciones directas
-            no se editan mientras ese rol esté asignado.
+            Esta cuenta tiene el rol Administrator. Las excepciones directas no
+            se editan mientras ese rol esté asignado.
           </p>
         </div>
       </div>
@@ -45,9 +42,7 @@ export default function UserDirectPermissionsSection({
         <span className="button-spinner" />
         <div>
           <strong>Cargando permisos directos…</strong>
-          <p>
-            Estamos consultando las excepciones actuales de esta cuenta.
-          </p>
+          <p>Estamos consultando las excepciones actuales de esta cuenta.</p>
         </div>
       </section>
     );
@@ -99,8 +94,7 @@ export default function UserDirectPermissionsSection({
 
                 <div className="access-permission-list">
                   {permissions.map((permission) => {
-                    const effect =
-                      userOverrides[permission.id] ?? "Inherit";
+                    const effect = userOverrides[permission.id] ?? "Inherit";
 
                     return (
                       <div

@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
-import {
-  Activity,
-  CirclePlus,
-  ShieldCheck,
-  UsersRound,
-} from "lucide-react";
+import { Activity, CirclePlus, ShieldCheck, UsersRound } from "lucide-react";
 import type { User, Notify } from "../../types";
 import { api, ApiError } from "../../lib/api";
 import type {
@@ -71,7 +66,7 @@ export default function useSettingsAdmin({
   const can = (code: string) => permissions.includes(code);
   const refreshAll = useCallback(async () => {
     setLoading(true);
-    const read = async <T,>(path: string): Promise<T | null> => {
+    const read = async <T>(path: string): Promise<T | null> => {
       try {
         return await api<T>(path);
       } catch (error) {

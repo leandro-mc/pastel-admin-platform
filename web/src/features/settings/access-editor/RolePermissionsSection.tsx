@@ -87,9 +87,7 @@ export default function RolePermissionsSection({
 
                 <div className="access-permission-list">
                   {permissions.map((permission) => {
-                    const checked = role.permissionIds.includes(
-                      permission.id,
-                    );
+                    const checked = role.permissionIds.includes(permission.id);
 
                     return (
                       <label
@@ -126,10 +124,7 @@ export default function RolePermissionsSection({
                             <p>{permission.description}</p>
                           )}
                         </span>
-                        <span
-                          className="access-role-check"
-                          aria-hidden="true"
-                        >
+                        <span className="access-role-check" aria-hidden="true">
                           {checked ? <Check size={15} /> : null}
                         </span>
                       </label>

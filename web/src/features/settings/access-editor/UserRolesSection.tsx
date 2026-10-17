@@ -19,8 +19,8 @@ export default function UserRolesSection({
         <div>
           <h2>Roles asignados</h2>
           <p>
-            Los permisos de cada rol se combinan con las excepciones directas
-            de esta cuenta.
+            Los permisos de cada rol se combinan con las excepciones directas de
+            esta cuenta.
           </p>
         </div>
         <span className="access-section-count">
