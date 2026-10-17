@@ -5,7 +5,6 @@ import {
   EyeOff,
   Flower2,
   KeyRound,
-  LockKeyhole,
   Moon,
   ShieldCheck,
   Sun,
