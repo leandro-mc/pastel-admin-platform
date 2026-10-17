@@ -777,9 +777,6 @@
 :root[data-theme='dark'] .table-panel .panel-heading,
 :root[data-theme='dark'] .modal-head,
 :root[data-theme='dark'] .modal-actions { @apply [border-color:#3b424e]; }
-}
-
-
 /* Full-page access editors: no nested modal or independent permission scroll area. */
 .access-editor-page { @apply flex min-w-0 flex-col gap-[20px] pb-[26px]; }
 .access-breadcrumbs { @apply flex flex-wrap items-center gap-[8px] min-w-0 text-[12px] [color:var(--muted)]; }
@@ -818,7 +815,7 @@
 .access-section-count { @apply shrink-0 rounded-full [background:var(--accent-subtle)] p-[6px_9px] text-[10px] font-semibold [color:var(--accent-strong)]; }
 .access-role-grid { @apply grid grid-cols-[repeat(2,_minmax(0,_1fr))] gap-[10px] p-[16px]; }
 .access-role-choice { @apply flex min-w-0 cursor-pointer items-start gap-[11px] rounded-[11px] [border:1px_solid_var(--border)] [background:var(--app-bg)] p-[13px] transition-colors hover:[border-color:var(--border-strong)]; }
-.access-role-choice > input { @apply mt-[3px] shrink-0; [accent-color:var(--accent)]; }
+.access-role-choice > input { @apply mt-[3px] shrink-0 [accent-color:var(--accent)]; }
 .access-role-choice.is-selected { @apply [border-color:var(--secondary)] [background:var(--accent-subtle)] shadow-[inset_3px_0_0_var(--accent)]; }
 .access-role-choice-content { @apply flex min-w-0 flex-1 flex-col gap-[4px]; }
 .access-role-choice-content > strong { @apply text-[12px] font-semibold [color:var(--text)] [overflow-wrap:anywhere]; }
@@ -895,6 +892,7 @@
   .access-permission-copy code, .access-permission-copy p { @apply text-[9px]; }
   .access-module-heading { @apply p-[12px]; }
   .access-group-actions { @apply justify-start; }
+}
 }
 
 /* Custom keyframes define animation trajectories that Tailwind utilities can reference. */
