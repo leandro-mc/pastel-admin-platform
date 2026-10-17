@@ -15,7 +15,7 @@ Base modular para construir aplicaciones administrativas con autenticación, aut
 
 ### Estilos del frontend
 
-La interfaz usa Tailwind CSS 4 con `@tailwindcss/vite`; la integración es CSS-first y no requiere `tailwind.config.js` para el tema base. Los tokens compartidos (incluidos los temas claro y oscuro) se definen en `web/src/styles.css`. Para nuevas pantallas y cambios visuales, prioriza clases de utilidad Tailwind directamente en JSX. Usa `@apply` solo para estilos semánticos reutilizados o patrones complejos que necesiten selectores descendientes/estados; evita agregar reglas con propiedades CSS crudas salvo tokens globales, normalización y keyframes.
+La interfaz usa Tailwind CSS 4 con `@tailwindcss/vite`; la integración es CSS-first y no requiere `tailwind.config.js` para el tema base. Los tokens de los modos claro y oscuro se definen en `web/src/styles.css`. El código se organiza por pantalla/feature en `web/src/components/` y `web/src/features/settings/`; `App.tsx` coordina la sesión y las pantallas. Aplicá Prettier con `npm run format` y validalo con `npm run format:check`. Está prohibido incorporar tonos morados, violetas o púrpuras, iconos de destellos/estrellas decorativas o equivalentes; para la marca, usá la flor de la app (`Flower2`) y otros iconos por su significado semántico.
 
 ## Funcionalidades base
 
