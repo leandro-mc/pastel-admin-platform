@@ -199,7 +199,7 @@ export default function SettingsPage({
         <AuditTab audit={audit} />
       )}
 
-    </section>
+      </section>
 
       {/* Keep fixed overlays outside the animated settings section. */}
       {createPortal(
@@ -214,7 +214,7 @@ export default function SettingsPage({
               onClose={() => setNewUserOpen(false)}
             />
           )}
-    
+
           {newRoleOpen && (
             <CreateRoleDialog
               newRole={newRole}
@@ -225,7 +225,7 @@ export default function SettingsPage({
               onClose={() => setNewRoleOpen(false)}
             />
           )}
-    
+
           {newModuleOpen && (
             <CreateModuleDialog
               newModule={newModule}
@@ -235,7 +235,7 @@ export default function SettingsPage({
               onClose={() => setNewModuleOpen(false)}
             />
           )}
-    
+
           {temporaryPassword && (
             <TemporaryPasswordDialog
               password={temporaryPassword}
