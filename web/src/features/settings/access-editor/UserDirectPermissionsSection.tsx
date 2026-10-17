@@ -69,7 +69,7 @@ export default function UserDirectPermissionsSection({
           </p>
         </div>
         <span className="access-section-count">
-          {selectedCount} excepciones
+          {selectedCount} excepciones · {catalogCount} permisos totales
         </span>
       </div>
 
