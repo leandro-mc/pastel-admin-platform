@@ -1,0 +1,45 @@
+name: Temporary frontend formatting pass
+
+on:
+  push:
+    branches:
+      - feat/refined-visual-experience
+
+permissions:
+  contents: write
+
+jobs:
+  format-once:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out the work branch
+        uses: actions/checkout@v4
+        with:
+          ref: feat/refined-visual-experience
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install frontend dependencies
+        working-directory: web
+        run: npm install --no-audit --no-fund
+
+      - name: Apply Prettier to the frontend
+        working-directory: web
+        run: npm run format
+
+      - name: Commit formatted files and lockfile
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if [[ -n "$(git status --short)" ]]; then
+            git add web
+            git commit -m "style: aplicar formato consistente al frontend"
+            git push origin HEAD:feat/refined-visual-experience
+          else
+            echo "El frontend ya cumple el formato configurado."
+          fi
