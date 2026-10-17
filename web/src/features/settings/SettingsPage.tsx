@@ -1,4 +1,5 @@
 import { RefreshCw } from "lucide-react";
+import { createPortal } from "react-dom";
 import AccessEditorPage from "./AccessEditorPage";
 import AuditTab from "./tabs/AuditTab";
 import ModulesTab from "./tabs/ModulesTab";
@@ -119,7 +120,8 @@ export default function SettingsPage({
   }
 
   return (
-    <section className="settings-page">
+    <>
+      <section className="settings-page">
       <div className="page-heading settings-heading">
         <div>
           <span className="eyebrow">CENTRO DE CONTROL</span>
@@ -197,45 +199,53 @@ export default function SettingsPage({
         <AuditTab audit={audit} />
       )}
 
-      {newUserOpen && (
-        <CreateUserDialog
-          newUser={newUser}
-          setNewUser={setNewUser}
-          roles={roles}
-          saving={saving}
-          onSubmit={createUser}
-          onClose={() => setNewUserOpen(false)}
-        />
-      )}
-
-      {newRoleOpen && (
-        <CreateRoleDialog
-          newRole={newRole}
-          setNewRole={setNewRole}
-          permissionGroups={permissionGroups}
-          saving={saving}
-          onSubmit={createRole}
-          onClose={() => setNewRoleOpen(false)}
-        />
-      )}
-
-      {newModuleOpen && (
-        <CreateModuleDialog
-          newModule={newModule}
-          setNewModule={setNewModule}
-          saving={saving}
-          onSubmit={createModule}
-          onClose={() => setNewModuleOpen(false)}
-        />
-      )}
-
-      {temporaryPassword && (
-        <TemporaryPasswordDialog
-          password={temporaryPassword}
-          onClose={() => setTemporaryPassword(null)}
-          notify={notify}
-        />
-      )}
     </section>
+
+      {/* Keep fixed overlays outside the animated settings section. */}
+      {createPortal(
+        <>
+          {newUserOpen && (
+            <CreateUserDialog
+              newUser={newUser}
+              setNewUser={setNewUser}
+              roles={roles}
+              saving={saving}
+              onSubmit={createUser}
+              onClose={() => setNewUserOpen(false)}
+            />
+          )}
+    
+          {newRoleOpen && (
+            <CreateRoleDialog
+              newRole={newRole}
+              setNewRole={setNewRole}
+              permissionGroups={permissionGroups}
+              saving={saving}
+              onSubmit={createRole}
+              onClose={() => setNewRoleOpen(false)}
+            />
+          )}
+    
+          {newModuleOpen && (
+            <CreateModuleDialog
+              newModule={newModule}
+              setNewModule={setNewModule}
+              saving={saving}
+              onSubmit={createModule}
+              onClose={() => setNewModuleOpen(false)}
+            />
+          )}
+    
+          {temporaryPassword && (
+            <TemporaryPasswordDialog
+              password={temporaryPassword}
+              onClose={() => setTemporaryPassword(null)}
+              notify={notify}
+            />
+          )}
+        </>,
+        document.body,
+      )}
+    </>
   );
 }
