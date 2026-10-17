@@ -11,10 +11,10 @@ import AuditTab from "./features/settings/tabs/AuditTab";
 import ModulesTab from "./features/settings/tabs/ModulesTab";
 import RolesTab from "./features/settings/tabs/RolesTab";
 import UsersTab from "./features/settings/tabs/UsersTab";
-import CreateModuleDialog from "./features/settings/dialogs/CreateModuleDialog";
-import CreateRoleDialog from "./features/settings/dialogs/CreateRoleDialog";
-import CreateUserDialog from "./features/settings/dialogs/CreateUserDialog";
-import TemporaryPasswordDialog from "./features/settings/dialogs/TemporaryPasswordDialog";
+import { CreateModuleDialog } from "./features/settings/dialogs/CreateModuleDialog";
+import { CreateRoleDialog } from "./features/settings/dialogs/CreateRoleDialog";
+import { CreateUserDialog } from "./features/settings/dialogs/CreateUserDialog";
+import { TemporaryPasswordDialog } from "./features/settings/dialogs/TemporaryPasswordDialog";
 import type {
   Audit,
   Module,
