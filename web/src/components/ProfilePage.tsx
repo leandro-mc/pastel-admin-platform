@@ -1,13 +1,6 @@
 import { useState, type FormEvent } from "react";
-import {
-  Activity,
-  Check,
-  CircleHelp,
-  Flower2,
-  KeyRound,
-  ShieldCheck,
-} from "lucide-react";
-import type { Notice, Notify, PasswordChangeValues, User } from "../types";
+import { Activity, KeyRound, ShieldCheck } from "lucide-react";
+import type { Notify, PasswordChangeValues, User } from "../types";
 
 type ProfilePageProps = {
   user: User;
