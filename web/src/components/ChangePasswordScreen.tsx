@@ -1,6 +1,7 @@
 import { useState, type FormEvent } from "react";
 import {
   ArrowRight,
+  Check,
   Flower2,
   Eye,
   EyeOff,
