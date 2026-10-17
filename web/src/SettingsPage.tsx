@@ -1,5 +1,5 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { Activity, Check, ChevronDown, CirclePlus, KeyRound, LockKeyhole, RefreshCw, Search, ShieldCheck, ToggleLeft, ToggleRight, UserRoundCog, UsersRound, X } from 'lucide-react';
+import { useCallback, useEffect, useState, type Dispatch, type FormEvent, type SetStateAction } from 'react';
+import { Activity, ArrowLeft, Check, ChevronDown, ChevronRight, CirclePlus, KeyRound, LockKeyhole, RefreshCw, Save, Search, ShieldCheck, ToggleLeft, ToggleRight, UserRoundCog, UsersRound, X } from 'lucide-react';
 import { api, ApiError } from './lib/api';
 
 type User = { id: string; email: string; displayName: string; isActive: boolean; mustChangePassword: boolean; accessFailedCount: number; lockoutEnd: string | null; createdAt: string; roles: string[] };
@@ -34,6 +34,7 @@ export default function SettingsPage({ permissions, notify }: { permissions: str
   const [newModule, setNewModule] = useState({ code: '', name: '', description: '', actions: 'read, create, update, delete' });
   const [saving, setSaving] = useState(false);
   const [permissionSearch, setPermissionSearch] = useState('');
+  const [loadingUserOverrides, setLoadingUserOverrides] = useState(false);
 
   const can = (code: string) => permissions.includes(code);
   const refreshAll = useCallback(async () => {
@@ -63,10 +64,12 @@ export default function SettingsPage({ permissions, notify }: { permissions: str
     setPermissionSearch('');
     setUserRoleIds(roles.filter((role) => user.roles.includes(role.name)).map((role) => role.id));
     setUserOverrides({});
+    setLoadingUserOverrides(true);
     try {
       const values = await api<{ permissionId: string; effect: 'Grant' | 'Deny' }[]>(`/api/admin/users/${user.id}/permissions`);
       setUserOverrides(Object.fromEntries(values.map((x) => [x.permissionId, x.effect])));
     } catch (error) { if (!(error instanceof ApiError && error.status === 409)) notify(error instanceof Error ? error.message : 'No se pudieron consultar permisos directos.', 'error'); }
+    finally { setLoadingUserOverrides(false); }
   };
 
   const saveUserAccess = async () => {
@@ -149,38 +152,40 @@ export default function SettingsPage({ permissions, notify }: { permissions: str
   ];
   const visibleTabs = tabs.filter((x) => x.permitted);
   useEffect(() => { if (!visibleTabs.some((x) => x.id === tab) && visibleTabs[0]) setTab(visibleTabs[0].id); }, [visibleTabs, tab]);
-  const permissionGroups = catalog.reduce<Record<string, Permission[]>>((acc, item) => { (acc[item.moduleName] ??= []).push(item); return acc; }, {});
-  const normalizedPermissionSearch = permissionSearch.trim().toLocaleLowerCase('es-CR');
-  const matchesPermission = (permission: Permission) => `${permission.name} ${permission.code} ${permission.moduleName} ${permission.moduleCode}`.toLocaleLowerCase('es-CR').includes(normalizedPermissionSearch);
-  const filteredCatalog = catalog.filter(matchesPermission);
-  const visiblePermissionGroups = Object.entries(permissionGroups)
-    .map(([group, items]) => ({
-      group,
-      items: !normalizedPermissionSearch || group.toLocaleLowerCase('es-CR').includes(normalizedPermissionSearch)
-        ? items
-        : items.filter(matchesPermission),
-    }))
-    .filter(({ items }) => items.length > 0);
-  const accessDialogOpen = Boolean(userEditor || roleEditor);
 
-  useEffect(() => {
-    if (!accessDialogOpen) return;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = previousOverflow; };
-  }, [accessDialogOpen]);
 
-  useEffect(() => {
-    if (!accessDialogOpen) return;
-    const closeOnEscape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape' && !saving) {
-        setUserEditor(null);
-        setRoleEditor(null);
-      }
-    };
-    window.addEventListener('keydown', closeOnEscape);
-    return () => window.removeEventListener('keydown', closeOnEscape);
-  }, [accessDialogOpen, saving]);
+  if (userEditor) {
+    return <AccessEditorPage
+      mode="user"
+      user={userEditor}
+      roles={roles}
+      catalog={catalog}
+      userRoleIds={userRoleIds}
+      setUserRoleIds={setUserRoleIds}
+      userOverrides={userOverrides}
+      setUserOverrides={setUserOverrides}
+      permissionSearch={permissionSearch}
+      setPermissionSearch={setPermissionSearch}
+      loadingPermissions={loadingUserOverrides}
+      saving={saving}
+      onCancel={() => { setUserEditor(null); setRoleEditor(null); }}
+      onSave={() => void saveUserAccess()}
+    />;
+  }
+
+  if (roleEditor) {
+    return <AccessEditorPage
+      mode="role"
+      role={roleEditor}
+      catalog={catalog}
+      permissionSearch={permissionSearch}
+      setPermissionSearch={setPermissionSearch}
+      saving={saving}
+      onCancel={() => { setUserEditor(null); setRoleEditor(null); }}
+      onSave={() => void saveRole()}
+      onRolePermissionsChange={(permissionIds) => setRoleEditor((current) => current ? { ...current, permissionIds } : current)}
+    />;
+  }
 
   return (
     <section className="settings-page">
@@ -203,19 +208,7 @@ export default function SettingsPage({ permissions, notify }: { permissions: str
 
       {tab === 'audit' && can('settings.audit.read') && <div className="panel table-panel"><div className="panel-heading"><div><h2>Registro de auditoría</h2><p>Eventos administrativos más recientes</p></div><span className="audit-badge"><Activity size={15} /> Solo lectura</span></div><div className="table-scroll"><table><thead><tr><th>Evento</th><th>Actor</th><th>Recurso</th><th>Dirección IP</th><th>Fecha</th></tr></thead><tbody>{audit.map((item) => <tr key={item.id}><td><strong className="audit-action">{friendlyAction(item.action)}</strong></td><td>{item.actorEmail || 'Sistema'}</td><td>{item.target || '—'}</td><td className="muted-cell">{item.ipAddress || '—'}</td><td className="muted-cell">{readableDate(item.createdAt)}</td></tr>)}{audit.length === 0 && <tr><td colSpan={5} className="empty-row">No hay eventos registrados.</td></tr>}</tbody></table></div></div>}
 
-      {userEditor && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget && !saving) setUserEditor(null); }}><section className="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="user-edit-title" aria-describedby="user-edit-description" tabIndex={-1}><div className="modal-head"><div><span className="eyebrow">GESTIÓN DE ACCESO</span><h2 id="user-edit-title">{userEditor.displayName}</h2><p id="user-edit-description">{userEditor.email}</p></div><button className="icon-button" onClick={() => setUserEditor(null)} aria-label="Cerrar editor de accesos" autoFocus disabled={saving}><X size={19} /></button></div><div className="modal-content"><h3>Roles asignados</h3><p className="form-hint">Los roles suman permisos. Un bloqueo directo de permiso tiene prioridad sobre los permisos heredados.</p><div className="choice-list">{roles.map((role) => <label className="choice-row" key={role.id}><input type="checkbox" checked={userRoleIds.includes(role.id)} onChange={(e) => setUserRoleIds((old) => e.target.checked ? [...old, role.id] : old.filter((id) => id !== role.id))} /><span><strong>{role.name}</strong><small>{role.description || `${role.permissions.length} permisos`}</small></span></label>)}</div>
-          {!roles.some((role) => role.name === 'Administrator' && userRoleIds.includes(role.id)) && <><h3 className="space-top">Permisos directos</h3><p className="form-hint">Elegí “Conceder” o “Denegar” para anular lo heredado de los roles; “Heredar” elimina la excepción individual.</p><div className="mb-4 flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--app-bg)] p-3 sm:flex-row sm:items-center sm:justify-between">
-              <label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--input)] px-3 py-2 focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--focus)]">
-                <Search size={16} className="shrink-0 text-[var(--muted)]" aria-hidden="true" />
-                <input type="search" value={permissionSearch} onChange={(e) => setPermissionSearch(e.target.value)} placeholder="Buscar permiso por nombre o código" aria-label="Buscar permisos directos" className="min-w-0 w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]" />
-              </label>
-              <span className="shrink-0 rounded-full bg-[var(--accent-subtle)] px-3 py-1.5 text-xs font-medium text-[var(--accent-strong)]">{filteredCatalog.length} de {catalog.length} permisos</span>
-            </div><div className="override-list">{filteredCatalog.length === 0 ? <p className="p-4 text-sm text-[var(--muted)]">No se encontraron permisos.</p> : filteredCatalog.map((permission) => <div className="override-row" key={permission.id}><div><strong>{permission.name}</strong><small>{permission.code}</small></div><select aria-label={`Acceso ${permission.code}`} value={userOverrides[permission.id] || 'Inherit'} onChange={(e) => setUserOverrides((old) => ({ ...old, [permission.id]: e.target.value as 'Grant' | 'Deny' | 'Inherit' }))}><option value="Inherit">Heredar</option><option value="Grant">Conceder</option><option value="Deny">Denegar</option></select></div>)}</div></>}
-        </div><div className="modal-actions"><button className="button button-soft" onClick={() => setUserEditor(null)} disabled={saving}>Cancelar</button><button className="button button-primary" onClick={() => void saveUserAccess()} disabled={saving}>{saving ? 'Guardando…' : 'Guardar accesos'}</button></div></section></div>}
-
       {newUserOpen && <div className="modal-backdrop"><form className="modal" onSubmit={createUser}><div className="modal-head"><div><span className="eyebrow">NUEVA CUENTA</span><h2>Crear usuario</h2><p>La persona deberá reemplazar su contraseña temporal al ingresar.</p></div><button type="button" className="icon-button" onClick={() => setNewUserOpen(false)} aria-label="Cerrar"><X size={19} /></button></div><div className="modal-content"><label className="field-label">Nombre completo<input required minLength={2} maxLength={100} value={newUser.displayName} onChange={(e) => setNewUser({ ...newUser, displayName: e.target.value })} /></label><label className="field-label">Correo electrónico<input required type="email" maxLength={320} value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} /></label><label className="field-label">Contraseña temporal<input required minLength={12} maxLength={128} type="password" autoComplete="new-password" value={newUser.temporaryPassword} onChange={(e) => setNewUser({ ...newUser, temporaryPassword: e.target.value })} /><small>12 caracteres o más, con mayúscula, minúscula, número y símbolo.</small></label><h3>Asignar roles</h3><div className="choice-list">{roles.map((role) => <label className="choice-row" key={role.id}><input type="checkbox" checked={newUser.roleIds.includes(role.id)} onChange={(e) => setNewUser({ ...newUser, roleIds: e.target.checked ? [...newUser.roleIds, role.id] : newUser.roleIds.filter((x) => x !== role.id) })} /><span><strong>{role.name}</strong><small>{role.description || ''}</small></span></label>)}</div></div><div className="modal-actions"><button type="button" className="button button-soft" onClick={() => setNewUserOpen(false)}>Cancelar</button><button className="button button-primary" disabled={saving}>{saving ? 'Creando…' : 'Crear usuario'}</button></div></form></div>}
-
-      {roleEditor && <div className="modal-backdrop" role="presentation" onMouseDown={(e) => { if (e.target === e.currentTarget && !saving) setRoleEditor(null); }}><section className="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="role-edit-title" aria-describedby="role-edit-description" tabIndex={-1}><div className="modal-head"><div><span className="eyebrow">ROL Y AUTORIZACIÓN</span><h2 id="role-edit-title">{roleEditor.name}</h2><p id="role-edit-description">{roleEditor.isSystemRole ? 'Rol del sistema: siempre conserva todos los permisos del catálogo.' : 'Seleccioná los permisos que tendrá este rol.'}</p></div><button className="icon-button" onClick={() => setRoleEditor(null)} aria-label="Cerrar editor de permisos" autoFocus disabled={saving}><X size={19} /></button></div><div className="modal-content"><div className="mb-4 flex flex-col gap-2 rounded-xl border border-[var(--border)] bg-[var(--app-bg)] p-3 sm:flex-row sm:items-center sm:justify-between"><label className="flex min-w-0 flex-1 items-center gap-2 rounded-lg border border-[var(--border-strong)] bg-[var(--input)] px-3 py-2 focus-within:border-[var(--accent)] focus-within:ring-2 focus-within:ring-[var(--focus)]"><Search size={16} className="shrink-0 text-[var(--muted)]" aria-hidden="true" /><input type="search" value={permissionSearch} onChange={(e) => setPermissionSearch(e.target.value)} placeholder="Buscar permiso por nombre o código" aria-label="Buscar permisos del rol" className="min-w-0 w-full bg-transparent text-sm text-[var(--text)] outline-none placeholder:text-[var(--muted)]" /></label><span className="shrink-0 rounded-full bg-[var(--accent-subtle)] px-3 py-1.5 text-xs font-medium text-[var(--accent-strong)]">{roleEditor.permissionIds.length} seleccionados · {catalog.length} disponibles</span></div>{visiblePermissionGroups.length === 0 ? <p className="rounded-lg border border-dashed border-[var(--border)] p-4 text-sm text-[var(--muted)]">No se encontraron permisos con ese filtro.</p> : visiblePermissionGroups.map(({ group, items }) => <div className="permission-group" key={group}><h3 className="flex items-center justify-between gap-2">{group}<span className="rounded-md bg-[var(--surface)] px-2 py-1 text-[10px] font-semibold text-[var(--text-secondary)]">{items.filter((permission) => roleEditor.permissionIds.includes(permission.id)).length}/{items.length}</span></h3>{items.map((permission) => <label className="permission-row" key={permission.id}><input type="checkbox" disabled={roleEditor.isSystemRole} checked={roleEditor.permissionIds.includes(permission.id)} onChange={(e) => setRoleEditor({ ...roleEditor, permissionIds: e.target.checked ? [...roleEditor.permissionIds, permission.id] : roleEditor.permissionIds.filter((id) => id !== permission.id) })} /><span><strong>{permission.name}</strong><small>{permission.code}</small></span></label>)}</div>)}</div><div className="modal-actions"><button className="button button-soft" onClick={() => setRoleEditor(null)} disabled={saving}>Cancelar</button><button className="button button-primary" disabled={saving || roleEditor.isSystemRole} onClick={() => void saveRole()}>{saving ? 'Guardando…' : 'Guardar permisos'}</button></div></section></div>}
 
       {newRoleOpen && <div className="modal-backdrop"><form className="modal modal-wide" onSubmit={createRole}><div className="modal-head"><div><span className="eyebrow">CONTROL DE ACCESO</span><h2>Crear rol</h2><p>Un rol agrupa permisos que se pueden asignar a varias cuentas.</p></div><button type="button" className="icon-button" onClick={() => setNewRoleOpen(false)} aria-label="Cerrar"><X size={19} /></button></div><div className="modal-content"><label className="field-label">Nombre del rol<input required minLength={2} maxLength={64} value={newRole.name} onChange={(e) => setNewRole({ ...newRole, name: e.target.value })} /></label><label className="field-label">Descripción<textarea maxLength={500} rows={2} value={newRole.description} onChange={(e) => setNewRole({ ...newRole, description: e.target.value })} /></label><h3>Permisos iniciales</h3>{Object.entries(permissionGroups).map(([group, items]) => <div className="permission-group" key={group}><h3>{group}</h3>{items?.map((permission) => <label className="permission-row" key={permission.id}><input type="checkbox" checked={newRole.permissionIds.includes(permission.id)} onChange={(e) => setNewRole({ ...newRole, permissionIds: e.target.checked ? [...newRole.permissionIds, permission.id] : newRole.permissionIds.filter((id) => id !== permission.id) })} /><span><strong>{permission.name}</strong><small>{permission.code}</small></span></label>)}</div>)}</div><div className="modal-actions"><button type="button" className="button button-soft" onClick={() => setNewRoleOpen(false)}>Cancelar</button><button className="button button-primary" disabled={saving}>{saving ? 'Creando…' : 'Crear rol'}</button></div></form></div>}
 
@@ -223,5 +216,299 @@ export default function SettingsPage({ permissions, notify }: { permissions: str
 
       {temporaryPassword && <div className="modal-backdrop"><section className="modal" role="dialog" aria-modal="true"><div className="modal-head"><div><span className="eyebrow">RESTABLECIMIENTO COMPLETO</span><h2>Contraseña temporal</h2><p>Copiala ahora y entregala al usuario por un canal seguro. No se volverá a mostrar.</p></div><button className="icon-button" onClick={() => setTemporaryPassword(null)} aria-label="Cerrar"><X size={19} /></button></div><div className="modal-content"><div className="temporary-password">{temporaryPassword}</div><button className="button button-soft full-width" onClick={() => { void navigator.clipboard.writeText(temporaryPassword); notify('Contraseña copiada al portapapeles.', 'success'); }}><KeyRound size={16} /> Copiar contraseña</button></div><div className="modal-actions"><button className="button button-primary" onClick={() => setTemporaryPassword(null)}>Listo, ya la guardé</button></div></section></div>}
     </section>
+  );
+}
+
+type PermissionEffect = 'Grant' | 'Deny' | 'Inherit';
+
+type UserAccessEditorPageProps = {
+  mode: 'user';
+  user: User;
+  roles: Role[];
+  catalog: Permission[];
+  userRoleIds: string[];
+  setUserRoleIds: Dispatch<SetStateAction<string[]>>;
+  userOverrides: Record<string, PermissionEffect>;
+  setUserOverrides: Dispatch<SetStateAction<Record<string, PermissionEffect>>>;
+  permissionSearch: string;
+  setPermissionSearch: Dispatch<SetStateAction<string>>;
+  loadingPermissions: boolean;
+  saving: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+};
+
+type RolePermissionEditorPageProps = {
+  mode: 'role';
+  role: Role;
+  catalog: Permission[];
+  permissionSearch: string;
+  setPermissionSearch: Dispatch<SetStateAction<string>>;
+  saving: boolean;
+  onCancel: () => void;
+  onSave: () => void;
+  onRolePermissionsChange: (permissionIds: string[]) => void;
+};
+
+type AccessEditorPageProps = UserAccessEditorPageProps | RolePermissionEditorPageProps;
+
+function AccessEditorPage(props: AccessEditorPageProps) {
+  const query = props.permissionSearch.trim().toLocaleLowerCase('es-CR');
+  const permissionGroups = props.catalog.reduce<Record<string, Permission[]>>((groups, permission) => {
+    (groups[permission.moduleName] ??= []).push(permission);
+    return groups;
+  }, {});
+  const visibleGroups = Object.entries(permissionGroups)
+    .sort(([a], [b]) => a.localeCompare(b, 'es-CR'))
+    .map(([name, permissions]) => ({
+      name,
+      permissions: (!query || name.toLocaleLowerCase('es-CR').includes(query))
+        ? permissions
+        : permissions.filter((permission) =>
+          `${permission.name} ${permission.code} ${permission.moduleCode} ${permission.description ?? ''}`.toLocaleLowerCase('es-CR').includes(query)
+        ),
+    }))
+    .filter((group) => group.permissions.length > 0);
+  const visiblePermissionsCount = visibleGroups.reduce((total, group) => total + group.permissions.length, 0);
+  const title = props.mode === 'user' ? 'Editar accesos' : 'Administrar permisos';
+  const breadcrumbOrigin = props.mode === 'user' ? 'Usuarios' : 'Roles y permisos';
+  const selectedCount = props.mode === 'user'
+    ? Object.values(props.userOverrides).filter((effect) => effect !== 'Inherit').length
+    : props.role.permissionIds.length;
+  const userHasAdministratorRole = props.mode === 'user'
+    && props.roles.some((role) => role.name === 'Administrator' && props.userRoleIds.includes(role.id));
+
+  return (
+    <div className="access-editor-page">
+      <nav className="access-breadcrumbs" aria-label="Ruta de navegación">
+        <button type="button" onClick={props.onCancel}>Configuración</button>
+        <ChevronRight size={14} aria-hidden="true" />
+        <button type="button" onClick={props.onCancel}>{breadcrumbOrigin}</button>
+        <ChevronRight size={14} aria-hidden="true" />
+        <span aria-current="page">{props.mode === 'user' ? props.user.displayName : props.role.name}</span>
+      </nav>
+
+      <header className="access-editor-heading">
+        <div className="access-editor-title-row">
+          <div className="access-editor-icon" aria-hidden="true">
+            {props.mode === 'user' ? <UserRoundCog size={25} /> : <ShieldCheck size={25} />}
+          </div>
+          <div className="access-editor-title-copy">
+            <span className="eyebrow">CENTRO DE CONTROL / {props.mode === 'user' ? 'USUARIOS' : 'ROLES Y PERMISOS'}</span>
+            <h1>{title}</h1>
+            <p>{props.mode === 'user'
+              ? `${props.user.displayName} · ${props.user.email}`
+              : (props.role.description || 'Definí los permisos que tendrá este rol en cada módulo.')
+            }</p>
+          </div>
+        </div>
+        <div className="access-editor-context">
+          {props.mode === 'user'
+            ? <><span className="access-context-label">Cuenta</span><strong>{props.user.displayName}</strong><span>{props.user.isActive ? 'Activa' : 'Bloqueada'}</span></>
+            : <><span className="access-context-label">Rol</span><strong>{props.role.name}</strong>{props.role.isSystemRole && <span className="access-system-badge">Rol del sistema</span>}</>
+          }
+        </div>
+      </header>
+
+      <div className="access-editor-actions" role="group" aria-label="Acciones del editor">
+        <div className="access-editor-action-copy">
+          <strong>{props.mode === 'user' ? 'Configuración de accesos' : 'Permisos del rol'}</strong>
+          <span>{props.mode === 'user'
+            ? `${props.userRoleIds.length} roles asignados · ${selectedCount} excepciones directas`
+            : `${selectedCount} de ${props.catalog.length} permisos seleccionados`
+          }</span>
+        </div>
+        <div className="access-editor-action-buttons">
+          <button type="button" className="button button-soft" onClick={props.onCancel} disabled={props.saving}>
+            <ArrowLeft size={16} /> Cancelar
+          </button>
+          <button type="button" className="button button-primary" onClick={props.onSave} disabled={props.saving || (props.mode === 'role' && props.role.isSystemRole)}>
+            <Save size={16} /> {props.saving ? 'Guardando…' : props.mode === 'user' ? 'Guardar accesos' : 'Guardar permisos'}
+          </button>
+        </div>
+      </div>
+
+      <div className="access-editor-filter">
+        <label className="access-search-field">
+          <Search size={18} aria-hidden="true" />
+          <input
+            type="search"
+            value={props.permissionSearch}
+            onChange={(event) => props.setPermissionSearch(event.target.value)}
+            placeholder="Buscar permisos por nombre, código o módulo…"
+            aria-label="Buscar permisos"
+          />
+        </label>
+        <div className="access-filter-summary">
+          <span><strong>{visiblePermissionsCount}</strong> de {props.catalog.length} permisos visibles</span>
+          <span className="access-filter-divider" aria-hidden="true" />
+          <span>{selectedCount} {props.mode === 'user' ? 'excepciones directas' : 'seleccionados'}</span>
+          {props.permissionSearch && <button type="button" onClick={() => props.setPermissionSearch('')}>Limpiar búsqueda</button>}
+        </div>
+      </div>
+
+      {props.mode === 'user' ? (
+        <>
+          <section className="access-editor-section">
+            <div className="access-section-heading">
+              <div>
+                <h2>Roles asignados</h2>
+                <p>Los permisos de cada rol se combinan con las excepciones directas de esta cuenta.</p>
+              </div>
+              <span className="access-section-count">{props.userRoleIds.length} seleccionados</span>
+            </div>
+            <div className="access-role-grid">
+              {props.roles.map((role) => {
+                const checked = props.userRoleIds.includes(role.id);
+                return (
+                  <label className={checked ? 'access-role-choice is-selected' : 'access-role-choice'} key={role.id}>
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) => props.setUserRoleIds((current) =>
+                        event.target.checked
+                          ? [...current, role.id]
+                          : current.filter((id) => id !== role.id)
+                      )}
+                    />
+                    <span className="access-role-choice-content">
+                      <strong>{role.name}</strong>
+                      <span>{role.description || 'Rol de acceso'}</span>
+                      <small><UsersRound size={13} /> {role.permissions.length} permisos · {role.userCount} usuarios</small>
+                    </span>
+                    <span className="access-role-check" aria-hidden="true">{checked ? <Check size={16} /> : null}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </section>
+
+          {userHasAdministratorRole ? (
+            <div className="access-editor-notice">
+              <ShieldCheck size={19} />
+              <div><strong>Acceso de administrador</strong><p>Esta cuenta tiene el rol Administrator. Las excepciones directas no se editan mientras ese rol esté asignado.</p></div>
+            </div>
+          ) : props.loadingPermissions ? (
+            <section className="access-editor-loading" role="status">
+              <span className="button-spinner" />
+              <div><strong>Cargando permisos directos…</strong><p>Estamos consultando las excepciones actuales de esta cuenta.</p></div>
+            </section>
+          ) : (
+            <section className="access-editor-section">
+              <div className="access-section-heading">
+                <div>
+                  <h2>Permisos directos</h2>
+                  <p>Usá Conceder o Denegar para establecer una excepción. Heredar respeta los permisos de los roles.</p>
+                </div>
+                <span className="access-section-count">{selectedCount} excepciones</span>
+              </div>
+              {visibleGroups.length === 0 ? (
+                <p className="access-empty-state">No se encontraron permisos con ese criterio de búsqueda.</p>
+              ) : (
+                <div className="access-module-grid">
+                  {visibleGroups.map(({ name, permissions }) => (
+                    <article className="access-module-card" key={name}>
+                      <header className="access-module-heading">
+                        <div><h3>{name}</h3><p>{permissions.length} permisos</p></div>
+                        <span className="access-module-count">{permissions.filter((permission) => (props.userOverrides[permission.id] ?? 'Inherit') !== 'Inherit').length}/{permissions.length}</span>
+                      </header>
+                      <div className="access-permission-list">
+                        {permissions.map((permission) => {
+                          const effect = props.userOverrides[permission.id] ?? 'Inherit';
+                          return (
+                            <div className={`access-permission-row ${effect.toLowerCase()}`} key={permission.id}>
+                              <div className="access-permission-copy">
+                                <strong>{permission.name}</strong>
+                                <code>{permission.code}</code>
+                                {permission.description && <p>{permission.description}</p>}
+                              </div>
+                              <label className="access-effect-control">
+                                <span>Acceso</span>
+                                <select
+                                  aria-label={`Acceso para ${permission.name} (${permission.code})`}
+                                  className={`access-permission-select ${effect.toLowerCase()}`}
+                                  value={effect}
+                                  onChange={(event) => props.setUserOverrides((current) => ({ ...current, [permission.id]: event.target.value as PermissionEffect }))}
+                                >
+                                  <option value="Inherit">Heredar</option>
+                                  <option value="Grant">Conceder</option>
+                                  <option value="Deny">Denegar</option>
+                                </select>
+                              </label>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </article>
+                  ))}
+                </div>
+              )}
+            </section>
+          )}
+        </>
+      ) : (
+        <>
+          {props.role.isSystemRole && (
+            <div className="access-editor-notice">
+              <ShieldCheck size={19} />
+              <div><strong>Rol del sistema protegido</strong><p>Este rol mantiene todos los permisos del catálogo y no se puede modificar.</p></div>
+            </div>
+          )}
+          {visibleGroups.length === 0 ? (
+            <p className="access-empty-state">No se encontraron permisos con ese criterio de búsqueda.</p>
+          ) : (
+            <div className="access-module-grid role-permission-grid">
+              {visibleGroups.map(({ name, permissions }) => {
+                const selectedInGroup = permissions.filter((permission) => props.role.permissionIds.includes(permission.id)).length;
+                const groupIds = permissions.map((permission) => permission.id);
+                return (
+                  <article className="access-module-card" key={name}>
+                    <header className="access-module-heading">
+                      <div><h2>{name}</h2><p>{permissions.length} permisos disponibles</p></div>
+                      <span className="access-module-count">{selectedInGroup}/{permissions.length}</span>
+                    </header>
+                    {!props.role.isSystemRole && (
+                      <div className="access-group-actions">
+                        <button type="button" onClick={() => props.onRolePermissionsChange(Array.from(new Set([...props.role.permissionIds, ...groupIds])))}>
+                          Seleccionar todos
+                        </button>
+                        <button type="button" onClick={() => props.onRolePermissionsChange(props.role.permissionIds.filter((id) => !groupIds.includes(id)))}>
+                          Quitar selección
+                        </button>
+                      </div>
+                    )}
+                    <div className="access-permission-list">
+                      {permissions.map((permission) => {
+                        const checked = props.role.permissionIds.includes(permission.id);
+                        return (
+                          <label className={checked ? 'access-permission-row role-row is-selected' : 'access-permission-row role-row'} key={permission.id}>
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              disabled={props.role.isSystemRole}
+                              onChange={(event) => props.onRolePermissionsChange(
+                                event.target.checked
+                                  ? Array.from(new Set([...props.role.permissionIds, permission.id]))
+                                  : props.role.permissionIds.filter((id) => id !== permission.id)
+                              )}
+                            />
+                            <span className="access-permission-copy">
+                              <strong>{permission.name}</strong>
+                              <code>{permission.code}</code>
+                              {permission.description && <p>{permission.description}</p>}
+                            </span>
+                            <span className="access-role-check" aria-hidden="true">{checked ? <Check size={15} /> : null}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
+      )}
+    </div>
   );
 }
