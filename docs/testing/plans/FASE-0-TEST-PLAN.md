@@ -1,11 +1,11 @@
 # Plan de pruebas — Fase 0 (base modular, seguridad, Google, Tailwind, errores y logs)
 
-Autor inicial: orquestador (independiente de Dev). **El Agente 0 (Dev) debe ampliarlo** con los casos de lo que implemente, pero **no puede quitar ni debilitar** los casos obligatorios. Lo ejecuta un agente de QA distinto (ver `docs/TESTING_STRATEGY.md`).
+Autor inicial: orquestador (independiente de Dev). **El agente de QA lo amplía** con los casos de lo que se implementó (a partir de los datos que deja el Agente 0 en `docs/phase0/PROGRESS.md`), pero **no puede quitar ni debilitar** los casos obligatorios. Lo ejecuta un agente de QA distinto (ver `docs/TESTING_STRATEGY.md`).
 
 Prioridad: **O** obligatorio · **I** importante · **D** deseable. Tipos como en `TEST_PLAN_TEMPLATE.md`.
 
 ## 1. Cómo ejecutar
-`docker compose down -v && docker compose up --build` con `ASPNETCORE_ENVIRONMENT=Testing`, `Auth:Local:Enabled=true`. Cuentas: administrador de arranque + usuarios de prueba creados por el sembrador `Testing` (el Agente 0 documenta nombres y claves **de prueba** aquí en su versión del plan). Pruebas automatizadas: `dotnet test`, `npm test`, `npm run test:e2e`.
+`docker compose down -v && docker compose up --build` con `ASPNETCORE_ENVIRONMENT=Testing`, `Auth:Local:Enabled=true`. Cuentas: administrador de arranque + usuarios de prueba creados por el sembrador `Testing` (el Agente 0 los deja en `docs/phase0/PROGRESS.md`; QA los incorpora aquí). Pruebas automatizadas: `dotnet test`, `npm test`, `npm run test:e2e`.
 
 ## 2. Estructura y arranque
 | ID | Tipo | P | Caso | Esperado |

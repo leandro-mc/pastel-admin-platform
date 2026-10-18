@@ -38,7 +38,7 @@ Conexión de la app Android, sincronización sin conexión, notificaciones push,
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-Dev escribe `docs/testing/plans/BRISA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente; QA lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+QA escribe `docs/testing/plans/BRISA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. **Paridad:** ejecutar los ≥ 20 casos del inventario (`docs/migration/brisa-inventory.md` §11) y compararlos con el comportamiento de la app Android; cualquier diferencia es un defecto o un cambio aprobado por escrito.
 2. Aislamiento: la persona A nunca ve, edita ni borra pendientes de la persona B (IDs ajenos → 404).

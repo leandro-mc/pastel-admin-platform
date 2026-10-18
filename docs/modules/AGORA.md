@@ -60,7 +60,7 @@ Foros, comentarios, reportes y moderación; flujo formal de aprobación previa; 
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-Dev escribe `docs/testing/plans/AGORA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente; QA lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+QA escribe `docs/testing/plans/AGORA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. Matriz por rol (anónimo, registrado, autor, revisor, administrador) sobre cada acción de la sección 2; **un autor no puede verificar su propia pieza** (403 `agora.verification.self`).
 2. Borradores y piezas archivadas nunca aparecen en listados, búsqueda, página de pieza ni respuestas públicas.

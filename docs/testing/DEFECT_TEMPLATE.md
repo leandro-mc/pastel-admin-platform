@@ -19,5 +19,5 @@
 ## Evidencia
 Captura, respuesta HTTP (`traceId`), línea de log (sin datos sensibles).
 
-## Notas para Dev
+## Notas para Dev / Build
 Sospecha de causa (opcional; QA no corrige).

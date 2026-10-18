@@ -50,7 +50,7 @@ Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (r
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-Dev escribe `docs/testing/plans/HUELLA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente; QA lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+QA escribe `docs/testing/plans/HUELLA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. Anónimo abre `/huella/<slug>` publicado → 200 y contenido de la **última versión publicada**; sin sesión, sin cookies.
 2. Se edita el borrador después de publicar → la página pública **no cambia** hasta publicar de nuevo.

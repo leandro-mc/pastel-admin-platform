@@ -17,7 +17,7 @@ Reemplaza a la versión por capas (`Domain / Application / Infrastructure / Api`
 | D9 | **Compilación por subconjunto de módulos** (`PASTEL_MODULES`) | Desplegar un "Pastel" por proyecto sin reescribir nada |
 | D10 | **Tailwind: utilidades en JSX**; patrones compartidos = componentes React; `@apply` solo en `base.css` | Co-ubicación estilo/markup y hojas pequeñas (el análisis de `dev` halló 0 utilidades y 2 209 líneas de CSS) |
 | D11 | **Errores y logs estandarizados** (`Result` + `problem+json` + `traceId`; Serilog JSON; auditoría aparte) | Diagnóstico fiable y mensajes humanos en todos los módulos |
-| D12 | **Desarrollo y pruebas por agentes distintos** (Dev entrega código y plan; QA ejecuta y reporta) | Verificación independiente; sin autocertificación |
+| D12 | **Desarrollo y pruebas por agentes distintos** (Dev escribe el código; Build compila, corrige y escribe pruebas unitarias; QA planifica, ejecuta y reporta) | Verificación independiente; sin autocertificación |
 
 Descartado: microservicios (operación excesiva), Clean Architecture por módulo (ceremonial para módulos CRUD), Next.js/Remix (ver 9.1), capas horizontales (cada cambio toca cuatro proyectos).
 
@@ -45,7 +45,7 @@ pastel/
 ├── docs/
 │   ├── ARCHITECTURE.md  DESIGN_SYSTEM.md  SECURITY.md  AI_WORKFLOW.md  SPLIT_GUIDE.md
 │   ├── ERROR_HANDLING_AND_LOGGING.md  TESTING_STRATEGY.md
-│   ├── testing/                        # plantillas, plans/ (los escribe Dev) y reports/ (los escribe QA)
+│   ├── testing/                        # plantillas, plans/ (los escribe QA) y reports/ (los escribe QA)
 │   ├── adr/                            # decisiones breves (~15 líneas c/u)
 │   ├── modules/                        # fichas de producto: HUELLA.md, COSECHA.md, ...
 │   └── requests/                       # CCR: solicitudes de cambio a zonas protegidas
@@ -58,7 +58,7 @@ pastel/
 │       ├── Identity/   Brisa/   Balance/   Agora/   Cosecha/   Huella/
 ├── tests/
 │   ├── Pastel.ArchitectureTests/       # fronteras, permisos, estructura de módulos
-│   ├── Pastel.IntegrationTests/        # Foundation/ (Dev, Fase 0) y QA/<M>/ (QA); PostgreSQL real
+│   ├── Pastel.IntegrationTests/        # Foundation/ (Build, Fase 0) y QA/<M>/ (QA); PostgreSQL real
 │   └── e2e/                            # Playwright (lo escribe QA)
 ├── tools/new-module/                   # plantilla para crear módulos
 ├── scripts/                            # check-design.mjs, tailwind-audit.mjs
@@ -235,7 +235,7 @@ Reglas: páginas finas, estado del servidor en TanStack Query, formularios con r
 2. Ficha de producto en `docs/modules/<MODULO>.md` (alcance, roles, reglas).
 3. Declarar permisos y roles sugeridos en `<M>Module.cs`.
 4. Color y tokens del módulo en `web/src/core/design/module-themes.css` (CCR si es nuevo).
-5. Implementar por slices; pruebas unitarias e integración.
+5. Implementar por slices (Dev); pruebas unitarias (Build) e integración (QA).
 6. Completar `MODULE.md` (backend y frontend).
 7. Verificar: guardas de arquitectura y diseño, compilación aislada del módulo.
 
@@ -245,7 +245,7 @@ Estándar único en `docs/ERROR_HANDLING_AND_LOGGING.md`. Resumen: los fallos es
 
 ## 15. Desarrollo y pruebas separados
 
-Estándar en `docs/TESTING_STRATEGY.md`. Dev implementa, escribe pruebas unitarias de su dominio y un **plan de pruebas**; **otro agente (QA)** lo ejecuta en caja negra primero, luego caja gris, automatiza regresión en su propia zona (`tests/.../QA`, `tests/e2e`) y emite un informe. Un módulo o fase solo se integra a `dev` con el informe QA del SHA final aprobado y la autorización del propietario.
+Estándar en `docs/TESTING_STRATEGY.md`. Dev implementa solo el código de la aplicación (sin necesidad de compilar); **Build** compila, corrige y escribe las pruebas unitarias; **QA** escribe el **plan de pruebas** desde la ficha y lo ejecuta en caja negra primero, luego caja gris, automatiza regresión en su propia zona (`tests/.../QA`, `tests/e2e`) y emite un informe. Un módulo o fase solo se integra a `dev` con el informe QA del SHA final aprobado y la autorización del propietario.
 
 ## 16. Decisiones registradas
 

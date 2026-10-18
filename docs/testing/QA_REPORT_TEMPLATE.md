@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Agente QA (sesión distinta a Dev) | <id> |
+| Agente QA (sesión distinta a Dev y a Build) | <id> |
 | Rama y **SHA probado** | <rama> @ <sha> |
 | Plan ejecutado | `docs/testing/plans/<M>-TEST-PLAN.md` (versión/SHA) |
 | Fecha y entorno | <fecha> · <comandos/versión> |
