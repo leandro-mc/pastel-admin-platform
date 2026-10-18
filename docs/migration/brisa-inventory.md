@@ -4,13 +4,14 @@ Fuente funcional de la migración descrita en `docs/modules/BRISA.md`. Elaborado
 
 | Dato | Valor |
 |---|---|
-| Repositorio analizado | `leandro-mc/brisa-android` (rama `main`, 3 commits, 2026-10-15). Se asume que es el repositorio «Brisa» de la solicitud: el nombre difiere, pero `rootProject.name = "Brisa"` y `applicationId = com.brisa.todo`. |
+| Repositorio analizado | `leandro-mc/brisa-android` (rama `main`, 3 commits, 2026-10-15). **Confirmado por el propietario** como el proyecto «Brisa», sin otra versión en otra rama o repositorio (Q1). El nombre del repositorio difiere, pero `rootProject.name = "Brisa"` y `applicationId = com.brisa.todo`. |
 | Commit analizado | `c090107` («fix: polish dark theme surfaces and contrast») |
 | Alcance leído | Todo el código fuente (≈1 900 líneas: 15 archivos Kotlin, manifiesto, recursos, Gradle, README y la única clase de pruebas). La app no se compiló ni se ejecutó: todo lo descrito sale de leer el código. |
 | Convención de citas | `ruta › símbolo`. Las rutas son relativas a `app/src/main/java/com/brisa/todo/` salvo que empiecen por `app/` u otra raíz. «L123» = línea en el commit analizado. **Suposición** = no confirmado en el código. |
+| Revisión | **Revisión 2 (2026-10-18):** respuestas del propietario a las 14 preguntas incorporadas. Los cambios de comportamiento están en **§13**, que prevalece donde difiera de los apartados 1–11 (descripción de la app actual). |
 | Fecha de referencia en los casos | «hoy» = **domingo 2026-10-18** (zona `America/Costa_Rica`, UTC-6, sin horario de verano). |
 
-Hallazgo que condiciona la migración: **Brisa trabaja solo con fechas (día), nunca con hora del día; no tiene repetición de tareas, recordatorios ni notificaciones.** Los apartados 5, 6 y 11 lo detallan.
+Hallazgo que condiciona la migración: **Brisa trabaja solo con fechas (día), nunca con hora del día; no tiene repetición de tareas, recordatorios ni notificaciones.** Los apartados 5, 6 y 11 lo detallan. Las decisiones posteriores del propietario (§13) prevalecen sobre este inventario donde difieran de la app actual.
 
 ---
 
@@ -89,7 +90,7 @@ Abrir app ─► Semana (hoy enfocado) ──┬─ «+» de una columna / FAB �
 
 ## 3. Funcionalidades
 
-«Conservar» es **propuesta del investigador**; la decide el propietario (§12).
+«Conservar» es **propuesta del investigador**; el propietario respondió en §12 y las capacidades nuevas aprobadas (un toque para marcar, búsqueda, deshacer, `CompletedAt`) están en §13.6.
 
 | Funcionalidad | Descripción | Dónde está en el código | Conservar |
 |---|---|---|---|
@@ -105,7 +106,7 @@ Abrir app ─► Semana (hoy enfocado) ──┬─ «+» de una columna / FAB �
 | Vencidas | Pendientes atrasadas (regla en §5.3) | `TaskQueries.kt › overdueOn`; pestaña `OVERDUE` | **Esencial** |
 | Fechas límite | Lista ordenada por vencimiento | `TaskQueries.kt › withDeadlines`; pestaña `DEADLINES` | **Esencial** |
 | Fecha límite opcional | Casilla + selector de calendario | `TaskEditorDialog` | **Esencial** |
-| Reprogramación automática a hoy | Pendiente con fecha límite vigente y día asignado pasado → día asignado = hoy | `TaskQueries.kt › rollForwardDeadlineTasks`; `LocalTaskRepository.reconcileDailyTasks` | **Esencial** (regla); el mecanismo cambia en la web (§7.3) |
+| Reprogramación automática a hoy | Pendiente con fecha límite vigente y día asignado pasado → día asignado = hoy | `TaskQueries.kt › rollForwardDeadlineTasks`; `LocalTaskRepository.reconcileDailyTasks` | **Esencial** (regla); el mecanismo en la web es derivado, sin escrituras (§13.1) |
 | Vista Mes con contadores | Cuadrícula lunes–domingo; tocar día → Semana | `BrisaApp › MonthScreen / CalendarDayCell` | **Importante** |
 | Color pastel (10) y color aleatorio al crear | Paleta fija; se puede cambiar | `domain/TaskItem.kt › TaskPalette`; editor | **Importante** |
 | Indicador «HOY» y día enfocado | Resalta hoy y el día seleccionado | `DayColumn`, `CalendarDayCell` | **Importante** |
@@ -249,9 +250,9 @@ Alineado con `docs/modules/BRISA.md` §3.2.
 **Fechas y zona.** `ScheduledDate`/`DueDate` como `date` (sin hora). «Hoy» se calcula con una **zona de la persona** (valor inicial `America/Costa_Rica`), nunca con la del servidor (que suele ser UTC).
 
 **Decisión D-1: reprogramación persistida vs. derivada.** La app *persiste* el cambio de `scheduledDate`. Con varios dispositivos eso crea un conflicto de sistema contra persona (un dispositivo reprograma sin conexión mientras otro edita). Alternativas:
-- **A. Derivada (recomendada para sincronizar):** no persistir; la «fecha efectiva» de una tarea abierta con `dueDate >= hoy` es `max(scheduledDate, hoy)`. Resultado visible idéntico y sin escrituras ni conflictos; pierde la propiedad de que el día asignado quede escrito.
-- **B. Persistida (paridad estricta):** un proceso idempotente en el servidor, al cambiar el día en la zona de la persona o en la primera lectura del día, actualiza `scheduledDate` y `UpdatedAt`; el cambio de sistema solo se aplica si la fila no cambió desde la versión leída (compare-and-set).
-Ambas deben pasar los casos C06–C12.
+- **A. Derivada (decidida por el propietario, Q3 → §13.1):** no persistir; la «fecha efectiva» se calcula al leer (fórmula en §13.1). Equivale a la app en el uso normal, sin escrituras ni conflictos, y conserva el día asignado original. Difiere en los casos de §13.9.
+- **B. Persistida (descartada; paridad estricta):** un proceso idempotente en el servidor, al cambiar el día en la zona de la persona o en la primera lectura del día, actualiza `scheduledDate` y `UpdatedAt`; el cambio de sistema solo se aplica si la fila no cambió desde la versión leída (compare-and-set).
+**Resuelta: opción A.** Debe pasar los casos C06–C12 con los resultados de §13.9.
 
 **Reloj del cliente.** Un `createdAt` del dispositivo se acepta como dato de orden, pero no decide `UpdatedAt` ni conflictos.
 
@@ -283,7 +284,7 @@ Implicación para Pastel: el módulo web **introduce** por primera vez identidad
   <map><string name="tasks_json">[{&quot;id&quot;:&quot;…&quot;,&quot;title&quot;:&quot;…&quot;, …}]</string></map>
   ```
   El JSON va escapado dentro del XML; hay que desescapar antes de analizarlo.
-- **Cómo sacarlo (opciones, ninguna implementada):** (a) añadir a la app una acción «Exportar respaldo» que escriba el arreglo —cambio mínimo, requiere autorización del propietario porque toca el código original—; (b) acceso al archivo con una compilación de depuración (**Suposición**: una instalación normal no es depurable); (c) respaldo automático del sistema (**Suposición**, no accesible para Pastel). Se recomienda (a).
+- **Cómo sacarlo (opciones, ninguna implementada):** (a) añadir a la app una acción «Exportar respaldo» que escriba el arreglo —cambio mínimo, requiere autorización del propietario porque toca el código original—; (b) acceso al archivo con una compilación de depuración (**Suposición**: una instalación normal no es depurable); (c) respaldo automático del sistema (**Suposición**, no accesible para Pastel). Se recomendaba (a). **Resuelto (Q2): no hay datos reales que exportar; no se modifica la app Android (§13.7).**
 
 ### 9.2 Formato de importación propuesto
 El importador debe aceptar **dos entradas equivalentes**: el arreglo JSON crudo de `tasks_json`, o este sobre (nombres propuestos):
@@ -297,22 +298,22 @@ El importador debe aceptar **dos entradas equivalentes**: el arreglo JSON crudo 
 |---|---|---|
 | `id` | `Id` (`uuid`) | Debe ser UUID válido; se **conserva** (hace idempotente la reimportación). Duplicado dentro del archivo → error. |
 | — | `OwnerId` | Persona que importa (del token). |
-| `title` | `Title` | `trim`; no vacío. Límite máximo: pendiente (§12, Q8). |
-| `details` | `Notes` | Texto; `null`/ausente → `""`. |
+| `title` | `Title` | `trim`; no vacío. Máximo 150 caracteres (§13.4). |
+| `details` | `Notes` | Texto; `null`/ausente → `""`. Máximo 2000 caracteres (§13.4). |
 | `scheduledDate` | `ScheduledDate` (`date`) | ISO `yyyy-MM-dd` estricta. Sin conversión de zona. |
-| `priority` | `Priority` (smallint) | `LOW→0`, `MEDIUM→1`, `HIGH→2`. Ausente → `MEDIUM`; valor distinto de los tres → error (la app lo tolera como `MEDIUM`; ver §12 Q9). |
-| `colorHex` | `ColorHex` (`#RRGGBB`) | Formato obligatorio. Fuera de la paleta de 10: aceptar o mapear a Salvia (decisión Q10). Ausente → `#DDE8D5`. |
+| `priority` | `Priority` (smallint) | `LOW→0`, `MEDIUM→1`, `HIGH→2`. Ausente → `MEDIUM`; valor distinto de los tres → `MEDIUM` **con advertencia en el informe, sin abortar el lote** (como la app; Q9, §13.7). |
+| `colorHex` | `ColorHex` (`#RRGGBB`) | Formato obligatorio. Fuera de la paleta de 10: se acepta (Q10; interpretación y excepción de matiz en §13.7). Ausente → `#DDE8D5`. |
 | `dueDate` | `DueDate` (`date` nula) | `""` o ausente → `NULL`; si no, ISO estricta. |
 | `completed` | `IsCompleted` | Booleano. Ausente → `false`. |
 | `createdAt` (ms UTC) | `CreatedAt` (`timestamptz`) | `epoch ms → UTC`. Ausente → instante de importación (con aviso). |
-| — | `CompletedAt` | `NULL` (no se conoce; no inventarlo). |
+| — | `CompletedAt` | `NULL` (no se conoce; no inventarlo). Campo aprobado (Q12, §13.5). |
 | — | `UpdatedAt` / `RowVersion` | Los asigna el servidor al importar. |
 | — | `DeletedAt` | `NULL`. |
 | — | `ImportBatchId` | Identifica el lote para revertirlo (§9.4). |
 
 ### 9.4 Reglas de la importación (de `BRISA.md` §3.3 y plan de pruebas 6)
-1. **Todo o nada:** una transacción; **cualquier** registro inválido aborta el lote y se informa fila, campo y motivo. (Difiere a propósito de la app, que descarta en silencio.)
-2. **Sin duplicar:** por `OwnerId + Id`. Reimportar el mismo archivo no cambia nada; si el `Id` existe con contenido distinto, se informa como conflicto (no se sobrescribe sin decisión; Q11).
+1. **Todo o nada:** una transacción; **cualquier** registro inválido aborta el lote y se informa fila, campo y motivo. (Difiere a propósito de la app, que descarta en silencio. Única tolerancia: prioridad desconocida → Media con advertencia, Q9.)
+2. **Sin duplicar:** por `OwnerId + Id`. Reimportar el mismo archivo no cambia nada; si el `Id` existe con contenido distinto, **se omite y se informa** como «ya existía con diferencias»; nunca se sobrescribe (Q11, §13.7).
 3. **Vista previa (dry-run)** con totales: registros, abiertas, hechas, con fecha límite, rango de fechas.
 4. **Respaldo previo** de las tareas actuales de la persona y **reversión** del lote (borrado lógico de lo creado con `ImportBatchId`).
 5. **Integridad:** comparar totales origen/destino (cantidad, abiertas/hechas, con/sin fecha límite) y los 9 campos por registro.
@@ -369,16 +370,18 @@ Con «hoy» = 2026-10-18:
 | U12 | «Desliza para explorar cada día» no avanza más allá de las 7 columnas; hay que usar las flechas. | `WeekScreen` (`LazyRow` con lista fija) |
 | U13 | Ausencias: sin búsqueda, sin deshacer (hacer/eliminar), sin hora ni recordatorios aunque exista «fecha límite». | búsqueda en el código |
 
+Decisiones del propietario sobre U1–U13: §13.6 y pendientes P1–P2 en §12.
+
 ### 10.3 Textos y tono
-Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y sin culpa** («Tus días, con calma.», «Ajusta los detalles a tu ritmo.»). Eso debe conservarse. Pero usa **tuteo** («Puedes», «Elige», «Desliza», «¿Qué necesitas hacer?», «Vas al día»), y Pastel exige **usted o forma impersonal, sin voseo ni tuteo** (`AGENTS.md`; `DESIGN_SYSTEM.md` §8) y textos en `strings.ts`. Hay que reescribir los textos antes de portarlos. Ejemplos (propuesta, el texto final lo define UX):
+Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y sin culpa** («Tus días, con calma.», «Ajusta los detalles a tu ritmo.»). Eso debe conservarse. Pero usa **tuteo** («Puedes», «Elige», «Desliza», «¿Qué necesitas hacer?», «Vas al día»), y Pastel exige **usted o forma impersonal, sin voseo ni tuteo** (`AGENTS.md`; `DESIGN_SYSTEM.md` §8) y textos en `strings.ts`. Hay que reescribir los textos antes de portarlos. El propietario pidió que el **tono cálido** prevalezca (Q14): las formas de usted o impersonales deben sonar cercanas, no burocráticas. Ejemplos (propuesta, el texto final lo define UX):
 
 | Actual | Propuesta impersonal |
 |---|---|
-| Tus días, con calma. | Los días, con calma. |
-| Dale un lugar en tu día. | Asigne un lugar en el día. |
-| ¿Qué necesitas hacer? | ¿Qué hay que hacer? |
+| Tus días, con calma. | Sus días, con calma. |
+| Dale un lugar en tu día. | Un lugar para esta tarea en su día. |
+| ¿Qué necesitas hacer? | ¿Qué hay por hacer? |
 | Puedes mover cualquier tarea a otro día sin perder sus detalles. | Cualquier tarea se puede mover a otro día sin perder sus detalles. |
-| Vas al día / No tienes tareas pendientes de días anteriores. | Al día / No hay tareas pendientes de días anteriores. |
+| Vas al día / No tienes tareas pendientes de días anteriores. | Al día, sin prisa / No quedan tareas pendientes de días anteriores. |
 | Elige un día para ver sus pendientes. | Elija un día para ver sus pendientes. |
 | Desliza para explorar cada día | Deslice para explorar cada día |
 | No podrás recuperarla después de eliminarla. | La tarea no se podrá recuperar después de eliminarla. |
@@ -389,7 +392,7 @@ Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y s
 
 ## 11. Casos de paridad
 
-«Hoy» = 2026-10-18 (domingo) salvo indicación. `P` = día asignado, `L` = fecha límite. Estado: **P** = replicar tal cual; **D** = comportamiento actual discutible, el propietario decide (§12). Los resultados salen del código, no de la ficha de migración.
+«Hoy» = 2026-10-18 (domingo) salvo indicación. `P` = día asignado, `L` = fecha límite. Estado: **P** = replicar tal cual; **D** = comportamiento actual discutible; **A** = cambio aprobado por el propietario: el resultado esperado en la web está en §13.9 y sustituye al de esta columna. Los resultados salen del código, no de la ficha de migración.
 
 | ID | Entrada | Comportamiento esperado | Estado |
 |---|---|---|---|
@@ -397,65 +400,194 @@ Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y s
 | C02 | Día 10-18 con abierta A y hechas X Media (5.º), Y Alta (6.º), Z Alta (7.º) | Abiertas: A. Sección «HECHAS»: Z, Y, X (prioridad ↓, creación ↓). | P |
 | C03 | Abierta, `P=10-17`, `L=null` | Aparece en Vencidas («PROGRAMADA PARA Sábado 17 de octubre»); sigue en la columna del 17; no se reprograma | P |
 | C04 | Abierta, `P=10-18`, `L=null` | No está en Vencidas; aparece en el día «HOY» | P |
-| C05 | Abierta, `P=10-20`, `L=10-17` | Vencidas (muestra «Martes 20 de octubre» y «Límite 17 oct»); Fechas límite como «VENCIDA» («Sábado 17 de octubre») | P/D (Q7) |
-| C06 | Abierta, `P=10-15`, `L=10-20`; se abre la app | `P` pasa a 10-18; no está en Vencidas; aparece en HOY y en Fechas límite (20 oct) | P |
-| C07 | Abierta, `P=10-16`, `L=10-18`. Luego pasa un día (hoy = 10-19) sin completarla | Hoy 10-18: `P` pasa a 10-18, sin vencida. Hoy 10-19: `P` queda en 10-18 (`L < hoy`), aparece en Vencidas y como «VENCIDA» en Fechas límite | P |
+| C05 | Abierta, `P=10-20`, `L=10-17` | Vencidas (muestra «Martes 20 de octubre» y «Límite 17 oct»); Fechas límite como «VENCIDA» («Sábado 17 de octubre») | A (§13.2) |
+| C06 | Abierta, `P=10-15`, `L=10-20`; se abre la app | `P` pasa a 10-18; no está en Vencidas; aparece en HOY y en Fechas límite (20 oct) | A (§13.1) |
+| C07 | Abierta, `P=10-16`, `L=10-18`. Luego pasa un día (hoy = 10-19) sin completarla | Hoy 10-18: `P` pasa a 10-18, sin vencida. Hoy 10-19: `P` queda en 10-18 (`L < hoy`), aparece en Vencidas y como «VENCIDA» en Fechas límite | A (§13.1) |
 | C08 | Hecha, `P=10-15`, `L=10-20` | No se reprograma (queda en HECHAS del 15); no está en Vencidas; en Fechas límite al final con «Hecha» | P |
 | C09 | Hecha, `P=10-14`, `L=10-16` | No aparece en Fechas límite ni en Vencidas; sí en HECHAS del 14 y en el contador del mes | P |
-| C10 | Hecha, `P=10-14`, `L=10-25`; «Marcar como pendiente» | Queda abierta; **sigue en el 14** hasta el siguiente `ON_RESUME`/receptor, luego pasa a 10-18 | D (D-1) |
+| C10 | Hecha, `P=10-14`, `L=10-25`; «Marcar como pendiente» | Queda abierta; **sigue en el 14** hasta el siguiente `ON_RESUME`/receptor, luego pasa a 10-18 | A (§13.1) |
 | C11 | Hecha, `P=10-14`, `L=null`; «Marcar como pendiente» | Abierta y de inmediato en Vencidas | P |
-| C12 | Abierta, `P=10-18`, `L=10-25`; se edita `P` a 10-10 y se guarda | Se guarda 10-10; en el siguiente `ON_RESUME` vuelve a 10-18 sin aviso | D (U9) |
-| C13 | Crear `P=10-18`, `L=10-10` | Se guarda sin error; aparece de inmediato en Vencidas y también en HOY | D (U9) |
+| C12 | Abierta, `P=10-18`, `L=10-25`; se edita `P` a 10-10 y se guarda | Se guarda 10-10; en el siguiente `ON_RESUME` vuelve a 10-18 sin aviso | A (§13.1) |
+| C13 | Crear `P=10-18`, `L=10-10` | Se guarda sin error; aparece de inmediato en Vencidas y también en HOY | A (§13.2) |
 | C14 | Foco 10-18; título «  Comprar pan  », nada más; Guardar | Tarea: título «Comprar pan», notas vacías, `P=10-18`, prioridad Media, sin límite, abierta, color de la paleta (aleatorio), id nuevo, `createdAt` = ahora | P |
 | C15 | Título «   » (solo espacios) | «Guardar» (y «Marcar como hecha») deshabilitados; no se crea nada | P |
 | C16 | «+» de la columna 10-21 | Editor con día 10-21; el foco pasa a 10-21 (columnas 19…25 oct) | P |
 | C17 | Foco 10-18 → «Siguiente» | Columnas 16…22 oct; tras «Siguiente»: foco 10-19, columnas 17…23 oct; «Ir a hoy» vuelve a 10-18. El resumen «N por hacer · M hechas» cuenta solo tareas con `P` dentro de la ventana | P |
-| C18 | 3 abiertas (una vencida, otra con `P=10-30`) y 2 hechas | Cabecera: «3 pendientes» (todas las abiertas) | P/D (U11) |
+| C18 | 3 abiertas (una vencida, otra con `P=10-30`) y 2 hechas | Cabecera: «3 pendientes» (todas las abiertas) | P |
 | C19 | Mes octubre 2026 (el 1 es jueves) | 3 celdas vacías antes del 1, 31 días, 35 celdas (1 vacía al final); día con 12 tareas → insignia rellena «12»; con 100 → «99+»; tocar el 20 → foco 10-20 y pestaña Semana con columnas 18…24 oct | P |
 | C20 | Mes febrero 2028 | 1 celda vacía antes del 1 (martes), 29 días, 35 celdas | P |
 | C21 | Abiertas: V1 `P=10-15` Baja sin `L`; V2 `P=10-20`, `L=10-14` Media; V3 `P=10-15` Alta sin `L`; V4 `P=10-12`, `L=10-15` Media | Orden en Vencidas por `(L ?? P)` ↑ y prioridad ↓: V2, V3, V4, V1 | P |
 | C22 | Abiertas: F1 `L=10-17` Baja; F2 `L=10-20` Alta; F3 `L=10-20` Baja; F4 `L=10-19` Media. Hecha: F5 `L=10-19` | Orden en Fechas límite: F1, F4, F2, F3, F5 (abiertas antes que hechas) | P |
 | C23 | Abierta, `P=10-18`, `L=10-18` | Sin cambios; en Fechas límite con «FECHA LÍMITE» (no vencida); no está en Vencidas | P |
 | C24 | Eliminar una tarea: papelera → «Conservar» y luego «Eliminar» | «Conservar» la deja intacta; «Eliminar» la quita de todas las vistas y contadores, sin deshacer (en la web, borrado lógico con el mismo resultado visible) | P |
-| C25 | Dispositivo en Costa Rica; pasa de 2026-10-18 23:59 a 00:00 del 19. T1 `P=10-18`, `L=10-21`; T2 `P=10-18`, `L=null`; ambas abiertas | El receptor deja T1 en `P=10-19`; T2 no cambia. Al abrir la app (hoy 10-19), T2 está en Vencidas («PROGRAMADA PARA Domingo 18 de octubre») | P |
+| C25 | Dispositivo en Costa Rica; pasa de 2026-10-18 23:59 a 00:00 del 19. T1 `P=10-18`, `L=10-21`; T2 `P=10-18`, `L=null`; ambas abiertas | El receptor deja T1 en `P=10-19`; T2 no cambia. Al abrir la app (hoy 10-19), T2 está en Vencidas («PROGRAMADA PARA Domingo 18 de octubre») | A (§13.1) |
 | C26 | **Frontera de zona:** son las 23:30 del 18 en Costa Rica (= 05:30 UTC del 19). Tarea abierta `P=10-18`; otra `P=10-19` | «Hoy» = 10-18: la primera está en HOY y **no** en Vencidas; la segunda es «mañana». A las 00:00 CR del 19 (06:00 UTC) «hoy» pasa a 10-19. Un servidor en UTC debe dar el mismo resultado usando la zona de la persona | P |
-| C27 | Dispositivo cambia de UTC-6 a UTC+1 a las 22:00 CR del 18 (allí ya es 05:00 del 19) | `TIMEZONE_CHANGED` → hoy = 10-19 → se reconcilia como en C25 (solo Android; en la web «hoy» sigue la zona configurada, Q4) | D |
-| C28 | Cerrar y reabrir la app | Las tareas se conservan; vuelve a la pestaña Semana con foco = hoy; el tema vuelve a claro | P/D (U6) |
-| C29 | Datos locales con: registro sin título; otro con `scheduledDate` «2026-13-40»; otro con prioridad «URGENT»; otro sin `colorHex`; otro con `dueDate` «xx» | La app descarta los dos primeros; los siguientes se leen como prioridad Media, color `#DDE8D5` y `dueDate = null`. **La importación web no hereda esto:** rechaza el lote (§9.4) | P (solo lectura de datos viejos) |
-| C30 | Ejecutar la reprogramación dos veces el mismo día | Segunda ejecución sin cambios (idempotente) | P |
+| C27 | Dispositivo cambia de UTC-6 a UTC+1 a las 22:00 CR del 18 (allí ya es 05:00 del 19) | `TIMEZONE_CHANGED` → hoy = 10-19 → se reconcilia como en C25 (solo Android; en la web «hoy» sigue la zona configurada de la persona, Q4) | A (§13.3) |
+| C28 | Cerrar y reabrir la app | Las tareas se conservan; vuelve a la pestaña Semana con foco = hoy; el tema vuelve a claro | A (§13.6) |
+| C29 | Datos locales con: registro sin título; otro con `scheduledDate` «2026-13-40»; otro con prioridad «URGENT»; otro sin `colorHex`; otro con `dueDate` «xx» | La app descarta los dos primeros; los siguientes se leen como prioridad Media, color `#DDE8D5` y `dueDate = null`. **La importación web no hereda esto**, salvo la prioridad desconocida (Media con advertencia, Q9); el resto rechaza el lote (§9.4) | A (§13.7, Q9) |
+| C30 | Ejecutar la reprogramación dos veces el mismo día | Segunda ejecución sin cambios (idempotente) | A (§13.1) |
 | C31 | Editar una tarea existente y guardar | Sigue habiendo una sola con ese `id`; `createdAt` no cambia; conserva `completed` (salvo que se use el botón de estado) | P |
-| C32 | Exactamente 1 tarea abierta | Texto actual «1 pendientes» (cabecera) y «1 hechas»; «tarea/tareas» sí pluraliza | D (U11): se espera corrección aprobada |
+| C32 | Exactamente 1 tarea abierta | Texto actual «1 pendientes» (cabecera) y «1 hechas»; «tarea/tareas» sí pluraliza | A (§13.6) |
 
 ---
 
-## 12. Riesgos y preguntas abiertas para el propietario
+## 12. Riesgos, preguntas y respuestas del propietario
 
 ### Riesgos
-| # | Riesgo | Evidencia |
+| # | Riesgo | Evidencia / estado |
 |---|---|---|
-| R1 | Receptor y `ViewModel` usan instancias distintas del repositorio; el estado en memoria puede quedar desactualizado y sobrescribir cambios (efecto leve por idempotencia). | `DailyTaskRolloverReceiver`, `TasksViewModel` |
-| R2 | JSON corrupto → lista vacía → la siguiente escritura borra todo; registros inválidos se pierden en silencio. | `LocalTaskRepository.readTasks` |
-| R3 | «Hoy» no se actualiza con la app abierta pasada la medianoche. | `BrisaApp › DisposableEffect` |
-| R4 | No existe exportación: **sin acción del propietario no hay forma práctica de extraer datos reales** (§9.1). | búsqueda en el código |
-| R5 | `colorHex` no se valida; un valor inválido haría fallar `Color.parseColor` al dibujar (**Suposición**: lanza `IllegalArgumentException`). Solo alcanzable con datos manipulados o importados sin validar. | `BrisaColors.TaskCard`, `pastelColor` |
-| R6 | La ficha `BRISA.md` (prueba 5) supone tareas «para las 23:30»; Brisa **no tiene hora**. Riesgo de construir un campo inexistente o de probar un caso que no aplica. | `TaskItem` |
-| R7 | La reprogramación borra el día original; al migrar no se podrá reconstruir. | `rollForwardDeadlineTasks` |
-| R8 | Formatos de fecha en `es-CR` por Java (`Locale("es","CR")`) pueden diferir de `Intl` en el navegador (p. ej. abreviaturas de mes con o sin punto) (**Suposición**). | `formatCompactDate`, `formatFullDate` |
-| R9 | README desactualizado (versiones), wrapper no estándar y cobertura de pruebas mínima (solo lógica pura); la paridad depende de este inventario. | §1 |
-| R10 | Receptor `exported="true"` y `allowBackup="true"` sin reglas (**Suposición**: bajo riesgo hoy; no aplica a la web). | `AndroidManifest.xml` |
+| R1 | Receptor y `ViewModel` usan instancias distintas del repositorio; el estado en memoria puede quedar desactualizado y sobrescribir cambios (efecto leve por idempotencia). | `DailyTaskRolloverReceiver`, `TasksViewModel`. No aplica a la web. |
+| R2 | JSON corrupto → lista vacía → la siguiente escritura borra todo; registros inválidos se pierden en silencio. | `LocalTaskRepository.readTasks`. No aplica a la web. |
+| R3 | «Hoy» no se actualiza con la app abierta pasada la medianoche. | `BrisaApp › DisposableEffect`. En la web, «hoy» debe recalcularse en la zona de la persona sin recargar (a definir por Dev). |
+| R4 | No existe exportación de datos. | **Resuelto (Q2):** no hay datos reales que migrar. Nuevo riesgo: construir el importador sin datos reales con qué validarlo → usar el archivo de §9.5 y casos de borde. |
+| R5 | `colorHex` no se valida; un valor inválido haría fallar `Color.parseColor` al dibujar (**Suposición**). | `BrisaColors.TaskCard`, `pastelColor`. En la web se valida `#RRGGBB` siempre (§13.7). |
+| R6 | La ficha `BRISA.md` (prueba 5) supone tareas «para las 23:30»; Brisa **no tiene hora**. | **Resuelto (Q5):** no se agrega hora; texto de reemplazo en §13.10. |
+| R7 | La reprogramación borra el día original. | **Mitigado (Q3):** al ser derivada (§13.1), `ScheduledDate` no se sobrescribe. |
+| R8 | Formatos de fecha `es-CR` de Java pueden diferir de `Intl` en el navegador (**Suposición**). | `formatCompactDate`, `formatFullDate`. Definir formato en `strings.ts`/pruebas. |
+| R9 | README desactualizado, wrapper no estándar y cobertura de pruebas mínima: la paridad depende de este inventario. | §1 |
+| R10 | Receptor `exported="true"` y `allowBackup="true"` sin reglas (**Suposición**). | No aplica a la web. |
+| R11 | La fecha efectiva derivada y la nueva regla de Vencidas difieren de la app en casos concretos (§13.9) y en un supuesto de uso (la app se abre a diario o el receptor corre). | §13.1, §13.2. Los casos C05, C06, C07, C10, C12, C13 deben probarse con el resultado de §13.9, no con el de §11. |
+| R12 | Colores personalizados en el modo oscuro y la regla «sin morado» de Pastel. | §13.7 (interpretación de Q10 por confirmar). |
+| R13 | La zona por persona exige un lugar donde guardarla; si es el perfil de Identity (zona protegida) hace falta un CCR. | §13.3 |
+| R14 | Alcance ampliado (un toque, deshacer, búsqueda, `CompletedAt`): hay que probarlo aparte para no mezclarlo con la paridad. | §13.6, casos N01–N15 (§13.11) |
 
-### Preguntas abiertas
-1. **Q1.** ¿Confirma que `leandro-mc/brisa-android` (`main`) es el proyecto «Brisa» y que no existe otra versión (p. ej. con Room) en otra rama o repositorio?
-2. **Q2.** ¿Hay datos reales que migrar (cuántas personas, dispositivos y tareas)? ¿Autoriza añadir «Exportar respaldo» a la app Android (§9.1a), único camino práctico hoy?
-3. **Q3 (D-1).** Reprogramación automática: ¿**derivada** (opción A, recomendada para sincronizar) o **persistida** (B, paridad estricta)? (§7.3)
-4. **Q4.** Zona horaria: ¿fija `America/Costa_Rica` o configurable por persona? ¿«Hoy» usa siempre esa zona aunque el navegador esté en otra?
-5. **Q5.** Prueba 5 de `BRISA.md`: ¿se corrige la ficha (el caso equivalente sin hora es C26) o se quiere **agregar hora** (cambio de alcance, fuera de paridad)?
-6. **Q6.** Defectos actuales (U1–U13): ¿cuáles se corrigen como cambio aprobado? Sugerencia: corregir sin discusión textos (usted/impersonal), singular, tema persistente y accesibilidad; decidir U1 (marcar hecha desde la tarjeta), U2 (fecha del botón flotante) y U7.
-7. **Q7.** ¿Una tarea con fecha límite vencida sigue en Vencidas aunque se mueva su día (C05, C13)? ¿Se valida `L ≥ P` al guardar?
-8. **Q8.** Límites: longitud de título y notas, y máximo de tareas por persona (hoy sin límite).
-9. **Q9.** Importación: ¿prioridad desconocida se rechaza (propuesto) o se tolera como Media, como hace la app?
-10. **Q10.** Color: ¿se guarda el hex o la **clave** del color (para ajustar en oscuro)? ¿Los colores fuera de la paleta se aceptan o se mapean a Salvia?
-11. **Q11.** Reimportar un `Id` ya existente con contenido distinto: ¿omitir, sobrescribir o informar?
-12. **Q12.** ¿Se agrega `CompletedAt` (no existe hoy)? ¿Se ofrece deshacer/papelera (la app no)?
-13. **Q13.** ¿Se conserva la paleta de 10 colores y el color aleatorio al crear?
-14. **Q14.** Textos: ¿aprueba reescribirlos a usted/impersonal manteniendo el tono cálido (§10.3)?
+### Preguntas y respuestas (propietario, 2026-10-18)
+| # | Pregunta (resumen) | Respuesta | Resultado |
+|---|---|---|---|
+| Q1 | ¿`brisa-android` (`main`) es el proyecto y no hay otra versión? | Sí. | Confirmado (cabecera). |
+| Q2 | ¿Datos reales? ¿Autoriza «Exportar respaldo»? | No hay nada que exportar. | No se toca la app Android; el importador queda como herramienta mínima (§13.7). |
+| Q3 | Reprogramación: ¿derivada (A) o persistida (B)? | «No entiendo la pregunta, pero dejemos la recomendada.» | **A, derivada** (§13.1). En términos simples: la web calcula en qué día mostrar cada tarea al consultarla, en vez de reescribir su fecha cada medianoche. |
+| Q4 | ¿Zona fija o configurable? | Configurable por persona. | §13.3 |
+| Q5 | ¿Se agrega hora? | No se requiere. | Se corrige la ficha (§13.10). |
+| Q6 | ¿Qué defectos se corrigen? | Marcar hecha con un toque desde fuera y desde dentro; corregir textos (y lo sugerido: singular, tema persistente, accesibilidad); mejorar sutilmente búsqueda y hacer/deshacer; recordatorios para después; U7 «de la mejor manera». | §13.6 y §13.2 |
+| Q7 | ¿Sigue en Vencidas si se mueve su día? ¿Se valida `L ≥ P`? | No sigue en Vencidas si se mueve; «¿qué recomiendas?». | Se adopta la recomendación de §13.2 (sin bloqueo, con aviso). |
+| Q8 | Límites | Sin límite de cantidad; límite de longitud en título y notas, coherente con el campo. | 150 y 2000 caracteres (§13.4) |
+| Q9 | ¿Prioridad desconocida? | Se tolera como Media, como la app. | §13.7 |
+| Q10 | ¿Hex o clave? ¿Colores fuera de paleta? | Claro: se aceptan y se actualiza la paleta; oscuro: se mantienen los definidos. | §13.7 (interpretación por confirmar) |
+| Q11 | Reimportar un `Id` con contenido distinto | «No entiendo, pero acepto tu sugerencia.» | Omitir e informar, nunca sobrescribir (§13.7). |
+| Q12 | ¿`CompletedAt`? | Sí. | §13.5 |
+| Q13 | ¿Paleta de 10 y color aleatorio? | Sí. | Se conservan. |
+| Q14 | ¿Textos en usted/impersonal? | Mejor con tono cálido. | §10.3, §13.8 |
+
+### Pendientes (con valor por defecto; el propietario puede objetar)
+- **P1 (U2).** Fecha de una tarea creada con el botón flotante: por defecto, el día enfocado en Semana/Mes y **hoy** en Vencidas y Fechas límite; el editor muestra siempre el día elegido.
+- **P2 (U3, U4, U5, U8).** Por defecto: pedir confirmación solo si hay texto escrito al cerrar el editor; foco automático en el título y «Enter» guarda; el borrador, la vista y el día enfocado sobreviven a una recarga; sin aviso de reprogramación (se deriva, no se escribe).
+- **P3 (interpretaciones).** (a) Q10, ver §13.7. (b) «hacer/deshacer» se entendió como **deshacer la última acción** (marcar, reabrir, eliminar), no rehacer.
+- **P4 (importador).** Sin datos reales, `BRISA.md` §4.4 y su criterio de aceptación 6 siguen exigiendo importación probada con datos de ejemplo. Se mantiene un importador mínimo; omitirlo exige cambiar la ficha.
+- **P5 (zona).** Dónde se guarda la zona de cada persona (perfil de Identity → CCR, o ajuste propio de Brisa) lo decide Arquitectura.
+
+---
+
+## 13. Decisiones del propietario y comportamiento objetivo de la web
+
+Este apartado incorpora las respuestas del 2026-10-18. **Prevalece sobre los apartados 5, 7, 9, 10 y 11 donde difieran**: los apartados 1–11 describen la app actual (base de paridad); aquí se registran los cambios de comportamiento exigidos por `BRISA.md` §3.1.
+
+### 13.0 Registro de cambios respecto a la app
+1. Reprogramación automática **derivada** (se calcula al leer, no se escribe) — §13.1.
+2. «Vencidas» según el **día efectivo** — §13.2.
+3. Zona horaria **por persona** — §13.3.
+4. Límites de longitud — §13.4.
+5. `CompletedAt` — §13.5.
+6. Marcar hecha con un toque; búsqueda; deshacer; tema persistente; textos y accesibilidad — §13.6.
+7. Importación: prioridad tolerada, colores, reimportación — §13.7.
+
+### 13.1 Reprogramación derivada (Q3 → A)
+`FechaEfectiva(t, hoy)` determina el día en que se **muestra** una tarea (listas del día, columnas de Semana, contadores de Mes, Vencidas, tarjetas):
+
+```
+si t está hecha                      → t.ScheduledDate
+si t.DueDate es nula                 → t.ScheduledDate
+si t.ScheduledDate >= hoy            → t.ScheduledDate
+si t.DueDate >= hoy                  → hoy
+en otro caso (límite ya vencido)     → max(t.ScheduledDate, t.DueDate)
+```
+- Equivale a la regla 5.5: mientras la fecha límite esté vigente, la tarea «acompaña» a hoy; al vencer, queda en el último día al que la app la habría movido (su fecha límite). **Suposición:** en la app esto se cumple si se abre a diario o el receptor corre.
+- **No se escribe nada:** sin proceso programado ni receptor; `ScheduledDate` conserva lo elegido por la persona, `UpdatedAt` no cambia y no hay conflictos entre dispositivos.
+- Es una función pura de (tarea, hoy): ejecutarla de nuevo da el mismo resultado.
+- **Editor:** «Día asignado» muestra la fecha efectiva; `ScheduledDate` solo se escribe si la persona la cambia.
+- Los órdenes de §5.3 se mantienen sustituyendo `scheduledDate` por la fecha efectiva.
+- «Hoy» es la fecha actual en la zona de la persona (§13.3).
+
+### 13.2 Vencidas y fecha límite (Q7, U7, U9)
+- **Vencidas** = abierta **y** `FechaEfectiva < hoy`. Equivale a: abierta, día asignado anterior a hoy y sin fecha límite vigente.
+- Mover el día a hoy o a un día futuro la saca de Vencidas **aunque su fecha límite ya haya pasado**; mover la fecha límite a hoy o después también. Con esto el subtítulo de Vencidas pasa a ser cierto (U7).
+- Fechas límite no cambia (§5.3), y conserva la etiqueta «VENCIDA» mientras la tarea esté abierta con `DueDate < hoy`.
+- **Sin validación bloqueante de `L ≥ P`.** Aviso discreto no bloqueante si `L < P`, en tono cálido (p. ej. «La fecha límite es anterior al día asignado. Puede guardarla así si lo desea.»). Motivo: bloquear obligaría a mover también la fecha límite para rescatar una tarea.
+- Única diferencia de datos frente a la app: abiertas con `L < hoy` y `P ≥ hoy` (C05, C13), que ya no son Vencidas.
+
+### 13.3 Zona horaria por persona (Q4, Q5)
+- Ajuste `TimeZoneId` (identificador IANA, p. ej. `America/Costa_Rica`), valor inicial `America/Costa_Rica`. Validar contra la base IANA (inválido → error con `code`).
+- «Hoy», el cambio de día y la fecha efectiva usan **esa zona**, no la del navegador ni la del servidor. No suponer desfase fijo: hay zonas con horario de verano (Costa Rica no lo tiene); probar con al menos una zona con horario de verano.
+- Las fechas del módulo son `date` sin zona; `CreatedAt`, `CompletedAt` y `UpdatedAt` son `timestamptz` en UTC y se muestran en la zona de la persona.
+- Cambiar la zona solo cambia «hoy» (nada que reescribir, gracias a §13.1).
+- Brisa sigue **sin hora del día** (Q5).
+
+### 13.4 Límites (Q8)
+- Título: **máximo 150 caracteres** (campo de una línea, se muestra en 2–3 líneas). Notas: **máximo 2000 caracteres**. Se cuentan después de `trim`. Sin límite de cantidad de tareas por persona.
+- Validación en frontend (contador visible al acercarse al límite) y en backend (error esperable con `code`, sin truncar en silencio); columnas con ese mismo tamaño.
+- Los límites son nuevos (la app no tiene). En importación, un registro que los exceda se informa como error de ese registro (§9.4).
+
+### 13.5 `CompletedAt` (Q12)
+`timestamptz` UTC, asignado **por el servidor** al marcar como hecha; `NULL` al reabrir; deshacer restaura el valor anterior. En datos importados con `completed = true` queda `NULL` (desconocido; no se inventa). No altera ninguna regla de §5.
+
+### 13.6 Capacidades y correcciones aprobadas (Q6, Q14)
+| Tema | Decisión |
+|---|---|
+| **Marcar hecha con un toque** (U1) | Control en cada tarjeta (Semana, Vencidas, Fechas límite, resultados de búsqueda) que alterna hecha/pendiente en un toque; el botón fijo del editor se conserva. Tamaño táctil según `DESIGN_SYSTEM.md`. |
+| **Deshacer** (U13) | Tras marcar, reabrir o eliminar, aviso temporal con «Deshacer». Eliminar es borrado lógico, así que deshacer limpia `DeletedAt`. Duración del aviso: la define UX. Sin papelera visible (no pedida). |
+| **Búsqueda** (U13) | Discreta (un icono en la cabecera). Busca en título y notas, sin distinguir mayúsculas ni tildes, entre las tareas **propias** abiertas y hechas, sin las eliminadas. Resultado muestra día y estado; tocar abre el editor. |
+| **Recordatorios** | Aplazados; fuera de alcance (`BRISA.md` §5). |
+| **Textos** (U11, Q14) | Usted o impersonal, **tono cálido** (§10.3); singular correcto («1 pendiente», «1 hecha»); todo en `strings.ts`. |
+| **Tema** (U6) | Persistente y coherente con el sistema de diseño de Pastel (claro/oscuro). |
+| **Accesibilidad** (U10) | Tamaños de texto y objetivos táctiles según `DESIGN_SYSTEM.md` (WCAG 2.2 AA); descripciones legibles («Crear tarea para el domingo 18 de octubre»); iconos de navegación con nombre accesible. |
+
+### 13.7 Importación (Q2, Q9, Q10, Q11)
+- **Q2:** sin datos reales; no se añade «Exportar respaldo» ni se modifica la app Android. El importador y el formato de §9 se conservan como herramienta mínima probada con el archivo de §9.5 (P4).
+- **Q9:** prioridad ausente o desconocida → `MEDIUM` con **advertencia** en el informe (no aborta el lote). Todo lo demás sigue la validación estricta de §9.4.
+- **Q10 (interpretación por confirmar):** se guarda el **hex**. En modo claro se muestra tal cual y cualquier `#RRGGBB` válido se acepta; un color fuera de las 10 muestras se incorpora a las opciones de color de esa persona («se actualiza la paleta»). En modo oscuro **no cambia la regla actual** (la tarjeta mezcla el color con la superficie al 36 %; las 10 muestras definidas se mantienen, sin valores oscuros propios). Propuesta de seguridad: un color importado con matiz entre 235° y 345° (saturación > 10 %) se mapea a Salvia con advertencia, para no romper la regla «sin morado».
+- **Q11:** si el `Id` ya existe y el contenido es igual → se cuenta como «ya existente»; si es distinto → se **omite** y se informa «ya existía con diferencias»; nunca se sobrescribe (así no se pierden ediciones hechas en la web).
+
+### 13.8 Textos (Q14)
+Reescribir a usted o impersonal sin perder la calidez y el «sin culpa». Las propuestas de §10.3 son orientativas; el texto final lo aprueba UX/propietario.
+
+### 13.9 Resultado esperado en la web de los casos afectados (sustituye al de §11)
+| Caso | Resultado en la web |
+|---|---|
+| C05 `P=10-20`, `L=10-17` | **No** está en Vencidas; aparece en la columna del 20; en Fechas límite con «VENCIDA» (17 oct). |
+| C06 `P=10-15`, `L=10-20` | Aparece en HOY (efectiva 10-18); `ScheduledDate` sigue en 10-15 en la base; sin escrituras. |
+| C07 `P=10-16`, `L=10-18` | Hoy 10-18: en HOY. Hoy 10-19: efectiva = `max(16, 18)` = 10-18 → Vencidas («PROGRAMADA PARA Domingo 18 de octubre») y «VENCIDA» en Fechas límite; `ScheduledDate` sigue 10-16. |
+| C10 hecha `P=10-14`, `L=10-25`, se reabre | Aparece **de inmediato** en HOY (efectiva 10-18); `CompletedAt = NULL`. |
+| C12 `P=10-18`, `L=10-25`, se guarda `P=10-10` | Se guarda 10-10 y se muestra en HOY mientras la fecha límite esté vigente; el editor muestra 10-18. |
+| C13 `P=10-18`, `L=10-10` | Se guarda con aviso no bloqueante; **no** está en Vencidas; aparece en HOY y en Fechas límite como «VENCIDA». |
+| C25 medianoche CR | Sin receptor: a las 00:00 locales «hoy» = 10-19; T1 se muestra el 19; T2 está en Vencidas; ninguna escritura. |
+| C27 cambio de zona | La persona cambia su ajuste de zona: «hoy» se recalcula; los datos no cambian. |
+| C28 reabrir la app | El tema se conserva (§13.6); vista y día enfocado según P2. |
+| C29 datos viejos | Prioridad desconocida → Media con advertencia; título vacío, fecha inválida o color con formato inválido → se rechaza el lote. |
+| C30 | Determinista: la derivación no escribe, mismo resultado siempre. |
+| C32 | «1 pendiente» y «1 hecha». |
+
+### 13.10 Texto de reemplazo para la prueba 5 de `BRISA.md`
+> **Fechas:** con «hoy» calculado en la zona configurada de la persona (por defecto `America/Costa_Rica`, UTC-6, sin horario de verano), una tarea asignada al día 18 sigue en «Hoy» a las 23:30 hora local aunque en UTC ya sea el 19, y deja de serlo solo a las 00:00 local. Brisa no maneja hora del día. El vencimiento y el día efectivo respetan esa zona (inventario §13.1–§13.3).
+
+No modifiqué `BRISA.md`: el cambio queda a cargo de quien tenga autorización sobre las fichas.
+
+### 13.11 Casos nuevos (capacidades aprobadas)
+«Hoy» = 2026-10-18 salvo indicación.
+
+| ID | Entrada | Comportamiento esperado |
+|---|---|---|
+| N01 | Tarea abierta; un toque en su control de la tarjeta en Semana | Pasa a «HECHAS»; `CompletedAt` = ahora (UTC, del servidor); `UpdatedAt` cambia; contadores actualizados |
+| N02 | Tarea hecha; un toque en su control | Vuelve a abiertas; `CompletedAt = NULL`; se ubica según su fecha efectiva |
+| N03 | N01 y «Deshacer» dentro del tiempo del aviso | Vuelve al estado anterior, incluido `CompletedAt` previo |
+| N04 | Eliminar una tarea y «Deshacer» | Reaparece con los mismos datos (`DeletedAt = NULL`); pasado el aviso ya no se ofrece, y la tarea sigue siendo borrado lógico |
+| N05 | Buscar «reunion» con tareas «Reunión semanal» (título) y otra con «REUNIÓN» en notas; una eliminada y una de otra persona con ese texto | Devuelve las dos propias no eliminadas; ignora tildes y mayúsculas |
+| N06 | Título de 150 / 151 caracteres; notas de 2000 / 2001 | 150 y 2000 se guardan; 151 y 2001 → error claro, sin guardar ni truncar |
+| N07 | Persona con zona `America/New_York`; son las 23:30 del 18 en Costa Rica (01:30 del 19 en Nueva York, UTC-4) | Para esa persona «hoy» = 2026-10-19 |
+| N08 | Persona sin ajuste de zona | Se usa `America/Costa_Rica` |
+| N09 | Guardar una zona inválida («Mars/Olympus») | Error esperable con `code`; el ajuste no cambia |
+| N10 | Importar un registro con prioridad «URGENT» | Se importa como Media, con advertencia en el informe; el lote continúa |
+| N11 | Reimportar el mismo archivo; luego reimportarlo con un título cambiado en un registro | Primero: 0 nuevos y 5 «ya existentes». Después: ese registro se omite y se informa «ya existía con diferencias»; la tarea guardada no cambia |
+| N12 | Vencida sin límite (`P=10-15`); mover su día a hoy | Sale de Vencidas y aparece en HOY |
+| N13 | `P=10-15`, `L=10-17`; cambiar `L` a 10-25 | Sale de Vencidas (efectiva = hoy) y pierde la etiqueta «VENCIDA» |
+| N14 | `P=10-15`, `L=10-17`; mover solo el día a 10-18 | Sale de Vencidas, aparece en HOY y sigue en Fechas límite como «VENCIDA» |
+| N15 | Importar un registro con color `#2E8B57`, otro con `#7B3FA0` y otro con `azul` | `#2E8B57` (matiz ≈ 146°) se acepta; `#7B3FA0` (matiz ≈ 277°) se mapea a Salvia con advertencia; `azul` → error de formato y se rechaza el lote |
