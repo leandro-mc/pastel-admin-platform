@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| Autor (Dev) | <agente / sesión> |
+| Autor (QA) | <agente / sesión> |
 | Rama y SHA | <rama> @ <sha> |
 | Ficha de producto | `docs/modules/<M>.md` |
 | Fecha | <fecha> |

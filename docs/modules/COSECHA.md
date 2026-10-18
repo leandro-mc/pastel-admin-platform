@@ -130,7 +130,7 @@ Mapas incrustados y rutas optimizadas, vistas para transportistas, comprobante d
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-Dev escribe `docs/testing/plans/COSECHA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente; QA lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+QA escribe `docs/testing/plans/COSECHA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 **Reparto proporcional (sección 5)**
 1. `T=100`, capacidades A=50, B=30, C=20 → 50 / 30 / 20.

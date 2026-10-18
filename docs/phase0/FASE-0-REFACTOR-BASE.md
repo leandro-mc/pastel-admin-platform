@@ -1,6 +1,6 @@
 # Fase 0 — Refactor de la base (instrucciones para el Agente 0, rol **Dev**)
 
-Un único agente Dev ejecuta esta fase. **No certifica su propio trabajo:** al terminar entrega el plan de pruebas y otro agente (QA) ejecuta `docs/testing/plans/FASE-0-TEST-PLAN.md` (ver `docs/TESTING_STRATEGY.md`). Hasta que QA apruebe y el propietario autorice, ningún otro agente toca el código.
+Esta fase se ejecuta **en relevo**: el Agente 0 (Dev) escribe **solo el código de la aplicación, sin necesidad de compilar**; después un agente **Build** (con entorno de compilación) compila, corrige, genera migraciones y escribe las pruebas; por último un agente **QA**, distinto de Build, ejecuta `docs/testing/plans/FASE-0-TEST-PLAN.md` (ver `docs/TESTING_STRATEGY.md`). **Nadie certifica su propio trabajo.** Hasta que QA apruebe y el propietario autorice, ningún otro agente toca el código.
 
 ## 0. Autorización y contexto
 
@@ -14,10 +14,12 @@ Un único agente Dev ejecuta esta fase. **No certifica su propio trabajo:** al t
 
 1. Rama `refactor/modular-foundation` desde `dev`. **Nunca PR ni integración a `dev`**: el propietario revisa desde tu rama y autoriza.
 2. Mantén `docs/phase0/PROGRESS.md` tras cada WP (hecho, pendiente, decisiones, comandos que pasan, hallazgos del análisis confirmados o descartados). Debe permitir que otro agente retome sin el chat.
-3. Ejecuta los WP **en orden**. Cada uno termina con todo compilando y las pruebas en verde. Commits coherentes y **revisables** (ningún commit de más de ~1 500 líneas cambiadas, salvo bloqueos de dependencias, migraciones generadas o capturas; el PR #21 anterior, de 10 360 líneas, es el contraejemplo). Publica (push) en los puntos de control **C1** (tras WP1), **C2** (tras WP5), **C3** (tras WP8) y **C4** (final).
+3. Ejecuta los WP **en orden**. Cada uno deja el código completo y coherente; **no necesitas compilar ni ejecutar nada** (ver los puntos 7 y 8). Las líneas «Aceptación» que hablan de compilar o de pruebas en verde las verifica Build. Commits coherentes y **revisables** (ningún commit de más de ~1 500 líneas cambiadas, salvo bloqueos de dependencias, migraciones generadas o capturas; el PR #21 anterior, de 10 360 líneas, es el contraejemplo). Publica (push) en los puntos de control **C2** (tras WP5), **C3** (tras WP8) y **C4** (final); no esperes a nadie entre ellos. **C1** (línea base de pruebas, WP1) lo publica Build.
 4. Si algo contradice el código real, sigue el código, corrige el documento y regístralo.
 5. Si te bloquea una decisión no resuelta, elige la opción más simple, regístrala en `docs/adr/` y continúa.
-6. **Como Dev:** escribes pruebas unitarias de tu dominio, las pruebas de caracterización de refactor (WP1) y el plan de pruebas. **No escribes el informe de aprobación.**
+6. **Como Dev:** escribes solo código de la aplicación y de herramientas (scripts, configuración). **No escribes pruebas ni el plan de pruebas, ni el informe de aprobación.**
+7. **Sin compilar:** el propietario retiró la exigencia de compilar. No intentes compilar ni simules resultados. Escribe el código completo y consistente (referencias entre proyectos, `using`, nombres, firmas). Anota en `PROGRESS.md`, por WP, «sin compilar». Si en tu entorno sí puedes compilar o ejecutar algo, hazlo y repórtalo con el comando exacto. **Nunca afirmes que algo compila o pasa si no lo ejecutaste.** Las migraciones de EF **no se escriben a mano**: déjalas a Build (`dotnet ef`); tú dejas el modelo y los `DbContext` listos.
+8. **Pruebas:** todo lo que esta fase llame prueba (unitaria, de caracterización, de integración, de arquitectura, E2E, plan) lo escribe Build o QA, no tú. Cuando un WP las nombre, solo prepara el código de producción que las hace posibles (p. ej., `Program` accesible, sembrador `Testing`, manejador remoto falso inyectable, etiquetas accesibles).
 
 ## 2. Decisiones ya tomadas (no reabrir)
 
@@ -25,7 +27,7 @@ Un único agente Dev ejecuta esta fase. **No certifica su propio trabajo:** al t
 |---|---|
 | Estructura | Monolito modular + vertical slices (`docs/ARCHITECTURE.md`). Las capas nominales desaparecen (resuelve B2) |
 | API | Minimal APIs por módulo; los controladores actuales pasan a slices |
-| Base de datos | Esquema por módulo; `public` actual pasa a `identity`. **Sin datos que conservar** (solo desarrollo): regenerar migración y reiniciar la base local |
+| Base de datos | Esquema por módulo; `public` actual pasa a `identity`. **Sin datos que conservar** (solo desarrollo): regenerar la migración (la genera Build con `dotnet ef`) y reiniciar la base local |
 | Módulos dinámicos | Vienen del código (`IPastelModule`); se elimina la creación desde UI/API; se conserva activar/desactivar y consultar catálogo |
 | Autenticación | Google (código + PKCE) como método principal; contraseña local solo para el administrador de arranque y cuentas creadas por administración; autorregistro con contraseña **desactivado** por defecto |
 | Frontend | React Router v7 (modo datos), TanStack Query, react-hook-form + zod, react-aria-components |
@@ -50,15 +52,17 @@ Desaparecen `Pastel.Domain`, `Pastel.Application`, `Pastel.Infrastructure` y `te
 
 ---
 
-## 4. WP1 — Red de seguridad (antes de mover nada) — T1
+## 4. WP1 — Red de seguridad (antes de mover nada) — T1 · **la ejecuta Build, no Dev**
 
-1. Añade `Directory.Packages.props` (gestión central) y alinea versiones. Añade `Testcontainers.PostgreSql`, `Microsoft.AspNetCore.Mvc.Testing`, `NetArchTest.Rules`.
+Dev empieza directamente en WP2. Build ejecuta WP1 **sobre el SHA base** (el `dev` anterior al refactor) en un *worktree* aparte, rama `build/fase0-linea-base`, y al terminar Dev incorpora estas pruebas a la rama del refactor y las adapta (referencia a `Pastel.Host`).
+
+1. `Directory.Packages.props` (gestión central, versiones alineadas) lo añade Dev en WP2. Build añade `Testcontainers.PostgreSql`, `Microsoft.AspNetCore.Mvc.Testing` y `NetArchTest.Rules` al crear sus proyectos de prueba.
 2. `tests/Pastel.IntegrationTests/Foundation/`: fábrica `WebApplicationFactory<Program>` + PostgreSQL real (Testcontainers; el CI tiene Docker).
 3. **Pruebas de caracterización** del comportamiento actual correcto: registro y login; bloqueo tras fallos; refresh con rotación; detección de reutilización; CSRF; cambio de contraseña invalida sesiones; `MustChangePassword` bloquea la API; autorización por permiso (concedido, denegado, excepción, módulo deshabilitado); administración sin permiso → 403; `/api/auth/me` con permisos efectivos; regla del último administrador.
 4. **Pruebas de comportamiento seguro esperado** de S1 y S2 (casos F0-S101…S116 y F0-S201…S206 del plan) escritas ahora y marcadas `Skip` con motivo "WP4"; se activan en WP4.
-5. Registra la lista de endpoints (método, ruta, política) en `PROGRESS.md`.
+5. Registra la lista de endpoints (método, ruta, política) del SHA base en el informe de build.
 
-**Aceptación:** verdes sobre el código sin mover. **C1.**
+**Aceptación (la verifica Build):** verdes sobre el SHA base, con los comandos reales en el informe de build. **C1.**
 
 ## 5. WP2 — `SharedKernel`, `Platform`, `Host` y plataforma de errores/logs
 
@@ -69,10 +73,10 @@ Desaparecen `Pastel.Domain`, `Pastel.Application`, `Pastel.Infrastructure` y `te
 5. **Salud:** `/health/live` y `/health/ready` (base de datos + migraciones de cada módulo) (B4).
 6. `POST /api/client-errors` (límites de la sección 3 del estándar).
 7. `Pastel.Host`: renombrar `Pastel.Api`; `Program.cs` reducido a llamadas a métodos de extensión (`AddPastelSecurity`, `AddPastelObservability`, `AddPastelModules`, …) en lugar de 152 líneas mezcladas (B2).
-8. `Pastel.Host.csproj`: referencias por *glob* a `../../Modules/*/Pastel.Modules.*/Pastel.Modules.*.csproj` (sin `*.Tests`/`*.Contracts`) filtradas por `PastelModules` (por defecto `*`; Identity siempre). Verifica `dotnet build -p:PastelModules=Identity`.
+8. `Pastel.Host.csproj`: referencias por *glob* a `../../Modules/*/Pastel.Modules.*/Pastel.Modules.*.csproj` (sin `*.Tests`/`*.Contracts`) filtradas por `PastelModules` (por defecto `*`; Identity siempre). La verificación de `dotnet build -p:PastelModules=Identity` es de Build.
 9. Dockerfiles y `compose.yaml`: argumento `PASTEL_MODULES` hacia backend y frontend.
 
-**Aceptación:** compila; WP1 sigue verde; pruebas nuevas de la traducción de errores y de la redacción de logs (F0-E01…E09).
+**Aceptación (la verifica Build):** compila; WP1 sigue verde; pruebas nuevas de la traducción de errores y de la redacción de logs (F0-E01…E09).
 
 ## 6. WP3 — Módulo Identity
 
@@ -83,13 +87,13 @@ Mueve todo lo de seguridad a `src/Modules/Identity/Pastel.Modules.Identity`.
 4. **Catálogo desde código:** `IdentityModule` declara los grupos `dashboard` y `settings` con los permisos actuales (**no cambies códigos existentes**). Sincronización genérica e idempotente de los módulos cargados (módulos y permisos faltantes, todo a `Administrator`, `SuggestedRoles` solo si no existen, nunca pisar ediciones). `Member` recibe `dashboard.view`.
 5. Retirar `CreateModule` (comando, endpoint y diálogo); conservar listar, ver permisos y activar/desactivar.
 6. **Auditoría (B5):** `IAuditTrail` con módulo de origen, `TraceId` y **`DetailsJson` con antes/después**; auditar accesos denegados (con límite); listados de auditoría y de usuarios **paginados y filtrados en el servidor**.
-7. Mueve y adapta las pruebas unitarias existentes a `Pastel.Modules.Identity.Tests`.
+7. Mueve con `git mv` las pruebas unitarias existentes a `Pastel.Modules.Identity.Tests` (Build las adapta y ejecuta).
 
-**Aceptación:** WP1 verde (sin las que esperan WP4); misma lista de endpoints (salvo `CreateModule`); migración desde base vacía correcta.
+**Aceptación (la verifica Build):** WP1 verde (sin las que esperan WP4); misma lista de endpoints (salvo `CreateModule`); migración desde base vacía correcta.
 
 ## 7. WP4 — Endurecimiento de seguridad (prioridad 1)
 
-Implementa y activa las pruebas `Skip` de WP1. Cada punto cita el hallazgo.
+Implementa los cambios de código de seguridad; Build activa las pruebas `Skip` de WP1. Cada punto cita el hallazgo.
 
 **S1 — Jerarquía de privilegios** (`IPrivilegeGuard` en Identity, aplicado en todas las acciones de administración):
 1. Quien **no** es Administrator no puede: asignar/quitar el rol Administrator; actuar (restablecer contraseña, bloquear, cambiar roles o excepciones) sobre una cuenta Administrator; actuar sobre **sí mismo** en roles, excepciones, restablecimiento y bloqueo; conceder (a un rol o por excepción) un permiso que **no posee**; modificar un rol que **él mismo tiene**.
@@ -116,7 +120,7 @@ Implementa y activa las pruebas `Skip` de WP1. Cada punto cita el hallazgo.
 
 **D1 backend:** `AllowedHosts` configurable por variable; red de proxy confiable por **subred** (no IP fija); IP real del cliente validada para límites de tasa y auditoría.
 
-**Aceptación:** todas las pruebas de las secciones 3 y 4 del plan de la Fase 0 pasan.
+**Aceptación (la verifica Build):** todas las pruebas de las secciones 3 y 4 del plan de la Fase 0 pasan.
 
 ## 8. WP5 — Google OAuth 2.0 / OIDC
 
@@ -146,10 +150,10 @@ Tabla `identity.external_logins` (`id`, `user_id`, `provider`, `provider_subject
 ### 8.4 Frontend de acceso
 Pantalla `/ingresar`: botón principal **"Continuar con Google"** (botón y "G" oficiales), y debajo, enlace discreto "Ingresar con correo y contraseña" que despliega el formulario (solo si `localLogin`). Mensaje por código de error. Volver a la ruta protegida (`returnUrl`) tras iniciar sesión.
 
-### 8.5 Pruebas (Dev)
+### 8.5 Pruebas (las escribe Build; Dev deja el manejador remoto falso inyectable)
 Con un manejador remoto falso (sin llamar a Google): vínculo existente; vinculación con invalidación de contraseña temporal; alta con `AllowSignUp` activo/inactivo; correo no verificado; cuenta bloqueada; `returnUrl` malicioso; `state` inválido; Google desactivado; no se guardan tokens; atributos de cookies; auditoría; **logs sin `code`, `state` ni tokens**. La verificación con Google real es manual (guía del propietario en `GOOGLE_OAUTH_SETUP.md`).
 
-**Aceptación:** pruebas verdes. **C2.**
+**Aceptación (la verifica Build):** pruebas verdes. **C2.**
 
 ## 9. WP6 — Esqueletos de módulos y plantilla
 
@@ -187,7 +191,7 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 - Todos los componentes de `core/ui` y de Identity usan utilidades; `className` con utilidades en ≥ 95 % de los atributos.
 - Sin valores de color sueltos fuera de los tokens; `check-design.mjs` limpio.
 
-**Aceptación:** lint, build, test y `format:check` verdes; paridad visual documentada. **C3.**
+**Aceptación (la verifica Build):** lint, build, test y `format:check` verdes; paridad visual documentada. **C3.**
 
 ## 12. WP9 — Infraestructura, CI y repositorio (D1, D2, G1–G3)
 
@@ -196,34 +200,48 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 3. **nginx:** compresión y caché de activos con hash; cabeceras de seguridad sin duplicar (decide una única fuente por tipo de respuesta y documéntalo); `X-Forwarded-For` y *real IP* configurables para ir detrás de otro proxy; `Host $http_host`.
 4. **CI (`ci.yml`, uso local):** disparadores `push` solo a `dev` y `main` + `pull_request` (un disparo por PR); `concurrency` con cancelación; `timeout-minutes`; trabajos: *backend* (build, test, `dotnet format --verify-no-changes`, `dotnet list package --vulnerable --include-transitive`), *frontend* (`npm ci`, format, lint, build, test, `npm audit --audit-level=high`), *guardrails* (arquitectura, diseño, Tailwind), *aislamiento por módulo* (matriz que borra los demás), *contenedores* (smoke de compose). Acciones con versiones vigentes (verificar). Añade `codeql.yml` (C# y TypeScript) como opcional.
 5. **Higiene:** `.editorconfig`, `.gitattributes`, `EnforceCodeStyleInBuild`, `docs/SECURITY.md` con la sección "Cómo reportar una vulnerabilidad", corrección de rutas obsoletas en docs (p. ej. `SettingsPage.tsx`).
-6. **Guardarraíles (todos en CI):** pruebas de arquitectura (`Pastel.ArchitectureTests`: fronteras, `internal`, prefijos de permisos, `MODULE.md` y atributo de módulo, endpoints con permiso o `AllowAnonymousExplicit`); ESLint de fronteras por módulo + `jsx-a11y` + `no-console`; `scripts/check-design.mjs` (morado 235°–345°, iconos/emojis de IA, colores sueltos) con sus propias pruebas; Vitest con `vitest-axe`.
-7. **Scaffold E2E para QA:** `tests/e2e` con Playwright (`@playwright/test`, `@axe-core/playwright`), configuración, utilidad de inicio de sesión local por API y **una prueba de humo**. No escribas más E2E: es trabajo de QA.
+6. **Guardarraíles (todos en CI; Dev escribe los scripts y la configuración, Build las pruebas de arquitectura y de Vitest):** pruebas de arquitectura (`Pastel.ArchitectureTests`: fronteras, `internal`, prefijos de permisos, `MODULE.md` y atributo de módulo, endpoints con permiso o `AllowAnonymousExplicit`); ESLint de fronteras por módulo + `jsx-a11y` + `no-console`; `scripts/check-design.mjs` (morado 235°–345°, iconos/emojis de IA, colores sueltos) con sus propias pruebas; Vitest con `vitest-axe`.
+7. **Scaffold E2E:** lo prepara Build (`tests/e2e` con Playwright, `@axe-core/playwright`, configuración, utilidad de inicio de sesión local por API y una prueba de humo); Dev solo deja las dependencias en `web/package.json`. Más E2E es trabajo de QA.
 
-**Aceptación:** todos los trabajos de CI en verde. Pendiente fuera de alcance (anótalo en el informe): TLS, dominio y `AllowedHosts` de producción.
+**Aceptación (la verifica Build):** todos los trabajos de CI en verde. Pendiente fuera de alcance (anótalo en el informe): TLS, dominio y `AllowedHosts` de producción.
 
-## 13. WP10 — Testabilidad, documentación y plan de pruebas
+## 13. WP10 — Testabilidad, documentación y datos para pruebas
 
-1. **Sembrador `Testing`:** usuarios de prueba por rol con inicio local, solo en `Development`/`Testing`; **se niega a ejecutarse en `Production`** (con prueba).
-2. **Plan de pruebas:** completa `docs/testing/plans/FASE-0-TEST-PLAN.md` con los casos de lo que implementaste (sin quitar ni debilitar los obligatorios), cuentas de prueba y comandos exactos.
-3. **Documentos:** `README.md` (arranque, estructura, comandos, cómo probar Google), `docs/SECURITY.md` (OAuth, vinculación, jerarquía de privilegios, *break-glass*, límites), `docs/AI_WORKFLOW.md` (protocolo en paralelo, Dev/QA, CCR, `PROGRESS.md`), `docs/SPLIT_GUIDE.md` (desplegar un solo módulo), ADR 0001–0008 (`docs/adr/`: monolito modular, stack/router, Google OAuth, esquemas y migraciones, paleta, compilación por subconjunto, Tailwind, errores y logs).
+1. **Sembrador `Testing`:** usuarios de prueba por rol con inicio local, solo en `Development`/`Testing`; **se niega a ejecutarse en `Production`** (Build escribe la prueba).
+2. **Datos para pruebas:** en `docs/phase0/PROGRESS.md`, sección «Datos para pruebas»: cuentas de prueba (nombres y claves **de prueba**), comandos de arranque y qué implementaste, para que QA amplíe `docs/testing/plans/FASE-0-TEST-PLAN.md`. No edites ni debilites los casos obligatorios.
+3. **Documentos:** `README.md` (arranque, estructura, comandos, cómo probar Google), `docs/SECURITY.md` (OAuth, vinculación, jerarquía de privilegios, *break-glass*, límites), `docs/AI_WORKFLOW.md` (protocolo en paralelo, Dev/Build/QA, CCR, `PROGRESS.md`), `docs/SPLIT_GUIDE.md` (desplegar un solo módulo), ADR 0001–0008 (`docs/adr/`: monolito modular, stack/router, Google OAuth, esquemas y migraciones, paleta, compilación por subconjunto, Tailwind, errores y logs).
 4. `MODULE.md` backend y frontend de cada módulo (≤ 120 líneas, estado "marcador").
 5. Elimina referencias obsoletas (`Pastel.Api`, `Pastel.Application`, paleta Brisa, `screen`, `npm install`).
 
-## 14. Definición de terminado de Dev (puerta hacia QA)
+## 14. Definición de terminado de Dev (puerta hacia Build)
 
-- [ ] WP1–WP10 completos; pruebas de Dev en verde; CI en verde.
+- [ ] WP2–WP10 completos como código de aplicación (WP1 es de Build); sin exigencia de compilar.
+- [ ] `PROGRESS.md` declara, por WP, qué se compiló o ejecutó y qué no.
 - [ ] Hallazgos del análisis: cada uno resuelto, descartado con evidencia o diferido con motivo en `PROGRESS.md` (tabla S1–S4, B1–B5, T1, F1–F4, D1–D2, G1–G3).
-- [ ] Cinco esqueletos de módulo compilan, migran y aparecen en el hub; compilación aislada por módulo funciona.
-- [ ] Google OAuth implementado y probado con manejador falso.
+- [ ] Cinco esqueletos de módulo implementados y registrados en el hub (Build verifica que compilan, migran y que la compilación aislada por módulo funciona).
+- [ ] Google OAuth implementado, con un manejador remoto falso inyectable para las pruebas de Build.
 - [ ] Metas de Tailwind cumplidas (sección 11) con el "antes/después" medido.
 - [ ] Estándar de errores y logs implementado; sin datos sensibles en logs.
 - [ ] Sin morado ni símbolos de IA; sin voseo.
-- [ ] `docker compose up` desde base vacía funciona; sin `.env` ni secretos en el diff.
-- [ ] Plan de pruebas de la Fase 0 completo y **sin informe de aprobación propio**.
+- [ ] Código preparado para `docker compose up` desde base vacía (lo comprueba Build); sin `.env` ni secretos en el diff.
+- [ ] «Datos para pruebas» completos en `PROGRESS.md` y **sin informe de aprobación propio**.
 
 ## 15. Informe final de Dev
 
-Rama y SHA; resumen por WP; tabla de hallazgos del análisis (resuelto / descartado / diferido); árbol resultante; endpoints antes/después; métricas `tailwind-audit` antes/después; resultados reales de los comandos ejecutados (y los no ejecutados); decisiones y ADR; CCR o deudas; pasos manuales para el propietario (credenciales de Google, prueba real, capturas); riesgos. **Cierra con:** "Listo para QA: ejecutar `docs/testing/plans/FASE-0-TEST-PLAN.md` sobre el SHA <sha>".
+Rama y SHA; resumen por WP; tabla de hallazgos del análisis (resuelto / descartado / diferido); árbol resultante; endpoints antes/después; métricas `tailwind-audit` antes/después; resultados reales de los comandos ejecutados y la lista de lo no compilado ni ejecutado; decisiones y ADR; CCR o deudas; pasos manuales para el propietario (credenciales de Google, prueba real, capturas); riesgos. **Cierra con:** "Listo para Build sobre el SHA <sha>".
 
 ## 16. Lo que NO debes hacer
-Funcionalidades de módulos (solo marcadores). Desplegar o tocar Oracle. Cambiar códigos de permisos existentes ni el modelo de sesión/CSRF. Almacenar tokens en el navegador. Añadir bibliotecas fuera de la lista aprobada sin CCR. Usar morado o símbolos de IA. Dejar el repositorio sin compilar entre puntos de control publicados. Declarar la fase aprobada.
+Funcionalidades de módulos (solo marcadores). Desplegar o tocar Oracle. Cambiar códigos de permisos existentes ni el modelo de sesión/CSRF. Almacenar tokens en el navegador. Añadir bibliotecas fuera de la lista aprobada sin CCR. Usar morado o símbolos de IA. Escribir pruebas. Afirmar que algo compila o pasa sin haberlo ejecutado. Declarar la fase aprobada.
+
+## 17. Relevo a Build (agente con entorno de compilación)
+
+Tras el «Listo para Build» de Dev, un agente Build trabaja en la rama `refactor/modular-foundation` (Dev ya terminó: no hay trabajo simultáneo).
+
+1. Ejecuta WP1 en `build/fase0-linea-base` (sección 4), valida que queda en verde sobre el SHA base y fusiona esa rama en `refactor/modular-foundation`.
+2. Restaura y compila toda la solución, el frontend y las imágenes. Corrige **errores de compilación y de configuración** en el código de producto con el mínimo cambio, en commits `fix(build): …` agrupados por causa.
+3. Genera con `dotnet ef` las migraciones iniciales de cada esquema y levanta el stack desde base vacía.
+4. Escribe y ejecuta las pruebas que Dev no escribió: unitarias (`*.Tests`, Vitest), de arquitectura (`Pastel.ArchitectureTests`), F0-E01…E09, las de Google con manejador falso y el scaffold E2E con prueba de humo. Activa las pruebas `Skip` de WP4.
+5. Si una prueba falla: si el código no cumple lo especificado, corrígelo. Si la especificación y el código chocan, o el arreglo cambia el diseño o el comportamiento acordado, **no lo cambies**: regístralo en `docs/requests/CCR-<n>-<tema>.md` y sigue.
+6. Informe `docs/testing/reports/FASE-0-BUILD-<fecha>.md`: comandos exactos, resultados reales, correcciones por causa, pruebas añadidas y lo no ejecutado. **No declares la fase aprobada.** Cierra con: «Listo para QA: ejecutar `docs/testing/plans/FASE-0-TEST-PLAN.md` sobre el SHA <sha>».
+
+Build y QA son sesiones distintas.

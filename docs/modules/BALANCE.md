@@ -37,7 +37,7 @@ Pagos reales o integración bancaria, conversión de divisas en vivo, notificaci
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-Dev escribe `docs/testing/plans/BALANCE-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente; QA lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+QA escribe `docs/testing/plans/BALANCE-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. **Casos dorados:** el 100 % de los ≥ 25 casos de `docs/migration/balance-inventory.md` §9 producen exactamente los saldos y liquidaciones del sistema SaldApp; QA los recalcula de forma independiente.
 2. Redondeo: reparto de ₡100,00 entre 3 personas → la suma de las partes es exactamente ₡100,00 y el centavo sobrante se asigna según la regla documentada del sistema anterior.

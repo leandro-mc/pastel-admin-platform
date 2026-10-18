@@ -129,7 +129,7 @@ Docker con controlador `json-file` y `max-size` y `max-file` definidos en `compo
 - [ ] Frontend: cada página tiene estados de carga, vacío y error; los formularios muestran errores por campo; 409 y 401 manejados.
 - [ ] Pruebas de integración para cada código de error y para la ausencia de datos sensibles en logs.
 
-## 8. Pruebas obligatorias (las escribe QA a partir de este documento; Dev deja el plan)
+## 8. Pruebas obligatorias (las escriben QA y Build a partir de este documento)
 1. Cada traducción de excepción (único, concurrencia, serialización con reintento, cancelación, inesperado) produce el estado y `code` correctos y nunca filtra detalles.
 2. `traceId` de la respuesta coincide con el del log del servidor.
 3. **Redacción:** al ejecutar login, refresco y callback de Google, ningún log contiene contraseñas, tokens, cookies, `code` ni `state`.

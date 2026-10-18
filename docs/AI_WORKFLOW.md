@@ -45,10 +45,10 @@ No crees ramas por archivo, clase o commit. Agrupa cambios dependientes en una s
 
 - Usa Conventional Commits en español o inglés consistente con el área: `feat: ...`, `fix: ...`, `refactor: ...`, `docs: ...`, `test: ...`, `chore: ...`.
 - Mantén cada commit enfocado, pero no confundas “un commit por idea” con “un commit por archivo”. Ajustes dependientes de una misma corrección se agrupan.
-- **No publiques commits intermedios que sabes que están incompletos o que no compilan.** En refactorizaciones de varios archivos, termina un conjunto coherente, formatea y ejecuta las validaciones locales aplicables antes de crear el commit que vas a subir.
+- **Agentes con entorno de compilación (Build, QA):** no publiques commits intermedios que sabes que están incompletos o que no compilan; termina un conjunto coherente, formatea y ejecuta las validaciones locales aplicables antes de subirlo. **Agentes sin entorno (Dev):** pueden publicar código sin compilar; no lo simulen ni afirmen que compila, y declaren «sin compilar» en `PROGRESS.md` y en el informe. El agente Build compila y corrige después.
 - GitHub Actions se ejecuta por cada push a una rama cubierta por el workflow. No hagas un push por cada archivo o paso del refactoring: cada push innecesario crea una ejecución adicional y puede dejar una lista larga de fallos previsibles.
 - Cuando trabajes directamente mediante herramientas GitHub, no uses el endpoint de contenido para actualizar cada archivo en serie si la tarea es multiarchivo: prepara todos los blobs, crea un árbol y publica **un solo commit atómico** con Git Data API. En un checkout local, reúne los cambios y haz un push después de las comprobaciones.
-- Si una refactorización extensa necesita puntos intermedios, mantenlos locales y sin publicar hasta que el estado compile y las pruebas mínimas pasen. No desactives la CI para esconder fallos: conserva las comprobaciones automáticas en la versión que se comparte.
+- Si una refactorización extensa necesita puntos intermedios, el agente con entorno de compilación los mantiene locales hasta que compile y pasen las pruebas mínimas; el Dev sin entorno los publica en los puntos de control definidos en su fase. No desactives la CI para esconder fallos: conserva las comprobaciones automáticas en la versión que se comparte.
 - Si la CI falla, reúne los errores del mismo run, corrige el conjunto y vuelve a publicar una vez; evita una cadena de commits/pushes previsiblemente fallidos.
 - Antes del commit, revisa `git diff --check`, `git diff` y `git status`; confirma que no haya `.env`, claves, contraseñas, tokens, dumps o datos personales.
 - Antes de terminar, revisa el diff y las validaciones que realmente se pudieron ejecutar; no afirmes pruebas no realizadas.
@@ -75,7 +75,9 @@ Por defecto, termina el trabajo en `dev`. Nunca interpretes que pedir una funcio
 
 La CI se ejecuta tanto en `dev`/`main` como al hacer push a ramas de trabajo `feat/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*` y `test/*`. Esto permite validar una rama sin abrir un PR y deja al usuario probarla antes de autorizar la integración.
 
-Ejecuta lo aplicable y reporta exactamente qué pasó y qué no pudo ejecutarse:
+Ejecuta lo aplicable y reporta exactamente qué pasó y qué no pudo ejecutarse. Sin entorno de compilación (rol Dev) no ejecutes ni simules estos comandos: declara «sin compilar».
+
+
 
 ```powershell
 dotnet restore Pastel.slnx
