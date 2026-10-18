@@ -1,39 +1,43 @@
-# Instrucciones para agentes de IA — Pastel Admin Platform
+# Instrucciones para agentes de IA — Pastel
 
-Este archivo es la puerta de entrada obligatoria para cualquier persona o agente que trabaje en el repositorio.
+Pastel es una plataforma modular: un shell común, el módulo **Identity** (acceso y permisos) y subaplicaciones independientes: **Brisa, Balance, Ágora, Cosecha, Huella**. Lee solo lo necesario; el contexto es un recurso escaso.
 
-## Antes de hacer cualquier cambio
-1. Lee este archivo completo.
-2. Lee `docs/AI_WORKFLOW.md` y `docs/ARCHITECTURE.md` antes de proponer, planificar o editar cambios.
-3. Lee `docs/SECURITY.md` para trabajo de autenticación, autorización, sesiones, permisos, datos o configuración de despliegue.
-4. Revisa `git status --short --branch`, el historial reciente y el código existente. No sobrescribas cambios locales del usuario.
-5. Si los documentos y el código parecen contradecirse, confirma cómo funciona el código actual y actualiza la documentación relacionada en la misma tarea.
+## Tu rol (se te indica en el prompt)
+- **Dev:** implementa y deja un **plan de pruebas**. No certifica su trabajo.
+- **QA:** ejecuta el plan de forma independiente, automatiza regresión y reporta defectos. **No modifica código de producto.**
+- **Investigación:** solo produce documentos. **Mantenimiento:** aplica CCR aprobados.
+Dev y QA son siempre sesiones distintas. Detalle: `docs/TESTING_STRATEGY.md`.
 
-## Reglas obligatorias
-- `dev` es la rama de integración y la base de todo trabajo nuevo. `main` se reserva para versiones estables publicadas.
-- Nunca fusiones ni publiques en `main` hasta que el usuario lo autorice explícitamente.
-- Para cada tarea coherente, usa una sola rama de trabajo. Si el usuario pide continuar en una rama existente, reutilízala; no crees ramas por archivo o pequeño ajuste.
-- **Controla el momento de los commits/pushes:** no publiques por separado los archivos de un refactoring incompleto. Prepara los cambios dependientes, ejecuta formato/build/lint/pruebas posibles y publica un commit coherente. Los pushes sucesivos disparan CI repetidamente; no publiques un estado que sabes que fallará si todavía estás editando el conjunto.
-- Si editas con herramientas GitHub, agrupa los archivos de una misma tarea mediante Git Data API (blobs + tree + un commit + actualización fast-forward de la rama), en vez de crear un commit con cada operación individual de contenido. No desactives CI para encubrir errores; deja la validación activa para el estado final.
-- **No abras PR ni integres a `dev` automáticamente.** Primero entrega el nombre de la rama, el commit y los comandos para probar. Espera a que el usuario valide el cambio en su entorno y autorice expresamente enviarlo a `dev`; sólo entonces prepara la integración y CI.
-- En cambios de UI iterativos, no consideres terminado el trabajo con una revisión del código solamente: solicita validación visual del usuario antes de integrar. `main` siempre requiere autorización explícita independiente.
-- No cambies tecnología, arquitectura, formato de permisos, modelo de sesión ni convenciones de ramas por iniciativa propia. Consulta `docs/ARCHITECTURE.md` y mantén la coherencia.
-- Todo cambio estructural o de permisos debe incluir pruebas y actualizar la documentación pertinente.
-- No uses `EnsureCreated` como sustituto de migraciones. No almacenes tokens en localStorage/sessionStorage ni registres secretos.
+## Ruta de lectura (en orden, y nada más salvo necesidad)
+1. Este archivo. 2. Tu módulo: `src/Modules/<M>/MODULE.md` y `web/src/modules/<m>/MODULE.md`, más `docs/modules/<M>.md`. 3. `docs/ARCHITECTURE.md` §2–5. 4. `docs/DESIGN_SYSTEM.md` si tocas UI. 5. `docs/ERROR_HANDLING_AND_LOGGING.md` siempre que escribas endpoints, pantallas o logs. 6. `docs/SECURITY.md` si tocas acceso, permisos o datos personales. 7. `docs/AI_WORKFLOW.md` (ramas, commits).
+No leas `Migrations/`, `bin/`, `obj/`, `node_modules/` ni `package-lock.json` salvo necesidad.
 
-## Estilos, iconografía y formato del frontend
-- El frontend usa Tailwind CSS 4 con el plugin nativo de Vite. Antes de tocar estilos, revisa `docs/ARCHITECTURE.md` y los tokens/variantes de `web/src/styles.css`.
-- Para nuevos estilos, usa utilidades Tailwind en JSX; utiliza variantes responsive, hover y focus-visible. `@apply` se reserva para patrones semánticos reutilizados y selectores complejos. Mantén los tokens de tema en un único lugar.
-- **Paleta estricta:** no uses morado, violeta, púrpura ni ninguna variante, degradado o tono cercano. Aplica sólo la paleta Brisa y los tokens existentes; la prohibición cubre componentes, iconos, ilustraciones, fondos, estados, gráficas y nuevas variables.
-- **Iconografía estricta:** no uses el icono Lucide `Sparkles`, iconos equivalentes de destellos/estrellas ni caracteres decorativos de estrella. Para el lenguaje visual de marca, prioriza `Flower2`; para cualquier otro caso, usa iconos Lucide semánticos que describan la acción o el estado.
-- **Estructura:** `App.tsx` se concentra en el bootstrap de sesión y composición; las pantallas compartidas viven en `web/src/components/`. Configuración divide el estado/operaciones en `features/settings/useSettingsAdmin.ts`, la composición en `SettingsPage.tsx`, las vistas en `tabs/`, los formularios breves en `dialogs/` y el editor de pantalla completa en `AccessEditorPage.tsx` con secciones menores en `access-editor/`. Evita archivos que mezclen estado de API, varias pantallas y grandes bloques de JSX.
-- **Formato obligatorio:** usa Prettier, definido por `web/.prettierrc.json`. Ejecuta `npm run format` para aplicar el formato y `npm run format:check` antes de terminar; evita JSX comprimido y líneas manuales enormes.
-- `web/src/styles.css` contiene tokens, tema y patrones CSS reutilizables. No añadas reglas de componentes con propiedades CSS crudas; las excepciones son tokens globales, normalización y keyframes personalizados.
+## Mapa
+`src/Host/Pastel.Host` (composición) · `src/BuildingBlocks/` (SharedKernel, Platform: **protegida**) · `src/Modules/<M>/` (Pastel.Modules.<M> + .Tests) · `web/src/core` y `web/src/app` (**protegidas**) · `web/src/modules/<m>/` · `tests/` · `docs/modules/` (fichas de producto) · `docs/testing/` (planes e informes).
 
-## Fuentes de contexto
-- Flujo de trabajo, ramas, commits, PRs y releases: `docs/AI_WORKFLOW.md`.
-- Arquitectura, tecnologías, ubicación de funcionalidades y cómo agregar módulos: `docs/ARCHITECTURE.md`.
-- Modelo de seguridad y límites conocidos: `docs/SECURITY.md`.
-- Arranque, operaciones comunes y conexión de pgAdmin: `README.md`.
+## Zonas de escritura
+- **Dev:** tu módulo (backend, frontend, pruebas unitarias, `MODULE.md`) y tu plan en `docs/testing/plans/`.
+- **QA:** `tests/Pastel.IntegrationTests/QA/<M>/`, `tests/e2e/<m>/`, `docs/testing/reports/`.
+- Protegidas (solo orquestador/mantenimiento): `BuildingBlocks`, `Identity`, `web/src/core`, `web/src/app`, `Directory.*`, `compose.yaml`, `.github/**`, nginx, documentos raíz de `docs/`, dependencias. Necesitas un cambio allí → `docs/requests/CCR-<n>-<tema>.md` y solución local provisional.
 
-Si inicias una sesión nueva sin contexto, comienza por los documentos anteriores antes de escribir código. No asumas que una explicación del chat es más actual que el estado remoto de `dev`.
+## Reglas de arquitectura (CI las verifica)
+- Un módulo no referencia el interior de otro; solo `*.Contracts` o `Pastel.Platform`. Tipos `internal`. Un `DbContext` y un esquema por módulo; sin claves foráneas entre esquemas.
+- Vertical slices: `Features/<VerboSustantivo>/`. Permisos `<modulo>.<recurso>.<accion>`; cada endpoint con permiso o `AllowAnonymousExplicit()`; denegar por defecto.
+- Frontend: un módulo no importa de otro; solo de `@/core/*`. Quitar un módulo = borrar sus carpetas sin romper el resto.
+
+## Errores y logs (obligatorio)
+Errores esperables como `Result` → `problem+json` con `code` y `traceId`; sin `ex.Message` al cliente; sin `catch` que traguen errores. Logs con plantillas, sin secretos ni datos personales (ni `code`/`state` de OAuth). Auditoría aparte con antes/después. Frontend: estados de carga, vacío y error en cada pantalla; `core/log`, nunca `console.log`.
+
+## Interfaz (reglas duras)
+- **Prohibido el morado** (tono HSL 235°–345°) y los **símbolos de IA** (`Sparkles`, `Stars`, `Wand*`, `Bot`, `Brain*`, `Cpu`, ✨🤖🪄🔮). Marca: `Flower2`.
+- **Tailwind:** utilidades en JSX; los patrones compartidos son componentes de `core/ui`; **prohibido `@apply`** fuera de `core/design/base.css`. Color solo por tokens (`bg-accent`…); `data-module` da el color de cada módulo; sin hexadecimales sueltos.
+- UX primero: `DESIGN_SYSTEM.md` (heurísticas, WCAG 2.2 AA, móvil primero). Español de Costa Rica, trato de usted o impersonal, **sin voseo**; textos en `strings.ts`.
+
+## Seguridad (no negociable)
+Tokens solo en cookies `HttpOnly`, nunca en el navegador. Autorización siempre en el backend. No versionar secretos ni `.env`. No `EnsureCreated`. No registrar datos sensibles. Quien administra no puede escalar privilegios (concede solo lo que tiene).
+
+## Flujo
+- Parte de `dev`; rama por tarea: `feat/<m>-<alcance>`, `qa/<m>`, `chore/…`, `docs/…`. Nunca `main`.
+- **Nunca abras PR ni integres a `dev`:** entrega rama, SHA y resultados; el propietario revisa y autoriza.
+- Commits coherentes y revisables (que compilen; evita volcados enormes). Formato con Prettier/`dotnet format`.
+- Informa solo lo que ejecutaste. Mantén `MODULE.md` y tu `PROGRESS.md` al día. Si algo contradice estos documentos, confirma el código real y corrige el documento.
