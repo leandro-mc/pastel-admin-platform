@@ -38,6 +38,9 @@ services:
       Jwt__Issuer: PastelAdmin
       Jwt__Audience: PastelAdmin.Web
       Jwt__SigningKey: ${JWT_SIGNING_KEY:?Set JWT_SIGNING_KEY in .env}
+      Jwt__SigningKeyId: ${JWT_SIGNING_KEY_ID:-primary}
+      Jwt__PreviousSigningKey: ${JWT_PREVIOUS_SIGNING_KEY:-}
+      Jwt__PreviousSigningKeyId: ${JWT_PREVIOUS_SIGNING_KEY_ID:-}
       Jwt__AccessTokenMinutes: ${JWT_ACCESS_TOKEN_MINUTES:-10}
       Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
       Bootstrap__AdminEmail: ${BOOTSTRAP_ADMIN_EMAIL:-admin@pastel.local}
