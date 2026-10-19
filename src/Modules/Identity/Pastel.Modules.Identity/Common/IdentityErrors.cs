@@ -43,7 +43,7 @@ internal static class IdentityErrors
         "identity.user.cannot_block_self", "No puede bloquear su propia cuenta.");
 
     public static readonly Error LastActiveAdministrator = Error.Conflict(
-        "identity.admin.last_active", "No se puede dejar la plataforma sin una persona administradora activa.");
+        "identity.user.last_admin", "No se puede dejar la plataforma sin una persona administradora activa.");
 
     public static readonly Error OverridesNotForAdministrator = Error.Conflict(
         "identity.user.overrides_not_allowed", "Los permisos directos no aplican a una cuenta de administración. Modifique sus roles.");
@@ -65,7 +65,7 @@ internal static class IdentityErrors
 
     // Jerarquía de privilegios (S1): todas son 403
     public static readonly Error PrivilegeAdministratorRoleRequired = Error.Forbidden(
-        "identity.privilege.administrator_role_required", "Solo una persona administradora puede asignar o quitar el rol Administrator.");
+        "identity.privilege.escalation", "Solo una persona administradora puede asignar o quitar el rol Administrator.");
 
     public static readonly Error PrivilegeAdministratorAccountProtected = Error.Forbidden(
         "identity.privilege.administrator_account_protected", "Solo una persona administradora puede actuar sobre una cuenta de administración.");
