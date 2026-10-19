@@ -100,6 +100,7 @@ export const settingsStrings = {
     permissions: (count: number) =>
       count === 1 ? "1 permiso" : `${count} permisos`,
     system: "De sistema",
+    editPermissions: "Editar permisos",
     managePermissions: (name: string) => `Editar permisos de ${name}`,
   },
   createRole: {
@@ -163,6 +164,8 @@ export const settingsStrings = {
     savedRole: "Permisos del rol guardados.",
     roleSystemHint:
       "Administrator siempre conserva todos los permisos y no se puede reducir.",
+    selectAll: "Seleccionar todos",
+    clearAll: "Quitar todos",
     selectedCount: (count: number) =>
       count === 1 ? "1 seleccionado" : `${count} seleccionados`,
   },
