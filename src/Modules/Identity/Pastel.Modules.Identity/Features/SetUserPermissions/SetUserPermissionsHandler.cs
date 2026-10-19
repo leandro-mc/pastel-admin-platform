@@ -73,7 +73,11 @@ internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrai
             {
                 db.UserPermissionOverrides.Add(new UserPermissionOverride
                 {
-                    UserId = userId, PermissionId = change.PermissionId, Effect = change.Effect, AssignedByUserId = currentUser.UserId, UpdatedAt = now,
+                    UserId = userId,
+                    PermissionId = change.PermissionId,
+                    Effect = change.Effect,
+                    AssignedByUserId = currentUser.UserId,
+                    UpdatedAt = now,
                 });
             }
             else if (current.Effect != change.Effect)
