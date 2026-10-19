@@ -2,8 +2,11 @@
 
 > **Rol:** investigación. **Estado:** borrador para revisión del propietario.
 > **Fuentes leídas:** repositorios `leandro-mc/saldapp-backend` (rama `main`, último commit `ff865f0`, 2026-06-18) y `leandro-mc/saldapp-frontend` (rama `main`, último commit `fae3f75`, 2026-06-18); en Pastel, `AGENTS.md` y `docs/modules/BALANCE.md` (rama `dev`, `60cfc31`).
+> **Actualización 2026-10-18:** se incorporaron las decisiones del propietario (§12): centavos asignados (D1), liquidación determinista (D2), autenticación y ligado de cuentas (D3) y corrección del campo de monto (D4).
 > **No se modificó** ningún repositorio de SaldApp ni se escribió código de migración.
 > **Nomenclatura:** **SaldApp** = sistema actual; **Balance** = módulo futuro de Pastel.
+
+> **Cómo leer este documento.** Las secciones 1 a 11 describen **SaldApp tal como es hoy**. Lo que **Balance hará distinto** (correcciones y mejoras aprobadas) está en la **§12**, y sus resultados esperados en la **§9.3**.
 
 **Convenciones de este documento**
 
@@ -245,6 +248,8 @@ sacar():     res = q[0] ; x = último elemento (se quita) ; n = tamaño actual
 
 Ejemplo (G22): saldos Ana +75.00, Beto +15.00, Carla −45.00, Diego −45.00 → `Carla→Ana 45.00`, `Diego→Ana 30.00`, `Diego→Beto 15.00`. (Carla va primero por el desempate del montículo; si salieran en el otro orden, el resultado cambiaría de pagador pero cada persona pagaría o recibiría lo mismo.)
 
+> **Decisión D2 (aprobada, §12.2):** en Balance la liquidación **debe ser determinista**. Se reemplaza el montículo y el `HashMap` por un orden total (mayor monto primero; en empate, orden de alta en el grupo), independiente del orden de entrada y del de la base de datos. Lo descrito en esta sección es el comportamiento **de SaldApp**, que no debe copiarse.
+
 ### 4.4 Reglas de redondeo y destino de los centavos sobrantes
 
 | Aspecto | Regla en SaldApp (evidencia) |
@@ -257,7 +262,7 @@ Ejemplo (G22): saldos Ana +75.00, Beto +15.00, Carla −45.00, Diego −45.00 �
 | Saldos mostrados | No se ajustan: la tabla de saldos muestra los valores crudos, y la suma de la columna puede ser ≠ 0 (G02: +0.01; G03: −0.01; G26: −0.05) |
 | Parte que se redondea a 0.00 | Si `total/n < 0.005`, `parte = 0.00` y el pagador queda con saldo `+total` sin deudores: la liquidación sale **vacía** y la interfaz dice «No hay deudas pendientes» (G11) |
 
-> **Contradicción con la ficha `BALANCE.md`** (plan de pruebas, punto 2): la ficha supone que, al repartir ₡100,00 entre 3, «la suma de las partes es exactamente ₡100,00 y el centavo sobrante se asigna según la regla documentada del sistema anterior». **El sistema anterior no tiene tal regla:** las partes suman 99.99 y el centavo queda sin cobrar al pagador. Hay que decidir (propietario) si Balance reproduce este comportamiento tal cual o define una regla nueva y explícita como cambio aprobado (ver §11, P3).
+> **Contradicción con la ficha `BALANCE.md`** (plan de pruebas, punto 2): la ficha supone que, al repartir ₡100,00 entre 3, «la suma de las partes es exactamente ₡100,00 y el centavo sobrante se asigna según la regla documentada del sistema anterior». **El sistema anterior no tiene tal regla:** las partes suman 99.99 y el centavo queda sin cobrar al pagador. **Resuelto por el propietario (D1, §12.1):** en Balance los centavos sobrantes **sí se asignan**; las partes suman exactamente el total y los saldos suman exactamente 0.00. La regla de SaldApp descrita arriba **no se reproduce**.
 
 ---
 
@@ -272,6 +277,8 @@ Ejemplo (G22): saldos Ana +75.00, Beto +15.00, Carla −45.00, Diego −45.00 �
 
 **Propuesta para Balance** *(no es evidencia; requiere ADR del modelo de participantes, según `BALANCE.md` §4.2)*: participante = persona del grupo con nombre visible y, opcionalmente, cuenta de Pastel o correo invitado; rol de grupo `administrador`/`miembro` como dato del dominio (no rol de plataforma); permisos de plataforma `balance.access` y `balance.groups.manage`; visibilidad solo para miembros (servidor); IDs de otros grupos → 404.
 
+> **Decisión D3 (aprobada, §12.3):** Balance **no puede quedar abierto**: toda lectura o escritura exige sesión de Pastel y pertenencia al grupo; los participantes se ligan a cuentas (o quedan como invitados hasta aceptar una invitación); el ID deja de ser llave de acceso.
+
 ---
 
 ## 6. Autenticación actual y relación con cuentas de Google en Pastel
@@ -284,6 +291,8 @@ Ejemplo (G22): saldos Ana +75.00, Beto +15.00, Carla −45.00, Diego −45.00 �
 2. Cada `integrant` legado se importaría como **participante con nombre visible y sin cuenta** (invitado). Cuando alguien inicie sesión con Google y acepte la invitación (por correo, que SaldApp **no almacena**), el participante se vincula a esa cuenta.
 3. Los grupos legados no tienen dueño: el propietario debe indicar quién será el administrador de cada uno (o un administrador por defecto para toda la importación).
 4. Autorización 100 % en el servidor y cookies `HttpOnly` según `AGENTS.md`; el «ID del grupo como llave de acceso» debe desaparecer.
+
+> **Decisión D3 (aprobada, §12.3):** la ausencia de autenticación es un defecto de SaldApp que **no se hereda**. Lo anterior es la propuesta de ligado; los puntos concretos (sesión obligatoria, «Mis grupos», administrador por grupo, invitados, grupos heredados con administrador asignado) están en §12.3.
 
 ---
 
@@ -320,6 +329,8 @@ Ejemplo (G22): saldos Ana +75.00, Beto +15.00, Carla −45.00, Diego −45.00 �
 **Participantes parciales.** SaldApp **no los soporta** (§4.1). Los casos G09, G18 y G19 cubren los equivalentes reales: integrante que no pagó nada, integrante agregado después de los gastos, integrante dado de baja. Un caso con participación parcial por gasto no tiene resultado esperado en SaldApp y debe tratarse como requisito nuevo.
 
 **Borrado de grupos.** No existe (§2). Se cubre el cierre (G21).
+
+**Referencia y objetivo.** Los resultados de §9.2 son **de SaldApp** («antes»). Como Balance corrige el manejo de centavos y el orden de la liquidación (D1, D2) y exige autenticación (D3) y validación de montos (D4), la **§9.3** fija el resultado esperado en Balance para los casos que cambian.
 
 ### 9.1 Resumen de los 34 casos
 
@@ -1140,6 +1151,45 @@ Suma de saldos (sobrante de redondeo): **0.01**
 - **Rechazo esperado** (POST expense payedBy de otro grupo): HTTP 409 — Integrant with id X does not belong to group with id 1. _(calculado desde el código; no ejecutado)_
 - **Rechazo esperado** (POST expense payedBy inexistente): HTTP 404 — Integrant with id 999 not found. _(calculado desde el código; no ejecutado)_
 - **Rechazo esperado** (GET /groups/999): HTTP 404 — Group with id 999 not found. _(calculado desde el código; no ejecutado)_
+### 9.3 Resultados esperados en Balance (reglas D1, D2, D3 y D4 de §12)
+
+Se calcularon con las reglas de §12.1 y §12.2 (centavos enteros; orden de alta = orden de los IDs en cada caso) y se verificaron con propiedades sobre 5 000 escenarios aleatorios (partes que suman el total, saldos que suman 0, cada persona queda en cero, a lo sumo `#deudores + #acreedores − 1` transferencias, resultado independiente del orden de entrada). Estado de los resultados: **calculado** con la regla propuesta (no es salida de SaldApp). Las entradas (altas, gastos y ediciones) son las de §9.2.
+
+**Casos que cambian** (se muestra cada paso donde el resultado difiere):
+
+| Caso (paso) | Partes nuevas (suman el total) | Saldos nuevos (suman 0.00) | Liquidación nueva | Cambia respecto a SaldApp |
+|---|---|---|---|---|
+| G02 | total 100.00; Ana 33.34, Beto 33.33, Carla 33.33 | Ana +66.66, Beto -33.33, Carla -33.33 | Beto→Ana 33.33; Carla→Ana 33.33 | saldos (SaldApp sumaba 0.01) |
+| G03 | total 200.00; Ana 66.67, Beto 66.67, Carla 66.66 | Ana +133.33, Beto -66.67, Carla -66.66 | Beto→Ana 66.67; Carla→Ana 66.66 | saldos (SaldApp sumaba -0.01) |
+| G04 | total 200.00; Ana 66.67, Beto 66.67, Carla 66.66 | Ana +33.33, Beto +33.33, Carla -66.66 | Carla→Ana 33.33; Carla→Beto 33.33 | saldos (SaldApp sumaba -0.01) |
+| G05 | total 400.00; Ana 100.00, Beto 100.00, Carla 100.00, Diego 100.00 | Ana +300.00, Beto -100.00, Carla -100.00, Diego -100.00 | Beto→Ana 100.00; Carla→Ana 100.00; Diego→Ana 100.00 | liquidación/orden |
+| G10 | total 0.05; Ana 0.03, Beto 0.02 | Ana +0.02, Beto -0.02 | Beto→Ana 0.02 | saldos (SaldApp sumaba -0.01) |
+| G11 | total 0.01; Ana 0.01, Beto 0.00, Carla 0.00 | Ana 0.00, Beto 0.00, Carla 0.00 | (vacía) | saldos (SaldApp sumaba 0.01) |
+| G12 | total 1000.00; Ana 142.86, Beto 142.86, Carla 142.86, Diego 142.86, Elena 142.86, Fabio 142.85, Gina 142.85 | Ana +857.14, Beto -142.86, Carla -142.86, Diego -142.86, Elena -142.86, Fabio -142.85, Gina -142.85 | Beto→Ana 142.86; Carla→Ana 142.86; Diego→Ana 142.86; Elena→Ana 142.86; Fabio→Ana 142.85; Gina→Ana 142.85 | saldos (SaldApp sumaba -0.02), liquidación/orden |
+| G13 | total 9999999999.99; Ana 5000000000.00, Beto 4999999999.99 | Ana +4999999999.99, Beto -4999999999.99 | Beto→Ana 4999999999.99 | saldos (SaldApp sumaba -0.01) |
+| G14 — antes | total 100.00; Ana 33.34, Beto 33.33, Carla 33.33 | Ana +66.66, Beto -33.33, Carla -33.33 | Beto→Ana 33.33; Carla→Ana 33.33 | saldos (SaldApp sumaba 0.01) |
+| G17 — antes | total 100.00; Ana 33.34, Beto 33.33, Carla 33.33 | Ana +66.66, Beto -33.33, Carla -33.33 | Beto→Ana 33.33; Carla→Ana 33.33 | saldos (SaldApp sumaba 0.01) |
+| G18 — después de agregar a Carla | total 100.00; Ana 33.34, Beto 33.33, Carla 33.33 | Ana +66.66, Beto -33.33, Carla -33.33 | Beto→Ana 33.33; Carla→Ana 33.33 | saldos (SaldApp sumaba 0.01) |
+| G21 — balances y liquidación tras cerrar | total 100.00; Ana 33.34, Beto 33.33, Carla 33.33 | Ana +66.66, Beto -33.33, Carla -33.33 | Beto→Ana 33.33; Carla→Ana 33.33 | saldos (SaldApp sumaba 0.01) |
+| G23 | total 455.76; Ana 91.16, Beto 91.15, Carla 91.15, Diego 91.15, Elena 91.15 | Ana +158.84, Beto +34.35, Carla -10.90, Diego -91.14, Elena -91.15 | Elena→Ana 91.15; Diego→Ana 67.69; Diego→Beto 23.45; Carla→Beto 10.90 | saldos (SaldApp sumaba 0.01), liquidación/orden |
+| G24 | total 130.00; todas 10.00 | (ver nota) | Beto→Ana 10.00; Carla→Ana 10.00; Diego→Ana 10.00; Elena→Ana 10.00; Fabio→Ana 10.00; Gina→Ana 10.00; Hugo→Ana 10.00; Irene→Ana 10.00; Jorge→Ana 10.00; Karla→Ana 10.00; Luis→Ana 10.00; Marta→Ana 10.00 | liquidación/orden |
+| G25 | total 130.00; todas 10.00 | (ver nota) | Beto→Ana 10.00; Carla→Ana 10.00; Diego→Ana 10.00; Elena→Ana 10.00; Fabio→Ana 10.00; Gina→Ana 10.00; Hugo→Ana 10.00; Irene→Ana 10.00; Jorge→Ana 10.00; Karla→Ana 10.00; Luis→Ana 10.00; Marta→Ana 10.00 | liquidación/orden |
+| G26 | total 68645.35; 5 personas pagan 3432.26 y 15 pagan 3432.27 (las primeras 15 por orden de alta) | (ver nota) | Beto→Luis 3432.27; Carla→Luis 3432.27; Diego→Luis 3432.27; Fabio→Luis 3432.27; Hugo→Luis 3432.27; Irene→Luis 3432.27; Jorge→Luis 3432.27; Karla→Luis 3432.27; Marta→Luis 3432.27; Nora→Ana 3432.27; Oscar→Luis 3432.27; Paula→Ana 3432.26; Raul→Elena 3432.26; Sara→Luis 3432.26; Tomas→Ana 3432.26; Ursula→Elena 2035.47; Gina→Luis 1812.87; Ursula→Ana 1086.79; Gina→Ana 418.65 | saldos (SaldApp sumaba -0.05), liquidación/orden |
+| G27 | total 1.00; Ana 0.34, Beto 0.33, Carla 0.33 | Ana +0.66, Beto -0.33, Carla -0.33 | Beto→Ana 0.33; Carla→Ana 0.33 | saldos (SaldApp sumaba 0.01) |
+| G28 — (b) si la BD lo almacena redondeado a 10.01 (numeric(12,2)); inferido, no verificado | total 10.01; Ana 5.01, Beto 5.00 | Ana +5.00, Beto -5.00 | Beto→Ana 5.00 | saldos (SaldApp sumaba -0.01) |
+| G32 (calculador directo) | — | ids 1–5: −3, −2, −4, +4, +5 | id3→id5 4.00; id1→id4 3.00; id2→id4 1.00; id2→id5 1.00 | solo el **orden** de las dos últimas transferencias (SaldApp: id2→id5 1.00 antes que id2→id4 1.00) |
+
+Notas: en G24 y G25 (13 integrantes, un pagador) y en G26 (20 integrantes) los saldos nuevos son `pagado − parte` con las partes indicadas; en G24 y G25 la liquidación nueva sale en **orden de alta** (`Beto→Ana`, `Carla→Ana`, `Diego→Ana`, …). En G12 y G26 el sobrante deja de perderse: la liquidación cubre todos los saldos.
+
+**Casos que no cambian** (valen los resultados de §9.2): G01, G06, G07, G08, G09, G15, G16, G19, G20, G22, G29, G30, G31. En los casos con varios pasos (G14, G17, G18) cambian solo los pasos indicados arriba; los demás coinciden con §9.2.
+
+**Casos con tratamiento distinto en Balance**
+
+- **G28 (monto `10.005`).** En SaldApp quedaba indefinido; en Balance es **error 400 de validación** (más de 2 decimales, D4). El paso (b) con `10.01` se evalúa con las reglas normales (ver fila G28).
+- **G33 (saldos que no suman cero).** Con D1 el cálculo **nunca** produce saldos que no sumen 0; una entrada así viola un invariante y debe fallar con error explícito, no ignorar el sobrante.
+- **G34 (errores de validación).** Se mantienen y se suman: monto con más de 2 decimales → 400; persona ajena al grupo → **404** (en SaldApp era 409, D3); sin sesión → 401 (D3).
+- **G21 (grupo cerrado).** Sigue siendo lectura permitida y escritura rechazada con 409; los saldos y la liquidación usan D1/D2.
+
 ---
 
 ## 10. Experiencia de usuario actual
@@ -1188,6 +1238,8 @@ Suma de saldos (sobrante de redondeo): **0.01**
 13. **Cierre irreversible sin «reabrir»**; no se puede corregir un error tras cerrar.
 14. **Sin concurrencia:** dos personas editando el mismo grupo se pisan sin aviso (no hay versión).
 
+> **Resolución en Balance (§12):** los puntos 1 y 14 se atienden con D3 (sesión, «Mis grupos», pertenencia) y el control de edición simultánea de la ficha; los puntos 2, 3, 4 y 5 con **D4** (campo de monto con decimales, validación en cliente y servidor, totales calculados por el servidor); el resto figura en §12.6.
+
 ---
 
 ## 11. Riesgos y preguntas abiertas para el propietario
@@ -1209,14 +1261,16 @@ Suma de saldos (sobrante de redondeo): **0.01**
 | R11 | **Orden de filas sin `ORDER BY`** | `IntegrantRepositoryAdapter.findAllByGroup` | Puede alterar el orden de empates entre lecturas **[SUPOSICIÓN, no reproducido]** |
 | R12 | **Cálculos de pantalla en coma flotante** | §10.3 (4) | Balance no debe replicarlo: mostrar los valores del servidor |
 
+**Estado tras las decisiones del 2026-10-18:** R1 → resuelto por **D2**; R2 → resuelto por **D1**; R3 sigue vigente (P5); R4 → resuelto por **D3** (falta asignar administradores a los grupos heredados, P8); R6 → resuelto por **D4** para datos nuevos (los datos ya guardados tienen a lo sumo 2 decimales si la columna es `numeric(12,2)` como se deduce de las entidades; **[NO VERIFICADO]** contra la BD real); R12 → resuelto por **D4**; R5, R7–R11 siguen vigentes.
+
 ### 11.2 Preguntas abiertas
 
 - **P1.** ¿Existe una instancia con datos reales de SaldApp? ¿Cuántos grupos, integrantes y gastos hay? ¿Se migran todos o solo los cerrados? ¿Los abiertos pasan como abiertos?
 - **P2.** ¿Puede entregarse un volcado de la BD (sin datos personales) o acceso de lectura para validar el esquema real y los montos con más de 2 decimales?
-- **P3.** Centavos: ¿se **mantiene** el comportamiento actual (§4.4: el pagador absorbe el centavo si la parte se redondea hacia abajo; el último deudor paga de menos si se redondea hacia arriba) o se desea una regla explícita (p. ej., asignar el sobrante siempre al pagador o repartirlo centavo a centavo entre los participantes)? La ficha de Balance asume una regla explícita.
-- **P4.** Desempates: ¿se acepta una regla determinista (p. ej., mayor monto primero y, en empate, por orden de creación del participante) aunque el orden de las transferencias cambie respecto a SaldApp, manteniendo el mismo neto por persona?
+- **P3. (Respondida: sí se asignan, D1; falta confirmar el criterio, P14).** Centavos: ¿se **mantiene** el comportamiento actual (§4.4: el pagador absorbe el centavo si la parte se redondea hacia abajo; el último deudor paga de menos si se redondea hacia arriba) o se desea una regla explícita (p. ej., asignar el sobrante siempre al pagador o repartirlo centavo a centavo entre los participantes)? La ficha de Balance asume una regla explícita.
+- **P4. (Respondida: debe ser determinista, D2; falta confirmar el criterio de desempate).** Desempates: ¿se acepta una regla determinista (p. ej., mayor monto primero y, en empate, por orden de creación del participante) aunque el orden de las transferencias cambie respecto a SaldApp, manteniendo el mismo neto por persona?
 - **P5.** ¿Es intencional que un integrante nuevo asuma retroactivamente su parte de los gastos anteriores? ¿Se quiere participación parcial por gasto en Balance (alcance nuevo)?
-- **P6.** ¿Se registran gastos con decimales en la práctica (₡ suele usarse sin céntimos)? ¿El campo numérico permite hoy escribir `12.50` en su navegador?
+- **P6. (Respondida: se corrige el campo, D4).** ¿Se registran gastos con decimales en la práctica (₡ suele usarse sin céntimos)? ¿El campo numérico permite hoy escribir `12.50` en su navegador?
 - **P7.** «Liquidar»: ¿basta con mostrar transferencias sugeridas o se quiere **registrar pagos realizados**? ¿Se quiere poder reabrir un grupo cerrado?
 - **P8.** ¿Quién debe ser administrador de cada grupo migrado? ¿Existe el correo de los integrantes para invitarlos, o se vincularán manualmente?
 - **P9.** Monedas: ¿qué ISO corresponde a `$` (¿USD?), `¥`, `Bs.`, `L`, `Q`? ¿Los grupos existentes usan sobre todo ₡?
@@ -1224,6 +1278,144 @@ Suma de saldos (sobrante de redondeo): **0.01**
 - **P11.** ¿Hay despliegue público o solo uso local? ¿Debe apagarse Swagger/API vieja tras migrar?
 - **P12.** ¿Se desea poder borrar grupos (hoy no existe) y editar la fecha de un gasto (hoy no se puede)?
 - **P13.** Zona horaria de las fechas y de `endDate`.
+
+- **P14.** D1: ¿a quién se asigna cada centavo sobrante? Se propone el **orden de alta en el grupo** (los primeros `r` participantes). Alternativas: quien más pagó, o rotación.
+- **P15.** D3: permisos dentro del grupo. ¿Qué puede hacer un `miembro` y qué un `administrador` (editar o borrar gastos ajenos, cerrar el grupo, invitar, editar la moneda)?
+- **P16.** D2: ¿se acepta el desempate propuesto (mayor monto primero; en empate, orden de alta)?
+- **P17.** ¿Los grupos ya cerrados en SaldApp se recalculan con D1/D2 (diferencias de hasta 0.01 por persona, listadas en el informe de importación) o se necesita conservar sus cifras exactas?
+
+---
+
+## 12. Decisiones de migración: qué cambia en Balance respecto a SaldApp
+
+**Principio.** El objetivo es una buena migración, no una copia. Este documento describe **SaldApp tal como es** (§1–§11) y la sección 12 fija **qué se corrige o mejora en Balance**. Estado de cada punto: **Aprobado** = indicado por el propietario el 2026-10-18; **Criterio por confirmar** = la decisión está tomada, pero el detalle que se propone aquí necesita confirmación; **Recomendado** = propuesto por la investigación, sin aprobar.
+
+| ID | Cambio | SaldApp (hoy) | Balance (destino) | Estado |
+|---|---|---|---|---|
+| **D1** | Los centavos sobrantes **sí se asignan** | No se asignan: las partes suman menos o más que el total y los saldos no suman cero (§4.4) | Las partes suman **exactamente** el total y los saldos suman **exactamente 0.00** | **Aprobado** · criterio de a quién se asigna cada centavo: **por confirmar** (P14) |
+| **D2** | La liquidación es **determinista** | Orden de salida y desempates dependen de `PriorityQueue` y `HashMap` (§4.3) | Orden total definido; mismo resultado sin importar el orden de entrada ni el de la base de datos | **Aprobado** · criterio de desempate: **por confirmar** (P4) |
+| **D3** | **Autenticación y pertenencia obligatorias** | Sin autenticación; el ID del grupo es la llave de acceso (§5, §6) | Solo con sesión de Pastel; cada grupo ligado a sus miembros y cada participante ligable a una cuenta; sin acceso por ID | **Aprobado** · permisos finos y administrador de grupos heredados: **por definir** (P8, P15) |
+| **D4** | **Corregir el campo de monto** (decimales) y validar el dinero | `type="number"` sin `step` (posible bloqueo de decimales), sin validación en cliente, sin límite de decimales en servidor (§3.3, §10.3) | Se pueden escribir y guardar montos con 2 decimales; validación en cliente **y** servidor | **Aprobado** |
+
+### 12.1 D1 — Asignación de los centavos sobrantes
+
+**Regla propuesta** (reemplaza `redondear_mitad_arriba(total / n, 2)` de §4.1; el cálculo se hace en **centavos enteros**):
+
+```
+partes(grupo):
+    n        = participantes del grupo, en orden de alta (posición 0 … n−1)
+    total_c  = Σ monto de todos los gastos, en centavos enteros   # los montos tienen exactamente 2 decimales (D4)
+    base     = total_c DIV n          # cociente entero
+    r        = total_c MOD n          # centavos que sobran, 0 ≤ r < n
+    parte[i] = base + 1   si posición(i) < r        # un centavo extra a los primeros r participantes
+             = base       en otro caso
+saldo[i] = pagado[i] − parte[i]
+```
+
+**Propiedades garantizadas** (probadas en 5 000 escenarios aleatorios de 1–25 participantes): `Σ partes = total` exacto; `Σ saldos = 0` exacto; dos partes cualesquiera difieren **a lo sumo 1 centavo**; no se usa `double`.
+
+**Ejemplos** (resultados completos en §9.3):
+
+- ₡100.00 entre 3 (G02): `10000 DIV 3 = 3333`, `MOD = 1` → partes `33.34 / 33.33 / 33.33` (suman 100.00). Saldos con Ana pagadora: `+66.66 / −33.33 / −33.33` (suman 0.00).
+- ₡200.00 entre 3 (G03): `20000 DIV 3 = 6666`, `MOD = 2` → `66.67 / 66.67 / 66.66`.
+- ₡0.05 entre 2 (G10): `5 DIV 2 = 2`, `MOD = 1` → `0.03 / 0.02`.
+- ₡0.01 entre 3 (G11): partes `0.01 / 0.00 / 0.00`; el saldo de quien pagó queda en `0.00` y ya no aparece un residuo sin liquidar.
+
+**Criterio de a quién se asigna cada centavo (por confirmar, P14).** Se propone el **orden de alta en el grupo** (estable, no depende del pagador ni del azar) porque es simple, determinista y fácil de explicar. Alternativas: asignarlo siempre a quien más pagó, o rotar. Cualquiera que se elija debe quedar en una sola función con prueba propia.
+
+**Consecuencias.**
+
+- Se retira el principio «reglas de redondeo idénticas a las actuales» de `BALANCE.md` §3 (principio 2). **Es un cambio aprobado y deliberado**, no un error de migración.
+- Las **entradas** (montos de gastos y quién pagó) no cambian; cambia el **saldo por persona hasta ±0.01**. Detalle de la verificación de importación en §12.5.
+- La liquidación ya no deja saldo sin cobrar: se cumple el invariante «al terminar, ambas colas están vacías». La implementación debe **fallar con error explícito** si el invariante se rompe, en lugar de ignorarlo (hoy SaldApp lo ignora silenciosamente).
+
+### 12.2 D2 — Liquidación determinista
+
+**Regla propuesta** (misma estrategia codiciosa que hoy, con orden **total** en lugar de heap):
+
+```
+liquidar(saldos, orden_alta):
+    deudores   = participantes con saldo < 0, ordenados por (deuda DESC, posición_alta ASC)
+    acreedores = participantes con saldo > 0, ordenados por (crédito DESC, posición_alta ASC)
+    mientras haya deudores Y acreedores:
+        d = primero(deudores) ; c = primero(acreedores)
+        monto = mín(deuda(d), crédito(c))                  # en centavos enteros
+        registrar  d → c : monto
+        restar monto a ambos; quitar de su lista a quien quede en 0;
+        reubicar a quien quede con saldo usando la MISMA clave de orden
+    # invariante (D1): al terminar no queda nadie con saldo
+```
+
+**Requisitos de determinismo.**
+
+1. El orden de alta se obtiene con un `ORDER BY` explícito (fecha de alta y, si empata, identificador); **nunca** del orden en que la base devuelve filas.
+2. El resultado **no debe cambiar** si se permuta el orden de los saldos de entrada (probado con permutaciones en 5 000 escenarios).
+3. Sin estructuras de iteración no ordenada (`HashMap`, `Set`) en el camino del cálculo.
+4. Los montos de las transferencias son enteros en centavos, convertidos a decimal solo al presentar.
+
+**Compatibilidad con SaldApp.** Donde SaldApp **no tenía empates** y la suma de saldos era 0, el resultado coincide con el actual (G01, G06–G09, G15, G16, G19, G20, G22, G29–G31). Donde había empates (G05, G12, G24–G26, G32) cambia **el orden** y, a veces, **quién paga a quién**, pero cada persona sigue pagando o recibiendo el mismo neto (§9.3).
+
+**Nota (no aprobada).** El algoritmo sigue sin minimizar el número de transferencias (G32: 4 en lugar de 3). Si se quisiera minimizar, sería un cambio aparte (**Recomendado**, ver §12.6).
+
+### 12.3 D3 — Autenticación, pertenencia y ligado de cuentas
+
+Balance ya cuenta con autenticación de Pastel; **ningún dato ni endpoint de Balance puede quedar abierto**. Cambios requeridos respecto a SaldApp:
+
+1. **Sesión obligatoria** en todo endpoint de Balance (inicio de sesión con Google, cookie `HttpOnly`; la autorización se verifica siempre en el servidor, nunca solo en la interfaz).
+2. **Permisos de plataforma:** `balance.access` para usar el módulo y `balance.groups.manage` para operaciones de administración (según `BALANCE.md`).
+3. **Se elimina el ID como llave de acceso.** Desaparece «Ingresar a grupo existente por ID»; se reemplaza por **«Mis grupos»** (listado de los grupos de los que la persona es miembro). Un grupo del que no se es miembro **no existe** para esa persona: responde **404** (no 409 como hoy).
+4. **Quien crea un grupo es su administrador.** Los grupos tienen miembros con rol de grupo (`administrador` / `miembro`), dato del dominio y no rol de plataforma.
+5. **Ligado de participantes a cuentas.** Hoy un integrante es solo un nombre. En Balance, cada participante puede (a) estar ligado a una cuenta de Pastel, o (b) ser un **invitado sin cuenta** (solo nombre) que luego se liga cuando esa persona acepta una invitación con su cuenta de Google. Un participante ligado ve el grupo en «Mis grupos».
+6. **Datos heredados:** los integrantes importados entran como participantes **sin cuenta** (SaldApp no guarda correos) y cada grupo importado necesita un **administrador asignado** por el propietario antes de poder abrirse (P8). Los grupos heredados **no pueden quedar visibles para todos**.
+7. **Se apaga el acceso viejo** (API y Swagger de SaldApp) al terminar la migración (P11).
+8. **Pruebas de acceso obligatorias:** persona ajena a un grupo → 404 en lectura y escritura de todos sus recursos (grupo, participantes, gastos, saldos, liquidación); sin sesión → 401; sin `balance.access` → 403; `miembro` intentando acciones reservadas al administrador → 403.
+
+**Por definir (P15):** qué puede hacer un `miembro` frente a un `administrador` (¿quién edita o borra gastos de otros? ¿quién cierra el grupo? ¿quién invita?). Corresponde al ADR del modelo de participantes que pide `BALANCE.md`.
+
+### 12.4 D4 — Campo de monto y validación del dinero
+
+**Problema en SaldApp.** `ExpenseForm.jsx` usa `<input type="number">` **sin `step`**; por defecto los navegadores solo aceptan enteros al enviar el formulario, por lo que valores como `12.50` pueden ser rechazados **[NO VERIFICADO en navegador]**. No hay validación en cliente y el servidor no limita decimales (§3.3).
+
+**Corrección requerida en la interfaz de Balance.**
+
+1. El campo acepta montos con **hasta 2 decimales** y admite coma o punto como separador decimal (es-CR); se muestra con el formato de la moneda del grupo.
+2. Abre el teclado numérico con decimales en móvil (`inputMode="decimal"`); si se usa `type="number"`, debe llevar `step="0.01"` y `min="0.01"`.
+3. **Validación en cliente** con mensajes en español, junto al campo (no solo color): vacío, ≤ 0, más de 2 decimales, mayor al máximo permitido.
+4. La misma regla aplica **a crear y a editar** gastos, y a cualquier otro campo de dinero.
+5. Los totales y la parte por persona se **muestran tal como los calcula el servidor**; se elimina el cálculo en coma flotante de JavaScript (§10.3, punto 4).
+
+**Corrección requerida en el servidor.**
+
+1. Monto `> 0`, **a lo sumo 2 decimales** y dentro del máximo de `numeric(18,2)` (según `BALANCE.md`); si no, error **400** con código de validación explícito (nunca redondeo silencioso ni error 500).
+2. Cálculo en `decimal`/centavos enteros, nunca `double` (ya exigido por la ficha).
+3. En SaldApp el caso G28 (monto `10.005`) quedaba indefinido; en Balance es **error de validación** (§9.3).
+
+**Criterios de aceptación.** Se puede guardar `12.50`, `12,50`, `0.01` y el máximo permitido; se rechazan `12.505`, `0`, `-5`, vacío y texto, con mensaje claro; en edición se conserva el valor con sus 2 decimales; el equivalente de G28 devuelve 400; prueba de interfaz en móvil.
+
+### 12.5 Efecto sobre pruebas, importación y documentación
+
+- **Casos dorados.** §9.2 queda como **referencia de SaldApp («antes»)**; §9.3 fija el **resultado esperado en Balance** para los casos que cambian. Para los casos sin cambio vale directamente §9.2. Las pruebas de Balance deben cubrir además las propiedades de D1 y D2 (sumas exactas, permutación de entrada, invariante final).
+- **Verificación de la importación** (`BALANCE.md` §3.3 pedía «antes y después»). Con D1 el criterio pasa a ser: (a) **exactos:** cantidad de grupos, participantes y gastos; suma de gastos por grupo; total pagado por participante; (b) **saldo por participante:** la diferencia `Balance − SaldApp` es `−0.01`, `0.00` o `+0.01` (verificado en 20 000 escenarios y por razonamiento: tanto la parte de SaldApp como la de Balance valen `base` o `base + 1` centavo), y `Σ saldos de Balance = 0.00`; (c) en grupos donde `total mod n = 0` los saldos son **idénticos**; (d) el informe de importación lista cada grupo y persona con diferencia ≠ 0 para revisión del propietario.
+- **Grupos ya cerrados.** SaldApp nunca guardó la liquidación final (se recalcula en cada lectura), así que no hay cifras «congeladas» que respetar. Se propone **recalcular con D1/D2** y mostrar en el informe las diferencias de centavos (P17).
+- **Documentación a actualizar** (no se modificó aquí; corresponde a quien mantiene las fichas): `docs/modules/BALANCE.md` §3 principio 2 («reglas de redondeo idénticas a las actuales») queda **obsoleto**; el plan de pruebas punto 2 debe citar la **regla D1** en lugar de «la regla documentada del sistema anterior»; agregar D2, D3 y D4 al alcance.
+
+### 12.6 Mejoras recomendadas (no aprobadas aún)
+
+Detectadas en este inventario; se listan para que el propietario decida cuáles entran en la migración.
+
+| Mejora | Origen | Estado |
+|---|---|---|
+| Listado de **todos** los gastos del grupo (hoy solo por pagador) y orden definido | §10.3 (8) | Recomendado |
+| Permitir **editar la fecha** de un gasto | §2 | Recomendado (P12) |
+| Control de **edición simultánea** (409) | §3.2, ficha | Requerido por la ficha |
+| Errores y textos **en español**, sin voseo, con `problem+json` | §10.2, §10.3 (3, 12) | Recomendado / ficha |
+| Accesibilidad (diálogos, foco, no depender del color, 320 px) | §10.3 (11) | Requerido por `AGENTS.md` |
+| Corregir mensaje «No hay deudas pendientes» y la falla silenciosa de liquidación | §10.3 (6, 7) | Recomendado |
+| **Moneda como código ISO 4217** y mapeo desde símbolos | R7 | Requerido por la ficha |
+| Registrar **pagos realizados** y poder **reabrir** un grupo | P7 | Por decidir |
+| Participación **parcial** por gasto / reparto no igualitario | §4.1 | Alcance nuevo, por decidir (P5) |
+| Borrar grupos | §2 | Por decidir (P12) |
+| Minimizar el número de transferencias | G32 | Opcional |
 
 ---
 
@@ -1368,4 +1560,5 @@ public class SettlementCalculator {
 1. Se copió `SettlementCalculator.java` quitando solo `package` e `import com.lmora…`; `Balance` y `Transaction` se reescribieron sin Lombok; un `Harness` con la réplica literal de `calculateGroupBalances` (A.2) lee escenarios de la forma `ids=1,2,3;exp=1:100.00,2:50.00` (o `raw=1:-90,2:60` para llamar al calculador directamente), imprime saldos en el orden del `HashMap` y las transferencias en el orden de salida.
 2. Compilación y ejecución con OpenJDK 21 (`jdk.compiler`). Cada escenario con ediciones/bajas se evaluó por separado tras cada operación con el estado resultante.
 3. La emulación independiente del §4.3 (`HashMap` + montículo + liquidación) se comparó con el Java real en 3 000 escenarios aleatorios: 0 discrepancias.
-4. **Limitaciones:** no se ejecutó la aplicación Spring, PostgreSQL ni `mvn test`; los códigos HTTP y los mensajes de error se **calcularon** leyendo el código.
+4. **Reglas de Balance (§9.3, §12):** se implementaron D1 y D2 en una emulación aparte y se verificaron con propiedades en 5 000 escenarios aleatorios (sumas exactas, invariante final, independencia del orden de entrada) y la cota de ±0.01 por persona frente a SaldApp en 20 000.
+5. **Limitaciones:** no se ejecutó la aplicación Spring, PostgreSQL ni `mvn test`; los códigos HTTP y los mensajes de error se **calcularon** leyendo el código.
