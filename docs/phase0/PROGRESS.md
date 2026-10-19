@@ -103,7 +103,23 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
   6. `IdentityErrors.cs` no resolvía `PasswordPolicy`; se importó `Pastel.Modules.Identity.Security`.
 - **Qué significa el resultado:** el usuario confirma que `docker compose build` ya termina correctamente. Esto valida la construcción de las imágenes en ese estado del código; no equivale a confirmar el arranque completo ni a aprobar WP1–WP4. Los seis arreglos se hicieron en `refactor/modular-foundation`.
 - **Bloqueo de arranque conocido:** al iniciar, la API lanza `InvalidOperationException: No se encontraron migraciones de EF Core para IdentityDbContext en Pastel.Modules.Identity`. No existe todavía la migración inicial de Identity. Build debe generarla con `dotnet ef`, revisar el resultado, reconstruir e iniciar los servicios y verificar los logs y pruebas de integración.
-- **Siguiente paso inmediato:** generar e incorporar la migración inicial EF Core de Identity; después ejecutar `docker compose up -d`, `docker compose ps` y revisar `docker compose logs --tail=150 api`. No borrar volúmenes ni desactivar las migraciones para ocultar el bloqueo.
+- **Intento de generación de migración en la sesión del agente (2026-10-19):** se confirmó que existe `src/Modules/Identity/Pastel.Modules.Identity/Persistence/IdentityDbContextFactory.cs`, que permite usar EF sin iniciar el host. No se generó la migración aquí porque esta sesión no dispone de `dotnet` ni Docker y el entorno no puede resolver `dot.net`; no se escribieron archivos de migración manualmente.
+- **Comando para generar la migración en el entorno local** (desde la raíz del repositorio, en PowerShell). La cadena de conexión se usa para configurar el proveedor durante el diseño; la generación no requiere que el servidor PostgreSQL esté disponible:
+
+  ```powershell
+  $env:ConnectionStrings__Default = "Host=localhost;Port=5432;Database=pastel;Username=pastel;Password=design-time-only"
+  # Ejecutar solo si dotnet-ef 10.0.13 aún no está instalado:
+  dotnet tool install --global dotnet-ef --version 10.0.13
+
+  dotnet ef migrations add InitialIdentity `
+    --project src/Modules/Identity/Pastel.Modules.Identity/Pastel.Modules.Identity.csproj `
+    --startup-project src/Modules/Identity/Pastel.Modules.Identity/Pastel.Modules.Identity.csproj `
+    --context Pastel.Modules.Identity.Persistence.IdentityDbContext `
+    --output-dir Persistence/Migrations
+  ```
+
+  Revisar que se generen los archivos de migración y `IdentityDbContextModelSnapshot.cs` en `src/Modules/Identity/Pastel.Modules.Identity/Persistence/Migrations`; luego revisar `git diff --check`, reconstruir e iniciar Docker y comprobar los logs.
+- **Siguiente paso inmediato:** ejecutar el comando anterior en un entorno con .NET SDK 10 y acceso a NuGet, incorporar los archivos generados y después ejecutar `docker compose up -d`, `docker compose ps` y revisar `docker compose logs --tail=150 api`. No borrar volúmenes ni desactivar las migraciones para ocultar el bloqueo.
 - **Validación que sigue pendiente:** no hay constancia de que las pruebas automatizadas de WP1/WP3/WP4 se hayan ejecutado ni de que la API haya arrancado con éxito. La compilación Docker reportada por el usuario sí fue exitosa; no extrapolar ese resultado a pruebas, migraciones o funcionamiento de login.
 - WP1 sigue pendiente de línea base y reporte C1 sobre `dev@7ba6f1c`. WP2–WP4 necesitan verificación de Build/QA; en particular, migración, pruebas de Identity, traducción EF de `PermissionEvaluator`, límite de consultas, sesiones/refresh, concurrencia y validación de seguridad.
 - WP5 (Google OAuth) no se ha iniciado. No abrir PR, hacer merge ni integrar en `dev` sin autorización explícita del propietario.
