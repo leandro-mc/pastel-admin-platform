@@ -114,6 +114,7 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
             isActive = user.IsActive,
             lockoutEnd = user.LockoutEnd,
             accessFailedCount = user.AccessFailedCount,
+            activeRefreshTokens = await db.RefreshTokens.CountAsync(x => x.UserId == user.Id && x.RevokedAt == null, cancellationToken),
         };
         db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = adminRole.Id });
         user.IsActive = true;
@@ -121,9 +122,15 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
         user.AccessFailedCount = 0;
         user.TokenVersion++;
         user.UpdatedAt = now;
+        var activeTokens = await db.RefreshTokens.Where(x => x.UserId == user.Id && x.RevokedAt == null).ToListAsync(cancellationToken);
+        foreach (var token in activeTokens)
+        {
+            token.RevokedAt = now;
+        }
+
         audit.Add(new AuditRecord(
             "identity.bootstrap.admin_restored", "identity", null, user.Id, "cuenta de arranque",
-            Before: beforeState, After: new { isAdministrator = true, isActive = true, lockoutEnd = (DateTimeOffset?)null, accessFailedCount = 0 }));
+            Before: beforeState, After: new { isAdministrator = true, isActive = true, lockoutEnd = (DateTimeOffset?)null, accessFailedCount = 0, refreshTokensRevoked = activeTokens.Count }));
         await db.SaveChangesAsync(cancellationToken);
         return (BootstrapResult.Restored, user.Id);
     }
