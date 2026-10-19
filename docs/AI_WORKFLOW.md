@@ -80,7 +80,7 @@ Por defecto, termina el trabajo en `dev`. Nunca interpretes que pedir una funcio
 
 ## 5. Validación mínima
 
-La CI no se ejecuta automáticamente con cada push a ramas de trabajo. Se ejecuta en pushes a `dev`/`main`, al abrir/reabrir un PR, al marcarlo listo para revisión y con nuevos pushes a un PR que ya no está en borrador. También puede iniciarse manualmente desde **Actions → CI → Run workflow**. Los PR en borrador no consumen ejecuciones. El workflow no se desactiva: solo se difiere la validación completa hasta que la tarea esté lista.
+La CI no se ejecuta automáticamente con cada push a ramas de trabajo. Se ejecuta en pushes a `dev`/`main`, al abrir/reabrir un PR, al marcarlo listo para revisión y con nuevos pushes a un PR que ya no está en borrador. También puede iniciarse manualmente desde **Actions → CI → Run workflow**. Los PR en borrador pueden dejar un run con los trabajos omitidos, pero no consumen minutos de runner. El workflow no se desactiva: solo se difiere la validación completa hasta que la tarea esté lista.
 
 Ejecuta lo aplicable y reporta exactamente qué pasó y qué no pudo ejecutarse. Sin entorno de compilación (rol Dev) no ejecutes ni simules estos comandos: declara «sin compilar».
 
@@ -91,7 +91,7 @@ dotnet restore Pastel.slnx
 dotnet build Pastel.slnx --configuration Release --no-restore
 dotnet test Pastel.slnx --configuration Release --no-build --no-restore
 Push-Location web
-npm install --no-audit --no-fund
+npm ci --no-audit --no-fund
 npm run format:check
 npm run build
 npm run lint
