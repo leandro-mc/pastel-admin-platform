@@ -4,12 +4,12 @@
     <UserSecretsId>pastel-admin-api-local</UserSecretsId>
     <!--
       Módulos incluidos en la compilación. "*" (por defecto) incluye todos los que existan en src/Modules.
-      Lista separada por ";" o ",", con el nombre de la carpeta o el código del módulo (sin distinguir mayúsculas):
+      Lista separada por ";" o ",", con el nombre de carpeta respetando su capitalización:
         dotnet build -p:PastelModules=Brisa;Balance
       Identity siempre se incluye. Ver docs/SPLIT_GUIDE.md.
     -->
     <PastelModules Condition="'$(PastelModules)' == ''">*</PastelModules>
-    <PastelModulesList>$([System.Globalization.CultureInfo]::InvariantCulture.TextInfo.ToTitleCase($([System.String]::Copy('$(PastelModules)').Replace(',', ';').ToLowerInvariant())))</PastelModulesList>
+    <PastelModulesList>$([System.String]::Copy('$(PastelModules)').Replace(',', ';'))</PastelModulesList>
   </PropertyGroup>
 
   <ItemGroup>
