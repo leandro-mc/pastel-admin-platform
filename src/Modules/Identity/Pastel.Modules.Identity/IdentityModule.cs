@@ -64,6 +64,13 @@ internal sealed class IdentityModule : IPastelModule
             .Validate(x => x.Refresh.ReuseGraceSeconds is >= 0 and <= 60, "Auth:Refresh:ReuseGraceSeconds debe estar entre 0 y 60.")
             .ValidateOnStart();
 
+        services.AddOptions<IdentityRetentionOptions>()
+            .Bind(configuration.GetSection(IdentityRetentionOptions.SectionName))
+            .Validate(x => x.ExpiredRefreshTokenDays is >= 30 and <= 3650, "Identity:Retention:ExpiredRefreshTokenDays debe estar entre 30 y 3650.")
+            .Validate(x => x.AuditLogRetentionDays is >= 30 and <= 3650, "Identity:Retention:AuditLogRetentionDays debe estar entre 30 y 3650.")
+            .Validate(x => x.CleanupIntervalHours is >= 1 and <= 168, "Identity:Retention:CleanupIntervalHours debe estar entre 1 y 168.")
+            .ValidateOnStart();
+
         services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
         services.Configure<PasswordHasherOptions>(options => options.IterationCount = 600_000);
 
@@ -80,6 +87,7 @@ internal sealed class IdentityModule : IPastelModule
         services.AddSingleton<IPastelStartupTask, ProductionSecurityValidationTask>();
         services.AddSingleton<IPastelStartupTask, CatalogSyncTask>();
         services.AddSingleton<IPastelStartupTask, BootstrapAdminTask>();
+        services.AddHostedService<IdentityRetentionService>();
 
         // Con contraseña temporal solo se permite lo necesario para cambiarla o salir.
         services.Configure<ForcePasswordChangeOptions>(options =>
