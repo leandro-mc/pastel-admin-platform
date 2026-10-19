@@ -9,6 +9,10 @@ export default tseslint.config(
   {
     files: ["**/*.{ts,tsx}"],
     languageOptions: { globals: { ...globals.browser, ...globals.node } },
-    rules: { "@typescript-eslint/no-explicit-any": "error" },
+    // Se usa core/log en lugar de console (ERROR_HANDLING_AND_LOGGING.md §3).
+    rules: {
+      "@typescript-eslint/no-explicit-any": "error",
+      "no-console": "error",
+    },
   },
 );

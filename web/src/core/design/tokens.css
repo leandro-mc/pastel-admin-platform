@@ -1,0 +1,21 @@
+/*
+ * PUENTE TRANSITORIO (WP7 -> WP8). Expone como utilidades de Tailwind (bg-surface, text-fg, border-line, bg-accent...)
+ * las variables de color que hoy define src/styles.css. `inline` mantiene el valor vivo: cambia con data-theme y con
+ * data-module (module-themes.css). WP8 mueve los valores a este archivo, elimina styles.css y conserva estos nombres.
+ */
+@theme inline {
+  --color-app: var(--app-bg);
+  --color-surface: var(--surface);
+  --color-surface-raised: var(--surface-raised);
+  --color-fg: var(--text);
+  --color-fg-secondary: var(--text-secondary);
+  --color-muted: var(--muted);
+  --color-line: var(--border);
+  --color-line-strong: var(--border-strong);
+  --color-accent: var(--accent);
+  --color-accent-strong: var(--accent-strong);
+  --color-accent-soft: var(--accent-soft);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+}
