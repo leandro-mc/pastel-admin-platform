@@ -2,10 +2,16 @@
 
 Rama: `refactor/modular-foundation`. Base: `origin/dev`. Este archivo permite retomar el trabajo sin el chat.
 
-## Reglas vigentes de trabajo
-- Dev escribe solo código de la aplicación. No escribe pruebas, planes de prueba ni migraciones (Build usa `dotnet ef`).
-- WP1 (red de seguridad) lo ejecuta Build. Dev empieza en WP2.
-- Se publica en C2 (tras WP5), C3 (tras WP8) y C4 (final), además de los checkpoints de protección de trabajo.
+## Sincronización con `dev`
+- `dev` = `7ba6f1c` (PR #24 fusionado). Integrado en esta rama con merge `e1fa940`, sin conflictos. No se reinició la fase.
+- Reglas vigentes tras PR #24 (leídas en `AGENTS.md`, `docs/AI_WORKFLOW.md`, `docs/TESTING_STRATEGY.md`, `docs/phase0/FASE-0-REFACTOR-BASE.md`):
+  - Dev implementa código de aplicación. Si su entorno compila, debe compilar y reportar; si no, publica sin compilar y lo declara. No escribe pruebas, planes ni migraciones (Build usa `dotnet ef`).
+  - WP1 (red de seguridad) lo ejecuta Build. Dev empieza en WP2.
+  - Checkpoints de push libres en esta rama; no disparan CI. Puntos formales: C2 (tras WP5), C3 (tras WP8) y C4 (final).
+  - **No abrir PR ni integrar a `dev` sin autorización explícita.** Build y QA pueden ser una sola sesión.
+  - Tono: sin voseo por defecto; solo se permite si la ficha del módulo lo autoriza. Ninguna ficha actual lo autoriza.
+  - CI (WP9): `push` solo a `dev`/`main`; `pull_request` (opened, reopened, ready_for_review, synchronize) saltando borradores; `workflow_dispatch`; `concurrency` con cancelación.
+    `dev` ya trae esa base en `.github/workflows/ci.yml`; WP9 la conserva y añade los trabajos nuevos.
 - Todo lo marcado «sin compilar» no se compiló ni se ejecutó con `dotnet build` completo (ver «Entorno»).
 
 ## Entorno de este agente
@@ -54,6 +60,12 @@ Rama: `refactor/modular-foundation`. Base: `origin/dev`. Este archivo permite re
 
 ## Datos para pruebas
 Pendiente (WP10).
+
+## Checkpoints publicados
+| Fecha | SHA | Contenido |
+|---|---|---|
+| checkpoint 1 | `145637f` | Estructura movida con `git mv`, SharedKernel y Platform |
+| checkpoint 2 | (merge de `dev` 7ba6f1c) | Integración de reglas actualizadas |
 
 ## Próximo paso
 Reescribir contenido de Identity (WP3) y el Host (WP2), luego WP4 y WP5; publicar C2.
