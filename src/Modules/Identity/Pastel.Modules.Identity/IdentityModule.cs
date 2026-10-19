@@ -59,6 +59,7 @@ internal sealed class IdentityModule : IPastelModule
 
         services.AddSingleton<ITokenService, JwtTokenService>();
         services.AddSingleton<RefreshGraceProtector>();
+        services.AddSingleton<LoginAccountRateLimiter>();
         services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IAuditTrail, AuditTrail>();

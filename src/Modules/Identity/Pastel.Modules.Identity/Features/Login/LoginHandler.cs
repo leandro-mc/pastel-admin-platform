@@ -19,6 +19,7 @@ internal sealed class LoginHandler(
     IAuditTrail audit,
     IClock clock,
     IOptions<AuthOptions> auth,
+    LoginAccountRateLimiter accountLimiter,
     LogHasher logHasher,
     ILogger<LoginHandler> logger)
 {
@@ -48,6 +49,13 @@ internal sealed class LoginHandler(
         var password = request.Password ?? string.Empty;
         if (email.Length > 320 || password.Length is 0 or > MaxPasswordLength)
         {
+            return IdentityErrors.InvalidCredentials;
+        }
+
+        if (!accountLimiter.TryAcquire(email))
+        {
+            // Respuesta idéntica a credenciales inválidas para no revelar si una cuenta llegó al límite.
+            logger.LogWarning(IdentityEventIds.LoginFailed, "Límite de intentos de ingreso alcanzado para {AccountHash}", logHasher.Hash(email));
             return IdentityErrors.InvalidCredentials;
         }
 
