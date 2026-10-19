@@ -22,7 +22,22 @@ internal sealed class LoginAccountRateLimiter(LogHasher logHasher, IClock clock)
     {
         var now = clock.UtcNow;
         var key = logHasher.Hash(normalizedEmail);
-        var window = _windows.GetOrAdd(key, _ => new AttemptWindow(now));
+        if (!_windows.TryGetValue(key, out var window))
+        {
+            if (_windows.Count >= MaxTrackedAccounts)
+            {
+                RemoveExpiredEntries(now);
+                // Si todavía está lleno, rechaza nuevas identidades hasta que expiren entradas antiguas.
+                // Las identidades ya rastreadas siguen teniendo su cuota normal.
+                if (_windows.Count >= MaxTrackedAccounts)
+                {
+                    return false;
+                }
+            }
+
+            window = _windows.GetOrAdd(key, _ => new AttemptWindow(now));
+        }
+
         bool allowed;
 
         lock (window)
