@@ -50,7 +50,16 @@ public static class PastelHostingExtensions
         var services = builder.Services;
         var configuration = builder.Configuration;
 
-        services.AddSingleton<UniqueViolationMap>();
+        services.AddSingleton(provider =>
+        {
+            var map = new UniqueViolationMap();
+            foreach (var source in provider.GetServices<IUniqueViolationSource>())
+            {
+                source.Register(map);
+            }
+
+            return map;
+        });
         services.AddExceptionHandler<PastelExceptionHandler>();
         services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
         {

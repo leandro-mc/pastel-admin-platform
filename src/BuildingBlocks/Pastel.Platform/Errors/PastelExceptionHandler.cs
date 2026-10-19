@@ -37,6 +37,12 @@ public sealed class UniqueViolationMap
     }
 }
 
+/// <summary>Un módulo implementa esto para registrar sus índices únicos en el <see cref="UniqueViolationMap"/> (se resuelve al crear el mapa).</summary>
+public interface IUniqueViolationSource
+{
+    void Register(UniqueViolationMap map);
+}
+
 /// <summary>Único traductor de excepciones a respuestas. Nunca devuelve <c>ex.Message</c>.</summary>
 internal sealed class PastelExceptionHandler(ILogger<PastelExceptionHandler> logger, UniqueViolationMap uniqueMap) : IExceptionHandler
 {

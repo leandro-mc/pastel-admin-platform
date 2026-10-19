@@ -154,3 +154,17 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Observaciones para WP3/WP5 (no son defectos de WP2):** Identity debe llenar `ForcePasswordChangeOptions.AllowedPaths`, registrar `UniqueViolationMap` (correo, nombre de rol) y, en WP5, `PublicBaseUrlOptions.PathPrefixes`.
 - **Validaciones ejecutadas:** lectura de código. No se ejecutó compilación (en esta sesión `dotnet` no está instalado y NuGet no es accesible).
 - **Siguiente acción:** WP3: `IdentityModule` + `BootstrapAdminTask`.
+
+### S4-02 · WP3.4 · Piezas comunes, `BootstrapAdminTask` e `IdentityModule`
+- **Último commit conocido antes:** `dd3ae22` (S4-01).
+- **Cambios (Platform):** `IUniqueViolationSource` (cada módulo registra sus índices únicos al crear `UniqueViolationMap`; resuelve la observación de S4-01).
+- **Cambios (Identity):** `Common/IdentityErrors` (códigos `identity.*`), `Common/FieldErrors`, `Common/Contracts` (mismos campos JSON que los contratos anteriores; `AuditEntry` suma `module` y `traceId`),
+  `Common/UserMapping`; `Security/PasswordPolicy` (regla vigente; WP4 la reemplaza); `Startup/BootstrapAdminTask` (orden 20, crea la cuenta de arranque o restaura el rol y lo audita como `identity.bootstrap.admin_restored`;
+  no registra el correo); `IdentityModule` (`[assembly: PastelModule]`, DbContext, opciones validadas, hasher con 600 000 iteraciones, evaluador/usuario actual/auditoría, tareas de arranque, `Member` con `dashboard.view`
+  como rol sugerido, rutas permitidas con contraseña temporal: `/api/auth/me`, `/change-password`, `/logout`); `Features/IdentityEndpoints` (punto de enlace, aún sin slices).
+- **Decisiones:** (1) la contraseña actual incorrecta en cambio de contraseña pasa de 401 a **400** con `identity.password.current_incorrect` (un 401 dispararía el refresco automático de WP7). (2) `Login` y `Register` respetan `Auth:Local:*` (registro desactivado por defecto, plan §2).
+  (3) Los nombres de índice únicos se buscan por fragmento (`users_NormalizedEmail`, `roles_NormalizedName`) porque las columnas siguen con nombre por defecto.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Sin compilar:** todo lo anterior.
+- **Pendiente WP3:** slices (`Login`, `Register`, `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`, `GetCsrfToken`, administración de usuarios/roles/módulos/permisos/auditoría), retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs` cuando sus slices lo sustituyan, adaptar `SecurityPolicyTests.cs` (movido con `git mv`; lo adapta Build).
+- **Siguiente acción:** `Security/SessionCookies` + `SessionIssuer` y los slices de `/api/auth/*`.
