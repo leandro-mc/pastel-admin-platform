@@ -10,4 +10,7 @@
     <Project Path="src/Modules/Identity/Pastel.Modules.Identity/Pastel.Modules.Identity.csproj" />
     <Project Path="src/Modules/Identity/Pastel.Modules.Identity.Tests/Pastel.Modules.Identity.Tests.csproj" />
   </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/Pastel.IntegrationTests/Pastel.IntegrationTests.csproj" />
+  </Folder>
 </Solution>
