@@ -46,15 +46,11 @@ La bitácora hasta S4-07 registra:
 - `CreateModule` se retiró y no se debe recrear.
 - Las validaciones registradas para estos checkpoints fueron principalmente `git diff --check`; **no hay constancia de compilación completa ni de pruebas ejecutadas**.
 
-### Bloqueo de cierre confirmado por inspección de archivos
+### Legado de las capas antiguas (resuelto)
 
-Estos tres archivos todavía existen en la rama y conservan namespaces/usings de las capas anteriores que fueron retiradas. El agente siguiente debe inspeccionar sus referencias y retirar el legado con seguridad:
+`PrivilegeGuard.cs` (antiguo `AdministrationService`), `SessionService.cs` (antiguo `AuthService`) y `DatabaseSeeder.cs` se **eliminaron** tras comprobar que no tenían consumidores y que su lógica vive en los slices de `Features/*`, `CatalogSyncTask` y `BootstrapAdminTask` (único método sin reemplazo: `CreateModule`, retirado a propósito). Sin compilar; solo búsqueda de referencias.
 
-- `src/Modules/Identity/Pastel.Modules.Identity/Security/PrivilegeGuard.cs` — contiene el antiguo `AdministrationService`, namespace `Pastel.Infrastructure.Services`.
-- `src/Modules/Identity/Pastel.Modules.Identity/Security/SessionService.cs` — contiene el antiguo `AuthService`, namespace `Pastel.Infrastructure.Services`.
-- `src/Modules/Identity/Pastel.Modules.Identity/Persistence/DatabaseSeeder.cs` — conserva namespace/imports de `Pastel.Infrastructure` y entidades de `Pastel.Domain`.
-
-La bitácora indica que la lógica de esos archivos ya fue reemplazada por los nuevos slices/tareas, pero eso debe confirmarse mediante búsquedas de referencias. Si no quedan consumidores legítimos, elimínalos; si algo sigue siendo necesario, migra la lógica al componente modular correcto antes de borrarlos. No conserves clases heredadas solo para evitar revisar referencias.
+Pendiente para Build en `Pastel.Modules.Identity.Tests`: la carpeta aún usa `RootNamespace` `Pastel.Application.Tests`, una `ProjectReference` a `Pastel.Application` y `using Pastel.Application.Contracts`/`Pastel.Domain.Entities`. Es código de pruebas: lo adapta Build, no Dev.
 
 ### Lista de cierre obligatoria para WP3
 
