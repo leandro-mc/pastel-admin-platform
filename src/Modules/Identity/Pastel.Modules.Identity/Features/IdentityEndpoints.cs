@@ -6,6 +6,7 @@ using Pastel.Modules.Identity.Features.CreateRole;
 using Pastel.Modules.Identity.Features.CreateUser;
 using Pastel.Modules.Identity.Features.GetCsrfToken;
 using Pastel.Modules.Identity.Features.GetCurrentUser;
+using Pastel.Modules.Identity.Features.GetAuthOptions;
 using Pastel.Modules.Identity.Features.GetUserPermissions;
 using Pastel.Modules.Identity.Features.ListAudit;
 using Pastel.Modules.Identity.Features.ListModules;
@@ -59,6 +60,7 @@ internal static class IdentityEndpoints
     {
         var auth = apiRoot.MapGroup("/auth");
         GetCsrfTokenEndpoint.Map(auth);
+        GetAuthOptionsEndpoint.Map(auth);
         LoginEndpoint.Map(auth);
         RegisterEndpoint.Map(auth);
         RefreshEndpoint.Map(auth);
