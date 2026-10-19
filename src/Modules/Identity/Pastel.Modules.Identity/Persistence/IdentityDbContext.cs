@@ -16,6 +16,7 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserPermissionOverride> UserPermissionOverrides => Set<UserPermissionOverride>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<ExternalLogin> ExternalLogins => Set<ExternalLogin>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -103,6 +104,23 @@ internal sealed class IdentityDbContext(DbContextOptions<IdentityDbContext> opti
             e.HasIndex(x => x.TokenHash).IsUnique();
             e.HasIndex(x => new { x.UserId, x.ExpiresAt });
             e.HasOne(x => x.User).WithMany(x => x.RefreshTokens).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        modelBuilder.Entity<ExternalLogin>(e =>
+        {
+            e.ToTable("external_logins");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Id).HasColumnName("id");
+            e.Property(x => x.UserId).HasColumnName("user_id");
+            e.Property(x => x.Provider).HasColumnName("provider").HasMaxLength(32).IsRequired();
+            e.Property(x => x.ProviderSubject).HasColumnName("provider_subject").HasMaxLength(255).IsRequired();
+            e.Property(x => x.EmailAtLink).HasColumnName("email_at_link").HasMaxLength(320).IsRequired();
+            e.Property(x => x.EmailVerified).HasColumnName("email_verified");
+            e.Property(x => x.CreatedAt).HasColumnName("created_at");
+            e.Property(x => x.LastLoginAt).HasColumnName("last_login_at");
+            e.HasIndex(x => new { x.Provider, x.ProviderSubject }).IsUnique();
+            e.HasIndex(x => new { x.UserId, x.Provider }).IsUnique();
+            e.HasOne(x => x.User).WithMany(x => x.ExternalLogins).HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         modelBuilder.Entity<AuditLog>(e =>
