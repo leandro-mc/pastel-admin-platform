@@ -27,7 +27,7 @@ export default function ModuleLayout({
       {hasNav ? (
         <nav
           aria-label={shellStrings.moduleNav(manifest.name)}
-          className="fixed inset-x-0 bottom-0 z-30 flex gap-1 border-t border-line bg-surface p-1 md:static md:min-h-[calc(100vh-3.5rem)] md:w-56 md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-t-0 md:p-3"
+          className="fixed inset-x-0 bottom-0 z-30 flex gap-1 border-t border-line bg-surface p-1 md:static md:min-h-[calc(100vh-3.5rem)] md:w-56 md:shrink-0 md:flex-col md:gap-1 md:border-t-0 md:border-r md:p-3"
         >
           {items.map((item) => (
             <NavLink
