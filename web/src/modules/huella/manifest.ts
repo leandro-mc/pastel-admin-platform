@@ -7,6 +7,7 @@ export default {
   name: strings.name,
   tagline: strings.tagline,
   icon: Footprints,
+  order: 50,
   basePath: "/huella",
   access: "public",
   requiredPermission: "huella.access",

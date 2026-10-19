@@ -7,6 +7,7 @@ export default {
   name: strings.name,
   tagline: strings.tagline,
   icon: ListChecks,
+  order: 10,
   basePath: "/brisa",
   access: "permission",
   requiredPermission: "brisa.access",
