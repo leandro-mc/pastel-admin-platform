@@ -28,6 +28,10 @@ export type ModuleManifest = {
   access: ModuleAccess;
   /** Permiso que habilita el módulo en el hub y el router (p. ej. `cosecha.access`). */
   requiredPermission?: string;
+  /** Alternativa a `requiredPermission`: basta con tener uno de estos permisos (p. ej. Configuración). */
+  requiredAnyPermission?: readonly string[];
+  /** Posición en el hub y en el selector (menor primero). Sin valor, va al final. */
+  order?: number;
   nav: ModuleNavItem[];
   routes: ModuleRoute[];
 };

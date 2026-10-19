@@ -7,6 +7,7 @@ export default {
   name: strings.name,
   tagline: strings.tagline,
   icon: Landmark,
+  order: 30,
   basePath: "/agora",
   access: "public",
   requiredPermission: "agora.access",

@@ -1,5 +1,9 @@
+using System.Text.Json.Serialization;
+
 namespace Pastel.Modules.Identity.Domain;
 
+/// <summary>Efecto de una excepción individual. Viaja como texto (<c>"Grant"</c>/<c>"Deny"</c>) en la API y en la auditoría; en la base sigue siendo entero.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
 internal enum PermissionEffect { Deny = 0, Grant = 1 }
 
 internal sealed class UserPermissionOverride

@@ -7,6 +7,7 @@ export default {
   name: strings.name,
   tagline: strings.tagline,
   icon: Scale,
+  order: 20,
   basePath: "/balance",
   access: "permission",
   requiredPermission: "balance.access",

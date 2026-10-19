@@ -7,6 +7,7 @@ export default {
   name: strings.name,
   tagline: strings.tagline,
   icon: Sprout,
+  order: 40,
   basePath: "/cosecha",
   access: "permission",
   requiredPermission: "cosecha.access",
