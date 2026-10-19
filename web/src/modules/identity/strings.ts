@@ -21,6 +21,10 @@ export const identityStrings = {
     submitting: "Ingresando…",
     showPassword: "Mostrar contraseña",
     hidePassword: "Ocultar contraseña",
+    withPassword: "Ingresar con correo y contraseña",
+    expired: "Su sesión venció. Ingrese de nuevo para continuar.",
+    loadingOptions: "Cargando las opciones de ingreso…",
+    retry: "Reintentar",
     noMethods:
       "Por ahora no hay un método de ingreso disponible. Comuníquese con administración.",
     toRegister: "¿No tiene cuenta? Crear una cuenta",
