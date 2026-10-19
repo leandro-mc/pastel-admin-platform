@@ -1,4 +1,7 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Identity.Common;
 using Pastel.Modules.Identity.Features.GoogleComplete;
 using Pastel.Modules.Identity.Security;
@@ -8,6 +11,7 @@ namespace Pastel.Modules.Identity.Tests;
 
 public sealed class GoogleAuthenticationUnitTests
 {
+    [Trait("RequirementId", "F0-G04")]
     [Theory]
     [InlineData("/inicio", "/inicio")]
     [InlineData("/configuracion/usuarios?tab=roles", "/configuracion/usuarios?tab=roles")]
@@ -18,18 +22,21 @@ public sealed class GoogleAuthenticationUnitTests
         Assert.Equal(expected, ReturnUrl.Sanitize(candidate));
     }
 
+    [Trait("RequirementId", "F0-G04")]
     [Theory]
     [InlineData("https://evil.example")]
     [InlineData("//evil.example")]
     [InlineData("/\\evil.example")]
     [InlineData("/%2f%2fevil.example")]
     [InlineData("/%5cevil.example")]
+    [InlineData("javascript:alert(1)")]
     [InlineData("/unknown-area/details")]
     public void ReturnUrlRejectsExternalOrUnknownRoutes(string candidate)
     {
         Assert.Equal("/", ReturnUrl.Sanitize(candidate));
     }
 
+    [Trait("RequirementId", "F0-G04")]
     [Fact]
     public void ReturnUrlDefaultsToRootForMissingOrOverlongValues()
     {
@@ -90,6 +97,41 @@ public sealed class GoogleAuthenticationUnitTests
         Assert.Null(GoogleIdentity.From(CreatePrincipal(
             new Claim(ClaimTypes.NameIdentifier, "google-subject"),
             new Claim(ClaimTypes.Email, "  "))));
+    }
+
+    [Fact]
+    public async Task GoogleSchemeStaysDisabledWithoutClientCredentials()
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddGoogleSignIn(new ConfigurationBuilder().Build());
+
+        using var provider = services.BuildServiceProvider();
+        var schemes = provider.GetRequiredService<IAuthenticationSchemeProvider>();
+
+        Assert.NotNull(await schemes.GetSchemeAsync(ExternalSchemes.ExternalCookie));
+        Assert.Null(await schemes.GetSchemeAsync(ExternalSchemes.Google));
+    }
+
+    [Fact]
+    public async Task GoogleSchemeIsRegisteredWhenBothClientCredentialsExist()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["Authentication:Google:ClientId"] = "test-client-id",
+                ["Authentication:Google:ClientSecret"] = "test-client-secret",
+            })
+            .Build();
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.AddGoogleSignIn(configuration);
+
+        using var provider = services.BuildServiceProvider();
+        var schemes = provider.GetRequiredService<IAuthenticationSchemeProvider>();
+
+        Assert.NotNull(await schemes.GetSchemeAsync(ExternalSchemes.ExternalCookie));
+        Assert.NotNull(await schemes.GetSchemeAsync(ExternalSchemes.Google));
     }
 
     private static ClaimsPrincipal CreatePrincipal(params Claim[] claims) =>
