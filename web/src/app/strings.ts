@@ -25,3 +25,36 @@ export const strings = {
       "Hubo un problema al consultar su cuenta. Revise su conexión e intente de nuevo.",
   },
 } as const;
+
+export const shellStrings = {
+  brand: "Pastel",
+  home: "Inicio",
+  modules: "Módulos",
+  help: {
+    button: "Ayuda",
+    title: "¿Necesita ayuda?",
+    body: "Si algo no funciona o necesita acceso a un módulo, comuníquese con administración. Si ve un código de soporte, indíquelo al escribir.",
+  },
+  account: {
+    menu: "Cuenta",
+    mine: "Mi cuenta",
+    theme: "Tema",
+    light: "Claro",
+    dark: "Oscuro",
+    textSize: "Tamaño de texto",
+    normal: "Normal",
+    large: "Grande",
+    xlarge: "Muy grande",
+    signOut: "Cerrar sesión",
+    signIn: "Ingresar",
+  },
+  breadcrumbs: "Migas de pan",
+  moduleNav: (name: string) => `Navegación de ${name}`,
+  hub: {
+    title: "Inicio",
+    anonymous: "Inicie sesión para ver sus módulos.",
+    empty:
+      "Todavía no tiene módulos asignados. Solicite acceso a administración.",
+    open: "Abrir",
+  },
+} as const;
