@@ -24,11 +24,16 @@ public sealed class SecurityPolicyTests
     [InlineData(true, true, null, true)]
     [InlineData(true, false, null, false)]
     [InlineData(false, true, null, false)]
-    [InlineData(false, false, PermissionEffect.Grant, false)]
-    [InlineData(true, true, PermissionEffect.Deny, false)]
-    [InlineData(true, false, PermissionEffect.Grant, true)]
-    public void PermissionDecisionUsesDenyOverrideAndDisabledModuleWins(bool moduleEnabled, bool grantedByRole, PermissionEffect? userOverride, bool expected)
+    [InlineData(false, false, 1, false)] // Grant cannot bypass a disabled module.
+    [InlineData(true, true, 0, false)]   // An explicit Deny overrides a role grant.
+    [InlineData(true, false, 1, true)]
+    public void PermissionDecisionUsesDenyOverrideAndDisabledModuleWins(bool moduleEnabled, bool grantedByRole, int? userOverrideValue, bool expected)
     {
+        // Keep the public xUnit method signature free of the module's internal enum type.
+        PermissionEffect? userOverride = userOverrideValue is int value
+            ? (PermissionEffect)value
+            : null;
+
         Assert.Equal(expected, PermissionDecision.IsAllowed(moduleEnabled, grantedByRole, userOverride));
     }
 
