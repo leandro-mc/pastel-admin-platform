@@ -35,9 +35,9 @@ internal sealed class ProductionSecurityValidationTask(
             problems.Add("Bootstrap:AdminEmail debe ser una cuenta controlada por el responsable y no el valor local de ejemplo");
         }
 
-        if (IsExampleSecret(bootstrapPassword))
+        if (IsExampleSecret(bootstrapPassword) || bootstrapPassword is { Length: < 16 })
         {
-            problems.Add("Bootstrap:AdminPassword debe configurarse con una contraseña secreta y no de ejemplo");
+            problems.Add("Bootstrap:AdminPassword debe ser una contraseña secreta de al menos 16 caracteres y no un valor de ejemplo");
         }
 
         if (IsExampleSecret(signingKey))
