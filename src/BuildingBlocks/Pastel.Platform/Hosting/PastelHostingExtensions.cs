@@ -95,12 +95,20 @@ public static class PastelHostingExtensions
             options.KnownProxies.Clear();
             options.KnownIPNetworks.Clear();
             var networks = configuration["ReverseProxy:TrustedNetworks"] ?? "127.0.0.0/8;::1/128;172.16.0.0/12";
-            foreach (var text in networks.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries))
+            var configuredNetworks = networks.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            if (configuredNetworks.Length == 0)
             {
-                if (IPNetwork.TryParse(text, out var network))
+                throw new InvalidOperationException("ReverseProxy:TrustedNetworks debe contener al menos una subred CIDR confiable.");
+            }
+
+            foreach (var text in configuredNetworks)
+            {
+                if (!IPNetwork.TryParse(text, out var network))
                 {
-                    options.KnownIPNetworks.Add(network);
+                    throw new InvalidOperationException("ReverseProxy:TrustedNetworks contiene una subred CIDR inválida.");
                 }
+
+                options.KnownIPNetworks.Add(network);
             }
         });
 
