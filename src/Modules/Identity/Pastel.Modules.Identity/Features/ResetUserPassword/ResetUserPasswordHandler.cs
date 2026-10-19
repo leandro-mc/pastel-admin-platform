@@ -27,7 +27,7 @@ internal sealed class ResetUserPasswordHandler(
             return denied;
         }
 
-        // Cumple la política vigente (mayúscula, minúscula, número y símbolo). La contraseña nunca se registra ni se audita.
+        // La contraseña temporal aleatoria cumple la política por longitud y no aparece en logs ni auditoría.
         var temporary = $"Pst!{Convert.ToHexString(RandomNumberGenerator.GetBytes(12))}a9";
         var wasTemporary = user.MustChangePassword;
         user.PasswordHash = hasher.HashPassword(user, temporary);
