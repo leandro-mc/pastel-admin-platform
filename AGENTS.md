@@ -10,6 +10,16 @@ Pastel es una plataforma modular: un shell común, el módulo **Identity** (acce
 - **Investigación:** solo produce documentos. **Mantenimiento:** aplica CCR aprobados.
 Detalle: `docs/TESTING_STRATEGY.md`.
 
+## Tipo de agente y cadencia de commits (obligatorio)
+
+El tipo de agente debe indicarse al asignar **cada tarea** y es independiente del rol funcional (Dev, Build, QA, Investigación o Mantenimiento).
+
+- **Tipo 1 — checkpoint frecuente:** publicar commit + push con progreso coherente **al menos cada 3 minutos**, incluyendo la actualización correspondiente de `PROGRESS.md`. No esperar a completar una WP o subobjetivo.
+- **Tipo 2 — checkpoint por unidad de trabajo:** no tiene un límite fijo de 3 minutos. Conviene publicar commits periódicos, pero agrupar cambios relacionados en una unidad coherente y revisable; evitar commits mínimos por cada ajuste. Actualizar `PROGRESS.md` en el mismo commit cuando registre ese avance y publicar antes de cambiar de tarea/contexto o ante riesgo de interrupción.
+- **Tipo no indicado:** preguntar al orquestador/propietario y no continuar con cambios de implementación hasta recibir la clasificación. No inferir el tipo por el rol ni por la tarea.
+
+La clasificación controla la **frecuencia** de guardado, no la obligación de trabajar con seguridad, revisar el diff, mantener la documentación, evitar secretos ni informar con honestidad qué se validó.
+
 ## Ruta de lectura (en orden, y nada más salvo necesidad)
 1. Este archivo. 2. Tu módulo: `src/Modules/<M>/MODULE.md` y `web/src/modules/<m>/MODULE.md`, más `docs/modules/<M>.md`. 3. `docs/ARCHITECTURE.md` §2–5. 4. `docs/DESIGN_SYSTEM.md` si tocas UI. 5. `docs/ERROR_HANDLING_AND_LOGGING.md` siempre que escribas endpoints, pantallas o logs. 6. `docs/SECURITY.md` si tocas acceso, permisos o datos personales. 7. `docs/AI_WORKFLOW.md` (ramas, commits).
 No leas `Migrations/`, `bin/`, `obj/`, `node_modules/` ni `package-lock.json` salvo necesidad.
