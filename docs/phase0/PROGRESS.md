@@ -2,7 +2,7 @@
 
 > **Fuente de verdad para el relevo.** Este archivo resume el estado actual y los siguientes pasos; no agregues resúmenes iniciales repetidos. El detalle de sesiones anteriores se conserva en [`PROGRESS-HISTORY.md`](./PROGRESS-HISTORY.md), solo como historial. Si existe una discrepancia, inspecciona el código y actualiza este documento.
 
-Última reconciliación documental: 2026-10-18.
+Última reconciliación documental: 2026-10-19.
 
 ## Repositorio y reglas vigentes
 
@@ -19,7 +19,7 @@
 |---|---|---|
 | WP1 — Línea base de pruebas | **Sin evidencia de cierre en esta bitácora; responsabilidad de Build** | Confirmar el resultado de Build y la integración de la línea base en la rama según la sección 4 del plan. Dev no debe rehacerla. |
 | WP2 — SharedKernel, Platform, Host | **Revisión estática registrada como completa** en S4-01 | No se compiló. Build debe verificar los puntos sensibles descritos abajo y validar el proyecto completo. |
-| WP3 — Identity | **Cerrado como código** (auditoría estática contra §6, sin compilar) | Build: generar la migración inicial con `dotnet ef`, adaptar las pruebas movidas, verificar que EF traduce la consulta de `PermissionEvaluator` y escribir la prueba de ≤ 2 consultas por petición. |
+| WP3 — Identity | **Migración inicial aplicada en PostgreSQL; validación funcional y automatizada pendiente** | Build/QA: ejecutar pruebas unitarias y de integración, verificar la traducción EF de `PermissionEvaluator` y probar el límite de ≤ 2 consultas por petición. |
 | WP4 — Endurecimiento de seguridad | **Código implementado; pendiente de Build/QA** | S1–S4 y D1 tienen cambios publicados, pero no se han compilado ni ejecutado sus pruebas; ver el estado consolidado más abajo. |
 | WP5 — Google OAuth/OIDC | Pendiente; **no iniciado** | Flujo Google, vinculación de cuentas, configuración/proxy y pruebas con proveedor falso. La ruta común `/api/auth/options` existe, pero informa `google: false` hasta WP5. |
 | WP6 — Esqueletos/plantilla de módulos | Pendiente | Generador y esqueletos de Brisa, Balance, Ágora, Cosecha y Huella según §9. |
@@ -56,7 +56,7 @@ Se corrigió `Pastel.Modules.Identity.Tests.csproj` para referenciar `Pastel.Mod
 
 Contraste estático punto por punto; **sin compilar**.
 
-1. **Datos:** `IdentityDbContext` con esquema `identity`; `PasswordHash` nulo; `Version` (`uint`, `IsRowVersion`, `xmin`) en usuarios, roles y módulos. La migración **no existe**: la genera Build.
+1. **Datos:** `IdentityDbContext` con esquema `identity`; `PasswordHash` nulo; `Version` (`uint`, `IsRowVersion`, `xmin`) en usuarios, roles y módulos. Build/usuario generó con EF Core la migración `20261019050514_InitialIdentity` y `IdentityDbContextModelSnapshot.cs` (commit `ff1d8c5`); el 2026-10-19 el usuario confirmó su fila en `identity."__EFMigrationsHistory"` con `ProductVersion` `10.0.13`.
 2. **Slices:** los endpoints originales de autenticación y administración están organizados en `Features/*` (ningún archivo > 150 líneas en la auditoría original). Se agregó después `GET /api/auth/options` para exponer la política única de contraseña; declara `google: false` hasta WP5. Los contratos/cookies preexistentes se conservan.
 3. **Permisos y consultas:** `PermissionEvaluator` es la fuente única (autorización y `/api/auth/me`). `OnTokenValidated` carga una vez el estado de sesión y el resumen de la persona en `HttpContext.Items`; `ForcePasswordChange` lo lee de ahí. Resultado: 1 consulta de sesión + 1 de permisos por petición.
 4. **Catálogo:** códigos de permiso idénticos a los anteriores; `CatalogSyncTask` idempotente (todo a Administrator, roles sugeridos solo si no existen); `Member` recibe `dashboard.view` por `SuggestedRoles`; `BootstrapAdminTask` audita la creación y la restauración (*break-glass*).
@@ -92,19 +92,15 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - **Commits representativos del trabajo de seguridad:** `630cb38` (hash ficticio/lockout), `8bfecf4` (gracia refresh), `dcaf979`/`6ac0a82` (ADR), `2ffeab5`/`c42fbf3` (límite por cuenta), `79c67be` (validación Production), `07db059`/`147dc6b` (JWT `kid` y rotación), `84572fc`/`5d4463f` (política), `826a69b`/`3a9d413` (retención), `e0d8265`/`1bb7a00` (opciones de autenticación), `45a837b` (validación CIDR), `ed98a0c`/`9410a4b` (entorno Compose configurable), `2dbd9ca`/`47059d` (revocación de cadena refresh), `b7c577a`/`f3cd6fa` (alineación de códigos S1), `3877458`/`8d8cc5c`/`54c1bc0` (bloqueo propio siempre 403 y auditado), `fa99bb2` (clave bootstrap de producción fuerte).
  
 
-## Validación Docker y bloqueos actuales — 2026-10-19
+## Validación Docker, migración y bloqueos actuales — 2026-10-19
 
-- **Build Docker: exitoso hasta este punto**, según la última confirmación del usuario tras resolver seis incidencias de compilación. Las seis se condensan aquí para evitar duplicar el historial:
-  1. Sintaxis de la propiedad MSBuild `InvariantCulture` no admitida (`MSB4185`); se ajustó la normalización del filtro `PastelModules`.
-  2. Faltaba importar `Microsoft.AspNetCore.Http` para `HttpContext`.
-  3. En `PastelHostingExtensions.cs`, conflicto/uso obsoleto de `IPNetwork` y posible null en `RoutePattern.RawText`; se calificó `System.Net.IPNetwork` y se protegió el valor nulo en logging.
-  4. Tres handlers no encontraban `IPrivilegeGuard`; se agregó el namespace `Pastel.Modules.Identity.Security`.
-  5. `IdentityEndpoints.cs` no resolvía `MapGroup`; se importó `Microsoft.AspNetCore.Builder`.
-  6. `IdentityErrors.cs` no resolvía `PasswordPolicy`; se importó `Pastel.Modules.Identity.Security`.
-- **Qué significa el resultado:** el usuario confirma que `docker compose build` ya termina correctamente. Esto valida la construcción de las imágenes en ese estado del código; no equivale a confirmar el arranque completo ni a aprobar WP1–WP4. Los seis arreglos se hicieron en `refactor/modular-foundation`.
-- **Bloqueo de arranque conocido:** al iniciar, la API lanza `InvalidOperationException: No se encontraron migraciones de EF Core para IdentityDbContext en Pastel.Modules.Identity`. No existe todavía la migración inicial de Identity. Build debe generarla con `dotnet ef`, revisar el resultado, reconstruir e iniciar los servicios y verificar los logs y pruebas de integración.
-- **Siguiente paso inmediato:** generar e incorporar la migración inicial EF Core de Identity; después ejecutar `docker compose up -d`, `docker compose ps` y revisar `docker compose logs --tail=150 api`. No borrar volúmenes ni desactivar las migraciones para ocultar el bloqueo.
-- **Validación que sigue pendiente:** no hay constancia de que las pruebas automatizadas de WP1/WP3/WP4 se hayan ejecutado ni de que la API haya arrancado con éxito. La compilación Docker reportada por el usuario sí fue exitosa; no extrapolar ese resultado a pruebas, migraciones o funcionamiento de login.
-- WP1 sigue pendiente de línea base y reporte C1 sobre `dev@7ba6f1c`. WP2–WP4 necesitan verificación de Build/QA; en particular, migración, pruebas de Identity, traducción EF de `PermissionEvaluator`, límite de consultas, sesiones/refresh, concurrencia y validación de seguridad.
+- **Build Docker:** exitoso según la confirmación previa del usuario tras resolver seis incidencias de compilación.
+- **Migración inicial de Identity generada y aplicada:** el usuario ejecutó `dotnet ef migrations add InitialIdentity`; EF informó `Build succeeded`. El 2026-10-19, la consulta por stdin a PostgreSQL devolvió una fila en `identity."__EFMigrationsHistory"`: `20261019050514_InitialIdentity | 10.0.13`. La aplicación de la migración inicial queda confirmada.
+- **Archivos publicados:** `src/Modules/Identity/Pastel.Modules.Identity/Persistence/Migrations/20261019050514_InitialIdentity.cs`, `20261019050514_InitialIdentity.Designer.cs` y `IdentityDbContextModelSnapshot.cs`. Commit de migración: [`ff1d8c5`](https://github.com/leandro-mc/pastel-admin-platform/commit/ff1d8c503b3487daa404a101a79471a4d73ac2bd).
+- **Arranque local observado por el usuario (2026-10-19):** tras reconstruir la API, los logs dejaron de mostrar la excepción fatal `No se encontraron migraciones de EF Core`. `CatalogSyncTask` sincronizó 2 grupos y 13 permisos; `BootstrapAdminTask` creó la cuenta inicial; la API registró `Application started` y `GET /api/auth/csrf` respondió HTTP 200. En una comprobación posterior, `docker compose ps` mostró la API `Up` y la base de datos `healthy`.
+- **Tablas observadas:** la consulta a `information_schema.tables` devuelve 10 tablas bajo el esquema `identity`, entre ellas `__EFMigrationsHistory`, `users`, `roles`, `permissions`, `refresh_tokens` y tablas de relaciones/auditoría.
+- **Inicio de sesión no validado:** los logs compartidos muestran intentos a `/api/auth/login` que respondieron HTTP 401 (`identity.login.invalid_credentials`), incluido un intento para la cuenta inicial con contraseña incorrecta y otros para una cuenta desconocida. No hay evidencia de login exitoso. Tras entrar con la cuenta inicial, cambiar su contraseña temporal inmediatamente; no registrar credenciales en esta bitácora.
+- **Advertencia de Development:** ASP.NET Data Protection usa un repositorio de claves en memoria/efímero, por lo que las claves no sobreviven al reinicio. Resolver persistencia y protección de claves antes de producción.
+- **Siguiente paso inmediato:** ejecutar `dotnet test Pastel.slnx` desde la raíz para validar el proyecto de pruebas de Identity incluido en la solución. Registrar resultado real, corregir fallos si los hay y después ejecutar/crear la validación de integración contra PostgreSQL para WP3/WP4, incluida autorización, consultas de `PermissionEvaluator`, límite de consultas, refresh y concurrencia. No ejecutar comandos que borren el volumen de la base local.
+- **Validación WP3/WP4 pendiente:** el arranque y la migración confirmada no sustituyen las pruebas automatizadas ni la validación de autorización, consultas de `PermissionEvaluator`, límite de consultas, refresh/concurrencia y seguridad. WP1 sigue pendiente de línea base y reporte C1 sobre `dev@7ba6f1c`; WP2–WP4 requieren verificación de Build/QA.
 - WP5 (Google OAuth) no se ha iniciado. No abrir PR, hacer merge ni integrar en `dev` sin autorización explícita del propietario.
-
