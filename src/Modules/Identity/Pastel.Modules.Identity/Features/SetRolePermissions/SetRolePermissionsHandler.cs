@@ -8,7 +8,7 @@ using Pastel.SharedKernel;
 
 namespace Pastel.Modules.Identity.Features.SetRolePermissions;
 
-internal sealed class SetRolePermissionsHandler(IdentityDbContext db, IAuditTrail audit, ICurrentUser currentUser)
+internal sealed class SetRolePermissionsHandler(IdentityDbContext db, IAuditTrail audit, ICurrentUser currentUser, IPrivilegeGuard guard)
 {
     public async Task<Result> HandleAsync(Guid roleId, SetRolePermissionsRequest request, CancellationToken cancellationToken)
     {
@@ -19,6 +19,11 @@ internal sealed class SetRolePermissionsHandler(IdentityDbContext db, IAuditTrai
             return IdentityErrors.RoleNotFound;
         }
 
+        if (await guard.AuthorizeRoleEditAsync(role, "set_role_permissions", cancellationToken) is { } denied)
+        {
+            return denied;
+        }
+
         var ids = (request.PermissionIds ?? []).Distinct().ToArray();
         var requested = await db.Permissions.Where(x => ids.Contains(x.Id)).ToListAsync(cancellationToken);
         if (requested.Count != ids.Length)
@@ -26,10 +31,12 @@ internal sealed class SetRolePermissionsHandler(IdentityDbContext db, IAuditTrai
             return IdentityErrors.UnknownPermissions;
         }
 
-        // Administrator es un rol de sistema: siempre tiene todos los permisos.
-        if (role.NormalizedName == AdministratorRules.NormalizedName)
+        // Solo se pueden agregar permisos que quien actúa ya posee; quitar permisos siempre se permite.
+        var heldPermissionIds = role.RolePermissions.Select(x => x.PermissionId).ToHashSet();
+        var addedCodes = requested.Where(x => !heldPermissionIds.Contains(x.Id)).Select(x => x.Code).ToArray();
+        if (await guard.AuthorizeGrantAsync(addedCodes, "set_role_permissions", null, cancellationToken) is { } grantDenied)
         {
-            requested = await db.Permissions.ToListAsync(cancellationToken);
+            return grantDenied;
         }
 
         var before = role.RolePermissions.Select(x => x.Permission.Code).OrderBy(x => x, StringComparer.Ordinal).ToArray();

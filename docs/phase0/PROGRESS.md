@@ -77,6 +77,12 @@ Confirma el código antes de aplicar cada punto. Si un requisito de WP4 depende 
 
 Después continúa WP5–WP10 en orden conforme a la especificación. No adelantes funcionalidades fuera del alcance.
 
+## Estado de WP4 (en curso)
+
+- **S1 — Jerarquía de privilegios:** `IPrivilegeGuard` aplicado en SetUserRoles, SetUserPermissions, BlockUser, UnblockUser (ahora con `UnblockUserHandler`), ResetUserPassword, CreateUser, CreateRole y SetRolePermissions. Rol Administrator inmutable (ya no se "fuerza" en silencio: se deniega con `identity.privilege.system_role_immutable`); al promover a administrador se limpian sus excepciones. Cada denegación: 403 `identity.privilege.*`, Warning y auditoría `identity.privilege.denied`. **Falta:** documentar el *break-glass* y la jerarquía en `SECURITY.md`. La invariante del último administrador sigue en `SetUserRoles` y `BlockUser` (transacción serializable); su prueba bajo concurrencia es de Build.
+- **Decisión S1:** además de lo literal de §7, un no-Administrator solo agrega a una cuenta roles cuyos permisos ya posee (asignar un rol equivale a conceder sus permisos).
+- S2, S3, S4 y D1 backend: pendientes.
+
 ## Validación y entrega conocidas
 
 - Validaciones citadas en los últimos checkpoints: `git diff --check`; no consta `dotnet build`, pruebas completas ni ejecución de Docker para WP2/WP3.

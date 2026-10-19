@@ -8,7 +8,7 @@ using Pastel.SharedKernel;
 
 namespace Pastel.Modules.Identity.Features.SetUserPermissions;
 
-internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrail audit, ICurrentUser currentUser, IClock clock)
+internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrail audit, ICurrentUser currentUser, IClock clock, IPrivilegeGuard guard)
 {
     public async Task<Result> HandleAsync(Guid userId, SetUserPermissionsRequest request, CancellationToken cancellationToken)
     {
@@ -16,6 +16,11 @@ internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrai
         if (user is null)
         {
             return IdentityErrors.UserNotFound;
+        }
+
+        if (await guard.AuthorizeActionOnUserAsync(user, "set_permissions", cancellationToken) is { } denied)
+        {
+            return denied;
         }
 
         if (user.IsAdministrator())
@@ -45,6 +50,12 @@ internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrai
         if (permissions.Count != ids.Length)
         {
             return IdentityErrors.UnknownPermissions;
+        }
+
+        var granted = changes.Where(x => x.Effect == PermissionEffect.Grant).Select(x => permissions[x.PermissionId].Code).ToArray();
+        if (await guard.AuthorizeGrantAsync(granted, "set_permissions", userId, cancellationToken) is { } grantDenied)
+        {
+            return grantDenied;
         }
 
         var existing = await db.UserPermissionOverrides.Include(x => x.Permission).Where(x => x.UserId == userId).ToListAsync(cancellationToken);
