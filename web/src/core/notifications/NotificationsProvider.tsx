@@ -17,7 +17,7 @@ type Notice = { id: number; message: string; tone: NoticeTone };
 
 const NotificationsContext = createContext<Notify | null>(null);
 
-// Transitorio: el estilo heredado `.toast` es fixed y varios se solaparían; WP8 lo sustituye por el kit de UI (cola real).
+// Transitorio: la posición es fija y varios avisos se solaparían, por eso se muestra uno a la vez; la cola real llega con el kit de UI.
 const MAX_VISIBLE = 1;
 const DURATION_MS: Record<NoticeTone, number> = { success: 5000, error: 9000 };
 
@@ -65,23 +65,29 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           <div
             key={notice.id}
             role={notice.tone === "error" ? "alert" : "status"}
-            className={`toast ${notice.tone}`}
+            className="fixed right-3 bottom-3 z-50 flex max-w-[min(27rem,calc(100vw-1.5rem))] animate-toast-in items-center gap-3 rounded-xl border border-line bg-surface-raised p-3 text-sm text-fg shadow-lg sm:right-6 sm:bottom-6"
           >
-            <span className="toast-symbol">
+            <span
+              className={`grid size-7 shrink-0 place-items-center rounded-full ${
+                notice.tone === "error"
+                  ? "bg-danger-soft text-danger"
+                  : "bg-accent-soft text-accent-strong"
+              }`}
+            >
               {notice.tone === "success" ? (
-                <Check size={17} />
+                <Check aria-hidden="true" size={17} />
               ) : (
-                <CircleHelp size={17} />
+                <CircleHelp aria-hidden="true" size={17} />
               )}
             </span>
             <span>{notice.message}</span>
             <button
               type="button"
-              className="toast-close"
+              className="-my-2 -mr-2 grid size-11 shrink-0 cursor-pointer place-items-center rounded-lg text-xl text-muted hover:bg-accent-soft focus-visible:ring-3 focus-visible:ring-accent-strong/45 focus-visible:outline-none"
               onClick={() => dismiss(notice.id)}
               aria-label="Cerrar aviso"
             >
-              ×
+              <span aria-hidden="true">×</span>
             </button>
           </div>
         ))}
