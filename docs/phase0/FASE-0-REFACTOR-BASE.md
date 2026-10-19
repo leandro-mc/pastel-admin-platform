@@ -1,6 +1,6 @@
 # Fase 0 — Refactor de la base (instrucciones para el Agente 0, rol **Dev**)
 
-Esta fase se ejecuta **en relevo**: el Agente 0 (Dev) escribe **solo el código de la aplicación, sin necesidad de compilar**; después un agente **Build** (con entorno de compilación) compila, corrige, genera migraciones y escribe las pruebas; por último un agente **QA**, distinto de Build, ejecuta `docs/testing/plans/FASE-0-TEST-PLAN.md` (ver `docs/TESTING_STRATEGY.md`). **Nadie certifica su propio trabajo.** Hasta que QA apruebe y el propietario autorice, ningún otro agente toca el código.
+Esta fase se ejecuta por responsabilidades y puede haber relevos: el Agente 0 (Dev) implementa el código de aplicación y **puede compilar/probar si su entorno lo permite**; si no, entrega sin compilar y lo declara en `PROGRESS.md`. Después un agente con entorno de compilación realiza Build y las pruebas. En esta etapa, **Build y QA pueden ser la misma sesión/agente** para ahorrar sesiones; debe completar ambas responsabilidades y ejecutar de nuevo las validaciones afectadas tras cualquier corrección. Consulte `docs/testing/plans/FASE-0-TEST-PLAN.md` y `docs/TESTING_STRATEGY.md`.
 
 ## 0. Autorización y contexto
 
@@ -10,16 +10,21 @@ Esta fase se ejecuta **en relevo**: el Agente 0 (Dev) escribe **solo el código 
 - Documentos ya en el repositorio: `AGENTS.md`, `docs/ARCHITECTURE.md`, `docs/DESIGN_SYSTEM.md`, `docs/ERROR_HANDLING_AND_LOGGING.md`, `docs/TESTING_STRATEGY.md`, `docs/testing/**`, `docs/modules/*.md`, `docs/phase0/GOOGLE_OAUTH_SETUP.md`. **Léelos antes de empezar**, además de `docs/SECURITY.md`, `docs/AI_WORKFLOW.md` y el código de `AuthService`, `AdministrationService`, `PermissionAuthorization`, `DatabaseSeeder`, `Program.cs` y `web/src`.
 - **Fuera de alcance:** despliegue, Oracle, TLS de producción, CI/CD de despliegue, funcionalidades de módulos, Android, mensajería, mapas. La CI de GitHub sigue siendo de uso local.
 
+
 ## 1. Forma de trabajo
 
-1. Rama `refactor/modular-foundation` desde `dev`. **Nunca PR ni integración a `dev`**: el propietario revisa desde tu rama y autoriza.
-2. Mantén `docs/phase0/PROGRESS.md` tras cada WP (hecho, pendiente, decisiones, comandos que pasan, hallazgos del análisis confirmados o descartados). Debe permitir que otro agente retome sin el chat.
-3. Ejecuta los WP **en orden**. Cada uno deja el código completo y coherente; **no necesitas compilar ni ejecutar nada** (ver los puntos 7 y 8). Las líneas «Aceptación» que hablan de compilar o de pruebas en verde las verifica Build. Commits coherentes y **revisables** (ningún commit de más de ~1 500 líneas cambiadas, salvo bloqueos de dependencias, migraciones generadas o capturas; el PR #21 anterior, de 10 360 líneas, es el contraejemplo). Publica (push) en los puntos de control **C2** (tras WP5), **C3** (tras WP8) y **C4** (final); no esperes a nadie entre ellos. **C1** (línea base de pruebas, WP1) lo publica Build.
-4. Si algo contradice el código real, sigue el código, corrige el documento y regístralo.
-5. Si te bloquea una decisión no resuelta, elige la opción más simple, regístrala en `docs/adr/` y continúa.
-6. **Como Dev:** escribes solo código de la aplicación y de herramientas (scripts, configuración). **No escribes pruebas ni el plan de pruebas, ni el informe de aprobación.**
-7. **Sin compilar:** el propietario retiró la exigencia de compilar. No intentes compilar ni simules resultados. Escribe el código completo y consistente (referencias entre proyectos, `using`, nombres, firmas). Anota en `PROGRESS.md`, por WP, «sin compilar». Si en tu entorno sí puedes compilar o ejecutar algo, hazlo y repórtalo con el comando exacto. **Nunca afirmes que algo compila o pasa si no lo ejecutaste.** Las migraciones de EF **no se escriben a mano**: déjalas a Build (`dotnet ef`); tú dejas el modelo y los `DbContext` listos.
-8. **Pruebas:** todo lo que esta fase llame prueba (unitaria, de caracterización, de integración, de arquitectura, E2E, plan) lo escribe Build o QA, no tú. Cuando un WP las nombre, solo prepara el código de producción que las hace posibles (p. ej., `Program` accesible, sembrador `Testing`, manejador remoto falso inyectable, etiquetas accesibles).
+1. Trabaja en la rama existente `refactor/modular-foundation`. **Nunca abras PR ni integres a `dev` sin autorización explícita del propietario**. Autorizar la apertura del PR no autoriza por sí solo el merge.
+2. **Regla obligatoria: no pasar más de 3 minutos sin guardar y publicar progreso.** El límite se cuenta desde el último checkpoint publicado (commit + push), no desde el último cambio de código. Antes de que se cumplan 3 minutos, detén la implementación y guarda un checkpoint seguro; no esperes a terminar el WP ni a que la sesión esté por agotarse. Si completas antes un subobjetivo coherente, guarda el checkpoint de inmediato. Publica también antes de cambiar de tarea/contexto o cuando exista riesgo de interrupción por tokens, tiempo o cierre de sesión.
+3. Cada checkpoint incluye la actualización correspondiente de `docs/phase0/PROGRESS.md` **en el mismo commit que el código descrito**. Registra WP y subobjetivo, cambios/archivos, estado (completo/parcial), decisiones, validaciones realmente ejecutadas y sus comandos/resultados, lo que no se compiló/ejecutó, bloqueos y el siguiente paso concreto. No inventes el SHA del commit actual dentro del propio archivo; después de publicar, comunica el SHA resultante en la entrega. El progreso debe permitir que otro agente continúe sin este chat.
+4. Flujo obligatorio de checkpoint: revisa `git status`, `git diff --check` y el diff; prepara solo archivos revisados y pertinentes; actualiza `PROGRESS.md`; crea un commit pequeño y coherente; publica inmediatamente con `git push origin refactor/modular-foundation`; confirma que el push terminó y anota el SHA. No incluyas secretos ni archivos ajenos. **No dejes código nuevo sin publicar por esperar a compilar**, pero declara honestamente si está parcial, sin compilar o sin validar. No uses force push ni reescribas historial compartido.
+5. Los checkpoints formales **C2** (tras WP5), **C3** (tras WP8) y **C4** (final) son adicionales a los checkpoints frecuentes; no esperes a esos hitos para guardar. **C1** (línea base de pruebas, WP1) lo publica Build.
+6. Ejecuta los WP en orden. Cada WP debe dejar código completo y coherente; Dev no necesita compilar (ver puntos 7 y 8). Build verifica las líneas de aceptación que requieren compilación o pruebas.
+7. Si algo contradice el código real, confirma el comportamiento, sigue el código y registra/corrige la documentación pertinente.
+8. Si una decisión no está resuelta, elige la opción más simple, regístrala en `docs/adr/` y continúa, salvo que cambie sustancialmente el alcance o la seguridad; en ese caso, documenta el bloqueo.
+9. **Como Dev:** escribe código de aplicación, scripts y configuración. No escribas pruebas, planes de pruebas ni informes de aprobación; corresponden a Build/QA.
+10. **Sin compilar:** el propietario retiró la exigencia de compilar para Dev. No intentes compilar ni simules resultados. Anota por WP «sin compilar» en `PROGRESS.md`. Si el entorno sí permite compilar o ejecutar algo, hazlo y reporta el comando exacto. Nunca afirmes que algo compila o pasa si no lo ejecutaste. Las migraciones de EF no se escriben a mano: déjalas a Build (`dotnet ef`); deja preparados el modelo y los `DbContext`.
+11. **Pruebas:** las pruebas unitarias, de caracterización, integración, arquitectura, E2E y los planes los escribe Build o QA. Cuando un WP las nombre, prepara el código de producción que necesitan (por ejemplo, `Program` accesible, sembrador `Testing`, manejador remoto falso inyectable y etiquetas accesibles).
+12. Mantén los commits revisables (evita más de ~1.500 líneas cambiadas por commit, salvo dependencias, migraciones generadas o capturas). No agrupes el WP completo en un único commit gigante.
 
 ## 2. Decisiones ya tomadas (no reabrir)
 
@@ -34,7 +39,7 @@ Esta fase se ejecuta **en relevo**: el Agente 0 (Dev) escribe **solo el código 
 | **Estilos** | **Utilidades de Tailwind en JSX** (opción 1 del análisis, sección 3). Los patrones compartidos son **componentes React** (`core/ui`), no clases `@apply`. Tokens con `@theme` de Tailwind v4 |
 | **Errores y logs** | Estándar de `docs/ERROR_HANDLING_AND_LOGGING.md`: `Result` + `problem+json` con `code` y `traceId`, `IExceptionHandler` único, Serilog JSON, auditoría separada |
 | Paleta | Shell neutro; el verde actual pasa a ser el color de Brisa; la paleta "Brisa" antigua desaparece como concepto de plataforma |
-| Tono | Español de Costa Rica; sin voseo; trato de usted o impersonal |
+| Tono | Español de Costa Rica; sin voseo por defecto; el módulo puede autorizar una voz más personal en su ficha/instrucciones específicas; trato de usted o impersonal como regla general |
 | Modelo de pruebas | Dev y QA separados (`docs/TESTING_STRATEGY.md`) |
 
 ## 3. Estructura objetivo
@@ -169,7 +174,7 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 4. **Proveedores:** `AuthProvider`, `QueryClientProvider` (con manejo global de errores inesperados), tema, tamaño de texto, notificaciones.
 5. **Shell:** barra superior (marca `Flower2`, selector de módulos, ayuda, cuenta con tema y tamaño de texto), hub, navegación del módulo (inferior en móvil, lateral en escritorio), migas, "Saltar al contenido", foco al `h1` al cambiar de ruta. Con un solo módulo habilitado, `/` redirige a él.
 6. **Migrar Identity** a `web/src/modules/identity/`: `ProfilePage` → `/cuenta`; `Settings*` → `/configuracion/*` (`usuarios`, `roles`, `modulos`, `auditoria`, `accesos/:tipo/:id`); `ChangePasswordScreen` como ruta obligatoria; `Dashboard` pasa a ser el hub (sin cifras falsas). Sustituir `useSettingsAdmin` (466 líneas, 23 `useState`) por consultas y mutaciones de TanStack Query con invalidación. Conservar el comportamiento del editor de accesos.
-7. **Textos:** normalizar al tono de `DESIGN_SYSTEM.md` §8 (sin voseo), cadenas en `strings.ts`; corregir también los mensajes del backend, con una prueba que detecte voseo.
+7. **Textos:** normalizar al tono predeterminado de `DESIGN_SYSTEM.md` §8 (sin voseo, salvo que la ficha o instrucciones específicas del módulo autoricen una voz más personal), cadenas en `strings.ts`; corregir también los mensajes del backend y probar la regla predeterminada y sus excepciones documentadas.
 8. `core/log` (envoltorio) que reporta errores a `/api/client-errors`; ESLint `no-console`.
 
 ## 11. WP8 — Migración correcta a Tailwind CSS y sistema de diseño (prioridad 2)
@@ -198,7 +203,7 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 1. **Reproducibilidad:** `web/Dockerfile` copia `package-lock.json` y usa `npm ci`; CI y documentación también (D2). Dependabot sin cambios de contenido (solo surte efecto desde la rama por defecto; anotarlo).
 2. **Docker/compose:** PostgreSQL **fuera** del stack principal (solo en `compose.override.yaml` de desarrollo); `healthcheck` de `api` (con `/health/ready`) y `web`; `cap_drop: [ALL]`; límites de recursos; rotación de logs (`json-file`, `max-size`/`max-file`); `depends_on` con `service_healthy`; sin IP estáticas para la confianza del proxy.
 3. **nginx:** compresión y caché de activos con hash; cabeceras de seguridad sin duplicar (decide una única fuente por tipo de respuesta y documéntalo); `X-Forwarded-For` y *real IP* configurables para ir detrás de otro proxy; `Host $http_host`.
-4. **CI (`ci.yml`, uso local):** disparadores `push` solo a `dev` y `main` + `pull_request` (un disparo por PR); `concurrency` con cancelación; `timeout-minutes`; trabajos: *backend* (build, test, `dotnet format --verify-no-changes`, `dotnet list package --vulnerable --include-transitive`), *frontend* (`npm ci`, format, lint, build, test, `npm audit --audit-level=high`), *guardrails* (arquitectura, diseño, Tailwind), *aislamiento por módulo* (matriz que borra los demás), *contenedores* (smoke de compose). Acciones con versiones vigentes (verificar). Añade `codeql.yml` (C# y TypeScript) como opcional.
+4. **CI (`ci.yml`, uso local):** `push` solo a `dev` y `main`; `pull_request` hacia esas ramas al abrir/reabrir, marcar listo para revisión y sincronizar un PR ya listo; los PR en borrador se saltan; `workflow_dispatch` permite ejecución manual en la rama seleccionada una vez que esta versión del workflow también esté en la rama predeterminada (`main`). Los pushes a ramas de trabajo sin PR listo no disparan CI. `concurrency` con cancelación; `timeout-minutes`; trabajos: *backend* (build, test, `dotnet format --verify-no-changes`, `dotnet list package --vulnerable --include-transitive`), *frontend* (`npm ci`, format, lint, build, test, `npm audit --audit-level=high`), *guardrails* (arquitectura, diseño, Tailwind), *aislamiento por módulo* (matriz que borra los demás), *contenedores* (smoke de compose). Acciones con versiones vigentes (verificar). Añade `codeql.yml` (C# y TypeScript) como opcional.
 5. **Higiene:** `.editorconfig`, `.gitattributes`, `EnforceCodeStyleInBuild`, `docs/SECURITY.md` con la sección "Cómo reportar una vulnerabilidad", corrección de rutas obsoletas en docs (p. ej. `SettingsPage.tsx`).
 6. **Guardarraíles (todos en CI; Dev escribe los scripts y la configuración, Build las pruebas de arquitectura y de Vitest):** pruebas de arquitectura (`Pastel.ArchitectureTests`: fronteras, `internal`, prefijos de permisos, `MODULE.md` y atributo de módulo, endpoints con permiso o `AllowAnonymousExplicit`); ESLint de fronteras por módulo + `jsx-a11y` + `no-console`; `scripts/check-design.mjs` (morado 235°–345°, iconos/emojis de IA, colores sueltos) con sus propias pruebas; Vitest con `vitest-axe`.
 7. **Scaffold E2E:** lo prepara Build (`tests/e2e` con Playwright, `@axe-core/playwright`, configuración, utilidad de inicio de sesión local por API y una prueba de humo); Dev solo deja las dependencias en `web/package.json`. Más E2E es trabajo de QA.
@@ -222,7 +227,7 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 - [ ] Google OAuth implementado, con un manejador remoto falso inyectable para las pruebas de Build.
 - [ ] Metas de Tailwind cumplidas (sección 11) con el "antes/después" medido.
 - [ ] Estándar de errores y logs implementado; sin datos sensibles en logs.
-- [ ] Sin morado ni símbolos de IA; sin voseo.
+- [ ] Sin morado ni símbolos de IA; tono predeterminado sin voseo y excepciones de voz solo cuando estén autorizadas por el módulo.
 - [ ] Código preparado para `docker compose up` desde base vacía (lo comprueba Build); sin `.env` ni secretos en el diff.
 - [ ] «Datos para pruebas» completos en `PROGRESS.md` y **sin informe de aprobación propio**.
 
@@ -244,4 +249,4 @@ Tras el «Listo para Build» de Dev, un agente Build trabaja en la rama `refacto
 5. Si una prueba falla: si el código no cumple lo especificado, corrígelo. Si la especificación y el código chocan, o el arreglo cambia el diseño o el comportamiento acordado, **no lo cambies**: regístralo en `docs/requests/CCR-<n>-<tema>.md` y sigue.
 6. Informe `docs/testing/reports/FASE-0-BUILD-<fecha>.md`: comandos exactos, resultados reales, correcciones por causa, pruebas añadidas y lo no ejecutado. **No declares la fase aprobada.** Cierra con: «Listo para QA: ejecutar `docs/testing/plans/FASE-0-TEST-PLAN.md` sobre el SHA <sha>».
 
-Build y QA son sesiones distintas.
+Build y QA pueden ser la misma sesión/agente para ahorrar sesiones en esta etapa. Si se combinan, deben completarse ambas responsabilidades y repetirse las validaciones afectadas tras cualquier corrección de código.
