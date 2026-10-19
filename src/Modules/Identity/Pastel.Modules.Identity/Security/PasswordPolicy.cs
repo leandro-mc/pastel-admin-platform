@@ -46,6 +46,7 @@ internal static class PasswordPolicy
         "changeme123",
         "defaultpassword",
         "correcthorsebatterystaple",
+        "correct horse battery staple",
         "pasteladmin",
         "pastel-dev-only-2026!",
     };
