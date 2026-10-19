@@ -192,3 +192,14 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
 - **Pendiente WP3:** administración (usuarios, roles, permisos, módulos, auditoría) por slices; retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs`.
 - **Siguiente acción:** slices de usuarios: `ListUsers` (paginado y filtrado en servidor), `CreateUser`, `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`.
+
+### S4-05 · WP3.7 · Administración de usuarios (1/2): `ListUsers` y `CreateUser`
+- **Último commit conocido antes:** `1539809` (S4-04).
+- **Cambios (Identity):** `Common/AdministratorRules` (conteo de administradores activos; el bloqueo por contraseña ya no cuenta), `Common/ResultHttp` (`Result` → respuesta o `problem+json`),
+  `Features/ListUsers` (`GET /api/admin/users`: `{ items, page, pageSize, totalCount }`; filtros `search` (ILIKE literal sobre correo y nombre), `role` (nombre) y `status` (`active`|`blocked`); orden por correo; página y tamaño normalizados por `PageRequest`),
+  `Features/CreateUser` (`POST /api/admin/users`, 201, contraseña temporal con `MustChangePassword`, auditoría con después).
+  Enlazados en `IdentityEndpoints` bajo `/api/admin/users`.
+- **Decisiones:** el listado cambia de arreglo a objeto paginado (decisión 2 de PROGRESS); el frontend se adapta en WP7.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Pendiente WP3:** `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`; roles, permisos, módulos y auditoría; retirar `PrivilegeGuard.cs`, `SessionService.cs`, `DatabaseSeeder.cs`.
+- **Siguiente acción:** `SetUserRoles` y `GetUserPermissions`/`SetUserPermissions`.

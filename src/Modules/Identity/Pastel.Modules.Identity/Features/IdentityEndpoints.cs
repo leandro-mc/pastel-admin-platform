@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Identity.Features.ChangePassword;
+using Pastel.Modules.Identity.Features.CreateUser;
 using Pastel.Modules.Identity.Features.GetCsrfToken;
 using Pastel.Modules.Identity.Features.GetCurrentUser;
+using Pastel.Modules.Identity.Features.ListUsers;
 using Pastel.Modules.Identity.Features.Login;
 using Pastel.Modules.Identity.Features.Logout;
 using Pastel.Modules.Identity.Features.Refresh;
@@ -26,6 +28,8 @@ internal static class IdentityEndpoints
         services.AddScoped<RefreshHandler>();
         services.AddScoped<LogoutHandler>();
         services.AddScoped<ChangePasswordHandler>();
+        services.AddScoped<ListUsersHandler>();
+        services.AddScoped<CreateUserHandler>();
         return services;
     }
 
@@ -39,5 +43,9 @@ internal static class IdentityEndpoints
         LogoutEndpoint.Map(auth);
         GetCurrentUserEndpoint.Map(auth);
         ChangePasswordEndpoint.Map(auth);
+
+        var users = apiRoot.MapGroup("/admin/users");
+        ListUsersEndpoint.Map(users);
+        CreateUserEndpoint.Map(users);
     }
 }
