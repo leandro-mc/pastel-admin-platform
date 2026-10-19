@@ -39,14 +39,21 @@ internal sealed class SessionIssuer(IdentityDbContext db, ITokenService tokens, 
         return new IssuedSession(access, accessExpires, refreshToken, refreshExpiresAt, new SessionSummary(UserMapping.ToSummary(user), accessExpires));
     }
 
-    /// <summary>Revoca todos los refresh tokens vigentes de la cuenta (cambio de contraseña, bloqueo, cambio de roles).</summary>
+    /// <summary>
+    /// Invalida toda la cadena de refresh tokens (cambio de contraseña, bloqueo, cambio de roles o reutilización).
+    /// Se limpian enlaces/ciphertexts de rotación: después de una revocación explícita, un token histórico ya no debe
+    /// interpretarse como reutilización de un sucesor que fue invalidado intencionadamente.
+    /// </summary>
     public async Task RevokeAllAsync(Guid userId, CancellationToken cancellationToken)
     {
         var now = clock.UtcNow;
-        var active = await db.RefreshTokens.Where(x => x.UserId == userId && x.RevokedAt == null).ToListAsync(cancellationToken);
-        foreach (var token in active)
+        var tokens = await db.RefreshTokens.Where(x => x.UserId == userId).ToListAsync(cancellationToken);
+        foreach (var token in tokens)
         {
-            token.RevokedAt = now;
+            token.RevokedAt ??= now;
+            token.ReplacedByTokenHash = null;
+            token.ReplacedByEncryptedToken = null;
+            token.GraceUntil = null;
         }
     }
 }
