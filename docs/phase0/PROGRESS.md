@@ -203,3 +203,14 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
 - **Pendiente WP3:** `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`; roles, permisos, módulos y auditoría; retirar `PrivilegeGuard.cs`, `SessionService.cs`, `DatabaseSeeder.cs`.
 - **Siguiente acción:** `SetUserRoles` y `GetUserPermissions`/`SetUserPermissions`.
+
+### S4-06 · WP3.8 · Administración de usuarios (2/2)
+- **Último commit conocido antes:** `06f6a57` (S4-05).
+- **Cambios (Identity):** `Features/SetUserRoles` (`PUT /api/admin/users/{id}/roles` → `{ roles }`; transacción serializable; no deja la plataforma sin administradores activos; `TokenVersion++` y revoca refresh tokens; auditoría con roles antes/después),
+  `Features/GetUserPermissions` y `Features/SetUserPermissions` (`/api/admin/users/{id}/permissions`; excepciones antes/después con códigos de permiso; rechaza cuentas Administrator, repetidos, efectos y permisos inexistentes),
+  `Features/BlockUser` (serializable; no a sí mismo ni al último administrador activo), `Features/UnblockUser`, `Features/ResetUserPassword` (`{ temporaryPassword, mustChangePassword }`, `Cache-Control: no-store`, la contraseña no se registra ni se audita).
+  Todas con los permisos de siempre (`settings.users.read|update|lock|reset_password`). Enlazadas en `IdentityEndpoints`.
+- **Decisiones:** sin cambios de contrato JSON; los errores pasan de excepciones (400/404/409 según el tipo) a `Result` con códigos `identity.*`.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Estado WP3:** rutas `/api/auth/*` y `/api/admin/users/*` completas. Faltan `/api/admin/roles`, `/permissions`, `/modules`, `/audit`.
+- **Siguiente acción:** slices de roles (`ListRoles`, `CreateRole`, `SetRolePermissions`) y `ListPermissions`.
