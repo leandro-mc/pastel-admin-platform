@@ -91,53 +91,20 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - **Alcance:** WP5 (Google OAuth) no se ha comenzado. `/api/auth/options` solo expone la configuración local y declara Google como no disponible; el flujo OAuth/vinculación de cuentas sigue pendiente para WP5.
 - **Commits representativos del trabajo de seguridad:** `630cb38` (hash ficticio/lockout), `8bfecf4` (gracia refresh), `dcaf979`/`6ac0a82` (ADR), `2ffeab5`/`c42fbf3` (límite por cuenta), `79c67be` (validación Production), `07db059`/`147dc6b` (JWT `kid` y rotación), `84572fc`/`5d4463f` (política), `826a69b`/`3a9d413` (retención), `e0d8265`/`1bb7a00` (opciones de autenticación), `45a837b` (validación CIDR), `ed98a0c`/`9410a4b` (entorno Compose configurable), `2dbd9ca`/`47059d` (revocación de cadena refresh), `b7c577a`/`f3cd6fa` (alineación de códigos S1), `3877458`/`8d8cc5c`/`54c1bc0` (bloqueo propio siempre 403 y auditado), `fa99bb2` (clave bootstrap de producción fuerte).
  
-## Incidencia Docker Build — 2026-10-18
 
-- **Resultado reportado por el usuario:** `docker compose build` falla en `src/Host/Pastel.Host/Pastel.Host.csproj`, línea 12, durante `dotnet restore`: `MSB4185`, la función `InvariantCulture` de `System.Globalization.CultureInfo` no está disponible como función de propiedad MSBuild. El frontend no llegó a compilar porque su paso de instalación fue cancelado al fallar el backend.
-- **Corrección publicada en la rama actual:** se eliminó el uso de `CultureInfo.InvariantCulture.TextInfo.ToTitleCase(...)`, reemplazándolo por una normalización de separadores admitida por MSBuild (`Replace(',', ';')`). El build Docker aún **no se ha repetido después de la corrección**; no afirmar que quedó resuelto hasta que Build/usuario vuelva a ejecutar `docker compose build`.
-- **Detalle del filtro modular:** la lista para seleccionar un subconjunto ahora requiere que los nombres coincidan con la capitalización de las carpetas (por ejemplo, `Brisa;Balance`). El valor predeterminado `*` usado en Docker no depende de este filtro.
-- Próximo paso: actualizar la rama local con `git pull --ff-only origin refactor/modular-foundation` y repetir `docker compose build`. Si pasa, seguir con `docker compose up --build -d` y revisar logs de API; aún falta generar la migración inicial de Identity con EF Core, por lo que un build exitoso no garantiza que la API arranque.
+## Validación Docker y bloqueos actuales — 2026-10-19
 
-## Segunda incidencia Docker Build — 2026-10-18
-
-- **Resultado reportado por el usuario:** tras resolver MSB4185, `dotnet restore` pasó y la publicación falló en `src/BuildingBlocks/Pastel.Platform/Security/Abstractions.cs(37,60)` con `CS0246: HttpContext could not be found`.
-- **Corrección publicada:** se añadió `using Microsoft.AspNetCore.Http;` al archivo que declara `SessionStateExtensions.GetSessionState(HttpContext)`. El proyecto ya referencia `Microsoft.AspNetCore.App`, así que el problema observado era el namespace ausente, no la referencia de framework.
-- **Validación pendiente:** no se volvió a ejecutar Docker desde este entorno. Repetir `docker compose build` con la rama actual; cualquier error nuevo debe tratarse como un bloqueo distinto. Si compila, aún falta verificar el inicio y generar la migración EF Core de Identity.
-
-## Tercera incidencia Docker Build — 2026-10-18
-
-- **Resultado reportado por el usuario:** tras añadir el namespace de `HttpContext`, el backend llegó a compilar `Pastel.SharedKernel` y falló en `PastelHostingExtensions.cs` por dos errores: `CS0104` (`IPNetwork` ambiguo entre `System.Net` y `Microsoft.AspNetCore.HttpOverrides`) y `CS8604` al pasar `RoutePattern.RawText` posiblemente nulo a Serilog.
-- **Corrección publicada:** se quitó el `using System.Net` que introducía la ambigüedad (el tipo requerido en esta configuración es el de `Microsoft.AspNetCore.HttpOverrides`) y se condicionó el enriquecimiento del log a que `RawText` no sea nulo. No se suprimieron advertencias ni se relajó `TreatWarningsAsErrors`.
-- **Validación pendiente:** no se ejecutó el build tras el cambio. Actualizar la rama local y repetir `docker compose build`; se espera que revele cualquier siguiente error real, sin dar por confirmada aún la compilación integral.
-
-## Validación y entrega conocidas
-
-- **Build de esta sesión bloqueado por el entorno disponible:** comprobé con shell `dotnet --info` (comando no encontrado), `docker --version` (comando no encontrado) y `git ls-remote https://github.com/leandro-mc/pastel-admin-platform.git` (falló porque no se puede resolver `github.com`). No hay .NET SDK, Docker ni acceso DNS a GitHub/NuGet; no se ejecutaron `dotnet build`, `dotnet test`, `dotnet ef` ni `docker compose`. No se afirma que el código compile.
-- **WP1 sigue pendiente:** no se ejecutó la línea base de pruebas sobre el SHA base `dev@7ba6f1c`, ni se produjo el informe C1 ni se integró el trabajo de `build/fase0-linea-base`. Requiere runner con .NET 10, NuGet, Docker y acceso al repositorio.
-- **WP2 sigue pendiente de Build:** validar compilación general y filtrado MSBuild `PastelModules` para Identity y subconjuntos.
-- **WP3 sigue pendiente de Build:** generar la migración inicial con `dotnet ef` (no manualmente), compilar y ejecutar `Pastel.Modules.Identity.Tests`, verificar la traducción EF de `PermissionEvaluator`, comprobar el máximo de dos consultas por petición y ampliar pruebas de integración/concurrencia.
-- Los cambios de esta sesión se verificaron mediante inspección estática del contenido remoto de GitHub. Esto no equivale a compilación ni pruebas. En un runner adecuado, el siguiente paso es ejecutar Build antes de hacer cualquier PR/merge.
-- Cada checkpoint debe enumerar el subobjetivo, archivos/cambios, decisiones, comando y resultado real de cada validación, limitaciones, pendientes y siguiente acción.
-- Antes de finalizar una sesión, publica el último estado coherente en esta rama y deja un siguiente paso accionable. El handoff de Dev solo habilita el trabajo posterior de Build/QA; no significa que Fase 0 esté aprobada.
-
-## Cuarta incidencia Docker Build — 2026-10-18
-
-- **Resultado reportado por el usuario:** tras la corrección anterior, la compilación falló en `PastelHostingExtensions.cs`: ASPDEPR005 indica que `Microsoft.AspNetCore.HttpOverrides.IPNetwork` está obsoleto y debe usarse `System.Net.IPNetwork`; además, `KnownIPNetworks.Add` requiere el tipo de `System.Net`.
-- **Corrección publicada:** se calificó explícitamente `System.Net.IPNetwork.TryParse(...)`, evitando la ambigüedad y usando el tipo esperado por `ForwardedHeadersOptions.KnownIPNetworks`. Commit: `9c48ef44ff4f8bad7e05ebc06524a1ee63ebab71`.
-- **Validación pendiente:** esta corrección se inspeccionó estáticamente, pero no se ejecutó Docker ni compilación .NET desde este entorno. El usuario debe actualizar la rama y repetir `docker compose build`; no declarar resuelto hasta ver el resultado real.
-- Si el siguiente build avanza, registrar el nuevo bloqueo por separado. Si ambos contenedores compilan, continuar con arranque y logs; la migración inicial EF Core de Identity sigue pendiente.
-
-## Quinta incidencia Docker Build — 2026-10-18
-
-- **Resultado reportado por el usuario:** la compilación ya supera `Pastel.Platform`, pero falla en tres handlers del módulo Identity (`CreateRoleHandler`, `SetRolePermissionsHandler`, `SetUserPermissionsHandler`) porque no encuentra `IPrivilegeGuard`.
-- **Causa localizada por inspección estática:** `IPrivilegeGuard` se declara como interfaz interna en el namespace `Pastel.Modules.Identity.Security`; estos tres handlers usaban `Pastel.Platform.Security` (para `ICurrentUser` y otras abstracciones), pero no importaban también el namespace Identity `Security`.
-- **Corrección publicada:** se agregó `using Pastel.Modules.Identity.Security;` a los tres archivos, sin cambiar la visibilidad de la interfaz ni moverla de módulo. Commits: `93b7246`, `862e763`, `d7ec2cf`.
-- **Validación pendiente:** la corrección se verificó por inspección del código remoto, pero aún no se ejecutó la compilación .NET/Docker. Actualizar la rama local y repetir `docker compose build`. Registrar la próxima salida como un nuevo bloqueo si procede; si ambos contenedores compilan, continuar con el arranque y la migración inicial EF Core de Identity.
-
-## Sexta incidencia Docker Build — 2026-10-18
-
-- **Resultado reportado por el usuario:** tras corregir las referencias de `IPrivilegeGuard`, el build se detuvo en `IdentityEndpoints.cs` (seis errores `CS1061` sobre `IEndpointRouteBuilder.MapGroup`) y `Common/IdentityErrors.cs` (`CS0103` para `PasswordPolicy`).
-- **Causa localizada por inspección estática:** `MapGroup` es una extensión de ASP.NET Core que necesita el namespace `Microsoft.AspNetCore.Builder`; `PasswordPolicy` está en `Pastel.Modules.Identity.Security`, que no se importaba en `IdentityErrors.cs`.
-- **Correcciones publicadas:** `IdentityEndpoints.cs` importa `Microsoft.AspNetCore.Builder` (commit `d346452e`); `IdentityErrors.cs` importa `Pastel.Modules.Identity.Security` (commit `264a8387`). Se preservaron las interfaces y la política de contraseña existentes.
-- **Validación pendiente:** estas correcciones están revisadas estáticamente pero no se han compilado en este entorno. Actualizar la rama y repetir `docker compose build`; no afirmar que el build está limpio hasta ver un resultado real. Si compila, continuar con el arranque y la migración inicial EF Core de Identity, aún pendiente.
+- **Build Docker: exitoso hasta este punto**, según la última confirmación del usuario tras resolver seis incidencias de compilación. Las seis se condensan aquí para evitar duplicar el historial:
+  1. Sintaxis de la propiedad MSBuild `InvariantCulture` no admitida (`MSB4185`); se ajustó la normalización del filtro `PastelModules`.
+  2. Faltaba importar `Microsoft.AspNetCore.Http` para `HttpContext`.
+  3. En `PastelHostingExtensions.cs`, conflicto/uso obsoleto de `IPNetwork` y posible null en `RoutePattern.RawText`; se calificó `System.Net.IPNetwork` y se protegió el valor nulo en logging.
+  4. Tres handlers no encontraban `IPrivilegeGuard`; se agregó el namespace `Pastel.Modules.Identity.Security`.
+  5. `IdentityEndpoints.cs` no resolvía `MapGroup`; se importó `Microsoft.AspNetCore.Builder`.
+  6. `IdentityErrors.cs` no resolvía `PasswordPolicy`; se importó `Pastel.Modules.Identity.Security`.
+- **Qué significa el resultado:** el usuario confirma que `docker compose build` ya termina correctamente. Esto valida la construcción de las imágenes en ese estado del código; no equivale a confirmar el arranque completo ni a aprobar WP1–WP4. Los seis arreglos se hicieron en `refactor/modular-foundation`.
+- **Bloqueo de arranque conocido:** al iniciar, la API lanza `InvalidOperationException: No se encontraron migraciones de EF Core para IdentityDbContext en Pastel.Modules.Identity`. No existe todavía la migración inicial de Identity. Build debe generarla con `dotnet ef`, revisar el resultado, reconstruir e iniciar los servicios y verificar los logs y pruebas de integración.
+- **Siguiente paso inmediato:** generar e incorporar la migración inicial EF Core de Identity; después ejecutar `docker compose up -d`, `docker compose ps` y revisar `docker compose logs --tail=150 api`. No borrar volúmenes ni desactivar las migraciones para ocultar el bloqueo.
+- **Validación que sigue pendiente:** no hay constancia de que las pruebas automatizadas de WP1/WP3/WP4 se hayan ejecutado ni de que la API haya arrancado con éxito. La compilación Docker reportada por el usuario sí fue exitosa; no extrapolar ese resultado a pruebas, migraciones o funcionamiento de login.
+- WP1 sigue pendiente de línea base y reporte C1 sobre `dev@7ba6f1c`. WP2–WP4 necesitan verificación de Build/QA; en particular, migración, pruebas de Identity, traducción EF de `PermissionEvaluator`, límite de consultas, sesiones/refresh, concurrencia y validación de seguridad.
+- WP5 (Google OAuth) no se ha iniciado. No abrir PR, hacer merge ni integrar en `dev` sin autorización explícita del propietario.
 
