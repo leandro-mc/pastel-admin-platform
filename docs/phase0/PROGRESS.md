@@ -192,3 +192,37 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
 - **Pendiente WP3:** administración (usuarios, roles, permisos, módulos, auditoría) por slices; retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs`.
 - **Siguiente acción:** slices de usuarios: `ListUsers` (paginado y filtrado en servidor), `CreateUser`, `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`.
+
+### S4-05 · WP3.7 · Administración de usuarios (1/2): `ListUsers` y `CreateUser`
+- **Último commit conocido antes:** `1539809` (S4-04).
+- **Cambios (Identity):** `Common/AdministratorRules` (conteo de administradores activos; el bloqueo por contraseña ya no cuenta), `Common/ResultHttp` (`Result` → respuesta o `problem+json`),
+  `Features/ListUsers` (`GET /api/admin/users`: `{ items, page, pageSize, totalCount }`; filtros `search` (ILIKE literal sobre correo y nombre), `role` (nombre) y `status` (`active`|`blocked`); orden por correo; página y tamaño normalizados por `PageRequest`),
+  `Features/CreateUser` (`POST /api/admin/users`, 201, contraseña temporal con `MustChangePassword`, auditoría con después).
+  Enlazados en `IdentityEndpoints` bajo `/api/admin/users`.
+- **Decisiones:** el listado cambia de arreglo a objeto paginado (decisión 2 de PROGRESS); el frontend se adapta en WP7.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Pendiente WP3:** `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`; roles, permisos, módulos y auditoría; retirar `PrivilegeGuard.cs`, `SessionService.cs`, `DatabaseSeeder.cs`.
+- **Siguiente acción:** `SetUserRoles` y `GetUserPermissions`/`SetUserPermissions`.
+
+### S4-06 · WP3.8 · Administración de usuarios (2/2)
+- **Último commit conocido antes:** `06f6a57` (S4-05).
+- **Cambios (Identity):** `Features/SetUserRoles` (`PUT /api/admin/users/{id}/roles` → `{ roles }`; transacción serializable; no deja la plataforma sin administradores activos; `TokenVersion++` y revoca refresh tokens; auditoría con roles antes/después),
+  `Features/GetUserPermissions` y `Features/SetUserPermissions` (`/api/admin/users/{id}/permissions`; excepciones antes/después con códigos de permiso; rechaza cuentas Administrator, repetidos, efectos y permisos inexistentes),
+  `Features/BlockUser` (serializable; no a sí mismo ni al último administrador activo), `Features/UnblockUser`, `Features/ResetUserPassword` (`{ temporaryPassword, mustChangePassword }`, `Cache-Control: no-store`, la contraseña no se registra ni se audita).
+  Todas con los permisos de siempre (`settings.users.read|update|lock|reset_password`). Enlazadas en `IdentityEndpoints`.
+- **Decisiones:** sin cambios de contrato JSON; los errores pasan de excepciones (400/404/409 según el tipo) a `Result` con códigos `identity.*`.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Estado WP3:** rutas `/api/auth/*` y `/api/admin/users/*` completas. Faltan `/api/admin/roles`, `/permissions`, `/modules`, `/audit`.
+- **Siguiente acción:** slices de roles (`ListRoles`, `CreateRole`, `SetRolePermissions`) y `ListPermissions`.
+
+### S4-07 · WP3.9 · Roles, permisos, módulos y auditoría por slices
+- **Último commit conocido antes:** `f6aba23` (S4-06).
+- **Cambios (Identity):** `Features/ListRoles` (una consulta con permisos y cantidad de personas), `CreateRole` (201; nombre validado; duplicado → `identity.role.name_taken` 409), `SetRolePermissions` (204; Administrator conserva todos),
+  `ListPermissions`, `ListModules` (solo lectura del catálogo sincronizado), `SetModuleEnabled` (`PATCH`, 204; `settings` no se desactiva; audita antes/después),
+  `ListAudit` (`GET /api/admin/audit`: `{ items, page, pageSize, totalCount }`, más recientes primero; filtros `action`, `module`, `actor` (correo), `targetUserId`, `from`, `to`), `Common/LikePattern` (ILIKE literal; también usado por `ListUsers`).
+  **`CreateModule` retirado** (comando, endpoint y contrato): no se recrea. Auditoría de roles y módulos con antes/después.
+- **Decisiones:** `GET /api/admin/audit` reemplaza el parámetro `take` por `page`/`pageSize` (decisión 2); `AuditEntry` incluye `module` y `traceId`.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Estado WP3:** todas las rutas de `/api/auth/*` (salvo `options` y Google, de WP5) y `/api/admin/*` existen como slices.
+- **Pendiente WP3:** retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs` (su lógica ya vive en los slices) y revisar referencias colgantes; revisar `SecurityPolicyTests.cs`; auditar el estado real contra los criterios de §6.
+- **Siguiente acción:** `git rm` de los tres archivos heredados y auditoría de §6 punto por punto.
