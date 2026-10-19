@@ -1,8 +1,8 @@
 # Balance — inventario funcional y técnico de SaldApp
 
 > **Rol:** investigación. **Estado:** borrador para revisión del propietario.
-> **Fuentes leídas:** repositorios `leandro-mc/saldapp-backend` (rama `main`, último commit `ff865f0`, 2026-06-18) y `leandro-mc/saldapp-frontend` (rama `main`, último commit `fae3f75`, 2026-06-18); en Pastel, `AGENTS.md` y `docs/modules/BALANCE.md` (rama `dev`, `60cfc31`; la ficha se actualizó después en esta rama, §12.6).
-> **Actualización 2026-10-18:** se incorporaron las decisiones del propietario (§12): centavos asignados por orden de alta (D1), liquidación determinista con desempate «mayor monto primero, luego orden de alta» (D2), autenticación, roles de grupo e invitaciones (D3), corrección del campo de monto (D4) y **Balance inicia desde cero, sin importación de datos (D5)**.
+> **Fuentes leídas:** repositorios `leandro-mc/saldapp-backend` (rama `main`, último commit `ff865f0`, 2026-06-18) y `leandro-mc/saldapp-frontend` (rama `main`, último commit `fae3f75`, 2026-06-18); en Pastel, `AGENTS.md` y `docs/modules/BALANCE.md` (rama `dev`, `60cfc31`; la ficha se actualizó después en esta rama, §12.10).
+> **Actualización 2026-10-18:** se incorporaron las decisiones del propietario (§12): centavos por orden de alta (D1), liquidación determinista (D2), autenticación, varios administradores, roles e invitaciones sin confirmación (D3), campo de monto (D4), **Balance inicia desde cero (D5)**, reparto retroactivo sin participación parcial y solo transferencias sugeridas (D6), reabrir grupos, borrar grupos sin gastos y editar la fecha del gasto (D7), moneda ISO por grupo (D8) y zona horaria por grupo (D9).
 > **No se modificó** ningún repositorio de SaldApp ni se escribió código de migración.
 > **Nomenclatura:** **SaldApp** = sistema actual; **Balance** = módulo futuro de Pastel.
 
@@ -173,8 +173,8 @@ parte_igual(grupo):
 
 Consecuencias comprobadas en el código:
 
-1. **El reparto es retroactivo.** Si se agrega un integrante después de registrar gastos, esa persona pasa a deber su parte de **todos** los gastos anteriores (caso G18). Si se elimina uno (solo posible si no tiene gastos), las partes de los demás suben (G19).
-2. **No hay participación parcial.** Un gasto siempre se divide entre todos; no se puede excluir a alguien de un gasto concreto. Todo caso de «participantes parciales» es un **requisito nuevo**, no una regla existente.
+1. **El reparto es retroactivo (se mantiene en Balance, D6).** Si se agrega un integrante después de registrar gastos, esa persona pasa a deber su parte de **todos** los gastos anteriores (caso G18). Si se elimina uno (solo posible si no tiene gastos), las partes de los demás suben (G19).
+2. **No hay participación parcial.** Un gasto siempre se divide entre todos; no se puede excluir a alguien de un gasto concreto. Todo caso de «participantes parciales» es un **requisito nuevo**, no una regla existente. **Balance mantiene este comportamiento (D6).**
 3. **Si el grupo no tiene integrantes**, el cálculo devuelve lista vacía (`if (integrantsIds.isEmpty()) return emptyList()`).
 
 Ejemplo: 3 integrantes, un gasto de 100.00 → `parte = 100.00 / 3 = 33.3333… → 33.33`.
@@ -275,7 +275,7 @@ Ejemplo (G22): saldos Ana +75.00, Beto +15.00, Carla −45.00, Diego −45.00 �
 - **Estados.** Abierto/cerrado. Cerrado = solo lectura (incluye saldos y liquidación final).
 - **Sin propietario/creador.** El grupo no registra quién lo creó (en Balance, el creador es el administrador: D3).
 
-**Modelo en Balance (decidido, §12.3).** Balance **no puede quedar abierto**: toda lectura o escritura exige sesión de Pastel y pertenencia al grupo. El participante es una persona del grupo con nombre visible, ligada a una cuenta de Pastel o pendiente de aceptar su invitación. Roles de grupo: el **administrador** (quien crea el grupo) invita y acepta a los demás y registra y modifica los gastos de todo el grupo; el **miembro** registra y modifica **solo sus** gastos. Los permisos de plataforma son `balance.access` y `balance.groups.manage`. Un grupo ajeno responde 404. El ID deja de ser llave de acceso.
+**Modelo en Balance (decidido, §12.3).** Balance **no puede quedar abierto**: toda lectura o escritura exige sesión de Pastel y pertenencia al grupo. El participante es una persona del grupo con nombre visible, ligada a una cuenta de Pastel o pendiente de aceptar su invitación. Roles de grupo: puede haber **varios administradores** (siempre al menos uno; el creador es el primero), que invitan, nombran o quitan administradores, administran el grupo y registran y modifican los gastos de todo el grupo; el **miembro** registra, modifica y elimina **solo sus** gastos y ve todos los del grupo. Los permisos de plataforma son `balance.access` y `balance.groups.manage`. Un grupo ajeno responde 404. El ID deja de ser llave de acceso.
 
 ---
 
@@ -286,7 +286,7 @@ Ejemplo (G22): saldos Ana +75.00, Beto +15.00, Carla −45.00, Diego −45.00 �
 **Relación con Pastel (decidida, D3 en §12.3).**
 
 1. SaldApp **no tiene identidades**: el vínculo «integrante ↔ cuenta de Google» no existe y Balance lo crea desde el inicio.
-2. En Balance cada participante se **liga a una cuenta de Pastel** (inicio con Google) mediante una **invitación**: la crea el administrador, la persona la acepta con su cuenta y el administrador acepta su ingreso. Hasta entonces es un participante pendiente. SaldApp **no almacena correos**, y la plataforma **no envía correos** (fuera de alcance en la ficha), por lo que el mecanismo de entrega de la invitación se define en el ADR del modelo de participantes (P18).
+2. En Balance cada participante se **liga a una cuenta de Pastel** (inicio con Google) mediante una **invitación**: la crea el administrador y la persona la acepta con su cuenta, **sin otro paso de confirmación**. Hasta que acepta es un participante pendiente. SaldApp **no almacena correos**, y la plataforma **no envía correos** (fuera de alcance en la ficha), por lo que el mecanismo de entrega de la invitación se define en el ADR del modelo de participantes (P18).
 3. **No hay grupos heredados** (D5): no se asignan administradores ni se importan integrantes. Cada grupo nuevo tiene como administrador a quien lo crea.
 4. Autorización 100 % en el servidor y cookies `HttpOnly` según `AGENTS.md`; el ID del grupo deja de ser llave de acceso.
 
@@ -1149,9 +1149,9 @@ Suma de saldos (sobrante de redondeo): **0.01**
 - **Rechazo esperado** (POST expense payedBy de otro grupo): HTTP 409 — Integrant with id X does not belong to group with id 1. _(calculado desde el código; no ejecutado)_
 - **Rechazo esperado** (POST expense payedBy inexistente): HTTP 404 — Integrant with id 999 not found. _(calculado desde el código; no ejecutado)_
 - **Rechazo esperado** (GET /groups/999): HTTP 404 — Group with id 999 not found. _(calculado desde el código; no ejecutado)_
-### 9.3 Resultados esperados en Balance (reglas D1, D2, D3 y D4 de §12)
+### 9.3 Resultados esperados en Balance (decisiones aprobadas de §12)
 
-Se calcularon con las reglas de §12.1 y §12.2 (centavos enteros; orden de alta = orden de los IDs en cada caso) y se verificaron con propiedades sobre 5 000 escenarios aleatorios (partes que suman el total, saldos que suman 0, cada persona queda en cero, a lo sumo `#deudores + #acreedores − 1` transferencias, resultado independiente del orden de entrada). Estado de los resultados: **calculado** con las reglas aprobadas D1 y D2 (no es salida de SaldApp). Las entradas (altas, gastos y ediciones) son las de §9.2.
+Se calcularon con las reglas de §12.1 y §12.2 (unidades mínimas enteras; orden de alta = orden de los IDs en cada caso) y se verificaron con propiedades sobre 5 000 escenarios aleatorios (partes que suman el total, saldos que suman 0, cada persona queda en cero, a lo sumo `#deudores + #acreedores − 1` transferencias, resultado independiente del orden de entrada). Estado de los resultados: **calculado** con las reglas aprobadas D1 y D2 (no es salida de SaldApp). Las entradas (altas, gastos y ediciones) son las de §9.2.
 
 **Casos que cambian** (se muestra cada paso donde el resultado difiere):
 
@@ -1179,14 +1179,23 @@ Se calcularon con las reglas de §12.1 y §12.2 (centavos enteros; orden de alta
 
 Notas: en G24 y G25 (13 integrantes, un pagador) y en G26 (20 integrantes) los saldos nuevos son `pagado − parte` con las partes indicadas; en G24 y G25 la liquidación nueva sale en **orden de alta** (`Beto→Ana`, `Carla→Ana`, `Diego→Ana`, …). En G12 y G26 el sobrante deja de perderse: la liquidación cubre todos los saldos.
 
+**Casos nuevos solo de Balance** (monedas sin decimales, D8; no existen en SaldApp). Resultados **calculados** con D1 y D2 en unidades enteras (yenes); cumplen las mismas propiedades (partes suman el total, saldos suman 0).
+
+| Caso | Escenario (grupo en JPY) | Partes | Saldos | Liquidación |
+|---|---|---|---|---|
+| G35 | 3 participantes; Ana paga 100 | Ana 34, Beto 33, Carla 33 | Ana +66, Beto −33, Carla −33 | Beto→Ana 33; Carla→Ana 33 |
+| G36 | 7 participantes; Ana paga 1000 | Ana a Fabio 143; Gina 142 | Ana +857; Beto, Carla, Diego, Elena, Fabio −143; Gina −142 | Beto→Ana 143; Carla→Ana 143; Diego→Ana 143; Elena→Ana 143; Fabio→Ana 143; Gina→Ana 142 |
+| G37 | 4 participantes; Ana paga 1001 y Beto 2 | total 1003: Ana, Beto y Carla 251; Diego 250 | Ana +750; Beto −249; Carla −251; Diego −250 | Carla→Ana 251; Diego→Ana 250; Beto→Ana 249 |
+| G38 | Gasto de `100.50` en un grupo en JPY | — | — | **400**: más decimales de los que admite la moneda (D4, D8) |
+
 **Casos que no cambian** (valen los resultados de §9.2): G01, G06, G07, G08, G09, G15, G16, G19, G20, G22, G29, G30, G31. En los casos con varios pasos (G14, G17, G18) cambian solo los pasos indicados arriba; los demás coinciden con §9.2.
 
 **Casos con tratamiento distinto en Balance**
 
 - **G28 (monto `10.005`).** En SaldApp quedaba indefinido; en Balance es **error 400 de validación** (más de 2 decimales, D4). El paso (b) con `10.01` se evalúa con las reglas normales (ver fila G28).
 - **G33 (saldos que no suman cero).** Con D1 el cálculo **nunca** produce saldos que no sumen 0; una entrada así viola un invariante y debe fallar con error explícito, no ignorar el sobrante.
-- **G34 (errores de validación y permisos).** Se mantienen y se suman: monto con más de 2 decimales → 400 (D4); persona ajena al grupo → **404** (en SaldApp era 409, D3); sin sesión → 401; miembro que registra un gasto con otro pagador, edita o elimina un gasto ajeno, invita, cierra el grupo o edita su configuración → **403**; el administrador puede hacerlo (D3).
-- **G21 (grupo cerrado).** Sigue siendo lectura permitida y escritura rechazada con 409; los saldos y la liquidación usan D1/D2.
+- **G34 (errores de validación y permisos).** Se mantienen y se suman: monto con más decimales de los que admite la moneda → 400 (D4); persona ajena al grupo → **404** (en SaldApp era 409, D3); sin sesión → 401; miembro que registra un gasto con otro pagador, modifica o elimina un gasto ajeno, cambia el pagador, invita, nombra administradores, quita participantes, edita la configuración, cierra, reabre o borra el grupo → **403**, y el administrador sí puede (D3); quitar al **último administrador** → 409; borrar un grupo **con gastos** → 409 (D7).
+- **G21 (grupo cerrado).** Sigue siendo lectura permitida y escritura rechazada con 409 mientras esté cerrado; en Balance el administrador puede **reabrirlo** (D7) y entonces vuelven las escrituras y los saldos y la liquidación se recalculan con D1/D2.
 
 ---
 
@@ -1236,7 +1245,7 @@ Notas: en G24 y G25 (13 integrantes, un pagador) y en G26 (20 integrantes) los s
 13. **Cierre irreversible sin «reabrir»**; no se puede corregir un error tras cerrar.
 14. **Sin concurrencia:** dos personas editando el mismo grupo se pisan sin aviso (no hay versión).
 
-> **Resolución en Balance (§12):** los puntos 1 y 14 se atienden con D3 (sesión, «Mis grupos», pertenencia) y el control de edición simultánea de la ficha; los puntos 2, 3, 4 y 5 con **D4** (campo de monto con decimales, validación en cliente y servidor, totales calculados por el servidor); el resto figura en §12.7.
+> **Resolución en Balance (§12):** los puntos 1 y 14 se atienden con D3 (sesión, «Mis grupos», pertenencia) y el control de edición simultánea de la ficha; los puntos 2, 3, 4 y 5 con **D4** (campo de monto con decimales, validación en cliente y servidor, totales calculados por el servidor); el punto 10 con **D8** (moneda ISO fija por grupo); el punto 13 con **D7** (se puede reabrir un grupo cerrado); el resto figura en §12.11.
 
 ---
 
@@ -1248,18 +1257,18 @@ Notas: en G24 y G25 (13 integrantes, un pagador) y en G26 (20 integrantes) los s
 |---|---|---|---|
 | R1 | **Desempates no deterministas** (montículo de Java + `HashMap`) | §4.3, G05, G12, G24, G25 | **Resuelto por D2:** orden total (mayor monto primero, luego orden de alta) con `ORDER BY` explícito; las pruebas comparan el neto por persona y el orden exacto de §9.3 |
 | R2 | **Los centavos sobrantes no se asignan** y los saldos no suman cero | §4.4, G02, G03, G10–G12, G26 | **Resuelto por D1:** un centavo a cada participante por orden de alta; partes y saldos suman exacto. Ficha actualizada |
-| R3 | **Reparto retroactivo y sin participación parcial** | §4.1, G18, G19 | Se reproduce en Balance (agregar un participante recalcula las partes de todos los gastos); cualquier mejora (participación por gasto) es alcance nuevo (P5) |
+| R3 | **Reparto retroactivo y sin participación parcial** | §4.1, G18, G19 | **Aceptado (D6):** se reproduce en Balance; no habrá participación parcial |
 | R4 | **Sin autenticación ni dueño de los grupos** | §5, §6 | **Resuelto por D3:** Balance exige sesión, pertenencia y roles; el creador es el administrador |
 | R5 | **Esquema sin migraciones (`ddl-auto: update`)** | `application*.yaml` | **Sin objeto (D5):** no se importan datos; el esquema real de SaldApp ya no condiciona a Balance |
-| R6 | **Montos sin límite de decimales ni dígitos** | §3.3, G28 | **Resuelto por D4** (validación de 2 decimales en cliente y servidor); sin datos previos que depurar (D5) |
-| R7 | **Moneda como símbolo ambiguo** | §2 | En SaldApp `$`, `¥`, `Bs.` son ambiguos. Balance exige moneda explícita en ISO 4217 (lista ofrecida: P9); no hay datos que mapear (D5) |
-| R8 | **Fechas sin zona horaria** (`timestamp`) y `endDate` del servidor | §3.1 | Definir la zona horaria de Balance (¿America/Costa_Rica?) (P13) |
+| R6 | **Montos sin límite de decimales ni dígitos** | §3.3, G28 | **Resuelto por D4** (validación de los decimales de la moneda en cliente y servidor); sin datos previos que depurar (D5) |
+| R7 | **Moneda como símbolo ambiguo** | §2 | **Resuelto por D8:** moneda ISO 4217 por grupo, con decimales propios; la interfaz muestra código y símbolo |
+| R8 | **Fechas sin zona horaria** (`timestamp`) y `endDate` del servidor | §3.1 | **Resuelto por D9:** zona IANA por grupo (`America/Costa_Rica` por defecto), instantes en UTC y fecha del gasto como fecha de calendario |
 | R9 | **Cobertura de pruebas mínima** | §1 | Solo existe el calculador probado; las pruebas doradas de §9 son la única referencia ejecutable de las reglas |
 | R10 | **Código de error distinto al exigido por la ficha** | §5 | SaldApp responde 409 al usar IDs de otro grupo; la ficha exige 404 y 409 por edición simultánea. Son cambios **intencionales** de Balance: registrarlos como tales |
 | R11 | **Orden de filas sin `ORDER BY`** | `IntegrantRepositoryAdapter.findAllByGroup` | Puede alterar el orden de empates entre lecturas **[SUPOSICIÓN, no reproducido]** |
 | R12 | **Cálculos de pantalla en coma flotante** | §10.3 (4) | Balance no debe replicarlo: mostrar los valores del servidor |
 
-**Estado tras las decisiones del 2026-10-18:** R1 → resuelto por **D2**; R2 → resuelto por **D1**; R3 sigue vigente (P5); R4 → resuelto por **D3**; R5, R6 y la parte de datos de R7 → **sin objeto** por **D5** (Balance inicia sin datos), y R6 queda además cubierto por **D4**; R8 sigue vigente (P13); R11 → cubierto por **D2** (`ORDER BY` explícito); R12 → resuelto por **D4**; R9 y R10 siguen vigentes (R10: son cambios intencionales de Balance, registrados en §12).
+**Estado tras las decisiones del 2026-10-18:** R1 → resuelto por **D2**; R2 → resuelto por **D1**; R3 → **aceptado** (el reparto retroactivo se mantiene, **D6**); R4 → resuelto por **D3**; R5, R6 y la parte de datos de R7 → **sin objeto** por **D5**, y R6 queda además cubierto por **D4**; R7 → resuelto por **D8** (moneda ISO por grupo); R8 → resuelto por **D9** (zona horaria por grupo); R11 → cubierto por **D2** (`ORDER BY` explícito); R12 → resuelto por **D4**; R9 y R10 siguen vigentes (R10: son cambios intencionales de Balance, registrados en §12).
 
 ### 11.2 Preguntas abiertas
 
@@ -1272,52 +1281,58 @@ Notas: en G24 y G25 (13 integrantes, un pagador) y en G26 (20 integrantes) los s
 | P4 / P16 — desempates | **Mayor monto primero y, en empate, orden de alta** | D2, §12.2 |
 | P6 — campo de monto | Se corrige para admitir decimales | D4, §12.4 |
 | P10 — compartir grupos | Solo por **invitación del administrador**; el ID deja de ser llave | D3, §12.3 |
-| P15 — permisos dentro del grupo | El **miembro** registra y modifica **solo sus** gastos; el **administrador** registra y modifica los de **todo el grupo** | D3, §12.3 |
-| Quién administra e invita | El administrador es **quien crea el grupo**; **invita y acepta** a los demás | D3, §12.3 |
+| P15 / P20 — permisos dentro del grupo | El **miembro** registra, modifica y elimina **solo sus** gastos; el **administrador**, los de **todo el grupo**. **Todos los miembros ven todos los gastos y saldos.** Quitar participantes, editar la configuración y cerrar el grupo son **solo del administrador**. **Solo el administrador** puede cambiar el pagador de un gasto a otra persona | D3, §12.3 |
+| P18 (a) — invitación | El administrador invita y **no hace falta que además «acepte»** (se elimina el paso de confirmación) | D3, §12.3 |
+| P19 — administradores | **Puede haber varios**; **siempre debe quedar al menos uno**; un administrador puede **nombrar** a otros administradores y **quitarles** la administración | D3, §12.3 |
+| P5 — reparto | **Se mantiene el reparto retroactivo; no hay participación parcial** | D6, §12.6 |
+| P7 — liquidar y reabrir | Solo se **muestran transferencias sugeridas** (no se registran pagos). **Sí se pueden reabrir** los grupos cerrados | D6, D7 |
+| P9 — monedas | Moneda **ISO 4217 asignada al crear el grupo**; los gastos se registran en la moneda del grupo; catálogo con colones, dólares, pesos, yenes y las más populares | D8, §12.8 |
+| P12 — borrar grupos y fechas | Solo se pueden **borrar grupos sin gastos**; **sí se puede editar la fecha** de un gasto | D7, §12.7 |
+| P13 — zona horaria | **Por defecto Costa Rica**; los administradores pueden cambiarla | D9, §12.9 |
 
 **Pendientes.**
 
-- **P5.** ¿Se mantiene el reparto retroactivo (quien se agrega después paga su parte de **todos** los gastos anteriores)? ¿Se desea participación parcial por gasto (alcance nuevo)?
-- **P7.** «Liquidar»: ¿basta con mostrar transferencias sugeridas o se quiere **registrar pagos realizados**? ¿Se permite **reabrir** un grupo cerrado?
-- **P9.** ¿Qué monedas ofrece Balance al crear un grupo? Se exige moneda explícita en código ISO 4217 (por ejemplo CRC y USD); ya no hace falta mapear los símbolos de SaldApp.
-- **P12.** ¿Se desea poder **borrar grupos** y **editar la fecha** de un gasto (SaldApp no lo permite)?
-- **P13.** Zona horaria de las fechas y del cierre del grupo (¿America/Costa_Rica?).
-- **P18.** **Invitación:** (a) se interpretó «invita y acepta a los demás» como: el administrador invita, la persona invitada acepta con su cuenta de Google y **el administrador confirma su ingreso**; ¿es correcto el paso de confirmación? (b) La ficha excluye las notificaciones por correo (§5), por lo que la plataforma **no envía correos**: ¿se comparte un enlace manualmente o la persona ve la invitación al iniciar sesión con el correo asociado? (c) ¿Se permiten participantes **sin cuenta** (solo nombre, con gastos registrados por el administrador), como los integrantes de SaldApp?
-- **P19.** **Administrador:** ¿es único por grupo (el creador) o se pueden nombrar más? ¿Puede transferirse el cargo o dejar el grupo?
-- **P20.** **Supuestos de permisos por confirmar:** (a) «modificar» incluye **eliminar** el propio gasto; (b) todos los miembros **ven** todos los gastos, saldos y la liquidación del grupo; (c) editar la configuración (nombre, descripción, moneda), **cerrar** el grupo y **quitar** participantes sin gastos son acciones **solo del administrador**; (d) el miembro no puede cambiar el pagador de su gasto a otra persona.
+- **P18 (b).** La ficha excluye las notificaciones por correo (§5), por lo que la plataforma **no envía correos**: ¿la persona recibe un enlace compartido a mano por el administrador, o ve la invitación al iniciar sesión con el correo asociado? Se define en el ADR del modelo de participantes.
+- **P18 (c).** ¿Se permiten participantes **sin cuenta** (solo nombre, con gastos registrados por el administrador), como los integrantes de SaldApp? Mientras no se responda se asume que sí.
+- **P9 (revisión).** Revisar el catálogo de monedas propuesto en §12.8 (lista destacada y regla para el resto).
+- **P21.** **Supuestos nuevos por confirmar:** (a) **reabrir** y **borrar** un grupo son acciones solo del administrador; (b) la **moneda no se puede cambiar** una vez que el grupo tiene gastos (no hay conversión); (c) la **fecha** de un gasto la edita quien puede modificar ese gasto (el miembro, la suya; el administrador, cualquiera); (d) las monedas de 3 o más decimales quedan fuera de esta versión.
 
 ---
 
 ## 12. Decisiones de migración: qué cambia en Balance respecto a SaldApp
 
-**Principio.** El objetivo es una buena migración, no una copia. Las secciones 1 a 11 describen **SaldApp tal como es**; esta sección fija **qué se corrige o mejora en Balance**. Todo lo que figura aquí como **Aprobado** fue indicado por el propietario (2026-10-18); los **supuestos** que quedaron por confirmar están en P18–P20. `docs/modules/BALANCE.md` se actualizó para no contradecir esta sección (§12.6).
+**Principio.** El objetivo es una buena migración, no una copia. Las secciones 1 a 11 describen **SaldApp tal como es**; esta sección fija **qué se corrige o mejora en Balance**. Todo lo que figura aquí como **Aprobado** fue indicado por el propietario (2026-10-18); los **supuestos** que quedaron por confirmar están en P18 (b, c) y P21. `docs/modules/BALANCE.md` se actualizó para no contradecir esta sección (§12.10).
 
 | ID | Cambio | SaldApp (hoy) | Balance (destino) | Estado |
 |---|---|---|---|---|
-| **D1** | Los centavos sobrantes **sí se asignan**, un centavo a cada participante **por orden de alta** | No se asignan: las partes no suman el total y los saldos no suman cero (§4.4) | Las partes suman **exactamente** el total y los saldos **exactamente 0.00** | **Aprobado** (criterio confirmado) |
-| **D2** | La liquidación es **determinista**: mayor monto primero y, en empate, orden de alta | Orden y desempates dependen de `PriorityQueue` y `HashMap` (§4.3) | Orden total definido; mismo resultado sin importar el orden de entrada ni el de la base de datos | **Aprobado** (criterio confirmado) |
-| **D3** | **Autenticación, pertenencia y roles de grupo** obligatorios | Sin autenticación; el ID del grupo es la llave (§5, §6) | Sesión de Pastel; el creador es el administrador; el administrador invita y acepta; el miembro solo gestiona sus gastos | **Aprobado** (supuestos: P18–P20) |
-| **D4** | **Corregir el campo de monto** y validar el dinero | `type="number"` sin `step` (posible bloqueo de decimales), sin validación (§3.3, §10.3) | Montos con 2 decimales en cliente y servidor | **Aprobado** |
+| **D1** | Los centavos sobrantes **sí se asignan**, una unidad mínima a cada participante **por orden de alta** | No se asignan: las partes no suman el total y los saldos no suman cero (§4.4) | Las partes suman **exactamente** el total y los saldos **exactamente 0** | **Aprobado** |
+| **D2** | La liquidación es **determinista**: mayor monto primero y, en empate, orden de alta | Orden y desempates dependen de `PriorityQueue` y `HashMap` (§4.3) | Orden total definido; mismo resultado sin importar el orden de entrada ni el de la base de datos | **Aprobado** |
+| **D3** | **Autenticación, pertenencia y roles de grupo**: varios administradores (siempre al menos uno), miembros que gestionan solo sus gastos | Sin autenticación; el ID del grupo es la llave (§5, §6) | Sesión de Pastel; el creador es administrador; el administrador invita sin paso de confirmación | **Aprobado** (pendiente: P18 b y c) |
+| **D4** | **Corregir el campo de monto** y validar el dinero | `type="number"` sin `step` (posible bloqueo de decimales), sin validación (§3.3, §10.3) | Montos con los decimales de la moneda del grupo, en cliente y servidor | **Aprobado** |
 | **D5** | **Balance inicia desde cero** | — | No hay importación ni migración de datos; SaldApp es referencia de lógica y de experiencia | **Aprobado** |
+| **D6** | Se **mantiene el reparto retroactivo**; **sin participación parcial**; la liquidación solo **muestra transferencias sugeridas** | Igual (§4.1, §2) | Igual; no se registran pagos | **Aprobado** |
+| **D7** | **Ciclo de vida del grupo:** cerrar y **reabrir**; borrar solo grupos **sin gastos**; **editar la fecha** de un gasto | Cierre irreversible; no se borran grupos; la fecha no se edita (§2) | Reabrir y borrar (sin gastos) por el administrador; fecha editable | **Aprobado** (pendiente: P21 a y c) |
+| **D8** | **Moneda ISO 4217 por grupo**, asignada al crear; gastos en esa moneda | Símbolo libre (≤ 5 caracteres), editable en cualquier momento (§3.1) | Catálogo ISO con decimales por moneda | **Aprobado** (catálogo por revisar; P21 b y d) |
+| **D9** | **Zona horaria por grupo**, por defecto Costa Rica, editable por administradores | Fechas sin zona horaria (§3.1) | Zona IANA por grupo (`America/Costa_Rica` por defecto) | **Aprobado** |
 
 ### 12.1 D1 — Asignación de los centavos sobrantes
 
-**Regla** (reemplaza `redondear_mitad_arriba(total / n, 2)` de §4.1; el cálculo se hace en **centavos enteros**):
+**Regla** (reemplaza `redondear_mitad_arriba(total / n, 2)` de §4.1; el cálculo se hace en **unidades mínimas enteras** de la moneda del grupo: centavos en las monedas de 2 decimales y unidades enteras en las de 0 decimales como el yen, D8):
 
 ```
 partes(grupo):
     n        = participantes del grupo, en orden de alta (posición 0 … n−1)
-    total_c  = Σ monto de todos los gastos, en centavos enteros   # los montos tienen exactamente 2 decimales (D4)
-    base     = total_c DIV n          # cociente entero
-    r        = total_c MOD n          # centavos que sobran, 0 ≤ r < n
-    parte[i] = base + 1   si posición(i) < r        # un centavo extra a los primeros r participantes
+    total_u  = Σ monto de todos los gastos, en unidades mínimas enteras   # los montos respetan los decimales de la moneda (D4)
+    base     = total_u DIV n          # cociente entero
+    r        = total_u MOD n          # unidades que sobran, 0 ≤ r < n
+    parte[i] = base + 1   si posición(i) < r        # una unidad extra a los primeros r participantes
              = base       en otro caso
 saldo[i] = pagado[i] − parte[i]
 ```
 
-**Orden de alta.** Es el orden en que el administrador **agrega o invita** a cada participante al grupo (no el de aceptación de la invitación); si dos coinciden, se desempata por identificador. El creador del grupo es siempre el primero, de modo que **recibe el primer centavo extra** cuando sobra alguno. Se obtiene con un `ORDER BY` explícito, nunca del orden en que la base devuelve filas.
+**Orden de alta.** Es el orden en que el administrador **agrega o invita** a cada participante al grupo (no el de aceptación de la invitación); si dos coinciden, se desempata por identificador. El creador del grupo es siempre el primero, de modo que **recibe la primera unidad extra** cuando sobra alguna. Se obtiene con un `ORDER BY` explícito, nunca del orden en que la base devuelve filas.
 
-**Propiedades garantizadas** (probadas en 5 000 escenarios aleatorios de 1–25 participantes): `Σ partes = total` exacto; `Σ saldos = 0` exacto; dos partes cualesquiera difieren **a lo sumo 1 centavo**; no se usa `double`.
+**Propiedades garantizadas** (probadas en 5 000 escenarios aleatorios de 1–25 participantes con monedas de 2 decimales, y en 3 000 más con monedas de 0 y de 2 decimales): `Σ partes = total` exacto; `Σ saldos = 0` exacto; dos partes cualesquiera difieren **a lo sumo 1 unidad mínima**; no se usa `double`.
 
 **Ejemplos** (resultados completos en §9.3):
 
@@ -1325,6 +1340,7 @@ saldo[i] = pagado[i] − parte[i]
 - ₡200.00 entre 3 (G03): `20000 DIV 3 = 6666`, `MOD = 2` → `66.67 / 66.67 / 66.66`.
 - ₡0.05 entre 2 (G10): `5 DIV 2 = 2`, `MOD = 1` → `0.03 / 0.02`.
 - ₡0.01 entre 3 (G11): partes `0.01 / 0.00 / 0.00`; el saldo de quien pagó queda en `0.00` y ya no aparece un residuo sin liquidar.
+- ¥100 entre 3 (G35, yen: 0 decimales): `100 DIV 3 = 33`, `MOD = 1` → partes `34 / 33 / 33`.
 
 **Consecuencias.**
 
@@ -1342,7 +1358,7 @@ liquidar(saldos, orden_alta):
     acreedores = participantes con saldo > 0, ordenados por (crédito DESC, posición_alta ASC)
     mientras haya deudores Y acreedores:
         d = primero(deudores) ; c = primero(acreedores)
-        monto = mín(deuda(d), crédito(c))                  # en centavos enteros
+        monto = mín(deuda(d), crédito(c))                  # en unidades mínimas enteras
         registrar  d → c : monto
         restar monto a ambos; quitar de su lista a quien quede en 0;
         reubicar a quien quede con saldo usando la MISMA clave de orden
@@ -1354,9 +1370,9 @@ liquidar(saldos, orden_alta):
 1. El orden de alta sale de un `ORDER BY` explícito; **nunca** del orden en que la base devuelve filas.
 2. El resultado **no debe cambiar** si se permuta el orden de los saldos de entrada (probado con permutaciones en 5 000 escenarios).
 3. Sin estructuras de iteración no ordenada (`HashMap`, `Set`) en el camino del cálculo.
-4. Los montos de las transferencias son enteros en centavos, convertidos a decimal solo al presentar.
+4. Los montos de las transferencias son enteros en unidades mínimas, convertidos a decimal solo al presentar.
 
-**Relación con SaldApp.** Donde SaldApp **no tenía empates** y los saldos sumaban 0, el resultado coincide con el actual (G01, G06–G09, G15, G16, G19, G20, G22, G29–G31). Donde había empates (G05, G12, G24–G26, G32) cambia **el orden** y, a veces, **quién paga a quién**, pero cada persona sigue pagando o recibiendo el mismo neto (§9.3). El algoritmo sigue sin minimizar el número de transferencias (G32: 4 en lugar de 3); minimizarlas sería un cambio aparte (§12.7).
+**Relación con SaldApp.** Donde SaldApp **no tenía empates** y los saldos sumaban 0, el resultado coincide con el actual (G01, G06–G09, G15, G16, G19, G20, G22, G29–G31). Donde había empates (G05, G12, G24–G26, G32) cambia **el orden** y, a veces, **quién paga a quién**, pero cada persona sigue pagando o recibiendo el mismo neto (§9.3). El algoritmo sigue sin minimizar el número de transferencias (G32: 4 en lugar de 3); minimizarlas sería un cambio aparte (§12.11).
 
 ### 12.3 D3 — Autenticación, pertenencia, roles e invitaciones
 
@@ -1365,25 +1381,29 @@ Balance cuenta con autenticación de Pastel; **ningún dato ni endpoint de Balan
 1. **Sesión obligatoria** en todo endpoint (inicio de sesión con Google, cookie `HttpOnly`); la autorización se verifica **siempre en el servidor**, nunca solo en la interfaz.
 2. **Permisos de plataforma:** `balance.access` para usar el módulo y `balance.groups.manage` sobre los grupos de los que la persona forma parte (rol sugerido `Balance — Usuario`). Cualquier persona con ese rol puede crear grupos.
 3. **Se elimina el ID como llave de acceso.** Desaparece «Ingresar a grupo existente por ID»; se reemplaza por **«Mis grupos»**. Un grupo del que no se es miembro **no existe** para esa persona: responde **404** (en SaldApp era 409).
-4. **Roles dentro del grupo** (datos del dominio, no roles de plataforma):
+4. **Roles dentro del grupo** (datos del dominio, no roles de plataforma). Quien crea el grupo es su primer administrador; **puede haber varios administradores y siempre debe quedar al menos uno**.
 
 | Acción | Administrador | Miembro |
 |---|---|---|
-| Crear un grupo | Quien lo crea queda como su **administrador** | — |
-| Ver el grupo, participantes, gastos, saldos y liquidación | Sí | Sí |
+| Crear un grupo | Quien lo crea queda como **administrador** | — |
+| Ver el grupo, participantes, **todos** los gastos, saldos y liquidación | Sí | Sí |
 | **Registrar** un gasto | Sí, con **cualquier** participante como pagador | Sí, **solo con él mismo como pagador** |
-| **Modificar o eliminar** un gasto | Sí, **cualquiera** del grupo | Solo los **propios** (pagador = él) |
-| **Invitar** participantes y **aceptar** su ingreso | Sí | No |
+| **Modificar** (incluida la fecha) o **eliminar** un gasto | Sí, **cualquiera** del grupo | Solo los **propios** (pagador = él) |
+| **Cambiar el pagador** de un gasto a otra persona | Sí | No |
+| **Invitar** participantes | Sí | No |
+| **Nombrar o quitar administradores** | Sí (siempre debe quedar al menos uno) | No |
 | Quitar participantes (solo si no tienen gastos) | Sí | No |
-| Editar nombre, descripción y moneda del grupo | Sí | No |
-| Cerrar el grupo | Sí | No |
-| Escribir en un grupo **cerrado** | No (409) | No (409) |
+| Editar nombre, descripción y zona horaria del grupo | Sí | No |
+| **Cerrar** y **reabrir** el grupo | Sí | No |
+| **Borrar** el grupo (solo si no tiene gastos) | Sí | No |
+| Escribir en un grupo **cerrado** | No (409; primero hay que reabrirlo) | No (409) |
 
-   Los renglones «Quitar», «Editar», «Cerrar», «eliminar» y la visibilidad total para miembros son **supuestos derivados de las respuestas del propietario** y de la ficha, pendientes de confirmar (P20).
+   La moneda se asigna al crear el grupo y no se edita (D8). Que reabrir y borrar sean solo del administrador, y que la fecha la edite quien puede modificar el gasto, son supuestos pendientes de confirmar (P21).
 
-5. **Invitaciones.** El administrador agrega a cada participante (nombre visible y, para ligarlo a una cuenta, el correo de su cuenta de Google) → la persona **acepta** iniciando sesión → el administrador **acepta** (confirma) su ingreso → recién entonces es miembro y el grupo aparece en «Mis grupos». Mientras tanto es un **participante pendiente**: cuenta en el reparto desde su alta y el administrador puede registrar gastos a su nombre. La plataforma **no envía correos** (fuera de alcance en la ficha): el mecanismo concreto (enlace compartido por el administrador o invitación visible al iniciar sesión con el correo asociado) se define en el ADR del modelo de participantes (P18). El correo es dato personal: se trata según `docs/SECURITY.md` y no se registra en logs.
-6. **Sin escalada de privilegios:** el administrador solo concede lo que tiene; invita siempre como **miembro**.
-7. **Pruebas de acceso obligatorias:** persona ajena a un grupo → 404 en lectura y escritura de todos sus recursos (grupo, participantes, gastos, saldos, liquidación); invitación sin confirmar → 404; sin sesión → 401; sin `balance.access` → 403; miembro que registra un gasto con otro pagador, o edita o elimina un gasto ajeno, o invita, cierra o edita la configuración → 403; el administrador puede todo lo anterior; cualquier escritura en grupo cerrado → 409.
+5. **Invitaciones.** El administrador agrega a cada participante (nombre visible y, para ligarlo a una cuenta, el correo de su cuenta de Google) → **la persona acepta** iniciando sesión con su cuenta → queda como **miembro**, ligada a su participante, y el grupo aparece en «Mis grupos». **No hay paso de confirmación del administrador.** Mientras no acepte, es un **participante pendiente**: cuenta en el reparto desde su alta y el administrador puede registrar gastos a su nombre. La plataforma **no envía correos** (fuera de alcance en la ficha): el mecanismo concreto (enlace compartido por el administrador o invitación visible al iniciar sesión con el correo asociado) se define en el ADR del modelo de participantes (P18 b). El correo es dato personal: se trata según `docs/SECURITY.md` y no se registra en logs.
+6. **Invariante de administración.** Ninguna operación puede dejar un grupo **sin administradores**: quitar la administración a alguien, que un administrador deje el grupo o lo quiten como participante se rechazan con 409 si era el último. La verificación es **atómica** (una sola transacción con bloqueo o control de versión), para que dos administradores que se quitan el cargo a la vez no dejen el grupo vacío de administradores.
+7. **Sin escalada indebida:** el administrador concede la administración porque la tiene; un miembro nunca puede concederla.
+8. **Pruebas de acceso obligatorias:** persona ajena a un grupo → 404 en lectura y escritura de todos sus recursos; invitación sin aceptar → 404; sin sesión → 401; sin `balance.access` → 403; miembro que registra un gasto con otro pagador, modifica o elimina un gasto ajeno, cambia el pagador, invita, nombra administradores, quita participantes, edita la configuración, cierra, reabre o borra el grupo → 403, y el administrador sí puede; quitar al último administrador (incluida la carrera entre dos administradores) → 409; cualquier escritura en grupo cerrado → 409.
 
 ### 12.4 D4 — Campo de monto y validación del dinero
 
@@ -1391,19 +1411,19 @@ Balance cuenta con autenticación de Pastel; **ningún dato ni endpoint de Balan
 
 **Corrección requerida en la interfaz de Balance.**
 
-1. El campo acepta montos con **hasta 2 decimales** y admite coma o punto como separador decimal (es-CR); se muestra con el formato de la moneda del grupo.
-2. Abre el teclado numérico con decimales en móvil (`inputMode="decimal"`); si se usa `type="number"`, debe llevar `step="0.01"` y `min="0.01"`.
-3. **Validación en cliente** con mensajes en español, junto al campo (no solo color): vacío, ≤ 0, más de 2 decimales, mayor al máximo permitido.
+1. El campo acepta montos con **los decimales de la moneda del grupo** (2 en la mayoría; 0 en yen, peso chileno, won y guaraní, D8) y admite coma o punto como separador decimal (es-CR); se muestra con el formato de la moneda del grupo.
+2. Abre el teclado numérico con decimales en móvil (`inputMode="decimal"`, o `numeric` si la moneda no tiene decimales); si se usa `type="number"`, el `step` debe corresponder a la moneda (`0.01` o `1`) y `min` a la unidad mínima.
+3. **Validación en cliente** con mensajes en español, junto al campo (no solo color): vacío, ≤ 0, más decimales de los que admite la moneda, mayor al máximo permitido.
 4. La misma regla aplica **a crear y a editar** gastos, y a cualquier otro campo de dinero.
 5. Los totales y la parte por persona se **muestran tal como los calcula el servidor**; se elimina el cálculo en coma flotante de JavaScript (§10.3, punto 4).
 
 **Corrección requerida en el servidor.**
 
-1. Monto `> 0`, **a lo sumo 2 decimales** y dentro del máximo de `numeric(18,2)`; si no, error **400** con código de validación explícito (nunca redondeo silencioso ni error 500).
-2. Cálculo en `decimal`/centavos enteros, nunca `double`.
+1. Monto `> 0`, **con a lo sumo los decimales de la moneda del grupo** y dentro del máximo de `numeric(18,2)`; si no, error **400** con código de validación explícito (nunca redondeo silencioso ni error 500).
+2. Cálculo en `decimal`/unidades mínimas enteras, nunca `double`.
 3. El caso G28 (monto `10.005`), indefinido en SaldApp, es en Balance un **error de validación** (§9.3).
 
-**Criterios de aceptación.** Se puede guardar `12.50`, `12,50`, `0.01` y el máximo permitido; se rechazan `12.505`, `0`, `-5`, vacío y texto, con mensaje claro; en edición se conserva el valor con sus 2 decimales; el equivalente de G28 devuelve 400; prueba de interfaz en móvil.
+**Criterios de aceptación.** En un grupo en colones se puede guardar `12.50`, `12,50`, `0.01` y el máximo permitido; se rechazan `12.505`, `0`, `-5`, vacío y texto, con mensaje claro; en un grupo en yenes se acepta `1500` y se rechaza `100.50`; en edición se conserva el valor; el equivalente de G28 devuelve 400; prueba de interfaz en móvil.
 
 ### 12.5 D5 — Balance inicia desde cero
 
@@ -1414,28 +1434,89 @@ No existen grupos ni datos de SaldApp que conservar. Consecuencias:
 - **SaldApp queda como referencia** de las reglas de cálculo, de los flujos y de la experiencia, y de fuente de los casos dorados (§9). Su retiro o conservación no afecta a Balance.
 - Las pruebas de arranque son sobre base vacía (como el resto de la plataforma).
 
-### 12.6 Efecto sobre pruebas y documentación
+### 12.6 D6 — Reparto retroactivo, sin participación parcial, transferencias sugeridas
 
-- **Casos dorados.** §9.2 es la **referencia de SaldApp («antes»)**; §9.3 fija el **resultado esperado en Balance** donde cambia. Los casos sin cambio valen según §9.2. Las pruebas de Balance cubren además las propiedades de D1 y D2 (sumas exactas, permutación de entrada, invariante final), las pruebas de acceso de D3 y los criterios de D4.
-- **`docs/modules/BALANCE.md` actualizado** en esta misma rama, con autorización expresa del propietario, para que no contradiga el inventario: §1 (sin datos; el inventario §12 y §9.3 prevalecen), §2 (matriz de permisos de grupo), §3 (siete principios: corrección del cálculo con resultados de §9.2/§9.3, dinero y centavos, liquidación determinista, datos desde cero, identidad e invitaciones, interfaz con monto decimal, registro de cambios), §4 (pasos sin importación), §5 (fuera de alcance: importación de datos y envío de invitaciones por correo), §6 (criterios de aceptación) y el plan de pruebas (puntos 1, 2, 4 y 6 reescritos; se agregan 9 y 10).
-- **Contradicciones resueltas:** la ficha pedía «reglas de redondeo idénticas a las actuales», «conservar datos», una «herramienta de importación» y una vinculación por correo «invitado», sin precisar que no se envían correos; todo queda alineado con D1 a D5.
+- **Se mantiene el reparto retroactivo:** las partes se calculan sobre **todos** los participantes del grupo en el momento de calcular, de modo que quien se agrega después paga su parte de **todos** los gastos anteriores (G18) y quitar a alguien (solo si no tiene gastos) sube la parte de los demás (G19). Un participante pendiente de aceptar su invitación **cuenta** desde su alta.
+- **No hay participación parcial:** todo gasto se divide en partes iguales entre todos los participantes; no se puede excluir a nadie de un gasto.
+- **Liquidar = mostrar transferencias sugeridas.** Balance no registra pagos ni «marcar como pagado»; la liquidación se **recalcula en cada lectura** a partir de los gastos (igual que SaldApp), por lo que no hay saldo «ya pagado» que conservar al reabrir un grupo.
 
-### 12.7 Mejoras recomendadas (no aprobadas aún)
+### 12.7 D7 — Ciclo de vida del grupo y fechas de gastos
 
-Detectadas en este inventario; el propietario decide cuáles entran.
+1. **Cerrar y reabrir.** El administrador puede cerrar un grupo (solo lectura: saldos y liquidación se siguen calculando) y **reabrirlo**; al reabrir vuelven a permitirse las escrituras y los saldos y la liquidación se recalculan. El cierre y la reapertura se **auditan** (quién, cuándo, antes/después), según la ficha. Como el cierre ya no es definitivo, la interfaz no debe titular la tabla «Liquidación Final»: se propone «Liquidación (grupo cerrado)».
+2. **Borrar un grupo solo si no tiene gastos.** Si tiene al menos un gasto, se rechaza con 409 (hay que eliminar los gastos antes). Al borrar un grupo sin gastos se eliminan también sus participantes e invitaciones y se deja registro de auditoría. Requiere confirmación explícita en la interfaz.
+3. **La fecha de un gasto se puede editar** (en SaldApp no). La editan quienes pueden modificar ese gasto (D3). No se validan límites respecto a las fechas del grupo, igual que SaldApp.
+4. Ninguna de estas acciones es posible para quien no sea administrador, salvo editar la fecha de sus propios gastos (P21).
+
+### 12.8 D8 — Moneda ISO 4217 por grupo
+
+1. La moneda se **elige al crear el grupo** de un catálogo ISO 4217 y todos los gastos del grupo se registran **en esa moneda**; no hay conversión ni multimoneda (fuera de alcance en la ficha). La moneda **no se puede cambiar** una vez que el grupo tiene gastos (P21 b). Se sugiere preseleccionar CRC, sin dejar de exigir que quede guardada explícitamente.
+2. **Decimales por moneda.** Cada moneda tiene un número de decimales (exponente ISO): 2 en la mayoría y **0** en JPY, CLP, KRW y PYG. D1, D2 y D4 usan **unidades mínimas enteras** y ese exponente (la columna sigue siendo `numeric(18,2)`; en monedas de 0 decimales se guardan enteros). Las monedas de 3 o más decimales (por ejemplo BHD, KWD) quedan fuera de esta versión (P21 d).
+3. **Catálogo propuesto** (lista destacada, en este orden de uso esperado; el resto de las monedas ISO de 0 o 2 decimales, sin fondos, metales ni unidades de cuenta, se ofrece después alfabéticamente). Los símbolos son ambiguos (varios países usan `$`), por lo que la interfaz muestra siempre el **código junto al símbolo**. Códigos, símbolos y decimales se validarán contra la tabla ISO 4217 vigente al implementar **[NO VERIFICADO contra la fuente oficial]**.
+
+| Código | Moneda | Símbolo | Decimales |
+|---|---|---|---|
+| CRC | Colón costarricense | ₡ | 2 |
+| USD | Dólar estadounidense | $ | 2 |
+| EUR | Euro | € | 2 |
+| MXN | Peso mexicano | $ | 2 |
+| COP | Peso colombiano | $ | 2 |
+| ARS | Peso argentino | $ | 2 |
+| CLP | Peso chileno | $ | **0** |
+| UYU | Peso uruguayo | $U | 2 |
+| DOP | Peso dominicano | RD$ | 2 |
+| CUP | Peso cubano | $ | 2 |
+| PHP | Peso filipino | ₱ | 2 |
+| JPY | Yen japonés | ¥ | **0** |
+| CNY | Yuan renminbi chino | ¥ | 2 |
+| KRW | Won surcoreano | ₩ | **0** |
+| PEN | Sol peruano | S/ | 2 |
+| BRL | Real brasileño | R$ | 2 |
+| GTQ | Quetzal guatemalteco | Q | 2 |
+| HNL | Lempira hondureño | L | 2 |
+| NIO | Córdoba nicaragüense | C$ | 2 |
+| PAB | Balboa panameño | B/. | 2 |
+| PYG | Guaraní paraguayo | ₲ | **0** |
+| BOB | Boliviano | Bs. | 2 |
+| VES | Bolívar venezolano | Bs.S | 2 |
+| CAD | Dólar canadiense | $ | 2 |
+| GBP | Libra esterlina | £ | 2 |
+| CHF | Franco suizo | CHF | 2 |
+| SEK / NOK / DKK | Coronas sueca, noruega, danesa | kr | 2 |
+| PLN | Esloti polaco | zł | 2 |
+| AUD / NZD / SGD / HKD | Dólares australiano, neozelandés, singapurense, de Hong Kong | $ | 2 |
+| INR | Rupia india | ₹ | 2 |
+| THB | Baht tailandés | ฿ | 2 |
+| TRY | Lira turca | ₺ | 2 |
+| ZAR | Rand sudafricano | R | 2 |
+| AED | Dírham de los Emiratos Árabes Unidos | AED | 2 |
+| ILS | Nuevo shéquel israelí | ₪ | 2 |
+
+4. El catálogo se guarda como datos versionados (código, nombre en español, símbolo, decimales) y no como lista fija en la interfaz.
+
+### 12.9 D9 — Zona horaria por grupo
+
+- Cada grupo tiene una **zona horaria** (identificador IANA) con valor por defecto **`America/Costa_Rica`**. Los **administradores** pueden cambiarla; los miembros no.
+- Se recomienda almacenar los instantes (creación, cierre, reapertura, auditoría) en UTC (`timestamptz`) y mostrarlos en la zona del grupo, y guardar la **fecha del gasto como fecha de calendario** (`date`, sin hora), con lo que cambiar la zona no altera las fechas de los gastos. La «fecha de hoy» por defecto al registrar un gasto se toma de la zona del grupo.
+- Se valida que el identificador sea una zona IANA válida.
+
+### 12.10 Efecto sobre pruebas y documentación
+
+- **Casos dorados.** §9.2 es la **referencia de SaldApp («antes»)**; §9.3 fija el **resultado esperado en Balance** donde cambia y agrega casos nuevos para monedas sin decimales (G35–G38). Los casos sin cambio valen según §9.2. Las pruebas de Balance cubren además las propiedades de D1 y D2 (sumas exactas, permutación de entrada, invariante final), las pruebas de acceso de D3 (incluido el último administrador), el ciclo de vida de D7, las monedas de D8 y los criterios de D4.
+- **`docs/modules/BALANCE.md` actualizado** en esta misma rama, con autorización expresa del propietario, para que no contradiga el inventario: §1, §2 (matriz de permisos de grupo con varios administradores), §3 (principios de corrección del cálculo, dinero y unidad mínima por moneda, liquidación determinista, datos desde cero, identidad e invitaciones, interfaz con monto decimal, ciclo de vida del grupo, zona horaria y registro de cambios), §4, §5 (fuera de alcance: importación de datos, envío de invitaciones por correo y registro de pagos realizados), §6 y el plan de pruebas.
+- **Contradicciones resueltas:** la ficha pedía «reglas de redondeo idénticas a las actuales», «conservar datos», una «herramienta de importación», una vinculación por correo «invitado» sin precisar que no se envían correos y no definía moneda por grupo, ciclo de vida ni zona horaria; todo queda alineado con D1 a D9.
+
+### 12.11 Mejoras recomendadas (no aprobadas aún)
+
+Detectadas en este inventario; el propietario decide cuáles entran. Quedaron **decididas** (ya no son recomendaciones): reabrir grupos (D7), borrar grupos sin gastos (D7), editar la fecha del gasto (D7), moneda ISO (D8), no registrar pagos (D6) y mantener el reparto retroactivo sin participación parcial (D6).
 
 | Mejora | Origen | Estado |
 |---|---|---|
-| Listado de **todos** los gastos del grupo (hoy solo por pagador) y orden definido | §10.3 (8) | Recomendado |
-| Permitir **editar la fecha** de un gasto | §2 | Por decidir (P12) |
+| Listado de **todos** los gastos del grupo con orden definido (los miembros ven todos, D3; hoy SaldApp solo lista por pagador) | §10.3 (8) | Recomendado |
 | Control de **edición simultánea** (409) | §3.2 | Requerido por la ficha |
 | Errores y textos **en español**, sin voseo, con `problem+json` | §10.2, §10.3 (3, 12) | Requerido por `AGENTS.md` y la ficha |
 | Accesibilidad (diálogos, foco, no depender del color, 320 px) | §10.3 (11) | Requerido por `AGENTS.md` |
 | Corregir el mensaje «No hay deudas pendientes» y la falla silenciosa de liquidación | §10.3 (6, 7) | Recomendado |
-| **Moneda como código ISO 4217** | R7 | Requerido por la ficha (lista de monedas: P9) |
-| Registrar **pagos realizados** y poder **reabrir** un grupo | P7 | Por decidir |
-| Participación **parcial** por gasto / reparto no igualitario | §4.1 | Alcance nuevo, por decidir (P5) |
-| Borrar grupos | §2 | Por decidir (P12) |
+| Renombrar «Liquidación Final» por «Liquidación (grupo cerrado)», porque el cierre ya es reversible | D7 | Recomendado |
 | Minimizar el número de transferencias | G32 | Opcional |
 
 ---
