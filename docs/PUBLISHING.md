@@ -29,7 +29,7 @@ git commit -m "feat: describir el cambio"
 git push -u origin feat/nombre-del-cambio
 ```
 
-Cuando exista autorización para abrir el PR, usa `dev` como base salvo que el orquestador haya indicado otra base de integración. No fusiones directamente a `main`; sólo se promueve `dev` a `main` cuando el usuario lo autoriza expresamente. Los PR en borrador sirven para checkpoint y no ejecutan CI completo; al marcarlos listos, GitHub Actions ejecuta la validación. También puede iniciarse manualmente desde **Actions → CI → Run workflow**. Para cada versión publicada, usa un PR revisado y crea un tag `vMAJOR.MINOR.PATCH` en el commit aprobado. Consulta `docs/AI_WORKFLOW.md` para el procedimiento completo.
+Cuando exista autorización para abrir el PR, usa `dev` como base salvo que el orquestador haya indicado otra base de integración. No fusiones directamente a `main`; sólo se promueve `dev` a `main` cuando el usuario lo autoriza expresamente. Los PR en borrador sirven para checkpoint y no ejecutan CI completo; al marcarlos listos, GitHub Actions ejecuta la validación. Cuando este workflow también esté en la rama predeterminada (`main`), podrá iniciarse manualmente desde **Actions → CI → Run workflow**, seleccionando la rama objetivo. Para cada versión publicada, usa un PR revisado y crea un tag `vMAJOR.MINOR.PATCH` en el commit aprobado. Consulta `docs/AI_WORKFLOW.md` para el procedimiento completo.
 
 No subas `.env`, tokens, contraseñas reales, dumps, ni datos personales. Nunca uses `git push --force` en ramas compartidas.
 

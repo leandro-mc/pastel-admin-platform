@@ -151,7 +151,7 @@ Registrar un módulo desde Configuración crea metadatos y permisos en la base, 
 
 ## Comprobaciones de CI
 
-GitHub Actions verifica backend, frontend y arranque Docker con PostgreSQL en pushes a `dev`/`main` y en PRs hacia esas ramas cuando se abren, se reabren, se marcan listos o reciben nuevos commits estando listos. Los pushes a ramas de trabajo y los PR en borrador no ejecutan el CI completo. También se puede iniciar manualmente en **Actions → CI → Run workflow**. Consulta la pestaña **Actions**; tener un workflow configurado no significa que ya pasó.
+GitHub Actions verifica backend, frontend y arranque Docker con PostgreSQL en pushes a `dev`/`main` y en PRs hacia esas ramas cuando se abren, se reabren, se marcan listos o reciben nuevos commits estando listos. Los pushes a ramas de trabajo y los PR en borrador no ejecutan el CI completo. Cuando este workflow también esté en la rama predeterminada (`main`), se podrá iniciar manualmente en **Actions → CI → Run workflow**, seleccionando la rama objetivo. Consulta la pestaña **Actions**; tener un workflow configurado no significa que ya pasó.
 
 ## Seguridad y limitaciones
 
