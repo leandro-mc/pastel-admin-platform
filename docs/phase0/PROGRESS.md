@@ -168,3 +168,16 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Sin compilar:** todo lo anterior.
 - **Pendiente WP3:** slices (`Login`, `Register`, `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`, `GetCsrfToken`, administración de usuarios/roles/módulos/permisos/auditoría), retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs` cuando sus slices lo sustituyan, adaptar `SecurityPolicyTests.cs` (movido con `git mv`; lo adapta Build).
 - **Siguiente acción:** `Security/SessionCookies` + `SessionIssuer` y los slices de `/api/auth/*`.
+
+### S4-03 · WP3.5 · Infraestructura de sesión y slices `GetCsrfToken`, `Login`, `Register`
+- **Último commit conocido antes:** `5ad5555` (S4-02).
+- **Cambios (Platform):** `IClock` se registra como `SystemClock` en `AddPastelSecurity` (antes no estaba registrado).
+- **Cambios (Identity):** `Security/TokenSecrets` (hash SHA-256 y secretos opacos), `Security/SessionCookies` (mismas cookies y atributos que antes; `Cache-Control: no-store`),
+  `Security/SessionIssuer` (emite acceso + refresh en la transacción de quien llama; revoca refresh tokens), `JwtBearerSetup` proyecta **en la misma consulta** el estado de sesión y el resumen de la persona
+  (`HttpContext.GetSessionUser()`), de modo que `/api/auth/me` no hace una consulta extra de usuario (meta B1: 2 consultas = estado + permisos).
+  Slices: `Features/GetCsrfToken` (`GET /api/auth/csrf`), `Features/Login` (`POST /api/auth/login`), `Features/Register` (`POST /api/auth/register`, 201); manejadores con `Result`, sin `ex.Message`, sin correo en logs (`LogHasher`).
+  `Features/IdentityEndpoints` ya enlaza los tres bajo `/api/auth`.
+- **Decisiones:** el ingreso de una cuenta sin `PasswordHash` (solo Google) falla con el mismo error genérico; contraseñas de más de 256 caracteres se rechazan antes de calcular el hash; el registro devuelve errores por campo (`identity.register.invalid`).
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Pendiente WP3:** slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword` y toda la administración; retirar `PrivilegeGuard.cs`, `SessionService.cs`, `DatabaseSeeder.cs`.
+- **Siguiente acción:** slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`.
