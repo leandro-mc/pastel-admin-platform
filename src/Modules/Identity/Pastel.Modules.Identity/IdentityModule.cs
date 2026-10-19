@@ -49,12 +49,16 @@ internal sealed class IdentityModule : IPastelModule
             .Validate(x => System.Text.Encoding.UTF8.GetByteCount(x.SigningKey) >= 32, "Jwt:SigningKey debe tener al menos 32 bytes UTF-8.")
             .Validate(x => x.AccessTokenMinutes is >= 5 and <= 30, "La vida del token de acceso debe estar entre 5 y 30 minutos.")
             .ValidateOnStart();
-        services.AddOptions<AuthOptions>().Bind(configuration.GetSection(AuthOptions.SectionName));
+        services.AddOptions<AuthOptions>()
+            .Bind(configuration.GetSection(AuthOptions.SectionName))
+            .Validate(x => x.Refresh.ReuseGraceSeconds is >= 0 and <= 60, "Auth:Refresh:ReuseGraceSeconds debe estar entre 0 y 60.")
+            .ValidateOnStart();
 
         services.AddScoped<IPasswordHasher<AppUser>, PasswordHasher<AppUser>>();
         services.Configure<PasswordHasherOptions>(options => options.IterationCount = 600_000);
 
         services.AddSingleton<ITokenService, JwtTokenService>();
+        services.AddSingleton<RefreshGraceProtector>();
         services.AddScoped<IPermissionEvaluator, PermissionEvaluator>();
         services.AddScoped<ICurrentUser, CurrentUser>();
         services.AddScoped<IAuditTrail, AuditTrail>();

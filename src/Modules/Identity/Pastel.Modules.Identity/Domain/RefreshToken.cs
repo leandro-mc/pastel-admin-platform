@@ -10,5 +10,12 @@ internal sealed class RefreshToken
     public DateTimeOffset ExpiresAt { get; set; }
     public DateTimeOffset? RevokedAt { get; set; }
     public string? ReplacedByTokenHash { get; set; }
+
+    /// <summary>Fin de la gracia para repetir legítimamente una rotación concurrente.</summary>
+    public DateTimeOffset? GraceUntil { get; set; }
+
+    /// <summary>Refresh token sustituto cifrado y guardado solo durante la breve ventana de gracia.</summary>
+    public string? ReplacedByEncryptedToken { get; set; }
+
     public string? CreatedByIp { get; set; }
 }
