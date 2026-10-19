@@ -1,6 +1,5 @@
 [CmdletBinding()]
 param(
-    [switch]$SkipFrontendChecks,
     [switch]$SkipContainerBuild,
     [switch]$AllowIncompleteCoverage
 )
@@ -63,8 +62,20 @@ function Invoke-NativeCheck {
     Write-Section $Label
     Push-Location $WorkingDirectory
     try {
-        & $Executable @Arguments
+        $nativeOutput = @(& $Executable @Arguments 2>&1)
         $script:LastExitCode = $LASTEXITCODE
+        foreach ($line in $nativeOutput) {
+            Write-Host ([string]$line)
+        }
+
+        # dotnet format may print WHITESPACE diagnostics while returning exit code 0.
+        # Treat those diagnostics as a failed validation instead of reporting a false success.
+        if ($Label -eq "Verificar formato .NET") {
+            $outputText = ($nativeOutput | ForEach-Object { $_.ToString() }) -join [Environment]::NewLine
+            if ($outputText -match '(?m)\berror WHITESPACE:') {
+                $script:LastExitCode = 1
+            }
+        }
     }
     catch {
         $script:LastExitCode = 9009
@@ -134,9 +145,6 @@ try {
         if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
             throw ("Required command not found in PATH: {0}" -f $tool)
         }
-    }
-    if (-not $SkipFrontendChecks -and -not (Get-Command "npm.cmd" -ErrorAction SilentlyContinue)) {
-        throw "No se encontro npm.cmd. Instale Node.js/npm o ejecute con -SkipFrontendChecks."
     }
 
     # Validate Compose without printing its resolved values (which include secrets).
@@ -279,26 +287,11 @@ try {
         $script:Failures.Add("Se omitieron formato, compilacion y pruebas .NET porque fallo la restauracion.") | Out-Null
     }
 
-    if (-not $SkipFrontendChecks) {
-        $webDirectory = Join-Path $script:RepoRoot "web"
-        Invoke-NativeCheck -Label "Instalar dependencias frontend con npm ci" -Executable "npm.cmd" -Arguments @("ci", "--no-audit", "--no-fund") -WorkingDirectory $webDirectory
-        $npmInstallSucceeded = ($script:LastExitCode -eq 0)
-        if ($npmInstallSucceeded) {
-            Invoke-NativeCheck -Label "Comprobar formato frontend" -Executable "npm.cmd" -Arguments @("run", "format:check") -WorkingDirectory $webDirectory
-            Invoke-NativeCheck -Label "Compilar frontend" -Executable "npm.cmd" -Arguments @("run", "build") -WorkingDirectory $webDirectory
-            Invoke-NativeCheck -Label "Analizar frontend con ESLint" -Executable "npm.cmd" -Arguments @("run", "lint") -WorkingDirectory $webDirectory
-        }
-        else {
-            $script:Failures.Add("Se omitieron format:check/build/lint del frontend porque fallo npm ci.") | Out-Null
-        }
-    }
-    else {
-        Write-Host "Frontend omitido por -SkipFrontendChecks."
-    }
+    # Frontend is out of scope before WP7/WP8: do not install, format, build, lint, or test it here.
 
     Invoke-NativeCheck -Label "Validar la configuracion final de Docker Compose" -Executable "docker" -Arguments @("compose", "config", "--quiet")
     if (-not $SkipContainerBuild) {
-        Invoke-NativeCheck -Label "Construir las imagenes Docker (sin iniciar la API sobre la base de desarrollo)" -Executable "docker" -Arguments @("compose", "build")
+        Invoke-NativeCheck -Label "Construir la imagen Docker de API (sin iniciar la API sobre la base de desarrollo)" -Executable "docker" -Arguments @("compose", "build", "api")
     }
     else {
         Write-Host "Build de imagenes omitido por -SkipContainerBuild."
