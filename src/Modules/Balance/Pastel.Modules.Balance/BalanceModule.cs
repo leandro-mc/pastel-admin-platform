@@ -21,7 +21,7 @@ internal sealed class BalanceModule : IPastelModule
 
     public IReadOnlyList<SuggestedRole> SuggestedRoles { get; } =
     [
-        new("Balance — Usuario", "Acceso a Balance.", [BalancePermissions.Access]),
+        new("Balance — Usuario", "Usa Balance y gestiona los grupos de los que forma parte.", [BalancePermissions.Access, BalancePermissions.GroupsManage]),
     ];
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>

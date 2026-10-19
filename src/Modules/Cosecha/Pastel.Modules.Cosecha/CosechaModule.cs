@@ -21,7 +21,26 @@ internal sealed class CosechaModule : IPastelModule
 
     public IReadOnlyList<SuggestedRole> SuggestedRoles { get; } =
     [
-        new("Cosecha — Usuario", "Acceso a Cosecha.", [CosechaPermissions.Access]),
+        new(
+            "Cosecha — Gestor",
+            "Gestiona todo Cosecha: catálogo, productores, compradores, pedidos, envíos, pagos y reportes.",
+            [
+                CosechaPermissions.Access,
+                CosechaPermissions.CatalogRead,
+                CosechaPermissions.CatalogManage,
+                CosechaPermissions.ProducersRead,
+                CosechaPermissions.ProducersManage,
+                CosechaPermissions.BuyersRead,
+                CosechaPermissions.BuyersManage,
+                CosechaPermissions.OrdersRead,
+                CosechaPermissions.OrdersManage,
+                CosechaPermissions.ShipmentsRead,
+                CosechaPermissions.ShipmentsManage,
+                CosechaPermissions.SettlementsRead,
+                CosechaPermissions.SettlementsManage,
+                CosechaPermissions.ReportsRead,
+            ]),
+        new("Cosecha — Comprador", "Consulta solo sus pedidos y el estado de sus envíos.", [CosechaPermissions.Access, CosechaPermissions.OrdersReadOwn]),
     ];
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
