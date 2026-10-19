@@ -26,11 +26,6 @@ internal sealed class BlockUserHandler(IdentityDbContext db, SessionIssuer issue
             return denied;
         }
 
-        if (currentUser.UserId == userId)
-        {
-            return IdentityErrors.CannotBlockSelf;
-        }
-
         if (user.IsActive && user.IsAdministrator() && await db.CountActiveAdministratorsAsync(cancellationToken) <= 1)
         {
             return IdentityErrors.LastActiveAdministrator;

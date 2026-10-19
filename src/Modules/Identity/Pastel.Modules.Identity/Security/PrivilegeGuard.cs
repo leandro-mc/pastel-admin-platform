@@ -52,6 +52,12 @@ internal sealed class PrivilegeGuard(
 
     public async Task<Error?> AuthorizeActionOnUserAsync(AppUser target, string action, CancellationToken cancellationToken)
     {
+        // Bloquearse a sí mismo se prohíbe a cualquier actor, incluso Administrator; el evento debe quedar auditado.
+        if (currentUser.UserId == target.Id && string.Equals(action, "block_user", StringComparison.Ordinal))
+        {
+            return await DenyAsync(IdentityErrors.PrivilegeSelfAction, action, target.Id, target.Email, null, cancellationToken);
+        }
+
         if (ActorIsAdministrator)
         {
             return null;
