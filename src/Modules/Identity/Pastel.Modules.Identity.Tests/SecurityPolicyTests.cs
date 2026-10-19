@@ -1,19 +1,20 @@
-using Pastel.Application.Contracts;
-using Pastel.Domain.Entities;
+using Pastel.Modules.Identity.Domain;
+using Pastel.Modules.Identity.Security;
 using Xunit;
 
-namespace Pastel.Application.Tests;
+namespace Pastel.Modules.Identity.Tests;
 
 public sealed class SecurityPolicyTests
 {
     [Theory]
     [InlineData("shortA1!", false)]
-    [InlineData("onlylowercaseletters123!", false)]
-    [InlineData("NOLOWERCASE123!", false)]
-    [InlineData("NoDigitsAtAll!", false)]
     [InlineData("A9", false)]
+    [InlineData("Password123!", false)]
+    [InlineData("123456789012", false)]
+    [InlineData("a phrase with spaces", true)]
+    [InlineData("correct horse battery staple", true)]
     [InlineData("Sage-Garden_2026!", true)]
-    public void PasswordPolicyRequiresLengthAndCharacterVariety(string password, bool expected)
+    public void PasswordPolicyUsesLengthAndCommonPasswordBlocklistWithoutCompositionRules(string password, bool expected)
     {
         Assert.Equal(expected, PasswordPolicy.IsStrong(password));
     }
