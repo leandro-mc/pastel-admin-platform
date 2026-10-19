@@ -1,228 +1,86 @@
-# Fase 0 — Progreso del Agente 0 (rol Dev)
+# Fase 0 — Estado actual del refactor (rol Dev)
 
-Rama: `refactor/modular-foundation`. Base: `origin/dev`. Este archivo permite retomar el trabajo sin el chat.
+> **Fuente de verdad para el relevo.** Este archivo resume el estado actual y los siguientes pasos; no agregues resúmenes iniciales repetidos. El detalle de sesiones anteriores se conserva en [`PROGRESS-HISTORY.md`](./PROGRESS-HISTORY.md), solo como historial. Si existe una discrepancia, inspecciona el código y actualiza este documento.
 
-## Sincronización con `dev`
-- `dev` = `7ba6f1c` (PR #24 fusionado). Integrado en esta rama con merge `e1fa940`, sin conflictos. No se reinició la fase.
-- Reglas vigentes tras PR #24 (leídas en `AGENTS.md`, `docs/AI_WORKFLOW.md`, `docs/TESTING_STRATEGY.md`, `docs/phase0/FASE-0-REFACTOR-BASE.md`):
-  - Dev implementa código de aplicación. Si su entorno compila, debe compilar y reportar; si no, publica sin compilar y lo declara. No escribe pruebas, planes ni migraciones (Build usa `dotnet ef`).
-  - WP1 (red de seguridad) lo ejecuta Build. Dev empieza en WP2.
-  - Checkpoints de push libres en esta rama; no disparan CI. Puntos formales: C2 (tras WP5), C3 (tras WP8) y C4 (final).
-  - **No abrir PR ni integrar a `dev` sin autorización explícita.** Build y QA pueden ser una sola sesión.
-  - Tono: sin voseo por defecto; solo se permite si la ficha del módulo lo autoriza. Ninguna ficha actual lo autoriza.
-  - CI (WP9): `push` solo a `dev`/`main`; `pull_request` (opened, reopened, ready_for_review, synchronize) saltando borradores; `workflow_dispatch`; `concurrency` con cancelación.
-    `dev` ya trae esa base en `.github/workflows/ci.yml`; WP9 la conserva y añade los trabajos nuevos.
-- Todo lo marcado «sin compilar» no se compiló ni se ejecutó con `dotnet build` completo (ver «Entorno»).
+Última reconciliación documental: 2026-10-18.
 
-## Entorno de este agente
-- SDK .NET 10.0.112 instalado por `apt`. NuGet (`api.nuget.org`) y Docker no son accesibles: no se pueden restaurar paquetes.
-- Verificación parcial usada: `Pastel.SharedKernel` compila completo (0 advertencias, 0 errores). El resto se revisa compilando
-  sin paquetes y descartando los errores por tipos de EF Core, Npgsql y Serilog ausentes (0 errores restantes en `Pastel.Platform`).
-- Decisiones que Build debe verificar al compilar: `ForwardedHeadersOptions.KnownIPNetworks` y `System.Net.IPNetwork` (.NET 10),
-  `RequestLoggingOptions.IncludeQueryInRequestPath` (Serilog.AspNetCore 9), versiones de paquetes de `Directory.Packages.props`
-  (Serilog.AspNetCore 9.0.0, Serilog.Formatting.Compact 3.0.0, Authentication.Google 10.0.13), `IsRowVersion()` sobre `uint` para `xmin`.
+## Repositorio y reglas vigentes
 
-## Estado por WP
-| WP | Estado | Compilación |
+- Repositorio: `leandro-mc/pastel-admin-platform`.
+- Rama de trabajo: `refactor/modular-foundation`. Antes de tocar archivos, confirma el HEAD real con `git fetch origin`, `git status --short --branch` y `git log --oneline --decorate -10`.
+- Base de integración documentada: `dev` en `7ba6f1c80ad1025acc3333096ff3878b3226b0f4`. No integres cambios nuevos de `dev` por iniciativa propia.
+- No abrir PR, hacer merge ni integrar en `dev` sin autorización explícita del propietario. Autorizar un PR no autoriza su merge.
+- Publicar un checkpoint como máximo cada **3 minutos**: revisar el diff, actualizar este archivo en el mismo commit, hacer commit pequeño y push a `origin/refactor/modular-foundation`. Sin force push, sin reescribir historia y sin secretos.
+- Dev implementa código de producto; no escribe pruebas ni planes de pruebas. No inventes resultados ni afirmes que algo compila si no se verificó. Sigue las instrucciones de `FASE-0-REFACTOR-BASE.md` y declara de forma explícita lo que quedó sin compilar/validar. Build/QA se encarga de pruebas, compilación completa y migraciones EF Core.
+
+## Estado actual por WP
+
+| WP | Estado actual | Qué falta |
 |---|---|---|
-| WP1 | Fuera de alcance de Dev (lo hace Build) | n/a |
-| WP2 | **Completo como código** (S4-01: lista de verificación de §5 contra el código real, 9/9 puntos cumplidos). Pendiente de Build: compilar y pruebas F0-E01…E09 | SharedKernel: compilado (sesión anterior). Platform y Host: sin compilar |
-| WP3 | En curso. Hecho: S3-03 a S3-05 (dominio, `IdentityDbContext`, permisos, evaluador, auditoría, JWT, catálogo). Falta: `IdentityModule`, `BootstrapAdminTask`, `PrivilegeGuard`/`SessionService`/`PasswordPolicy`/`DatabaseSeeder` por reescribir y todos los slices `Features/*` | Sin compilar |
-| WP4–WP10 | Pendientes | — |
+| WP1 — Línea base de pruebas | **Sin evidencia de cierre en esta bitácora; responsabilidad de Build** | Confirmar el resultado de Build y la integración de la línea base en la rama según la sección 4 del plan. Dev no debe rehacerla. |
+| WP2 — SharedKernel, Platform, Host | **Revisión estática registrada como completa** en S4-01 | No se compiló. Build debe verificar los puntos sensibles descritos abajo y validar el proyecto completo. |
+| WP3 — Identity | **Implementación principal de endpoints/slices registrada; falta cierre y limpieza** | Eliminar/adaptar legado, revisar referencias y auditar todos los criterios de §6 del plan. No pasar a WP4 hasta dejar WP3 coherente o documentar un bloqueo real. |
+| WP4 — Endurecimiento de seguridad | Pendiente | Implementar S1–S4, después de cerrar WP3. |
+| WP5 — Google OAuth/OIDC | Pendiente | Flujo backend, vinculación de cuentas, configuración/proxy, opciones de autenticación y hooks para pruebas de Build. |
+| WP6 — Esqueletos/plantilla de módulos | Pendiente | Generador y esqueletos de Brisa, Balance, Ágora, Cosecha y Huella según §9. |
+| WP7 — Cimientos de frontend/sesión/errores/shell | Pendiente | Router, cliente API, sesión, errores y shell según §10. |
+| WP8 — Tailwind CSS/sistema de diseño | Pendiente | Migración y métricas de auditoría conforme a §11. |
+| WP9 — Infraestructura/CI/repositorio | Pendiente | Ajustes restantes de §12, sin salirse del alcance de Fase 0. |
+| WP10 — Testabilidad/documentación/datos | Pendiente | Hooks para Build, documentación, ADR y datos de prueba conforme a §13. |
 
-## Estructura actual (checkpoint 1)
-- `src/BuildingBlocks/Pastel.SharedKernel`: `Result`, `Error`, `PagedResult`, `IClock`, `Guard`.
-- `src/BuildingBlocks/Pastel.Platform`: contrato `IPastelModule`, cargador de módulos, errores `problem+json`, traductor de excepciones,
-  autorización por permiso, CSRF, cabeceras, URL pública, límites de tasa, Serilog, salud, `POST /api/client-errors`, `TransactionRunner`.
-- `src/Host/Pastel.Host`: renombrado desde `Pastel.Api`; `Program.cs` (26 líneas), `Pastel.Host.csproj`, configuración y Dockerfile ya reescritos (S3-01/S3-02).
-- `src/Modules/Identity/`: archivos del backend anterior movidos (entidades, `DbContext`, sembrador, JWT, políticas); pendientes de reescritura.
-- Se eliminaron `Pastel.Domain`, `Pastel.Application`, `Pastel.Infrastructure` (incluye las migraciones antiguas: Build regenera).
-- `Pastel.slnx` ya apunta a los proyectos nuevos; varios csproj aún no existen o están sin actualizar.
+## WP2 — Resultado conocido y limitaciones
 
-## Decisiones tomadas (registrar en ADR en WP10)
-1. Respuesta CSRF inválido: pasa de 400 a **403** con código `platform.csrf_invalid` (el plan F0-S213 lo exige). El modelo CSRF no cambia.
-2. Contrato de listados: `GET /api/admin/users` y `/api/admin/audit` pasan de arreglo a `{ items, page, pageSize, totalCount }` (paginación en servidor, B5).
-3. Los permisos efectivos se calculan en una sola consulta por petición; el estado de sesión se carga una vez en `HttpContext.Items`.
-4. El bloqueo por fallos de contraseña solo afecta el ingreso con contraseña (no invalida sesiones existentes ni cuenta para «último administrador»).
-5. `IPastelModule.MapRootEndpoints` (método por defecto) permite a Identity conservar `/api/auth` y `/api/admin`.
-6. Tablas de Identity en esquema `identity` con nombres en `snake_case`; columnas por defecto salvo `external_logins` (según la Fase 0).
+S4-01 contrasta estáticamente `Pastel.SharedKernel`, `Pastel.Platform` y `Pastel.Host` contra la sección 5 y registra los criterios como cumplidos. También corrigió una espera síncrona dentro de una ruta asíncrona en `InitializePastelAsync`.
 
-## Hallazgos del análisis (verificados en el código base)
-| Hallazgo | Estado |
-|---|---|
-| S1 jerarquía de privilegios (sin guardas en roles, bloqueo, restablecimiento, permisos) | Confirmado; pendiente WP4 |
-| S2 refresco, S3 (login sin hash para correo inexistente, bloqueo fijo 15 min que invalida sesiones) | Confirmado; pendiente WP4 |
-| S4 contraseñas | Confirmado; pendiente WP4 |
-| B2 `Program.cs` de 152 líneas mezclado | En resolución (WP2) |
-| B3 consultas repetidas por petición | En resolución (WP3) |
-| B5 auditoría sin antes/después, listados sin paginar | En resolución (WP3) |
-| Resto (T1, F1–F4, D1–D2, G1–G3) | Pendiente |
+- Evidencia: checkpoint S4-01 en `PROGRESS-HISTORY.md`.
+- **No compilado** en el registro de esa sesión; la sintaxis MSBuild del filtrado `PastelModules` y el build por subconjunto de módulos requieren verificación de Build.
+- Para Identity sigue siendo relevante revisar el registro de `UniqueViolationMap` y `ForcePasswordChangeOptions.AllowedPaths`. Para OAuth, revisar `PublicBaseUrlOptions.PathPrefixes`.
 
-## Datos para pruebas
-Pendiente (WP10).
+## WP3 — Avances documentados
 
-## Checkpoints publicados
-| Fecha | SHA | Contenido |
-|---|---|---|
-| checkpoint 1 | `145637f` | Estructura movida con `git mv`, SharedKernel y Platform |
-| checkpoint 2 | (merge de `dev` 7ba6f1c) | Integración de reglas actualizadas |
+La bitácora hasta S4-07 registra:
 
-## Próximo paso
-Terminar WP3 (ver bitácora, última entrada). Después WP4 y WP5; publicar C2. No empezar WP4 hasta cerrar WP3.
+- Dominio Identity y `IdentityDbContext` bajo el esquema `identity`, catálogo declarado desde los módulos, evaluación de permisos, usuario actual, auditoría, JWT/cookies y tareas de arranque.
+- Endpoints/slices para CSRF, login, registro, refresh, logout, usuario actual y cambio de contraseña.
+- Administración por slices para usuarios, roles, permisos, módulos y auditoría. Los listados de usuarios/auditoría usan `{ items, page, pageSize, totalCount }` con filtros en el servidor.
+- `CreateModule` se retiró y no se debe recrear.
+- Las validaciones registradas para estos checkpoints fueron principalmente `git diff --check`; **no hay constancia de compilación completa ni de pruebas ejecutadas**.
 
----
+### Bloqueo de cierre confirmado por inspección de archivos
 
-## Bitácora de checkpoints (sesión 3 en adelante)
+Estos tres archivos todavía existen en la rama y conservan namespaces/usings de las capas anteriores que fueron retiradas. El agente siguiente debe inspeccionar sus referencias y retirar el legado con seguridad:
 
-Formato: último commit conocido antes del trabajo → WP/subobjetivo → cambios → decisiones → validaciones → limitaciones → pendientes → siguiente acción.
-El SHA que contiene cada entrada se informa en la entrega, no aquí.
+- `src/Modules/Identity/Pastel.Modules.Identity/Security/PrivilegeGuard.cs` — contiene el antiguo `AdministrationService`, namespace `Pastel.Infrastructure.Services`.
+- `src/Modules/Identity/Pastel.Modules.Identity/Security/SessionService.cs` — contiene el antiguo `AuthService`, namespace `Pastel.Infrastructure.Services`.
+- `src/Modules/Identity/Pastel.Modules.Identity/Persistence/DatabaseSeeder.cs` — conserva namespace/imports de `Pastel.Infrastructure` y entidades de `Pastel.Domain`.
 
-### S3-01 · WP2 · Host
-- **Último commit conocido antes:** `81eb62f`.
-- **Cambios:** `Pastel.Host` reescrito. `Program.cs` queda en ~25 líneas encadenando `AddPastelObservability`, `AddPastelSecurity`, `AddPastelModules`,
-  `UsePastelPipeline`, `MapPastelEndpoints`, `InitializePastelAsync` (todo definido en `Pastel.Platform`). `Pastel.Host.csproj`: referencia a Platform e Identity,
-  más referencias por *glob* a `../../Modules/*/Pastel.Modules.*/Pastel.Modules.*.csproj` excluyendo Identity, `*.Tests` y `*.Contracts`, filtradas por `PastelModules`
-  (por defecto `*`; acepta `;` o `,`, carpeta o código, sin distinguir mayúsculas). `appsettings*.json` con Serilog, `Auth:*`, `ReverseProxy:*`, `App:PublicBaseUrl`.
-  `Dockerfile` con `ARG PASTEL_MODULES` y entrada `Pastel.Host.dll`.
-- **Decisiones:** el Dockerfile copia `src/` completo antes de `restore` (el *glob* impide copiar solo los csproj); se pierde parte del caché de capas, se gana coherencia con el subconjunto de módulos.
-  Normalización del filtro con `TextInfo.ToTitleCase` (válida porque las carpetas de módulos son una sola palabra en PascalCase).
-- **Validaciones ejecutadas:** ninguna de compilación (sin `dotnet` ni NuGet). Solo revisión de lectura.
-- **Sin compilar / a verificar por Build:** sintaxis MSBuild del filtro (`ToTitleCase` anidado, transformación de `PastelModuleName`), `dotnet build -p:PastelModules=Identity`
-  y `-p:PastelModules=Brisa;Balance`. `Microsoft.AspNetCore.OpenApi` sin versión (versión central en `Directory.Packages.props`).
-- **Pendiente WP2:** `PASTEL_MODULES` en `compose.yaml`/`.env.example`, claves de configuración nuevas en compose, revisar `Pastel.Platform` contra el plan §5 (lista de verificación).
-- **Siguiente acción:** compose y `.env.example`; luego lista de verificación de §5 contra `Platform`.
+La bitácora indica que la lógica de esos archivos ya fue reemplazada por los nuevos slices/tareas, pero eso debe confirmarse mediante búsquedas de referencias. Si no quedan consumidores legítimos, elimínalos; si algo sigue siendo necesario, migra la lógica al componente modular correcto antes de borrarlos. No conserves clases heredadas solo para evitar revisar referencias.
 
-### S3-02 · WP2 · Compose, `.env.example` y Dockerfiles
-- **Último commit conocido antes:** `98d9d71` (S3-01).
-- **Cambios:** `compose.yaml` apunta a `src/Host/Pastel.Host/Dockerfile` y pasa `PASTEL_MODULES` como argumento a `api` y `web`; sustituye `ReverseProxy__TrustedAddress` (IP fija)
-  por `ReverseProxy__TrustedNetworks` (subred); añade `App__PublicBaseUrl`, `AllowedHosts` y `Auth__Local__*` por variable. `web/Dockerfile` recibe `ARG/ENV PASTEL_MODULES`.
-  `.env.example` documenta las variables nuevas (sin valores reales).
-- **Decisiones:** `PASTEL_MODULES` admite comas en compose/.env (el csproj las convierte a `;`). Las IP estáticas de compose se mantienen hasta WP9 (la confianza ya no depende de ellas).
-- **Validaciones ejecutadas:** `git diff --check` limpio. No se ejecutó `docker compose config` (Docker no disponible).
-- **Pendiente WP2:** verificar §5 contra `Pastel.Platform` (lista de comprobación); `web/Dockerfile` seguirá con `npm install` hasta WP9 (`npm ci`).
-- **Siguiente acción:** lista de verificación de WP2 §5 contra el código de `Platform`.
+### Lista de cierre obligatoria para WP3
 
-### S3-03 · WP3.1 · Proyecto Identity, dominio y `IdentityDbContext`
-- **Último commit conocido antes:** `659c439` (S3-02).
-- **Cambios:** se crea `Pastel.Modules.Identity.csproj` (faltaba; `Pastel.slnx` ya lo referenciaba) con `InternalsVisibleTo` para `*.Tests`, `Pastel.IntegrationTests` y `Pastel.ArchitectureTests`.
-  Entidades en `Pastel.Modules.Identity.Domain` y `internal`. `AppUser.PasswordHash` pasa a nullable; `AppUser`, `AppRole` y `ModuleDefinition` llevan `uint Version` (`xmin`, `IsRowVersion()`).
-  `AuditLog` suma `Module` y `TraceId`; `DetailsJson` es `jsonb`. `IdentityDbContext` (esquema `identity`, tablas `users`, `roles`, `user_roles`, `modules`, `permissions`, `role_permissions`,
-  `user_permission_overrides`, `refresh_tokens`, `audit_logs`) y su fábrica de diseño con historial de migraciones en el esquema `identity`.
-- **Decisiones:** todo `internal` salvo lo que exija Platform; `ExternalLogin` se agrega en WP5.
-- **Validaciones ejecutadas:** ninguna de compilación. **Sin migración:** la genera Build con `dotnet ef`.
-- **Sin compilar:** todo el módulo (los demás archivos de Identity aún tienen el contenido original y no compilan con estos tipos).
-- **Pendiente WP3:** `IdentityModule`, evaluador de permisos y estado de sesión, auditoría, catálogo/siembra, JWT y política de contraseñas, slices `Features/*`, pruebas movidas.
-- **Siguiente acción:** `IdentityModule` + catálogo desde código + `IPermissionEvaluator`/`ICurrentUser`/`IAuditTrail`.
+1. Revisa `IdentityModule.cs`, `Features/IdentityEndpoints.cs`, los manejadores de slices, `IdentityDbContext`, las tareas de inicio y las opciones de configuración.
+2. Busca referencias a `Pastel.Application`, `Pastel.Domain`, `Pastel.Infrastructure`, `AdministrationService`, `AuthService` y `DatabaseSeeder` en el código de producción y en los proyectos. Resuelve las referencias colgantes.
+3. Verifica `IdentityModule` y su registro: DbContext, opciones validadas, `IPermissionEvaluator`, `ICurrentUser`, auditoría, tareas de arranque, `UniqueViolationMap` y rutas permitidas cuando se exige cambiar una contraseña temporal.
+4. Recorre la sección 6 de `FASE-0-REFACTOR-BASE.md` punto por punto: ruta y método HTTP, contrato/cookies, política de permisos, invariantes de administrador, paginación/filtros, auditoría antes/después, catálogo y ausencia de `CreateModule`.
+5. Deja registrado que las pruebas movidas requieren adaptación/ejecución por Build; Dev no escribe ni modifica pruebas como parte de este trabajo.
+6. Publica el cierre de WP3 con un checkpoint. Si hay un bloqueo, descríbelo concretamente y no marques WP3 como completo.
 
-### S3-04 · WP3.2 · Permisos declarados, evaluador único, usuario actual y auditoría
-- **Último commit conocido antes:** `54bf758` (S3-03).
-- **Cambios (Identity):** `IdentityPermissions` (grupos `dashboard` y `settings`, códigos sin cambios), `IdentityEventIds` (1000–1999), `PermissionEvaluator` reescrito como `IPermissionEvaluator`
-  (una consulta por usuario y petición, caché por ámbito, orden módulo→denegación→concesión→rol vía `PermissionDecision`), `CurrentUser : ICurrentUser`, `AuditTrail : IAuditTrail`
-  (`Add` en la misma transacción; `WriteAsync` con contexto aparte; `DetailsJson` = `{before, after}`; `TraceId` e IP automáticos).
-- **Decisiones:** el evaluador es el único lugar donde se calculan permisos; `/api/auth/me` lo reutilizará.
-- **Validaciones ejecutadas:** ninguna de compilación (el SDK ya está instalado, pero NuGet no es accesible).
-- **Sin compilar:** todo lo anterior. Los archivos `PrivilegeGuard.cs`, `SessionService.cs`, `JwtTokenService.cs`, `JwtOptions.cs`, `PasswordPolicy.cs`, `DatabaseSeeder.cs` conservan aún el contenido original.
-- **Siguiente acción:** `IdentityModule`, `CatalogSyncTask`, `BootstrapAdminTask`, opciones y autenticación JWT.
+## Siguiente trabajo después de cerrar WP3: WP4
 
-### S3-05 · WP3.3 · Opciones, JWT, autenticación y catálogo desde código
-- **Último commit conocido antes:** `a588c99` (S3-04).
-- **Cambios (Identity):** `AuthOptions` (`Auth:Local`, `Auth:Google`, `Auth:Refresh`), `JwtOptions` y `JwtTokenService` con espacios de nombres nuevos (`ITokenService` queda junto al servicio),
-  `JwtBearerSetup` (JWT en cookie `__Host-pastel_access`; **una sola proyección** `PastelSessionState` por petición guardada en `HttpContext.Items`; el bloqueo por contraseña ya no invalida sesiones),
-  `CatalogSyncTask` (orden 10: grupos y permisos de `IPastelModule`, todo a `Administrator`, roles sugeridos solo si faltan, sin pisar ediciones, transacción serializable).
-- **Decisiones:** los módulos de la base son los **grupos de permisos** (`dashboard`, `settings`, `brisa`, …); un módulo no cargado no borra sus filas.
-- **Validaciones ejecutadas:** ninguna de compilación.
-- **Sin compilar:** todo lo nuevo. Pendientes de reescritura: `PrivilegeGuard.cs`, `SessionService.cs`, `PasswordPolicy.cs`, `DatabaseSeeder.cs`.
-- **Siguiente acción:** `BootstrapAdminTask`, `IdentityModule` (+ registro de servicios) y slices de `Features/`.
+Implementa WP4 según la sección 7 de `FASE-0-REFACTOR-BASE.md`, en el orden indicado:
 
-### S4-01 · WP2 · Cierre: verificación de §5 contra el código real
-- **Último commit conocido antes:** `c5a15a7` (S3-05).
-- **Método:** lectura de todos los archivos de `Pastel.SharedKernel`, `Pastel.Platform` y `Pastel.Host`, contrastada punto por punto con `FASE-0-REFACTOR-BASE.md` §5.
-- **Resultado por punto (evidencia):**
-  1. SharedKernel: `Result.cs`, `Error.cs`, `IClock.cs`, `Paging.cs`, `Guard.cs`. Cumple.
-  2. Platform: `IPastelModule`, `PastelModuleAttribute`, `PermissionGroup`, `SuggestedRole`, `ModuleLoader` (`Modules/`), `ICurrentUser`, `IPermissionEvaluator` (`Security/Abstractions.cs`),
-     `IAuditTrail` (`Auditing/`), `RequirePermission`/`RequireSession`/`AllowAnonymousExplicit` (`Security/EndpointSecurityExtensions.cs`), migrador por orden (`InitializePastelAsync`). Cumple.
-  3. Errores: `PastelExceptionHandler` (`IExceptionHandler`) + `AddProblemDetails`; traduce `Result` (`PastelProblem.From`), violación única (`UniqueViolationMap`), concurrencia, 40001/40P01 (503 con `Retry-After`; el reintento acotado está en `TransactionRunner`),
-     cancelación (499) e inesperados; `traceId` en cuerpo y `X-Trace-Id` (`TraceIdMiddleware`); no usa `ex.Message`; códigos `platform.*` en `PlatformErrors`. Cumple.
-  4. Logs: Serilog JSON (`CompactJsonFormatter`), enriquecedor (`TraceId`, `RequestId`, `UserId`, `Module`, `ClientIp`) y propiedades `Environment`/`Version`; resumen por petición sin cuerpos ni cabeceras;
-     `IncludeQueryInRequestPath = false` (excluye la consulta, incluida `/api/auth/google/*`); rangos de `EventId` en `PastelEventIds`. Cumple.
-  5. Salud: `/health/live` y `/health/ready` (`ModulesReadyHealthCheck`: base de datos + migraciones pendientes de cada módulo). Cumple.
-  6. `POST /api/client-errors` (`ClientErrorsEndpoint`): límite de 8 KB, campos acotados, límite de tasa propio. Cumple.
-  7. `Program.cs` de 26 líneas con métodos de extensión. Cumple.
-  8. `Pastel.Host.csproj`: referencias por *glob* filtradas por `PastelModules`. Cumple (sintaxis MSBuild por verificar en Build).
-  9. Dockerfile y `compose.yaml` con `PASTEL_MODULES` (S3-01/S3-02). Cumple.
-- **Corrección hecha:** en `InitializePastelAsync` había una llamada síncrona sobre asíncrona (`.GetAwaiter().GetResult()` dentro de `Where`) al comprobar migraciones pendientes con `Database:ApplyMigrationsAtStartup=false`; ahora se espera con `await`.
-- **Observaciones para WP3/WP5 (no son defectos de WP2):** Identity debe llenar `ForcePasswordChangeOptions.AllowedPaths`, registrar `UniqueViolationMap` (correo, nombre de rol) y, en WP5, `PublicBaseUrlOptions.PathPrefixes`.
-- **Validaciones ejecutadas:** lectura de código. No se ejecutó compilación (en esta sesión `dotnet` no está instalado y NuGet no es accesible).
-- **Siguiente acción:** WP3: `IdentityModule` + `BootstrapAdminTask`.
+- **S1 — Jerarquía de privilegios:** guardas en todas las operaciones administrativas; protección de cuentas y rol Administrator; invariante del último administrador; denegaciones 403 con códigos `identity.privilege.*`, logs y auditoría.
+- **S2 — Sesiones/refresh:** ventana de gracia configurable para concurrencia legítima, detección de reutilización fuera de la ventana, transacción y reintentos acotados; documentar la decisión en ADR.
+- **S3 — Login/registro/bloqueo/configuración:** hash ficticio para correo inexistente, bloqueo con espera creciente solo para contraseña, configuración de producción segura, autorregistro desactivado por defecto y límite por cuenta en el servidor.
+- **S4 — JWT/contraseñas/retención:** rechazo de claves conocidas en producción, rotación con `kid`, una política de contraseña tipo NIST como fuente única, limpieza de tokens vencidos y retención de auditoría configurable.
 
-### S4-02 · WP3.4 · Piezas comunes, `BootstrapAdminTask` e `IdentityModule`
-- **Último commit conocido antes:** `dd3ae22` (S4-01).
-- **Cambios (Platform):** `IUniqueViolationSource` (cada módulo registra sus índices únicos al crear `UniqueViolationMap`; resuelve la observación de S4-01).
-- **Cambios (Identity):** `Common/IdentityErrors` (códigos `identity.*`), `Common/FieldErrors`, `Common/Contracts` (mismos campos JSON que los contratos anteriores; `AuditEntry` suma `module` y `traceId`),
-  `Common/UserMapping`; `Security/PasswordPolicy` (regla vigente; WP4 la reemplaza); `Startup/BootstrapAdminTask` (orden 20, crea la cuenta de arranque o restaura el rol y lo audita como `identity.bootstrap.admin_restored`;
-  no registra el correo); `IdentityModule` (`[assembly: PastelModule]`, DbContext, opciones validadas, hasher con 600 000 iteraciones, evaluador/usuario actual/auditoría, tareas de arranque, `Member` con `dashboard.view`
-  como rol sugerido, rutas permitidas con contraseña temporal: `/api/auth/me`, `/change-password`, `/logout`); `Features/IdentityEndpoints` (punto de enlace, aún sin slices).
-- **Decisiones:** (1) la contraseña actual incorrecta en cambio de contraseña pasa de 401 a **400** con `identity.password.current_incorrect` (un 401 dispararía el refresco automático de WP7). (2) `Login` y `Register` respetan `Auth:Local:*` (registro desactivado por defecto, plan §2).
-  (3) Los nombres de índice únicos se buscan por fragmento (`users_NormalizedEmail`, `roles_NormalizedName`) porque las columnas siguen con nombre por defecto.
-- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
-- **Sin compilar:** todo lo anterior.
-- **Pendiente WP3:** slices (`Login`, `Register`, `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`, `GetCsrfToken`, administración de usuarios/roles/módulos/permisos/auditoría), retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs` cuando sus slices lo sustituyan, adaptar `SecurityPolicyTests.cs` (movido con `git mv`; lo adapta Build).
-- **Siguiente acción:** `Security/SessionCookies` + `SessionIssuer` y los slices de `/api/auth/*`.
+Confirma el código antes de aplicar cada punto. Si un requisito de WP4 depende de un endpoint o contrato que WP5 también menciona (por ejemplo `/api/auth/options`), implementa una única fuente de verdad y documenta la coordinación; no dupliques endpoints ni políticas.
 
-### S4-03 · WP3.5 · Infraestructura de sesión y slices `GetCsrfToken`, `Login`, `Register`
-- **Último commit conocido antes:** `5ad5555` (S4-02).
-- **Cambios (Platform):** `IClock` se registra como `SystemClock` en `AddPastelSecurity` (antes no estaba registrado).
-- **Cambios (Identity):** `Security/TokenSecrets` (hash SHA-256 y secretos opacos), `Security/SessionCookies` (mismas cookies y atributos que antes; `Cache-Control: no-store`),
-  `Security/SessionIssuer` (emite acceso + refresh en la transacción de quien llama; revoca refresh tokens), `JwtBearerSetup` proyecta **en la misma consulta** el estado de sesión y el resumen de la persona
-  (`HttpContext.GetSessionUser()`), de modo que `/api/auth/me` no hace una consulta extra de usuario (meta B1: 2 consultas = estado + permisos).
-  Slices: `Features/GetCsrfToken` (`GET /api/auth/csrf`), `Features/Login` (`POST /api/auth/login`), `Features/Register` (`POST /api/auth/register`, 201); manejadores con `Result`, sin `ex.Message`, sin correo en logs (`LogHasher`).
-  `Features/IdentityEndpoints` ya enlaza los tres bajo `/api/auth`.
-- **Decisiones:** el ingreso de una cuenta sin `PasswordHash` (solo Google) falla con el mismo error genérico; contraseñas de más de 256 caracteres se rechazan antes de calcular el hash; el registro devuelve errores por campo (`identity.register.invalid`).
-- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
-- **Pendiente WP3:** slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword` y toda la administración; retirar `PrivilegeGuard.cs`, `SessionService.cs`, `DatabaseSeeder.cs`.
-- **Siguiente acción:** slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`.
+Después continúa WP5–WP10 en orden conforme a la especificación. No adelantes funcionalidades fuera del alcance.
 
-### S4-04 · WP3.6 · Slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`
-- **Último commit conocido antes:** `b9c8849` (S4-03).
-- **Cambios (Identity):** `Features/Refresh` (rotación en transacción serializable con `TransactionRunner`; la reutilización de un token rotado revoca todas las sesiones y sube `TokenVersion`; ya no se rechaza por `LockoutEnd`, decisión 4),
-  `Features/Logout` (público; revoca el refresh y audita si hay sesión), `Features/GetCurrentUser` (`GET /api/auth/me` con `RequireSession`, usa el resumen de la petición y `IPermissionEvaluator`; respuesta `{ user, permissions }`),
-  `Features/ChangePassword` (204, revoca refresh tokens, `TokenVersion++`, auditoría con antes/después sin secretos, limitado por `auth` de tasa). Todo enlazado en `IdentityEndpoints`.
-- **Rutas `/api/auth/*` completas:** `csrf`, `login`, `register`, `refresh`, `logout`, `me`, `change-password`. `/api/auth/options` y `/api/auth/google/*` corresponden a WP5.
-- **Decisiones:** se mantienen los nombres de acción de auditoría anteriores (`auth.login.*`, `auth.refresh.*`, `user.password.changed`); la ventana de gracia de refresh (S2) queda para WP4.
-- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
-- **Pendiente WP3:** administración (usuarios, roles, permisos, módulos, auditoría) por slices; retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs`.
-- **Siguiente acción:** slices de usuarios: `ListUsers` (paginado y filtrado en servidor), `CreateUser`, `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`.
+## Validación y entrega conocidas
 
-### S4-05 · WP3.7 · Administración de usuarios (1/2): `ListUsers` y `CreateUser`
-- **Último commit conocido antes:** `1539809` (S4-04).
-- **Cambios (Identity):** `Common/AdministratorRules` (conteo de administradores activos; el bloqueo por contraseña ya no cuenta), `Common/ResultHttp` (`Result` → respuesta o `problem+json`),
-  `Features/ListUsers` (`GET /api/admin/users`: `{ items, page, pageSize, totalCount }`; filtros `search` (ILIKE literal sobre correo y nombre), `role` (nombre) y `status` (`active`|`blocked`); orden por correo; página y tamaño normalizados por `PageRequest`),
-  `Features/CreateUser` (`POST /api/admin/users`, 201, contraseña temporal con `MustChangePassword`, auditoría con después).
-  Enlazados en `IdentityEndpoints` bajo `/api/admin/users`.
-- **Decisiones:** el listado cambia de arreglo a objeto paginado (decisión 2 de PROGRESS); el frontend se adapta en WP7.
-- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
-- **Pendiente WP3:** `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`; roles, permisos, módulos y auditoría; retirar `PrivilegeGuard.cs`, `SessionService.cs`, `DatabaseSeeder.cs`.
-- **Siguiente acción:** `SetUserRoles` y `GetUserPermissions`/`SetUserPermissions`.
-
-### S4-06 · WP3.8 · Administración de usuarios (2/2)
-- **Último commit conocido antes:** `06f6a57` (S4-05).
-- **Cambios (Identity):** `Features/SetUserRoles` (`PUT /api/admin/users/{id}/roles` → `{ roles }`; transacción serializable; no deja la plataforma sin administradores activos; `TokenVersion++` y revoca refresh tokens; auditoría con roles antes/después),
-  `Features/GetUserPermissions` y `Features/SetUserPermissions` (`/api/admin/users/{id}/permissions`; excepciones antes/después con códigos de permiso; rechaza cuentas Administrator, repetidos, efectos y permisos inexistentes),
-  `Features/BlockUser` (serializable; no a sí mismo ni al último administrador activo), `Features/UnblockUser`, `Features/ResetUserPassword` (`{ temporaryPassword, mustChangePassword }`, `Cache-Control: no-store`, la contraseña no se registra ni se audita).
-  Todas con los permisos de siempre (`settings.users.read|update|lock|reset_password`). Enlazadas en `IdentityEndpoints`.
-- **Decisiones:** sin cambios de contrato JSON; los errores pasan de excepciones (400/404/409 según el tipo) a `Result` con códigos `identity.*`.
-- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
-- **Estado WP3:** rutas `/api/auth/*` y `/api/admin/users/*` completas. Faltan `/api/admin/roles`, `/permissions`, `/modules`, `/audit`.
-- **Siguiente acción:** slices de roles (`ListRoles`, `CreateRole`, `SetRolePermissions`) y `ListPermissions`.
-
-### S4-07 · WP3.9 · Roles, permisos, módulos y auditoría por slices
-- **Último commit conocido antes:** `f6aba23` (S4-06).
-- **Cambios (Identity):** `Features/ListRoles` (una consulta con permisos y cantidad de personas), `CreateRole` (201; nombre validado; duplicado → `identity.role.name_taken` 409), `SetRolePermissions` (204; Administrator conserva todos),
-  `ListPermissions`, `ListModules` (solo lectura del catálogo sincronizado), `SetModuleEnabled` (`PATCH`, 204; `settings` no se desactiva; audita antes/después),
-  `ListAudit` (`GET /api/admin/audit`: `{ items, page, pageSize, totalCount }`, más recientes primero; filtros `action`, `module`, `actor` (correo), `targetUserId`, `from`, `to`), `Common/LikePattern` (ILIKE literal; también usado por `ListUsers`).
-  **`CreateModule` retirado** (comando, endpoint y contrato): no se recrea. Auditoría de roles y módulos con antes/después.
-- **Decisiones:** `GET /api/admin/audit` reemplaza el parámetro `take` por `page`/`pageSize` (decisión 2); `AuditEntry` incluye `module` y `traceId`.
-- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
-- **Estado WP3:** todas las rutas de `/api/auth/*` (salvo `options` y Google, de WP5) y `/api/admin/*` existen como slices.
-- **Pendiente WP3:** retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs` (su lógica ya vive en los slices) y revisar referencias colgantes; revisar `SecurityPolicyTests.cs`; auditar el estado real contra los criterios de §6.
-- **Siguiente acción:** `git rm` de los tres archivos heredados y auditoría de §6 punto por punto.
+- Validaciones citadas en los últimos checkpoints: `git diff --check`; no consta `dotnet build`, pruebas completas ni ejecución de Docker para WP2/WP3.
+- No infieras el estado del entorno de sesiones anteriores; sigue las instrucciones actuales del rol y reporta exactamente qué ejecutaste.
+- Cada checkpoint debe enumerar el subobjetivo, archivos/cambios, decisiones, comando y resultado real de cada validación, limitaciones, pendientes y siguiente acción.
+- Antes de finalizar una sesión, publica el último estado coherente en esta rama y deja un siguiente paso accionable. El handoff de Dev solo habilita el trabajo posterior de Build/QA; no significa que Fase 0 esté aprobada.
