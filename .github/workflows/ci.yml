@@ -1,15 +1,25 @@
 name: CI
 on:
+  # Work-in-progress branches can receive frequent checkpoint pushes without
+  # starting an expensive full CI run each time.
   push:
-    branches: [main, dev, 'feat/**', 'fix/**', 'refactor/**', 'chore/**', 'docs/**', 'test/**']
+    branches: [main, dev]
   pull_request:
     branches: [main, dev]
+    types: [opened, reopened, ready_for_review, synchronize]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
   backend:
+    # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,6 +31,8 @@ jobs:
       - run: dotnet test Pastel.slnx --configuration Release --no-build --no-restore
 
   frontend:
+    # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -36,6 +48,8 @@ jobs:
       - run: npm run lint
 
   container-build:
+    # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     env:
       # Disposable placeholders used only for Compose interpolation during image builds.

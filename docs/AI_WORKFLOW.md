@@ -6,7 +6,7 @@ Este documento define el ciclo normal de desarrollo. `AGENTS.md` y este archivo 
 
 - `main`: versión estable publicada. No se usa para el desarrollo diario.
 - `dev`: rama de integración actualizada. Todas las funcionalidades, correcciones y refactorizaciones aprobadas regresan a esta rama.
-- Ramas de trabajo: se crean desde el `dev` más reciente, salvo que el usuario pida continuar en una rama existente. Cada rama contiene una tarea coherente y permanece separada de `dev` mientras el usuario la prueba. No abras PR por defecto.
+- Ramas de trabajo: se crean desde la base indicada por el orquestador (normalmente el `dev` más reciente), salvo que se indique continuar una rama existente. Cada rama contiene una tarea coherente y permanece separada de `dev` mientras el usuario la prueba. **Nunca abras PR ni integres a `dev` sin autorización explícita del usuario.**
 
 Flujo normal:
 
@@ -28,6 +28,13 @@ git switch -c feat/nombre-corto
 
 No cambies de rama si hay cambios locales sin guardar o sin permiso del usuario. Si el usuario pide mantener la misma rama, inspecciona su estado e historial y reutilízala si corresponde a esta tarea. Si el nombre propuesto ya existe, inspecciónalo y reutilízalo únicamente si corresponde.
 
+### Coordinación cuando hay agentes y proyectos en paralelo
+
+- Durante una refactorización de la base, **no supongas que la arquitectura objetivo ya está implementada en `dev`**. El orquestador debe indicar la rama y el SHA base que corresponde a cada tarea. Sigue el código real de esa base y las instrucciones de la fase; no mezcles automáticamente el código antiguo con el objetivo de la refactorización.
+- Cada agente trabaja en una rama por tarea coherente y con una zona de escritura definida. Los módulos/proyectos independientes pueden avanzar en paralelo; evita que dos agentes editen los mismos archivos compartidos. `BuildingBlocks`, `Identity`, shell/core, configuración global, CI y documentación raíz siguen protegidos salvo asignación expresa del orquestador o CCR autorizado.
+- Para relevos, haz commits pequeños y coherentes y publica checkpoints cuando el siguiente agente necesite acceder a ellos. Mantén un `PROGRESS.md` por tarea/fase con SHA actual, cambios hechos, decisiones, comandos ejecutados, limitaciones, pendientes y el siguiente paso concreto. El siguiente agente inspecciona rama, `git status`, historial y progreso antes de continuar.
+- No integres ramas de agentes entre sí ni cambies su base por iniciativa propia. Coordina el orden y la base con el orquestador para evitar que una tarea dependiente se construya sobre una arquitectura todavía en transición.
+
 ## 2. Convención de nombres
 
 Usa minúsculas, kebab-case y una rama por objetivo coherente:
@@ -44,17 +51,17 @@ No crees ramas por archivo, clase o commit. Agrupa cambios dependientes en una s
 ## 3. Commits y Pull Requests
 
 - Usa Conventional Commits en español o inglés consistente con el área: `feat: ...`, `fix: ...`, `refactor: ...`, `docs: ...`, `test: ...`, `chore: ...`.
-- Mantén cada commit enfocado, pero no confundas “un commit por idea” con “un commit por archivo”. Ajustes dependientes de una misma corrección se agrupan.
-- **Agentes con entorno de compilación (Build, QA):** no publiques commits intermedios que sabes que están incompletos o que no compilan; termina un conjunto coherente, formatea y ejecuta las validaciones locales aplicables antes de subirlo. **Agentes sin entorno (Dev):** pueden publicar código sin compilar; no lo simulen ni afirmen que compila, y declaren «sin compilar» en `PROGRESS.md` y en el informe. El agente Build compila y corrige después.
-- GitHub Actions se ejecuta por cada push a una rama cubierta por el workflow. No hagas un push por cada archivo o paso del refactoring: cada push innecesario crea una ejecución adicional y puede dejar una lista larga de fallos previsibles.
-- Cuando trabajes directamente mediante herramientas GitHub, no uses el endpoint de contenido para actualizar cada archivo en serie si la tarea es multiarchivo: prepara todos los blobs, crea un árbol y publica **un solo commit atómico** con Git Data API. En un checkout local, reúne los cambios y haz un push después de las comprobaciones.
-- Si una refactorización extensa necesita puntos intermedios, el agente con entorno de compilación los mantiene locales hasta que compile y pasen las pruebas mínimas; el Dev sin entorno los publica en los puntos de control definidos en su fase. No desactives la CI para esconder fallos: conserva las comprobaciones automáticas en la versión que se comparte.
-- Si la CI falla, reúne los errores del mismo run, corrige el conjunto y vuelve a publicar una vez; evita una cadena de commits/pushes previsiblemente fallidos.
+- Mantén cada commit enfocado, pero no confundas “un commit por idea” con “un commit por archivo”. Ajustes dependientes de una misma corrección se agrupan. **Se permiten commits y pushes frecuentes en ramas de trabajo** para guardar avances y permitir relevos entre agentes.
+- **Dev:** si su entorno lo permite, ejecuta build y validaciones locales razonables antes de entregar. Si no tiene entorno de compilación, puede publicar código sin compilar; no lo simula ni afirma que compila, y declara «sin compilar» en `PROGRESS.md` y en el informe. El código publicado debe estar lo más coherente posible y listo para que el agente con entorno lo compile.
+- **Build/QA:** siempre deben trabajar en un entorno capaz de restaurar, compilar y ejecutar pruebas. Pueden ser responsabilidades de la misma sesión/agente para optimizar sesiones. Si corrigen código, vuelven a ejecutar las comprobaciones afectadas y declaran el SHA validado; no ocultan fallos ni afirman resultados no ejecutados.
+- **CI deliberadamente diferido:** los pushes a ramas de trabajo no disparan CI automáticamente. La CI completa se ejecuta en pushes a `dev`/`main`, al abrir/reabrir un PR o marcarlo listo para revisión, y al actualizar un PR que ya está listo. También se puede iniciar manualmente desde GitHub Actions. Así los commits de relevo no generan una ejecución por cada push, pero el trabajo integrado y los PR listos siguen verificados.
+- Cuando trabajes directamente mediante herramientas GitHub, no uses el endpoint de contenido para actualizar cada archivo en serie si la tarea es multiarchivo: prepara todos los blobs, crea un árbol y publica **un solo commit atómico** con Git Data API. En un checkout local, agrupa los cambios relacionados en commits coherentes; no esperes a que todo el módulo esté terminado para guardar avances.
+- Si una refactorización extensa necesita puntos intermedios, publica avances coherentes en la misma rama para que otro agente pueda retomarlos. No desactives ni elimines las comprobaciones finales: se difiere su ejecución, no la validación.
+- Si la CI falla, reúne los errores del mismo run, corrige el conjunto y vuelve a validar; no abras nuevos PR por cada intento.
 - Antes del commit, revisa `git diff --check`, `git diff` y `git status`; confirma que no haya `.env`, claves, contraseñas, tokens, dumps o datos personales.
 - Antes de terminar, revisa el diff y las validaciones que realmente se pudieron ejecutar; no afirmes pruebas no realizadas.
 - No borres ejecuciones históricas de CI solo para ocultar fallos válidos. La prevención se hace publicando estados coherentes; cualquier limpieza de historial debe ser deliberada y autorizada.
-- **No abras PR ni hagas merge automáticamente.** Entrega al usuario el nombre de la rama existente, el SHA del commit, el resumen de cambios y comandos exactos para que ejecute y valide la versión.
-- Espera una confirmación explícita del usuario antes de enviar el trabajo a `dev`. Tras su autorización, abre un único PR para la tarea validada, espera CI y revisa el diff. Las iteraciones de corrección permanecen en la misma rama; no abras un PR por cada intento.
+- **Nunca abras PR ni integres a `dev` sin autorización explícita del usuario.** Entrega rama, SHA, resumen y validaciones. Cuando el usuario autorice abrir el PR, abre uno solo para la tarea validada; espera CI y revisa el diff. Solo haz merge cuando la autorización para integrar también sea explícita. Las iteraciones permanecen en la misma rama.
 - Tras la integración autorizada, actualiza tu copia de `dev` y elimina la rama sólo cuando ya no se necesite.
 - No hagas commits de trabajo directamente a `main`. Evita `git push --force`; nunca reescribas el historial compartido.
 
@@ -65,7 +72,7 @@ Sólo ocurre cuando el usuario dice explícitamente que quiere publicar/pasar a 
 1. Confirma que `dev` está actualizado y sin tareas incompletas.
 2. Ejecuta las validaciones de backend, frontend y Docker indicadas en `README.md`.
 3. Revisa cambios de esquema, migraciones, secretos, configuración de producción y notas de versión.
-4. Abre un PR de `dev` a `main`, revisa CI y espera autorización si el usuario no ordenó de forma inequívoca completar la promoción.
+4. Solo después de recibir autorización explícita para abrir el PR de promoción, abre el PR de `dev` a `main`, revisa CI y espera autorización explícita para hacer merge si todavía no se autorizó la integración.
 5. Integra el PR aprobado y crea un tag semántico en el commit publicado: `vMAJOR.MINOR.PATCH` (por ejemplo, `v1.0.0`). No inventes ni reutilices un tag.
 6. Documenta en el PR o notas de la versión los cambios incluidos y cualquier paso operativo.
 
@@ -73,7 +80,7 @@ Por defecto, termina el trabajo en `dev`. Nunca interpretes que pedir una funcio
 
 ## 5. Validación mínima
 
-La CI se ejecuta tanto en `dev`/`main` como al hacer push a ramas de trabajo `feat/*`, `fix/*`, `refactor/*`, `chore/*`, `docs/*` y `test/*`. Esto permite validar una rama sin abrir un PR y deja al usuario probarla antes de autorizar la integración.
+La CI no se ejecuta automáticamente con cada push a ramas de trabajo. Se ejecuta en pushes a `dev`/`main`, al abrir/reabrir un PR, al marcarlo listo para revisión y con nuevos pushes a un PR que ya no está en borrador. También puede iniciarse manualmente desde **Actions → CI → Run workflow**. Los PR en borrador no consumen ejecuciones. El workflow no se desactiva: solo se difiere la validación completa hasta que la tarea esté lista.
 
 Ejecuta lo aplicable y reporta exactamente qué pasó y qué no pudo ejecutarse. Sin entorno de compilación (rol Dev) no ejecutes ni simules estos comandos: declara «sin compilar».
 
