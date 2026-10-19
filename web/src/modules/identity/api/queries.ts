@@ -43,6 +43,16 @@ export function useUsers(filters: UserFilters, { enabled = true }: Gate = {}) {
   });
 }
 
+/** Una persona por id (editor de accesos). */
+export function useUser(userId: string, { enabled = true }: Gate = {}) {
+  return useQuery({
+    queryKey: identityKeys.user(userId),
+    queryFn: ({ signal }) =>
+      api.get(`/api/admin/users/${userId}`, userSchema, { signal }),
+    enabled,
+  });
+}
+
 export function useRoles({ enabled = true }: Gate = {}) {
   return useQuery({
     queryKey: identityKeys.roles,

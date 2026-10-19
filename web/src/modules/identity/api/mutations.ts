@@ -66,6 +66,7 @@ export function useSaveUserAccess() {
     onSettled: (_data, _error, change) =>
       invalidate(
         identityKeys.usersAll,
+        identityKeys.user(change.userId),
         identityKeys.roles,
         identityKeys.userPermissions(change.userId),
       ),

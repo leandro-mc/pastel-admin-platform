@@ -8,6 +8,7 @@ using Pastel.Modules.Identity.Features.CreateUser;
 using Pastel.Modules.Identity.Features.GetCsrfToken;
 using Pastel.Modules.Identity.Features.GetCurrentUser;
 using Pastel.Modules.Identity.Features.GetAuthOptions;
+using Pastel.Modules.Identity.Features.GetUser;
 using Pastel.Modules.Identity.Features.GetUserPermissions;
 using Pastel.Modules.Identity.Features.GoogleComplete;
 using Pastel.Modules.Identity.Features.GoogleStart;
@@ -76,6 +77,7 @@ internal static class IdentityEndpoints
 
         var users = apiRoot.MapGroup("/admin/users");
         ListUsersEndpoint.Map(users);
+        GetUserEndpoint.Map(users);
         CreateUserEndpoint.Map(users);
         SetUserRolesEndpoint.Map(users);
         GetUserPermissionsEndpoint.Map(users);
