@@ -10,7 +10,7 @@
 - Rama de trabajo: `refactor/modular-foundation`. Antes de tocar archivos, confirma el HEAD real con `git fetch origin`, `git status --short --branch` y `git log --oneline --decorate -10`.
 - Base de integración documentada: `dev` en `7ba6f1c80ad1025acc3333096ff3878b3226b0f4`. No integres cambios nuevos de `dev` por iniciativa propia.
 - No abrir PR, hacer merge ni integrar en `dev` sin autorización explícita del propietario. Autorizar un PR no autoriza su merge.
-- Publicar un checkpoint como máximo cada **3 minutos**: revisar el diff, actualizar este archivo en el mismo commit, hacer commit pequeño y push a `origin/refactor/modular-foundation`. Sin force push, sin reescribir historia y sin secretos.
+- **Tipo asignado a la tarea actual: Tipo 2.** La cadencia se aplica según `AGENTS.md`: Tipo 1 publica commit + push al menos cada 3 minutos; Tipo 2 publica al completar unidades de trabajo coherentes, sin commits mínimos por cada ajuste. Si una tarea futura no indica tipo, el agente debe preguntar antes de continuar. En ambos casos, revisar el diff, mantener este archivo al día con el avance correspondiente y publicar antes de cambiar de contexto o ante riesgo de interrupción. Sin force push, sin reescribir historia y sin secretos.
 - Dev implementa código de producto; no escribe pruebas ni planes de pruebas. No inventes resultados ni afirmes que algo compila si no se verificó. Sigue las instrucciones de `FASE-0-REFACTOR-BASE.md` y declara de forma explícita lo que quedó sin compilar/validar. Build/QA se encarga de pruebas, compilación completa y migraciones EF Core.
 
 ## Estado actual por WP
