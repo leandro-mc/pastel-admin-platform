@@ -119,3 +119,11 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - Los cambios de esta sesión se verificaron mediante inspección estática del contenido remoto de GitHub. Esto no equivale a compilación ni pruebas. En un runner adecuado, el siguiente paso es ejecutar Build antes de hacer cualquier PR/merge.
 - Cada checkpoint debe enumerar el subobjetivo, archivos/cambios, decisiones, comando y resultado real de cada validación, limitaciones, pendientes y siguiente acción.
 - Antes de finalizar una sesión, publica el último estado coherente en esta rama y deja un siguiente paso accionable. El handoff de Dev solo habilita el trabajo posterior de Build/QA; no significa que Fase 0 esté aprobada.
+
+## Cuarta incidencia Docker Build — 2026-10-18
+
+- **Resultado reportado por el usuario:** tras la corrección anterior, la compilación falló en `PastelHostingExtensions.cs`: ASPDEPR005 indica que `Microsoft.AspNetCore.HttpOverrides.IPNetwork` está obsoleto y debe usarse `System.Net.IPNetwork`; además, `KnownIPNetworks.Add` requiere el tipo de `System.Net`.
+- **Corrección publicada:** se calificó explícitamente `System.Net.IPNetwork.TryParse(...)`, evitando la ambigüedad y usando el tipo esperado por `ForwardedHeadersOptions.KnownIPNetworks`. Commit: `9c48ef44ff4f8bad7e05ebc06524a1ee63ebab71`.
+- **Validación pendiente:** esta corrección se inspeccionó estáticamente, pero no se ejecutó Docker ni compilación .NET desde este entorno. El usuario debe actualizar la rama y repetir `docker compose build`; no declarar resuelto hasta ver el resultado real.
+- Si el siguiente build avanza, registrar el nuevo bloqueo por separado. Si ambos contenedores compilan, continuar con arranque y logs; la migración inicial EF Core de Identity sigue pendiente.
+
