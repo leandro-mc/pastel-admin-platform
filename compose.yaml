@@ -53,6 +53,10 @@ services:
       Auth__Local__Enabled: ${AUTH_LOCAL_ENABLED:-true}
       Auth__Local__SelfRegistrationEnabled: ${AUTH_LOCAL_SELF_REGISTRATION_ENABLED:-false}
       Auth__Refresh__ReuseGraceSeconds: ${AUTH_REFRESH_REUSE_GRACE_SECONDS:-10}
+      # Google OAuth 2.0 (opcional). Sin ambas credenciales, Google queda desactivado y la API arranca igual.
+      Authentication__Google__ClientId: ${GOOGLE_CLIENT_ID:-}
+      Authentication__Google__ClientSecret: ${GOOGLE_CLIENT_SECRET:-}
+      Auth__Google__AllowSignUp: ${AUTH_GOOGLE_ALLOW_SIGNUP:-true}
       Identity__Retention__ExpiredRefreshTokenDays: ${EXPIRED_REFRESH_TOKEN_DAYS:-30}
       Identity__Retention__AuditLogRetentionDays: ${AUDIT_LOG_RETENTION_DAYS:-365}
       Identity__Retention__CleanupIntervalHours: ${IDENTITY_CLEANUP_INTERVAL_HOURS:-24}
