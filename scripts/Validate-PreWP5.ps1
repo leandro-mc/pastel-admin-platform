@@ -18,6 +18,7 @@ $script:TestResultsDirectory = Join-Path $env:TEMP ("pastel-pre-wp5-" + (Get-Dat
 $script:ConnectionBuilder = $null
 $script:ComposeConfig = $null
 $script:TestConnectionString = $null
+$script:CoverageIncomplete = $false
 $password = $null
 
 $testDatabase = "pastel_integration_tests"
@@ -336,6 +337,7 @@ try {
             $script:Failures.Add("Cobertura de WP3/WP4 incompleta; el gate previo a WP5 sigue bloqueado.") | Out-Null
         }
         else {
+            $script:CoverageIncomplete = $true
             Write-Warning "-AllowIncompleteCoverage es solo para diagnóstico; no significa que WP3/WP4 estén cerrados ni autoriza considerar listo WP5."
         }
     }
@@ -355,7 +357,12 @@ try {
         throw "La validación previa a WP5 no está completa. Corrija los fallos y vuelva a ejecutar el script."
     }
 
-    Write-Host "VALIDACIÓN TÉCNICA Y COBERTURA PREVIA A WP5 APROBADAS." -ForegroundColor Green
+    if ($script:CoverageIncomplete) {
+        Write-Host "VALIDACIÓN TÉCNICA TERMINADA, PERO LA COBERTURA PREVIA A WP5 SIGUE INCOMPLETA. NO inicie WP5." -ForegroundColor Yellow
+    }
+    else {
+        Write-Host "VALIDACIÓN TÉCNICA Y COBERTURA PREVIA A WP5 APROBADAS." -ForegroundColor Green
+    }
 }
 finally {
     Remove-Item Env:PASTEL_TEST_CONNECTION_STRING -ErrorAction SilentlyContinue
