@@ -10,7 +10,7 @@ using Pastel.SharedKernel;
 
 namespace Pastel.Modules.Identity.Features.SetUserRoles;
 
-internal sealed class SetUserRolesHandler(IdentityDbContext db, SessionIssuer issuer, IAuditTrail audit, ICurrentUser currentUser, IClock clock)
+internal sealed class SetUserRolesHandler(IdentityDbContext db, SessionIssuer issuer, IAuditTrail audit, ICurrentUser currentUser, IClock clock, IPrivilegeGuard guard)
 {
     public Task<Result<string[]>> HandleAsync(Guid userId, SetUserRolesRequest request, CancellationToken cancellationToken) =>
         // Transacción serializable: dos cambios concurrentes no pueden dejar la plataforma sin administradores activos.
@@ -31,8 +31,19 @@ internal sealed class SetUserRolesHandler(IdentityDbContext db, SessionIssuer is
             return IdentityErrors.UnknownRoles;
         }
 
+        if (await guard.AuthorizeActionOnUserAsync(user, "set_roles", cancellationToken) is { } denied)
+        {
+            return denied;
+        }
+
+        if (await guard.AuthorizeRoleAssignmentAsync(user, newRoles, "set_roles", cancellationToken) is { } roleDenied)
+        {
+            return roleDenied;
+        }
+
+        var wasAdministrator = user.IsAdministrator();
         var willBeAdministrator = newRoles.Any(x => x.NormalizedName == AdministratorRules.NormalizedName);
-        if (user.IsAdministrator() && !willBeAdministrator && user.IsActive
+        if (wasAdministrator && !willBeAdministrator && user.IsActive
             && await db.CountActiveAdministratorsAsync(cancellationToken) <= 1)
         {
             return IdentityErrors.LastActiveAdministrator;
@@ -47,13 +58,25 @@ internal sealed class SetUserRolesHandler(IdentityDbContext db, SessionIssuer is
             db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = role.Id });
         }
 
+        var clearedOverrides = 0;
+        if (willBeAdministrator && !wasAdministrator)
+        {
+            // Las excepciones individuales no aplican a una cuenta de administración (S1): al promoverla se limpian.
+            var overrides = await db.UserPermissionOverrides.Where(x => x.UserId == user.Id).ToListAsync(cancellationToken);
+            clearedOverrides = overrides.Count;
+            db.UserPermissionOverrides.RemoveRange(overrides);
+        }
+
         user.TokenVersion++;
         user.UpdatedAt = clock.UtcNow;
         await issuer.RevokeAllAsync(user.Id, cancellationToken);
         var after = newRoles.Select(x => x.Name).OrderBy(x => x, StringComparer.Ordinal).ToArray();
+        object afterDetails = clearedOverrides > 0
+            ? new { roles = after, overridesCleared = clearedOverrides }
+            : new { roles = after };
         audit.Add(new AuditRecord(
             "admin.user.roles-updated", "identity", currentUser.UserId, user.Id, user.Email,
-            Before: new { roles = before }, After: new { roles = after }));
+            Before: new { roles = before }, After: afterDetails));
         await db.SaveChangesAsync(cancellationToken);
         return after;
     }

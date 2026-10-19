@@ -10,7 +10,7 @@ using Pastel.SharedKernel;
 
 namespace Pastel.Modules.Identity.Features.CreateUser;
 
-internal sealed class CreateUserHandler(IdentityDbContext db, IPasswordHasher<AppUser> hasher, IAuditTrail audit, ICurrentUser currentUser)
+internal sealed class CreateUserHandler(IdentityDbContext db, IPasswordHasher<AppUser> hasher, IAuditTrail audit, ICurrentUser currentUser, IPrivilegeGuard guard)
 {
     public async Task<Result<UserSummary>> HandleAsync(CreateUserRequest request, CancellationToken cancellationToken)
     {
@@ -50,6 +50,11 @@ internal sealed class CreateUserHandler(IdentityDbContext db, IPasswordHasher<Ap
         }
 
         var user = new AppUser { Email = request.Email!.Trim(), NormalizedEmail = email, DisplayName = displayName, MustChangePassword = true };
+        if (await guard.AuthorizeRoleAssignmentAsync(user, roles, "create_user", cancellationToken) is { } denied)
+        {
+            return denied;
+        }
+
         user.PasswordHash = hasher.HashPassword(user, request.TemporaryPassword!);
         foreach (var role in roles)
         {

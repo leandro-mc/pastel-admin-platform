@@ -12,14 +12,19 @@ using Pastel.SharedKernel;
 namespace Pastel.Modules.Identity.Features.ResetUserPassword;
 
 internal sealed class ResetUserPasswordHandler(
-    IdentityDbContext db, IPasswordHasher<AppUser> hasher, SessionIssuer issuer, IAuditTrail audit, ICurrentUser currentUser, IClock clock)
+    IdentityDbContext db, IPasswordHasher<AppUser> hasher, SessionIssuer issuer, IAuditTrail audit, ICurrentUser currentUser, IClock clock, IPrivilegeGuard guard)
 {
     public async Task<Result<ResetUserPasswordResponse>> HandleAsync(Guid userId, CancellationToken cancellationToken)
     {
-        var user = await db.Users.SingleOrDefaultAsync(x => x.Id == userId, cancellationToken);
+        var user = await db.FindWithRolesAsync(userId, cancellationToken);
         if (user is null)
         {
             return IdentityErrors.UserNotFound;
+        }
+
+        if (await guard.AuthorizeActionOnUserAsync(user, "reset_password", cancellationToken) is { } denied)
+        {
+            return denied;
         }
 
         // Cumple la política vigente (mayúscula, minúscula, número y símbolo). La contraseña nunca se registra ni se audita.

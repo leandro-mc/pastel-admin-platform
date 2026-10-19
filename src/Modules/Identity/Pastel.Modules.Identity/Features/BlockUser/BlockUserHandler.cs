@@ -8,22 +8,27 @@ using Pastel.SharedKernel;
 
 namespace Pastel.Modules.Identity.Features.BlockUser;
 
-internal sealed class BlockUserHandler(IdentityDbContext db, SessionIssuer issuer, IAuditTrail audit, ICurrentUser currentUser, IClock clock)
+internal sealed class BlockUserHandler(IdentityDbContext db, SessionIssuer issuer, IAuditTrail audit, ICurrentUser currentUser, IClock clock, IPrivilegeGuard guard)
 {
     public Task<Result> HandleAsync(Guid userId, CancellationToken cancellationToken) =>
         TransactionRunner.RunSerializableAsync(db, token => ApplyAsync(userId, token), cancellationToken);
 
     private async Task<Result> ApplyAsync(Guid userId, CancellationToken cancellationToken)
     {
-        if (currentUser.UserId == userId)
-        {
-            return IdentityErrors.CannotBlockSelf;
-        }
-
         var user = await db.FindWithRolesAsync(userId, cancellationToken);
         if (user is null)
         {
             return IdentityErrors.UserNotFound;
+        }
+
+        if (await guard.AuthorizeActionOnUserAsync(user, "block_user", cancellationToken) is { } denied)
+        {
+            return denied;
+        }
+
+        if (currentUser.UserId == userId)
+        {
+            return IdentityErrors.CannotBlockSelf;
         }
 
         if (user.IsActive && user.IsAdministrator() && await db.CountActiveAdministratorsAsync(cancellationToken) <= 1)

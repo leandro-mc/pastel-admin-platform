@@ -10,7 +10,7 @@ using Pastel.SharedKernel;
 
 namespace Pastel.Modules.Identity.Features.CreateRole;
 
-internal sealed partial class CreateRoleHandler(IdentityDbContext db, IAuditTrail audit, ICurrentUser currentUser)
+internal sealed partial class CreateRoleHandler(IdentityDbContext db, IAuditTrail audit, ICurrentUser currentUser, IPrivilegeGuard guard)
 {
     public async Task<Result<RoleSummary>> HandleAsync(CreateRoleRequest request, CancellationToken cancellationToken)
     {
@@ -43,6 +43,11 @@ internal sealed partial class CreateRoleHandler(IdentityDbContext db, IAuditTrai
         if (permissions.Count != permissionIds.Length)
         {
             return IdentityErrors.UnknownPermissions;
+        }
+
+        if (await guard.AuthorizeGrantAsync(permissions.Select(x => x.Code).ToArray(), "create_role", null, cancellationToken) is { } denied)
+        {
+            return denied;
         }
 
         var role = new AppRole { Name = name, NormalizedName = normalized, Description = description };
