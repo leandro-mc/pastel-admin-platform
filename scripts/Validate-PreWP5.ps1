@@ -34,7 +34,7 @@ $requiredRequirementIds += @(
     "F0-S204",
     "F0-S205",
     "F0-S207",
-    "F0-S208-PASSWORD-LOCKOUT",
+    "F0-S208",
     "F0-S209",
     "F0-S210",
     "F0-S211",

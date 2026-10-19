@@ -86,7 +86,15 @@ internal static class JwtBearerSetup
             .Where(x => x.Id == userId)
             .Select(x => new
             {
-                x.Id, x.Email, x.DisplayName, x.IsActive, x.MustChangePassword, x.AccessFailedCount, x.LockoutEnd, x.CreatedAt, x.TokenVersion,
+                x.Id,
+                x.Email,
+                x.DisplayName,
+                x.IsActive,
+                x.MustChangePassword,
+                x.AccessFailedCount,
+                x.LockoutEnd,
+                x.CreatedAt,
+                x.TokenVersion,
                 Roles = x.UserRoles.Select(r => r.Role.Name).ToList(),
             })
             .SingleOrDefaultAsync(context.HttpContext.RequestAborted);

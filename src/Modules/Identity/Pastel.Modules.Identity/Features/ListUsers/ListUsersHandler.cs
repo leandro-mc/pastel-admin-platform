@@ -46,7 +46,14 @@ internal sealed class ListUsersHandler(IdentityDbContext db)
             .Skip(page.Skip).Take(page.PageSize)
             .Select(x => new
             {
-                x.Id, x.Email, x.DisplayName, x.IsActive, x.MustChangePassword, x.AccessFailedCount, x.LockoutEnd, x.CreatedAt,
+                x.Id,
+                x.Email,
+                x.DisplayName,
+                x.IsActive,
+                x.MustChangePassword,
+                x.AccessFailedCount,
+                x.LockoutEnd,
+                x.CreatedAt,
                 Roles = x.UserRoles.Select(r => r.Role.Name).ToList(),
             })
             .ToListAsync(cancellationToken);

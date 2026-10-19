@@ -26,7 +26,10 @@ internal static class ListRolesEndpoint
         var rows = await query.OrderBy(x => x.Name)
             .Select(x => new
             {
-                x.Id, x.Name, x.Description, x.IsSystemRole,
+                x.Id,
+                x.Name,
+                x.Description,
+                x.IsSystemRole,
                 Permissions = x.RolePermissions.Select(p => new { p.PermissionId, p.Permission.Code }).ToList(),
                 UserCount = x.UserRoles.Count(),
             })
