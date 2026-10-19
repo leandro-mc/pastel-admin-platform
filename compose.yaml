@@ -31,7 +31,7 @@ services:
         PASTEL_MODULES: ${PASTEL_MODULES:-*}
     restart: unless-stopped
     environment:
-      ASPNETCORE_ENVIRONMENT: Production
+      ASPNETCORE_ENVIRONMENT: ${ASPNETCORE_ENVIRONMENT:-Development}
       ASPNETCORE_URLS: http://+:8080
       ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-pastel};Username=${POSTGRES_USER:-pastel};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD};GSS Encryption Mode=Disable
       Database__ApplyMigrationsAtStartup: ${DATABASE_APPLY_MIGRATIONS_AT_STARTUP:-true}
