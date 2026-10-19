@@ -91,3 +91,13 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
   y `-p:PastelModules=Brisa;Balance`. `Microsoft.AspNetCore.OpenApi` sin versión (versión central en `Directory.Packages.props`).
 - **Pendiente WP2:** `PASTEL_MODULES` en `compose.yaml`/`.env.example`, claves de configuración nuevas en compose, revisar `Pastel.Platform` contra el plan §5 (lista de verificación).
 - **Siguiente acción:** compose y `.env.example`; luego lista de verificación de §5 contra `Platform`.
+
+### S3-02 · WP2 · Compose, `.env.example` y Dockerfiles
+- **Último commit conocido antes:** `98d9d71` (S3-01).
+- **Cambios:** `compose.yaml` apunta a `src/Host/Pastel.Host/Dockerfile` y pasa `PASTEL_MODULES` como argumento a `api` y `web`; sustituye `ReverseProxy__TrustedAddress` (IP fija)
+  por `ReverseProxy__TrustedNetworks` (subred); añade `App__PublicBaseUrl`, `AllowedHosts` y `Auth__Local__*` por variable. `web/Dockerfile` recibe `ARG/ENV PASTEL_MODULES`.
+  `.env.example` documenta las variables nuevas (sin valores reales).
+- **Decisiones:** `PASTEL_MODULES` admite comas en compose/.env (el csproj las convierte a `;`). Las IP estáticas de compose se mantienen hasta WP9 (la confianza ya no depende de ellas).
+- **Validaciones ejecutadas:** `git diff --check` limpio. No se ejecutó `docker compose config` (Docker no disponible).
+- **Pendiente WP2:** verificar §5 contra `Pastel.Platform` (lista de comprobación); `web/Dockerfile` seguirá con `npm install` hasta WP9 (`npm ci`).
+- **Siguiente acción:** lista de verificación de WP2 §5 contra el código de `Platform`.

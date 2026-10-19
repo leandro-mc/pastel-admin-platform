@@ -26,7 +26,9 @@ services:
   api:
     build:
       context: .
-      dockerfile: src/Pastel.Api/Dockerfile
+      dockerfile: src/Host/Pastel.Host/Dockerfile
+      args:
+        PASTEL_MODULES: ${PASTEL_MODULES:-*}
     restart: unless-stopped
     environment:
       ASPNETCORE_ENVIRONMENT: Production
@@ -40,7 +42,13 @@ services:
       Jwt__RefreshTokenDays: ${JWT_REFRESH_TOKEN_DAYS:-7}
       Bootstrap__AdminEmail: ${BOOTSTRAP_ADMIN_EMAIL:-admin@pastel.local}
       Bootstrap__AdminPassword: ${BOOTSTRAP_ADMIN_PASSWORD:?Set BOOTSTRAP_ADMIN_PASSWORD in .env}
-      ReverseProxy__TrustedAddress: 172.30.0.2
+      # Red (subred) del proxy confiable, no una IP fija.
+      ReverseProxy__TrustedNetworks: ${REVERSE_PROXY_TRUSTED_NETWORKS:-172.30.0.0/24}
+      # URL pública con la que el usuario abre la aplicación (incluye puerto en local). Se usa para el redirect_uri de Google.
+      App__PublicBaseUrl: ${APP_PUBLIC_BASE_URL:-http://localhost:${WEB_PORT:-8080}}
+      AllowedHosts: ${ALLOWED_HOSTS:-localhost;127.0.0.1}
+      Auth__Local__Enabled: ${AUTH_LOCAL_ENABLED:-true}
+      Auth__Local__SelfRegistrationEnabled: ${AUTH_LOCAL_SELF_REGISTRATION_ENABLED:-false}
     depends_on:
       db:
         condition: service_healthy
@@ -57,6 +65,8 @@ services:
     build:
       context: .
       dockerfile: web/Dockerfile
+      args:
+        PASTEL_MODULES: ${PASTEL_MODULES:-*}
     restart: unless-stopped
     depends_on:
       - api
