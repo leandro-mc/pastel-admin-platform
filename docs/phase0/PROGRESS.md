@@ -104,6 +104,12 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - **Corrección publicada:** se añadió `using Microsoft.AspNetCore.Http;` al archivo que declara `SessionStateExtensions.GetSessionState(HttpContext)`. El proyecto ya referencia `Microsoft.AspNetCore.App`, así que el problema observado era el namespace ausente, no la referencia de framework.
 - **Validación pendiente:** no se volvió a ejecutar Docker desde este entorno. Repetir `docker compose build` con la rama actual; cualquier error nuevo debe tratarse como un bloqueo distinto. Si compila, aún falta verificar el inicio y generar la migración EF Core de Identity.
 
+## Tercera incidencia Docker Build — 2026-10-18
+
+- **Resultado reportado por el usuario:** tras añadir el namespace de `HttpContext`, el backend llegó a compilar `Pastel.SharedKernel` y falló en `PastelHostingExtensions.cs` por dos errores: `CS0104` (`IPNetwork` ambiguo entre `System.Net` y `Microsoft.AspNetCore.HttpOverrides`) y `CS8604` al pasar `RoutePattern.RawText` posiblemente nulo a Serilog.
+- **Corrección publicada:** se quitó el `using System.Net` que introducía la ambigüedad (el tipo requerido en esta configuración es el de `Microsoft.AspNetCore.HttpOverrides`) y se condicionó el enriquecimiento del log a que `RawText` no sea nulo. No se suprimieron advertencias ni se relajó `TreatWarningsAsErrors`.
+- **Validación pendiente:** no se ejecutó el build tras el cambio. Actualizar la rama local y repetir `docker compose build`; se espera que revele cualquier siguiente error real, sin dar por confirmada aún la compilación integral.
+
 ## Validación y entrega conocidas
 
 - **Build de esta sesión bloqueado por el entorno disponible:** comprobé con shell `dotnet --info` (comando no encontrado), `docker --version` (comando no encontrado) y `git ls-remote https://github.com/leandro-mc/pastel-admin-platform.git` (falló porque no se puede resolver `github.com`). No hay .NET SDK, Docker ni acceso DNS a GitHub/NuGet; no se ejecutaron `dotnet build`, `dotnet test`, `dotnet ef` ni `docker compose`. No se afirma que el código compile.
