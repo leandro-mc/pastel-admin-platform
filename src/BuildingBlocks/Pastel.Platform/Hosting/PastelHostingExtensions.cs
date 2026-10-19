@@ -195,9 +195,12 @@ public static class PastelHostingExtensions
         }
         else
         {
-            foreach (var module in catalog.Modules.Where(m => m.HasPendingMigrationsAsync(app.Services, cancellationToken).GetAwaiter().GetResult()))
+            foreach (var module in catalog.Modules)
             {
-                throw new InvalidOperationException($"Hay migraciones pendientes del módulo {module.Code}. Aplíquelas antes de iniciar la API.");
+                if (await module.HasPendingMigrationsAsync(app.Services, cancellationToken))
+                {
+                    throw new InvalidOperationException($"Hay migraciones pendientes del módulo {module.Code}. Aplíquelas antes de iniciar la API.");
+                }
             }
         }
 
