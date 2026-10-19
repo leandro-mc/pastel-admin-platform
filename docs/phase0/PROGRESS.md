@@ -181,3 +181,14 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
 - **Pendiente WP3:** slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword` y toda la administración; retirar `PrivilegeGuard.cs`, `SessionService.cs`, `DatabaseSeeder.cs`.
 - **Siguiente acción:** slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`.
+
+### S4-04 · WP3.6 · Slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`
+- **Último commit conocido antes:** `b9c8849` (S4-03).
+- **Cambios (Identity):** `Features/Refresh` (rotación en transacción serializable con `TransactionRunner`; la reutilización de un token rotado revoca todas las sesiones y sube `TokenVersion`; ya no se rechaza por `LockoutEnd`, decisión 4),
+  `Features/Logout` (público; revoca el refresh y audita si hay sesión), `Features/GetCurrentUser` (`GET /api/auth/me` con `RequireSession`, usa el resumen de la petición y `IPermissionEvaluator`; respuesta `{ user, permissions }`),
+  `Features/ChangePassword` (204, revoca refresh tokens, `TokenVersion++`, auditoría con antes/después sin secretos, limitado por `auth` de tasa). Todo enlazado en `IdentityEndpoints`.
+- **Rutas `/api/auth/*` completas:** `csrf`, `login`, `register`, `refresh`, `logout`, `me`, `change-password`. `/api/auth/options` y `/api/auth/google/*` corresponden a WP5.
+- **Decisiones:** se mantienen los nombres de acción de auditoría anteriores (`auth.login.*`, `auth.refresh.*`, `user.password.changed`); la ventana de gracia de refresh (S2) queda para WP4.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Pendiente WP3:** administración (usuarios, roles, permisos, módulos, auditoría) por slices; retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs`.
+- **Siguiente acción:** slices de usuarios: `ListUsers` (paginado y filtrado en servidor), `CreateUser`, `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`.
