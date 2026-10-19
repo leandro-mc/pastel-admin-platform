@@ -4,6 +4,7 @@ using Pastel.Modules.Identity.Common;
 using Pastel.Modules.Identity.Domain;
 using Pastel.Modules.Identity.Features.ListRoles;
 using Pastel.Modules.Identity.Persistence;
+using Pastel.Modules.Identity.Security;
 using Pastel.Platform.Auditing;
 using Pastel.Platform.Security;
 using Pastel.SharedKernel;
