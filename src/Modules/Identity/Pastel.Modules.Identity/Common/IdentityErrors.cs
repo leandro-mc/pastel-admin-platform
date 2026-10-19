@@ -63,6 +63,25 @@ internal static class IdentityErrors
         "identity.role.name_taken", "Ya existe un rol con ese nombre.",
         new Dictionary<string, string[]> { ["name"] = ["Ya existe un rol con ese nombre."] });
 
+    // Jerarquía de privilegios (S1): todas son 403
+    public static readonly Error PrivilegeAdministratorRoleRequired = Error.Forbidden(
+        "identity.privilege.administrator_role_required", "Solo una persona administradora puede asignar o quitar el rol Administrator.");
+
+    public static readonly Error PrivilegeAdministratorAccountProtected = Error.Forbidden(
+        "identity.privilege.administrator_account_protected", "Solo una persona administradora puede actuar sobre una cuenta de administración.");
+
+    public static readonly Error PrivilegeSelfAction = Error.Forbidden(
+        "identity.privilege.self_action_not_allowed", "No puede realizar esta acción sobre su propia cuenta.");
+
+    public static readonly Error PrivilegePermissionNotHeld = Error.Forbidden(
+        "identity.privilege.permission_not_held", "No puede conceder permisos que usted no tiene.");
+
+    public static readonly Error PrivilegeOwnRoleProtected = Error.Forbidden(
+        "identity.privilege.own_role_protected", "No puede modificar un rol que usted mismo tiene.");
+
+    public static readonly Error PrivilegeSystemRoleImmutable = Error.Forbidden(
+        "identity.privilege.system_role_immutable", "El rol Administrator es de sistema y no se puede modificar.");
+
     // Módulos
     public static readonly Error ModuleNotFound = Error.NotFound("identity.module.not_found", "No se encontró el módulo.");
 

@@ -36,6 +36,7 @@ internal static class IdentityEndpoints
     {
         services.AddSingleton<SessionCookies>();
         services.AddScoped<SessionIssuer>();
+        services.AddScoped<IPrivilegeGuard, PrivilegeGuard>();
         services.AddScoped<LoginHandler>();
         services.AddScoped<RegisterHandler>();
         services.AddScoped<RefreshHandler>();

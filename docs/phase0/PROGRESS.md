@@ -77,6 +77,12 @@ Confirma el código antes de aplicar cada punto. Si un requisito de WP4 depende 
 
 Después continúa WP5–WP10 en orden conforme a la especificación. No adelantes funcionalidades fuera del alcance.
 
+## Estado de WP4 (en curso)
+
+- **S1 — Jerarquía de privilegios:** `IPrivilegeGuard`/`PrivilegeGuard` (`Security/PrivilegeGuard.cs`) y seis errores `identity.privilege.*` (403) creados y registrados. **Falta** aplicarlo en los manejadores (SetUserRoles, SetUserPermissions, Block/Unblock, ResetUserPassword, CreateUser, CreateRole, SetRolePermissions), limpiar excepciones al promover a administrador y documentar el *break-glass* en `SECURITY.md`.
+- **Decisión S1:** además de lo literal de §7, un no-Administrator solo agrega a una cuenta roles cuyos permisos ya posee (asignar un rol equivale a conceder sus permisos).
+- S2, S3, S4 y D1 backend: pendientes.
+
 ## Validación y entrega conocidas
 
 - Validaciones citadas en los últimos checkpoints: `git diff --check`; no consta `dotnet build`, pruebas completas ni ejecución de Docker para WP2/WP3.
