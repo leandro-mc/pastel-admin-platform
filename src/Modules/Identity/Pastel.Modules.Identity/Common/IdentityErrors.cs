@@ -1,3 +1,4 @@
+using Pastel.Modules.Identity.Security;
 using Pastel.SharedKernel;
 
 namespace Pastel.Modules.Identity.Common;

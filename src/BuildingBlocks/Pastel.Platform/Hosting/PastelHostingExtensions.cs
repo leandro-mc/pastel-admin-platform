@@ -1,4 +1,3 @@
-using System.Net;
 using System.Reflection;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
@@ -103,7 +102,7 @@ public static class PastelHostingExtensions
 
             foreach (var text in configuredNetworks)
             {
-                if (!IPNetwork.TryParse(text, out var network))
+                if (!System.Net.IPNetwork.TryParse(text, out var network))
                 {
                     throw new InvalidOperationException("ReverseProxy:TrustedNetworks contiene una subred CIDR inválida.");
                 }
@@ -158,9 +157,10 @@ public static class PastelHostingExtensions
                 : Serilog.Events.LogEventLevel.Information;
             options.EnrichDiagnosticContext = (diagnostics, context) =>
             {
-                if (context.GetEndpoint() is RouteEndpoint endpoint)
+                if (context.GetEndpoint() is RouteEndpoint endpoint
+                    && endpoint.RoutePattern.RawText is { } routeTemplate)
                 {
-                    diagnostics.Set("RouteTemplate", endpoint.RoutePattern.RawText);
+                    diagnostics.Set("RouteTemplate", routeTemplate);
                 }
             };
         });

@@ -91,12 +91,20 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - **Alcance:** WP5 (Google OAuth) no se ha comenzado. `/api/auth/options` solo expone la configuración local y declara Google como no disponible; el flujo OAuth/vinculación de cuentas sigue pendiente para WP5.
 - **Commits representativos del trabajo de seguridad:** `630cb38` (hash ficticio/lockout), `8bfecf4` (gracia refresh), `dcaf979`/`6ac0a82` (ADR), `2ffeab5`/`c42fbf3` (límite por cuenta), `79c67be` (validación Production), `07db059`/`147dc6b` (JWT `kid` y rotación), `84572fc`/`5d4463f` (política), `826a69b`/`3a9d413` (retención), `e0d8265`/`1bb7a00` (opciones de autenticación), `45a837b` (validación CIDR), `ed98a0c`/`9410a4b` (entorno Compose configurable), `2dbd9ca`/`47059d` (revocación de cadena refresh), `b7c577a`/`f3cd6fa` (alineación de códigos S1), `3877458`/`8d8cc5c`/`54c1bc0` (bloqueo propio siempre 403 y auditado), `fa99bb2` (clave bootstrap de producción fuerte).
  
-## Validación y entrega conocidas
 
-- **Build de esta sesión bloqueado por el entorno disponible:** comprobé con shell `dotnet --info` (comando no encontrado), `docker --version` (comando no encontrado) y `git ls-remote https://github.com/leandro-mc/pastel-admin-platform.git` (falló porque no se puede resolver `github.com`). No hay .NET SDK, Docker ni acceso DNS a GitHub/NuGet; no se ejecutaron `dotnet build`, `dotnet test`, `dotnet ef` ni `docker compose`. No se afirma que el código compile.
-- **WP1 sigue pendiente:** no se ejecutó la línea base de pruebas sobre el SHA base `dev@7ba6f1c`, ni se produjo el informe C1 ni se integró el trabajo de `build/fase0-linea-base`. Requiere runner con .NET 10, NuGet, Docker y acceso al repositorio.
-- **WP2 sigue pendiente de Build:** validar compilación general y filtrado MSBuild `PastelModules` para Identity y subconjuntos.
-- **WP3 sigue pendiente de Build:** generar la migración inicial con `dotnet ef` (no manualmente), compilar y ejecutar `Pastel.Modules.Identity.Tests`, verificar la traducción EF de `PermissionEvaluator`, comprobar el máximo de dos consultas por petición y ampliar pruebas de integración/concurrencia.
-- Los cambios de esta sesión se verificaron mediante inspección estática del contenido remoto de GitHub. Esto no equivale a compilación ni pruebas. En un runner adecuado, el siguiente paso es ejecutar Build antes de hacer cualquier PR/merge.
-- Cada checkpoint debe enumerar el subobjetivo, archivos/cambios, decisiones, comando y resultado real de cada validación, limitaciones, pendientes y siguiente acción.
-- Antes de finalizar una sesión, publica el último estado coherente en esta rama y deja un siguiente paso accionable. El handoff de Dev solo habilita el trabajo posterior de Build/QA; no significa que Fase 0 esté aprobada.
+## Validación Docker y bloqueos actuales — 2026-10-19
+
+- **Build Docker: exitoso hasta este punto**, según la última confirmación del usuario tras resolver seis incidencias de compilación. Las seis se condensan aquí para evitar duplicar el historial:
+  1. Sintaxis de la propiedad MSBuild `InvariantCulture` no admitida (`MSB4185`); se ajustó la normalización del filtro `PastelModules`.
+  2. Faltaba importar `Microsoft.AspNetCore.Http` para `HttpContext`.
+  3. En `PastelHostingExtensions.cs`, conflicto/uso obsoleto de `IPNetwork` y posible null en `RoutePattern.RawText`; se calificó `System.Net.IPNetwork` y se protegió el valor nulo en logging.
+  4. Tres handlers no encontraban `IPrivilegeGuard`; se agregó el namespace `Pastel.Modules.Identity.Security`.
+  5. `IdentityEndpoints.cs` no resolvía `MapGroup`; se importó `Microsoft.AspNetCore.Builder`.
+  6. `IdentityErrors.cs` no resolvía `PasswordPolicy`; se importó `Pastel.Modules.Identity.Security`.
+- **Qué significa el resultado:** el usuario confirma que `docker compose build` ya termina correctamente. Esto valida la construcción de las imágenes en ese estado del código; no equivale a confirmar el arranque completo ni a aprobar WP1–WP4. Los seis arreglos se hicieron en `refactor/modular-foundation`.
+- **Bloqueo de arranque conocido:** al iniciar, la API lanza `InvalidOperationException: No se encontraron migraciones de EF Core para IdentityDbContext en Pastel.Modules.Identity`. No existe todavía la migración inicial de Identity. Build debe generarla con `dotnet ef`, revisar el resultado, reconstruir e iniciar los servicios y verificar los logs y pruebas de integración.
+- **Siguiente paso inmediato:** generar e incorporar la migración inicial EF Core de Identity; después ejecutar `docker compose up -d`, `docker compose ps` y revisar `docker compose logs --tail=150 api`. No borrar volúmenes ni desactivar las migraciones para ocultar el bloqueo.
+- **Validación que sigue pendiente:** no hay constancia de que las pruebas automatizadas de WP1/WP3/WP4 se hayan ejecutado ni de que la API haya arrancado con éxito. La compilación Docker reportada por el usuario sí fue exitosa; no extrapolar ese resultado a pruebas, migraciones o funcionamiento de login.
+- WP1 sigue pendiente de línea base y reporte C1 sobre `dev@7ba6f1c`. WP2–WP4 necesitan verificación de Build/QA; en particular, migración, pruebas de Identity, traducción EF de `PermissionEvaluator`, límite de consultas, sesiones/refresh, concurrencia y validación de seguridad.
+- WP5 (Google OAuth) no se ha iniciado. No abrir PR, hacer merge ni integrar en `dev` sin autorización explícita del propietario.
+

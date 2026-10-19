@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Http;
+
 namespace Pastel.Platform.Security;
 
 /// <summary>Persona que realiza la petición actual. La implementa Identity.</summary>
