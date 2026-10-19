@@ -39,9 +39,6 @@ internal static class IdentityErrors
     public static readonly Error EmailTaken = Error.Conflict(
         "identity.user.email_taken", "No se puede crear una cuenta con esos datos.");
 
-    public static readonly Error CannotBlockSelf = Error.Conflict(
-        "identity.user.cannot_block_self", "No puede bloquear su propia cuenta.");
-
     public static readonly Error LastActiveAdministrator = Error.Conflict(
         "identity.user.last_admin", "No se puede dejar la plataforma sin una persona administradora activa.");
 
