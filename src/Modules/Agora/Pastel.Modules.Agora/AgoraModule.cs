@@ -21,7 +21,8 @@ internal sealed class AgoraModule : IPastelModule
 
     public IReadOnlyList<SuggestedRole> SuggestedRoles { get; } =
     [
-        new("Ágora — Usuario", "Acceso a Ágora.", [AgoraPermissions.Access]),
+        new("Ágora — Autor", "Crea, edita y publica contenido.", [AgoraPermissions.Access, AgoraPermissions.ContentManage]),
+        new("Ágora — Revisor", "Revisa y verifica piezas como especialista.", [AgoraPermissions.Access, AgoraPermissions.ContentReview]),
     ];
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>

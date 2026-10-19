@@ -21,7 +21,7 @@ internal sealed class HuellaModule : IPastelModule
 
     public IReadOnlyList<SuggestedRole> SuggestedRoles { get; } =
     [
-        new("Huella — Usuario", "Acceso a Huella.", [HuellaPermissions.Access]),
+        new("Huella — Propietario", "Edita y publica su propio perfil.", [HuellaPermissions.Access, HuellaPermissions.ProfileManage]),
     ];
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>

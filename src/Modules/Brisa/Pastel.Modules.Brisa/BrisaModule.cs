@@ -21,7 +21,7 @@ internal sealed class BrisaModule : IPastelModule
 
     public IReadOnlyList<SuggestedRole> SuggestedRoles { get; } =
     [
-        new("Brisa — Usuario", "Acceso a Brisa.", [BrisaPermissions.Access]),
+        new("Brisa — Usuario", "Usa Brisa y gestiona sus propios pendientes.", [BrisaPermissions.Access, BrisaPermissions.ItemsManage]),
     ];
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
