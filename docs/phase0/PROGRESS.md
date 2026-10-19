@@ -113,3 +113,13 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Sin compilar:** todo el módulo (los demás archivos de Identity aún tienen el contenido original y no compilan con estos tipos).
 - **Pendiente WP3:** `IdentityModule`, evaluador de permisos y estado de sesión, auditoría, catálogo/siembra, JWT y política de contraseñas, slices `Features/*`, pruebas movidas.
 - **Siguiente acción:** `IdentityModule` + catálogo desde código + `IPermissionEvaluator`/`ICurrentUser`/`IAuditTrail`.
+
+### S3-04 · WP3.2 · Permisos declarados, evaluador único, usuario actual y auditoría
+- **Último commit conocido antes:** `54bf758` (S3-03).
+- **Cambios (Identity):** `IdentityPermissions` (grupos `dashboard` y `settings`, códigos sin cambios), `IdentityEventIds` (1000–1999), `PermissionEvaluator` reescrito como `IPermissionEvaluator`
+  (una consulta por usuario y petición, caché por ámbito, orden módulo→denegación→concesión→rol vía `PermissionDecision`), `CurrentUser : ICurrentUser`, `AuditTrail : IAuditTrail`
+  (`Add` en la misma transacción; `WriteAsync` con contexto aparte; `DetailsJson` = `{before, after}`; `TraceId` e IP automáticos).
+- **Decisiones:** el evaluador es el único lugar donde se calculan permisos; `/api/auth/me` lo reutilizará.
+- **Validaciones ejecutadas:** ninguna de compilación (el SDK ya está instalado, pero NuGet no es accesible).
+- **Sin compilar:** todo lo anterior. Los archivos `PrivilegeGuard.cs`, `SessionService.cs`, `JwtTokenService.cs`, `JwtOptions.cs`, `PasswordPolicy.cs`, `DatabaseSeeder.cs` conservan aún el contenido original.
+- **Siguiente acción:** `IdentityModule`, `CatalogSyncTask`, `BootstrapAdminTask`, opciones y autenticación JWT.

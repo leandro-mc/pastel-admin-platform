@@ -1,50 +1,45 @@
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authorization.Infrastructure;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
-using Pastel.Application.Abstractions;
-using Pastel.Domain.Entities;
+using Pastel.Modules.Identity.Domain;
+using Pastel.Modules.Identity.Persistence;
+using Pastel.Platform.Security;
 
-namespace Pastel.Infrastructure.Security;
+namespace Pastel.Modules.Identity.Security;
 
-public sealed record PermissionRequirement(string PermissionCode) : IAuthorizationRequirement;
-
-public sealed class PermissionPolicyProvider : IAuthorizationPolicyProvider
+/// <summary>
+/// Única fuente de permisos efectivos: módulo habilitado, luego denegación individual, concesión individual y por último el rol.
+/// Lo usan el manejador de autorización y <c>/api/auth/me</c>. Una consulta por usuario y por petición (caché por ámbito).
+/// </summary>
+internal sealed class PermissionEvaluator(IdentityDbContext db) : IPermissionEvaluator
 {
-    private const string Prefix = "permission:";
-    private readonly DefaultAuthorizationPolicyProvider _fallback;
-    public PermissionPolicyProvider(Microsoft.Extensions.Options.IOptions<AuthorizationOptions> options) => _fallback = new DefaultAuthorizationPolicyProvider(options);
+    private readonly Dictionary<Guid, IReadOnlySet<string>> _cache = [];
 
-    public Task<AuthorizationPolicy> GetDefaultPolicyAsync() => _fallback.GetDefaultPolicyAsync();
-    public Task<AuthorizationPolicy?> GetFallbackPolicyAsync() => _fallback.GetFallbackPolicyAsync();
-
-    public Task<AuthorizationPolicy?> GetPolicyAsync(string policyName)
+    public async Task<IReadOnlySet<string>> GetEffectivePermissionsAsync(Guid userId, CancellationToken cancellationToken = default)
     {
-        if (!policyName.StartsWith(Prefix, StringComparison.Ordinal)) return _fallback.GetPolicyAsync(policyName);
-        var code = policyName[Prefix.Length..];
-        var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().AddRequirements(new PermissionRequirement(code)).Build();
-        return Task.FromResult<AuthorizationPolicy?>(policy);
-    }
-}
+        if (_cache.TryGetValue(userId, out var cached))
+        {
+            return cached;
+        }
 
-public sealed class PermissionAuthorizationHandler(IAppDbContext db) : AuthorizationHandler<PermissionRequirement>
-{
-    protected override async Task HandleRequirementAsync(AuthorizationHandlerContext context, PermissionRequirement requirement)
-    {
-        var subject = context.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value
-            ?? context.User.FindFirst("sub")?.Value;
-        if (!Guid.TryParse(subject, out var userId)) return;
+        var rows = await db.Permissions.AsNoTracking()
+            .Where(p => p.Module.IsEnabled)
+            .Select(p => new
+            {
+                p.Code,
+                ByRole = p.RolePermissions.Any(rp => rp.Role.UserRoles.Any(ur => ur.UserId == userId)),
+                Override = db.UserPermissionOverrides
+                    .Where(o => o.UserId == userId && o.PermissionId == p.Id)
+                    .Select(o => (PermissionEffect?)o.Effect)
+                    .FirstOrDefault(),
+            })
+            .Where(r => r.ByRole || r.Override != null)
+            .ToListAsync(cancellationToken);
 
-        var permission = await db.Permissions.AsNoTracking().Where(x => x.Code == requirement.PermissionCode)
-            .Select(x => new { x.Id, x.Module.IsEnabled }).SingleOrDefaultAsync();
-        if (permission is null) return;
+        var effective = rows
+            .Where(r => PermissionDecision.IsAllowed(moduleEnabled: true, r.ByRole, r.Override))
+            .Select(r => r.Code)
+            .ToHashSet(StringComparer.Ordinal);
 
-        // Explicit user-level deny wins; a grant is still gated by the module being enabled.
-        var overrideEffect = await db.UserPermissionOverrides.AsNoTracking()
-            .Where(x => x.UserId == userId && x.PermissionId == permission.Id)
-            .Select(x => (PermissionEffect?)x.Effect).SingleOrDefaultAsync();
-        var allowedByRole = await db.RolePermissions.AsNoTracking().AnyAsync(x => x.PermissionId == permission.Id && x.Role.UserRoles.Any(ur => ur.UserId == userId));
-        if (PermissionDecision.IsAllowed(permission.IsEnabled, allowedByRole, overrideEffect)) context.Succeed(requirement);
+        _cache[userId] = effective;
+        return effective;
     }
 }
