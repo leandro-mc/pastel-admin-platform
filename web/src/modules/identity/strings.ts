@@ -43,6 +43,52 @@ export const identityStrings = {
     unexpected:
       "No se pudo crear la cuenta. Intente de nuevo; si continúa, comparta el código de soporte.",
   },
+  account: {
+    title: "Mi cuenta",
+    subtitle: "Revise su perfil y mantenga su acceso bajo control.",
+    active: "Cuenta activa",
+    name: "Nombre",
+    email: "Correo electrónico",
+    createdAt: "Fecha de alta",
+    roles: "Roles asignados",
+    noRoles: "Sin roles",
+    editTitle: "¿Necesita actualizar sus datos?",
+    editHint:
+      "Por ahora la edición del perfil está deshabilitada para mantener la información consistente.",
+    editRequest: "Solicitar cambio",
+    editNotice: "Solicite a administración que actualice su nombre de perfil.",
+    securityTitle: "Seguridad",
+    securityHint: "Su acceso se revisa en cada solicitud.",
+    password: "Contraseña",
+    passwordHint: "Actualícela periódicamente y no la comparta.",
+    changePassword: "Cambiar contraseña",
+    permissions: (count: number) =>
+      count === 1
+        ? "Tiene 1 permiso efectivo."
+        : `Tiene ${count} permisos efectivos.`,
+    authorization: "Autorización",
+    session: "Sesión",
+    sessionHint: "Tokens de corta duración y renovación rotativa.",
+  },
+  changePassword: {
+    title: "Cambiar contraseña",
+    forcedTitle: "Cree su contraseña nueva",
+    subtitle:
+      "Al guardar, su sesión actual se cerrará y deberá ingresar de nuevo.",
+    forcedSubtitle:
+      "Su contraseña es temporal. Debe cambiarla para continuar usando Pastel.",
+    current: "Contraseña actual",
+    next: "Contraseña nueva",
+    confirmation: "Confirmar contraseña nueva",
+    mismatch: "Las contraseñas no coinciden.",
+    currentRequired: "Escriba su contraseña actual.",
+    submit: "Guardar y cerrar sesión",
+    submitting: "Guardando…",
+    cancel: "Cancelar",
+    done: "Contraseña actualizada. Ingrese con la nueva.",
+    unexpected:
+      "No se pudo cambiar la contraseña. Intente de nuevo; si continúa, comparta el código de soporte.",
+  },
   /** Códigos de `?error=` que devuelve el flujo de Google. */
   googleErrors: {
     google_denied:
