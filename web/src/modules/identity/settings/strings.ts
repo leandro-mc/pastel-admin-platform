@@ -160,6 +160,17 @@ export const settingsStrings = {
     inherit: "Heredar",
     grant: "Conceder",
     deny: "Denegar",
+    byRoleYes: "Sus roles lo conceden.",
+    byRoleNo: "Sus roles no lo conceden.",
+    overrideState: (name: string) => `Efecto de «${name}» para esta persona`,
+    save: "Guardar cambios",
+    saving: "Guardando…",
+    cancel: "Cancelar",
+    saveError: "No se pudieron guardar los cambios. Intente de nuevo.",
+    accountActive: "Cuenta activa",
+    accountBlocked: "Cuenta bloqueada",
+    summaryUser: (roles: number, overrides: number) =>
+      `${roles === 1 ? "1 rol" : `${roles} roles`} · ${overrides === 1 ? "1 excepción" : `${overrides} excepciones`}`,
     saved: "Accesos guardados.",
     savedRole: "Permisos del rol guardados.",
     roleSystemHint:

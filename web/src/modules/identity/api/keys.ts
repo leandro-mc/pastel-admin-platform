@@ -22,6 +22,7 @@ export const identityKeys = {
   all: ["identity"] as const,
   users: (filters: UserFilters) => ["identity", "users", filters] as const,
   usersAll: ["identity", "users"] as const,
+  user: (userId: string) => ["identity", "user", userId] as const,
   userPermissions: (userId: string) =>
     ["identity", "user-permissions", userId] as const,
   roles: ["identity", "roles"] as const,
