@@ -102,7 +102,7 @@ public static class PastelHostingExtensions
 
             foreach (var text in configuredNetworks)
             {
-                if (!IPNetwork.TryParse(text, out var network))
+                if (!System.Net.IPNetwork.TryParse(text, out var network))
                 {
                     throw new InvalidOperationException("ReverseProxy:TrustedNetworks contiene una subred CIDR inválida.");
                 }
