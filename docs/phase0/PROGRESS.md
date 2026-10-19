@@ -21,7 +21,7 @@
 | WP2 — SharedKernel, Platform, Host | **Revisión estática registrada como completa** en S4-01 | No se compiló. Build debe verificar los puntos sensibles descritos abajo y validar el proyecto completo. |
 | WP3 — Identity | **Cerrado como código** (auditoría estática contra §6, sin compilar) | Build: generar la migración inicial con `dotnet ef`, adaptar las pruebas movidas, verificar que EF traduce la consulta de `PermissionEvaluator` y escribir la prueba de ≤ 2 consultas por petición. |
 | WP4 — Endurecimiento de seguridad | **Código implementado; pendiente de Build/QA** | S1–S4 y D1 tienen cambios publicados, pero no se han compilado ni ejecutado sus pruebas; ver el estado consolidado más abajo. |
-| WP5 — Google OAuth/OIDC | Pendiente | Flujo backend, vinculación de cuentas, configuración/proxy, opciones de autenticación y hooks para pruebas de Build. |
+| WP5 — Google OAuth/OIDC | Pendiente; **no iniciado** | Flujo Google, vinculación de cuentas, configuración/proxy y pruebas con proveedor falso. La ruta común `/api/auth/options` existe, pero informa `google: false` hasta WP5. |
 | WP6 — Esqueletos/plantilla de módulos | Pendiente | Generador y esqueletos de Brisa, Balance, Ágora, Cosecha y Huella según §9. |
 | WP7 — Cimientos de frontend/sesión/errores/shell | Pendiente | Router, cliente API, sesión, errores y shell según §10. |
 | WP8 — Tailwind CSS/sistema de diseño | Pendiente | Migración y métricas de auditoría conforme a §11. |
@@ -57,12 +57,12 @@ Se corrigió `Pastel.Modules.Identity.Tests.csproj` para referenciar `Pastel.Mod
 Contraste estático punto por punto; **sin compilar**.
 
 1. **Datos:** `IdentityDbContext` con esquema `identity`; `PasswordHash` nulo; `Version` (`uint`, `IsRowVersion`, `xmin`) en usuarios, roles y módulos. La migración **no existe**: la genera Build.
-2. **Slices:** 23 endpoints en `Features/*` (ningún archivo > 150 líneas). Rutas y métodos idénticos a los controladores de `dev@b705614` (`/api/auth/*`, `/api/admin/*`, incluido `PATCH /api/admin/modules/{moduleId}`); cookies `__Host-pastel_*` sin cambios.
+2. **Slices:** los endpoints originales de autenticación y administración están organizados en `Features/*` (ningún archivo > 150 líneas en la auditoría original). Se agregó después `GET /api/auth/options` para exponer la política única de contraseña; declara `google: false` hasta WP5. Los contratos/cookies preexistentes se conservan.
 3. **Permisos y consultas:** `PermissionEvaluator` es la fuente única (autorización y `/api/auth/me`). `OnTokenValidated` carga una vez el estado de sesión y el resumen de la persona en `HttpContext.Items`; `ForcePasswordChange` lo lee de ahí. Resultado: 1 consulta de sesión + 1 de permisos por petición.
 4. **Catálogo:** códigos de permiso idénticos a los anteriores; `CatalogSyncTask` idempotente (todo a Administrator, roles sugeridos solo si no existen); `Member` recibe `dashboard.view` por `SuggestedRoles`; `BootstrapAdminTask` audita la creación y la restauración (*break-glass*).
 5. `CreateModule` no existe en `src/`.
 6. **Auditoría:** `AuditRecord` con antes/después a `DetailsJson`, módulo y `TraceId`; accesos denegados con límite por minuto; `ListUsers` y `ListAudit` paginan y filtran en el servidor.
-7. **Referencias colgantes:** no quedan en código de producto (se verificaron namespaces `Pastel.*`, tipos clave y versiones centrales de paquetes). Solo el proyecto de pruebas conserva `Pastel.Application`/`Pastel.Domain` (tarea de Build).
+7. **Referencias colgantes:** no quedan en código de producto tras retirar los tres archivos heredados. En esta sesión se corrigió el csproj de `Pastel.Modules.Identity.Tests` y se eliminaron las referencias de sus pruebas a `Pastel.Application`/`Pastel.Domain`; esto requiere confirmación mediante compilación.
 
 ## Siguiente trabajo después de cerrar WP3: WP4
 
