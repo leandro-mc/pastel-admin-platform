@@ -260,3 +260,9 @@ Las 28 novedades del remoto (WP7.3–WP7.6b de otras sesiones) se incorporaron p
 - **Siguiente acción:** roles, módulos y auditoría; luego el editor de accesos (`accesos/:tipo/:id`), `SettingsLayout`, router, manifiesto de Identity y `main.tsx`.
 - [~] **WP7.6e — Configuración (3/4): roles, módulos y auditoría:** último commit conocido antes: `373ae24`. `settings/RolesPage.tsx` (lista de roles con personas y permisos, enlace a `accesos/rol/:id`, «Nuevo rol»), `CreateRoleDialog` (nombre validado como el servidor; permisos con `PermissionPicker`), `PermissionPicker` (agrupado por módulo, búsqueda, seleccionar/quitar grupo; se reutilizará en el editor de accesos), `ModulesPage` (activar/desactivar con interruptor accesible; `settings` bloqueado; **no hay «crear módulo»**), `AuditPage` (filtros `action`, `module`, `actor`, `from`, `to` **en el servidor y en la URL**; los días se convierten a instantes locales; paginación) y `auditLabels.ts` (etiquetas en español de las acciones conocidas; lo desconocido se muestra con formato legible). Validado: `tsc -b`, `eslint`, `format:check`. **Sin probar ni montar.**
 - **Siguiente acción:** editor de accesos (`accesos/usuario/:id` y `accesos/rol/:id`) y `SettingsLayout` con pestañas como rutas; luego manifiesto de Identity, `router.tsx` y `main.tsx`.
+
+## WP7.6f — Bitácora (Dev, Tipo 1, sesión sobre `03adb0b`)
+
+Sincronizado por *fast-forward* con el remoto; no había trabajo local sin publicar. Entorno: Node 22/npm sí; `dotnet` y NuGet no.
+
+- [x] **Backend (sin compilar):** nuevo slice `GET /api/admin/users/{userId}` (`Features/GetUser/GetUserEndpoint.cs`, permiso `settings.users.read`, devuelve `UserSummary` con roles; 404 `identity.user.not_found`). Motivo: el editor de accesos (`/configuracion/accesos/usuario/:id`) debe cargar a una persona por URL y la lista de usuarios ya está paginada en el servidor. **Build:** compilar y cubrirlo con una prueba (200 con permiso, 404 inexistente, 403 sin permiso).
