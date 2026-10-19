@@ -68,6 +68,17 @@ Contraste estático punto por punto; **sin compilar**.
 
 Implementa WP4 según la sección 7 de `FASE-0-REFACTOR-BASE.md`, en el orden indicado:
 
+- **S1 — Jerarquía de privilegios:** guardas en todas las operaciones administrativas; protección de cuentas y rol Administrator; invariante del último administrador; denegaciones 403 con códigos `identity.privilege.*`, logs y auditoría.
+- **S2 — Sesiones/refresh:** ventana de gracia configurable para concurrencia legítima, detección de reutilización fuera de la ventana, transacción y reintentos acotados; documentar la decisión en ADR.
+- **S3 — Login/registro/bloqueo/configuración:** hash ficticio para correo inexistente, bloqueo con espera creciente solo para contraseña, configuración de producción segura, autorregistro desactivado por defecto y límite por cuenta en el servidor.
+- **S4 — JWT/contraseñas/retención:** rechazo de claves conocidas en producción, rotación con `kid`, una política de contraseña tipo NIST como fuente única, limpieza de tokens vencidos y retención de auditoría configurable.
+
+Confirma el código antes de aplicar cada punto. Si un requisito de WP4 depende de un endpoint o contrato que WP5 también menciona (por ejemplo `/api/auth/options`), implementa una única fuente de verdad y documenta la coordinación; no dupliques endpoints ni políticas.
+
+Después continúa WP5–WP10 en orden conforme a la especificación. No adelantes funcionalidades fuera del alcance.
+
+## Estado de WP4 (en curso)
+
 - **S1 — Jerarquía de privilegios:** `IPrivilegeGuard` aplicado en SetUserRoles, SetUserPermissions, BlockUser, UnblockUser (ahora con `UnblockUserHandler`), ResetUserPassword, CreateUser, CreateRole y SetRolePermissions. Rol Administrator inmutable (ya no se "fuerza" en silencio: se deniega con `identity.privilege.system_role_immutable`); al promover a administrador se limpian sus excepciones. Cada denegación: 403 `identity.privilege.*`, Warning y auditoría `identity.privilege.denied`. **Falta:** documentar el *break-glass* y la jerarquía en `SECURITY.md`. La invariante del último administrador sigue en `SetUserRoles` y `BlockUser` (transacción serializable); su prueba bajo concurrencia es de Build.
 - **Decisión S1:** además de lo literal de §7, un no-Administrator solo agrega a una cuenta roles cuyos permisos ya posee (asignar un rol equivale a conceder sus permisos).
 - S2, S3, S4 y D1 backend: pendientes.
