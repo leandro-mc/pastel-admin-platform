@@ -16,6 +16,7 @@ Dos peticiones de pestañas del mismo navegador pueden enviar casi al mismo tiem
 4. Si la misma petición presenta el token anterior dentro de la ventana, solo se acepta cuando el sucesor sigue vigente, no revocado y la cuenta continúa activa. El servidor devuelve un access token nuevo y el mismo refresh token sucesor, sin crear otra fila ni rotarlo otra vez.
 5. Una reutilización de un token que ya fue rotado fuera de la ventana revoca los refresh tokens restantes, incrementa `TokenVersion` y registra `auth.refresh.reuse-detected`.
 6. Un token revocado sin sucesor (por logout o revocación administrativa) devuelve sesión expirada, pero no se clasifica como reutilización. Durante la gracia, si el sucesor ya fue invalidado por una rotación concurrente posterior, se responde con sesión expirada sin revocar todas las sesiones.
+7. Una revocación explícita de todas las sesiones (cambio de contraseña/roles, bloqueo o restauración de bootstrap) revoca los tokens vigentes y limpia los enlaces de sucesor y ciphertexts de toda la cadena. De esta manera, los tokens históricos de una sesión ya invalidada no vuelven a clasificarse como robo después del cambio.
 
 ## Consecuencias y riesgos
 
