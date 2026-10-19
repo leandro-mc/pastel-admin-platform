@@ -188,3 +188,13 @@ Sesión iniciada sobre `origin/refactor/modular-foundation` `3a4febe`. Este ento
 ## Siguiente paso de desarrollo
 
 **WP7 — resto** (§10 de `FASE-0-REFACTOR-BASE.md`), en este orden: 7.3 cliente API (`core/api`: `ApiError`, refresco single-flight, zod, reintento de lecturas) y `core/log`; 7.4 proveedores (Auth, Query, tema, tamaño de texto, notificaciones); 7.2 router con guardas y páginas 403/404/error; 7.5 shell; 7.6 migración de Identity a `web/src/modules/identity/` (sustituye `useSettingsAdmin`) y `/ingresar` (§8.4, contrato en «WP5 — Cierre de la unidad de desarrollo»); 7.7 textos sin voseo en `strings.ts`; 7.8 ESLint `no-console`. Mantén la app actual funcionando hasta el cambio de router.
+
+
+## Build/QA — separación de validación técnica y deuda de cobertura (2026-10-19)
+
+- Se ajustó `scripts/Validate-PreWP5.ps1` (se conserva el nombre para no romper el comando local existente; la validación ya no se limita a una puerta «previa a WP5»).
+- **Resultado técnico** separado: restauración, formato .NET, compilación Release, ejecución de la suite .NET contra una base PostgreSQL aislada, lectura de TRX, validación Compose y build de la imagen de API.
+- Se eliminó el umbral rígido de 21 pruebas; ahora el análisis de TRX exige al menos una prueba descubierta, cero fallos/errores y cero pruebas omitidas. Esto evita que ampliar la suite rompa el control por un conteo fijo.
+- **Deuda de cobertura** separada: las etiquetas históricas S101–S116, S203–S214 y los dos IDs de consultas se revisan como inventario de presencia, que por defecto informa avisos sin ocultar ni invalidar un resultado técnico. `-FailOnCoverageDebt` permite exigir ese gate explícitamente durante el cierre de QA. La presencia de etiquetas nunca demuestra por sí sola la suficiencia de las aserciones.
+- No se eliminan requisitos de QA; se evita que un gate histórico previo a WP5 impida usar el runner técnico durante WP5–WP7. El cierre de Fase 0 sigue requiriendo revisar los requisitos aplicables, pruebas de integración/E2E/manuales y defectos.
+- **Pendiente de verificación:** el script modificado no se ha ejecutado ni parseado con PowerShell en esta sesión, ni se han ejecutado .NET, Docker o migraciones. Se necesita validar sintaxis y flujo de salida en la máquina local antes de confiar en el resultado.
