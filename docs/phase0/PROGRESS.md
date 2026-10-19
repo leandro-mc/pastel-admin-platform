@@ -127,3 +127,10 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - **Validación pendiente:** esta corrección se inspeccionó estáticamente, pero no se ejecutó Docker ni compilación .NET desde este entorno. El usuario debe actualizar la rama y repetir `docker compose build`; no declarar resuelto hasta ver el resultado real.
 - Si el siguiente build avanza, registrar el nuevo bloqueo por separado. Si ambos contenedores compilan, continuar con arranque y logs; la migración inicial EF Core de Identity sigue pendiente.
 
+## Quinta incidencia Docker Build — 2026-10-18
+
+- **Resultado reportado por el usuario:** la compilación ya supera `Pastel.Platform`, pero falla en tres handlers del módulo Identity (`CreateRoleHandler`, `SetRolePermissionsHandler`, `SetUserPermissionsHandler`) porque no encuentra `IPrivilegeGuard`.
+- **Causa localizada por inspección estática:** `IPrivilegeGuard` se declara como interfaz interna en el namespace `Pastel.Modules.Identity.Security`; estos tres handlers usaban `Pastel.Platform.Security` (para `ICurrentUser` y otras abstracciones), pero no importaban también el namespace Identity `Security`.
+- **Corrección publicada:** se agregó `using Pastel.Modules.Identity.Security;` a los tres archivos, sin cambiar la visibilidad de la interfaz ni moverla de módulo. Commits: `93b7246`, `862e763`, `d7ec2cf`.
+- **Validación pendiente:** la corrección se verificó por inspección del código remoto, pero aún no se ejecutó la compilación .NET/Docker. Actualizar la rama local y repetir `docker compose build`. Registrar la próxima salida como un nuevo bloqueo si procede; si ambos contenedores compilan, continuar con el arranque y la migración inicial EF Core de Identity.
+
