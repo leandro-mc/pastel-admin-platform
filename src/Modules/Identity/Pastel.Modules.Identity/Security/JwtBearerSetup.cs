@@ -23,6 +23,18 @@ internal static class JwtBearerSetup
             .Configure<IOptions<JwtOptions>>((options, jwtOptions) =>
             {
                 var jwt = jwtOptions.Value;
+                var signingKeys = new List<SecurityKey>
+                {
+                    new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey)) { KeyId = jwt.SigningKeyId },
+                };
+                if (!string.IsNullOrWhiteSpace(jwt.PreviousSigningKey) && !string.IsNullOrWhiteSpace(jwt.PreviousSigningKeyId))
+                {
+                    signingKeys.Add(new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.PreviousSigningKey))
+                    {
+                        KeyId = jwt.PreviousSigningKeyId,
+                    });
+                }
+
                 options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
@@ -31,7 +43,9 @@ internal static class JwtBearerSetup
                     ValidateAudience = true,
                     ValidAudience = jwt.Audience,
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt.SigningKey)),
+                    IssuerSigningKeyResolver = (_, _, kid, _) => kid is null
+                        ? signingKeys
+                        : signingKeys.Where(key => string.Equals(key.KeyId, kid, StringComparison.Ordinal)).ToArray(),
                     ValidateLifetime = true,
                     RequireExpirationTime = true,
                     RequireSignedTokens = true,
