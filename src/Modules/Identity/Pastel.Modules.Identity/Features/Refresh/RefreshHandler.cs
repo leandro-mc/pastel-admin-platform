@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using Pastel.Modules.Identity.Common;
 using Pastel.Modules.Identity.Persistence;
 using Pastel.Modules.Identity.Security;
@@ -10,11 +11,18 @@ using Pastel.SharedKernel;
 namespace Pastel.Modules.Identity.Features.Refresh;
 
 /// <summary>
-/// Rotación del refresh token en transacción serializable (con reintento acotado ante 40001/40P01).
-/// El uso de un token ya rotado revoca todas las sesiones de la cuenta. WP4 (S2) agrega la ventana de gracia.
+/// Rota el refresh token en transacción serializable. El token sustituto se conserva cifrado solo durante la ventana de gracia,
+/// para que peticiones concurrentes legítimas que presentan el mismo token reciban el mismo refresh token nuevo.
+/// La reutilización posterior a esa ventana revoca todas las sesiones.
 /// </summary>
 internal sealed class RefreshHandler(
-    IdentityDbContext db, SessionIssuer issuer, IAuditTrail audit, IClock clock, ILogger<RefreshHandler> logger)
+    IdentityDbContext db,
+    SessionIssuer issuer,
+    RefreshGraceProtector graceProtector,
+    IOptions<AuthOptions> auth,
+    IAuditTrail audit,
+    IClock clock,
+    ILogger<RefreshHandler> logger)
 {
     private const int MaxTokenLength = 256;
 
@@ -43,6 +51,30 @@ internal sealed class RefreshHandler(
         var user = stored.User;
         if (stored.RevokedAt is not null)
         {
+            // Una revocación por logout, cambio de contraseña, bloqueo o cambio de roles no es prueba de reutilización.
+            if (stored.ReplacedByTokenHash is null)
+            {
+                return IdentityErrors.SessionExpired;
+            }
+
+            if (auth.Value.Refresh.ReuseGraceSeconds > 0 && stored.GraceUntil > now)
+            {
+                var successor = await db.RefreshTokens.SingleOrDefaultAsync(
+                    x => x.TokenHash == stored.ReplacedByTokenHash, cancellationToken);
+                if (successor is not null && successor.RevokedAt is null && successor.ExpiresAt > now && user.IsActive
+                    && graceProtector.TryUnprotect(stored.ReplacedByEncryptedToken, out var replacementToken))
+                {
+                    // No se rota por segunda vez: las peticiones paralelas reciben el mismo refresh vigente.
+                    audit.Add(new AuditRecord("auth.refresh.grace-reused", "identity", user.Id, user.Id));
+                    await db.SaveChangesAsync(cancellationToken);
+                    return issuer.ReissueAccessForExistingRefresh(user, replacementToken, successor.ExpiresAt);
+                }
+
+                // Durante la gracia, una rotación concurrente posterior puede haber invalidado al sucesor.
+                // No la clasifique como robo ni revoque todas las sesiones; simplemente solicite un refresh nuevo.
+                return IdentityErrors.SessionExpired;
+            }
+
             await RevokeOnReuseAsync(stored.UserId, now, cancellationToken);
             return IdentityErrors.SessionExpired;
         }
@@ -57,13 +89,16 @@ internal sealed class RefreshHandler(
         var session = issuer.Issue(user);
         stored.RevokedAt = now;
         stored.ReplacedByTokenHash = TokenSecrets.Hash(session.RefreshToken);
+        var graceSeconds = auth.Value.Refresh.ReuseGraceSeconds;
+        stored.GraceUntil = graceSeconds > 0 ? now.AddSeconds(graceSeconds) : null;
+        stored.ReplacedByEncryptedToken = graceSeconds > 0 ? graceProtector.Protect(session.RefreshToken) : null;
         audit.Add(new AuditRecord("auth.refresh.succeeded", "identity", user.Id, user.Id));
         await db.SaveChangesAsync(cancellationToken);
         logger.LogDebug(IdentityEventIds.SessionRefreshed, "Sesión renovada para {UserId}", user.Id);
         return session;
     }
 
-    /// <summary>Un token ya rotado puede indicar robo: se revocan todas las sesiones y se invalidan los accesos vigentes.</summary>
+    /// <summary>La reutilización fuera de la gracia puede indicar robo: revoca sesiones e invalida accesos vigentes.</summary>
     private async Task RevokeOnReuseAsync(Guid userId, DateTimeOffset now, CancellationToken cancellationToken)
     {
         await issuer.RevokeAllAsync(userId, cancellationToken);
