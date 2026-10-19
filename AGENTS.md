@@ -3,11 +3,12 @@
 Pastel es una plataforma modular: un shell común, el módulo **Identity** (acceso y permisos) y subaplicaciones independientes: **Brisa, Balance, Ágora, Cosecha, Huella**. Lee solo lo necesario; el contexto es un recurso escaso.
 
 ## Tu rol (se te indica en el prompt)
-- **Dev:** escribe **solo código de la aplicación**. **No necesita compilar ni ejecutar nada** (su entorno puede no permitirlo) y **no escribe pruebas ni planes de pruebas**; deja los hooks de testabilidad y `MODULE.md`. No certifica su trabajo.
-- **Build:** agente **con entorno de compilación**. Compila, corrige errores de compilación y de pruebas **en el código de producto** (sin cambiar el diseño ni el comportamiento especificado), genera migraciones, escribe y ejecuta las pruebas unitarias y de caracterización, e informa con comandos reales. No certifica.
-- **QA:** escribe el plan de pruebas desde la ficha, lo ejecuta de forma independiente, automatiza integración y E2E y reporta defectos. **No modifica código de producto.**
+- **Dev:** implementa el código de aplicación y deja hooks de testabilidad y `MODULE.md`; no escribe pruebas ni planes. **Si su entorno permite compilar/probar, debe hacerlo y reportar los comandos y resultados reales. Si no lo permite, puede publicar código sin compilar**, siempre que lo declare explícitamente en `PROGRESS.md` y en la entrega; no simula resultados ni afirma que compila.
+- **Build:** responsabilidad de compilar, corregir errores de build/pruebas en código de producto sin cambiar el comportamiento acordado, generar migraciones, escribir y ejecutar pruebas unitarias/caracterización e informar comandos reales. Se realiza por un agente con entorno de compilación.
+- **QA:** escribe el plan desde la ficha, ejecuta build y pruebas funcionales, permisos, integración y E2E en un entorno que **sí debe permitir compilar y ejecutar**; reporta defectos y resultados.
+- **Build y QA pueden combinarse en una misma sesión/agente** para ahorrar sesiones. Si se combinan, se deben completar ambas listas de responsabilidades, registrar qué se ejecutó y volver a ejecutar las validaciones afectadas tras cada corrección. La separación independiente es preferible cuando haya capacidad, pero no es obligatoria en esta etapa.
 - **Investigación:** solo produce documentos. **Mantenimiento:** aplica CCR aprobados.
-Dev, Build y QA son sesiones distintas; quien corrige código de producto no certifica ese mismo SHA. Detalle: `docs/TESTING_STRATEGY.md`.
+Detalle: `docs/TESTING_STRATEGY.md`.
 
 ## Ruta de lectura (en orden, y nada más salvo necesidad)
 1. Este archivo. 2. Tu módulo: `src/Modules/<M>/MODULE.md` y `web/src/modules/<m>/MODULE.md`, más `docs/modules/<M>.md`. 3. `docs/ARCHITECTURE.md` §2–5. 4. `docs/DESIGN_SYSTEM.md` si tocas UI. 5. `docs/ERROR_HANDLING_AND_LOGGING.md` siempre que escribas endpoints, pantallas o logs. 6. `docs/SECURITY.md` si tocas acceso, permisos o datos personales. 7. `docs/AI_WORKFLOW.md` (ramas, commits).
@@ -33,13 +34,13 @@ Errores esperables como `Result` → `problem+json` con `code` y `traceId`; sin 
 ## Interfaz (reglas duras)
 - **Prohibido el morado** (tono HSL 235°–345°) y los **símbolos de IA** (`Sparkles`, `Stars`, `Wand*`, `Bot`, `Brain*`, `Cpu`, ✨🤖🪄🔮). Marca: `Flower2`.
 - **Tailwind:** utilidades en JSX; los patrones compartidos son componentes de `core/ui`; **prohibido `@apply`** fuera de `core/design/base.css`. Color solo por tokens (`bg-accent`…); `data-module` da el color de cada módulo; sin hexadecimales sueltos.
-- UX primero: `DESIGN_SYSTEM.md` (heurísticas, WCAG 2.2 AA, móvil primero). Español de Costa Rica, trato de usted o impersonal, **sin voseo**; textos en `strings.ts`.
+- UX primero: `DESIGN_SYSTEM.md` (heurísticas, WCAG 2.2 AA, móvil primero). Español de Costa Rica, trato de usted o impersonal como regla general, **sin voseo salvo que la ficha o las instrucciones específicas del módulo lo permitan o lo soliciten expresamente**. Textos en `strings.ts`.
 
 ## Seguridad (no negociable)
 Tokens solo en cookies `HttpOnly`, nunca en el navegador. Autorización siempre en el backend. No versionar secretos ni `.env`. No `EnsureCreated`. No registrar datos sensibles. Quien administra no puede escalar privilegios (concede solo lo que tiene).
 
 ## Flujo
 - Parte de `dev`; rama por tarea: `feat/<m>-<alcance>`, `qa/<m>`, `chore/…`, `docs/…`. Nunca `main`.
-- **Nunca abras PR ni integres a `dev`:** entrega rama, SHA y resultados; el propietario revisa y autoriza.
+- **Nunca abras PR ni integres a `dev` sin autorización explícita del propietario.** Cuando el propietario lo autorice, sí puedes abrir un único PR para la tarea y, si también autoriza expresamente la integración, completar el merge siguiendo `docs/AI_WORKFLOW.md`.
 - Commits coherentes y revisables (evita volcados enormes). **El Dev sin entorno de compilación puede publicar código sin compilar y lo declara**; Build y QA no publican código que saben que no compila. Formato con Prettier/`dotnet format` cuando puedas ejecutarlos.
 - Informa solo lo que ejecutaste y **declara expresamente lo que no compilaste ni ejecutaste** («sin compilar», «sin ejecutar»); nunca afirmes que algo compila o pasa sin haberlo comprobado. Mantén `MODULE.md` y tu `PROGRESS.md` al día. Si algo contradice estos documentos, confirma el código real y corrige el documento.
