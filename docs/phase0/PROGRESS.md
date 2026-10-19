@@ -116,7 +116,11 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 Sesión iniciada sobre `origin/refactor/modular-foundation` `0959ff1`. El trabajo local previo de esta sesión (reescrituras de Identity) quedó superado por el remoto y se resguardó en la rama local `backup/dev-superado-local` (no publicada).
 
 - [x] **Modelo de datos (§8.2):** `ExternalLogin` y `identity.external_logins` (`id`, `user_id`, `provider`, `provider_subject`, `email_at_link`, `email_verified`, `created_at`, `last_login_at`; único `(provider, provider_subject)` y único `(user_id, provider)`). **Pendiente Build:** generar la migración con `dotnet ef` (Dev no escribe migraciones).
-- [ ] Autenticación: esquemas `ExternalCookie` y `Google`, registro condicionado a credenciales.
+- [x] **Autenticación (§8.1):** `GoogleSignInSetup` registra `ExternalCookie` (`__Host-pastel_ext`, `HttpOnly`, `Secure`, `Lax`, 5 min) siempre, y `Google` solo con `Authentication:Google:ClientId/ClientSecret`. PKCE explícito, `SaveTokens=false`, ámbitos `openid email profile`, callback `/api/auth/google/callback`, cookie de correlación `Lax`+`Secure`, `OnRemoteFailure` redirige a `/ingresar?error=google_denied|failed` sin registrar `code`/`state`. `Microsoft.AspNetCore` sigue en `Warning`.
+- [x] **`returnUrl` seguro:** `Common/ReturnUrl.Sanitize` (ruta interna, sin `//` ni `/\`, también decodificada, primer segmento conocido).
+- [x] **`/api/auth/options`:** `google` es `true` si el esquema `Google` está registrado.
+- [x] **URL pública:** `/api/auth/google` se añadió a `PublicBaseUrlOptions.PathPrefixes`; el `redirect_uri` sale de `App:PublicBaseUrl`.
+- **Gancho para Build/QA (proveedor falso):** registrar en `ConfigureTestServices` un `AuthenticationHandler` remoto con el nombre `ExternalSchemes.Google` (`"Google"`) cuyo `Challenge` firme una identidad con `ClaimTypes.NameIdentifier` (sub), `ClaimTypes.Email`, `ClaimTypes.Name` y `email_verified` en `ExternalCookie` y redirija a `/api/auth/google/complete`; sin credenciales reales, `options.google` pasa a `true`.
 - [ ] Slices `GoogleStart` y `GoogleComplete` con reglas de cuenta, `returnUrl` seguro y errores por redirección.
 - [ ] `/api/auth/options` con `google` real.
 - [ ] Configuración: `.env.example`, `compose.yaml`, nginx (`Host`/`X-Forwarded-Host`, límite de tasa), `SECURITY.md`.
