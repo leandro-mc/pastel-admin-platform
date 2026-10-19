@@ -1,4 +1,3 @@
-using System.Net;
 using System.Reflection;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authorization;
@@ -158,9 +157,10 @@ public static class PastelHostingExtensions
                 : Serilog.Events.LogEventLevel.Information;
             options.EnrichDiagnosticContext = (diagnostics, context) =>
             {
-                if (context.GetEndpoint() is RouteEndpoint endpoint)
+                if (context.GetEndpoint() is RouteEndpoint endpoint
+                    && endpoint.RoutePattern.RawText is { } routeTemplate)
                 {
-                    diagnostics.Set("RouteTemplate", endpoint.RoutePattern.RawText);
+                    diagnostics.Set("RouteTemplate", routeTemplate);
                 }
             };
         });
