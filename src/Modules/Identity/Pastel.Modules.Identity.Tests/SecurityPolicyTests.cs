@@ -12,7 +12,8 @@ public sealed class SecurityPolicyTests
     [InlineData("Password123!", false)]
     [InlineData("123456789012", false)]
     [InlineData("a phrase with spaces", true)]
-    [InlineData("correct horse battery staple", true)]
+    [InlineData("correct horse battery staple", false)]
+    [InlineData("river oak lantern meadow", true)]
     [InlineData("Sage-Garden_2026!", true)]
     public void PasswordPolicyUsesLengthAndCommonPasswordBlocklistWithoutCompositionRules(string password, bool expected)
     {
@@ -29,5 +30,37 @@ public sealed class SecurityPolicyTests
     public void PermissionDecisionUsesDenyOverrideAndDisabledModuleWins(bool moduleEnabled, bool grantedByRole, PermissionEffect? userOverride, bool expected)
     {
         Assert.Equal(expected, PermissionDecision.IsAllowed(moduleEnabled, grantedByRole, userOverride));
+    }
+
+    [Fact]
+    public void RefreshGraceProtectorRoundTripsAndRejectsTampering()
+    {
+        var options = Microsoft.Extensions.Options.Options.Create(new JwtOptions { SigningKey = new string('k', 64) });
+        var protector = new RefreshGraceProtector(options);
+        const string token = "opaque-refresh-token-value";
+
+        var protectedToken = protector.Protect(token);
+
+        Assert.NotEqual(token, protectedToken);
+        Assert.True(protector.TryUnprotect(protectedToken, out var roundTripped));
+        Assert.Equal(token, roundTripped);
+
+        var bytes = Convert.FromBase64String(protectedToken);
+        bytes[^1] ^= 0x01;
+        Assert.False(protector.TryUnprotect(Convert.ToBase64String(bytes), out _));
+    }
+
+    [Fact]
+    public void LoginAccountRateLimiterLimitsOneAccountWithoutBlockingOthers()
+    {
+        var limiter = new LoginAccountRateLimiter(new Pastel.Platform.Observability.LogHasher(), new Pastel.SharedKernel.SystemClock());
+
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            Assert.True(limiter.TryAcquire("USER@EXAMPLE.COM"));
+        }
+
+        Assert.False(limiter.TryAcquire("USER@EXAMPLE.COM"));
+        Assert.True(limiter.TryAcquire("someone-else@example.com"));
     }
 }
