@@ -1,0 +1,22 @@
+# __NAME__ — ficha técnica (frontend)
+
+Estado: **marcador** (esqueleto generado por `tools/new-module`).
+
+- Código `__CODE__` · ruta `/__CODE__` · icono `__ICON__` (Lucide) · color por `data-module="__CODE__"` (valores en `web/src/core/design/module-themes.css`).
+- Acceso en el manifiesto: `__ACCESS__`; permiso `__CODE__.access`.
+- Backend: `src/Modules/__PASCAL__/MODULE.md`. Producto: `docs/modules/__UPPER__.md`.
+
+## Estructura
+
+`manifest.ts` (descubierto por `virtual:pastel-modules`, WP7) · `strings.ts` (todos los textos) · `pages/` (una página por ruta; exportan `Component`).
+Reglas: no importar de otro módulo, solo de `@/core/*`; utilidades de Tailwind en el JSX; sin CSS propio.
+
+## Rutas
+
+| Ruta | Página |
+|---|---|
+| `/__CODE__` | `pages/HomePage.tsx` (marcador) |
+
+## Pendiente
+
+Todo lo funcional de la ficha de producto. Las clases `bg-accent-soft`, `text-accent-strong`, `text-fg` y `text-muted` las define el sistema de diseño (WP8).
