@@ -160,3 +160,4 @@ Sesión iniciada sobre `origin/refactor/modular-foundation` `cdb5cbb` (el trabaj
   Huella (`access`, `profile.manage`; `Huella — Propietario`). Grupos de permisos con orden 210–250 (después de `settings` = 100).
   **Decisión:** `agora.saved.manage` (persona registrada) no tiene rol sugerido propio: `Member` ya existe y los roles sugeridos nunca se modifican, así que asignarlo a `Member` queda para quien implemente Ágora o para el propietario (anotado en su `MODULE.md`).
   Los nombres de rol llevan raya (`—`) como en las fichas; solo `CreateRole` restringe caracteres, y `CatalogSyncTask` los crea directamente.
+- [x] **WP6.4 — Temas:** `web/src/core/design/module-themes.css` con `--accent`, `--accent-strong`, `--accent-soft` y `--on-accent` de los cinco módulos, claro y oscuro, con los valores exactos de `DESIGN_SYSTEM.md` 2.2. **Aún no se importa** desde ningún CSS (la entrada de Tailwind y los tokens llegan en WP8); no afecta el frontend actual.
