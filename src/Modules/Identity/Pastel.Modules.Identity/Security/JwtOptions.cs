@@ -1,8 +1,9 @@
-namespace Pastel.Infrastructure.Security;
+namespace Pastel.Modules.Identity.Security;
 
-public sealed class JwtOptions
+internal sealed class JwtOptions
 {
     public const string SectionName = "Jwt";
+
     public string Issuer { get; init; } = "PastelAdmin";
     public string Audience { get; init; } = "PastelAdmin.Web";
     public string SigningKey { get; init; } = string.Empty;

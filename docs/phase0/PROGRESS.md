@@ -123,3 +123,13 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Validaciones ejecutadas:** ninguna de compilación (el SDK ya está instalado, pero NuGet no es accesible).
 - **Sin compilar:** todo lo anterior. Los archivos `PrivilegeGuard.cs`, `SessionService.cs`, `JwtTokenService.cs`, `JwtOptions.cs`, `PasswordPolicy.cs`, `DatabaseSeeder.cs` conservan aún el contenido original.
 - **Siguiente acción:** `IdentityModule`, `CatalogSyncTask`, `BootstrapAdminTask`, opciones y autenticación JWT.
+
+### S3-05 · WP3.3 · Opciones, JWT, autenticación y catálogo desde código
+- **Último commit conocido antes:** `a588c99` (S3-04).
+- **Cambios (Identity):** `AuthOptions` (`Auth:Local`, `Auth:Google`, `Auth:Refresh`), `JwtOptions` y `JwtTokenService` con espacios de nombres nuevos (`ITokenService` queda junto al servicio),
+  `JwtBearerSetup` (JWT en cookie `__Host-pastel_access`; **una sola proyección** `PastelSessionState` por petición guardada en `HttpContext.Items`; el bloqueo por contraseña ya no invalida sesiones),
+  `CatalogSyncTask` (orden 10: grupos y permisos de `IPastelModule`, todo a `Administrator`, roles sugeridos solo si faltan, sin pisar ediciones, transacción serializable).
+- **Decisiones:** los módulos de la base son los **grupos de permisos** (`dashboard`, `settings`, `brisa`, …); un módulo no cargado no borra sus filas.
+- **Validaciones ejecutadas:** ninguna de compilación.
+- **Sin compilar:** todo lo nuevo. Pendientes de reescritura: `PrivilegeGuard.cs`, `SessionService.cs`, `PasswordPolicy.cs`, `DatabaseSeeder.cs`.
+- **Siguiente acción:** `BootstrapAdminTask`, `IdentityModule` (+ registro de servicios) y slices de `Features/`.
