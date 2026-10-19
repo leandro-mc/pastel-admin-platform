@@ -292,3 +292,16 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
   `NotificationsProvider` dejó las clases `.toast*` y usa utilidades con tokens (objetivo táctil de cierre de 44 px, `aria-hidden` en los símbolos, texto `text-sm` en lugar de 11 px).
   **Decisión:** no se migraron una a una las 226 clases huérfanas: dejaron de tener consumidores al retirar el frontend heredado (WP7.6h), así que se eliminaron junto con `styles.css`. También desaparecen las reglas globales de `table`/`th`/`td` (9–10 px, `min-width: 690px`) que competían con las utilidades de las tablas de Configuración.
   **Validado (`web/`):** `tsc -b`, `eslint .`, `format:check` y `vite build` correctos; el CSS generado pasa de 90,8 kB a 25,3 kB y contiene `animate-toast-in`, `@keyframes toast-in`, los tokens y la regla de movimiento reducido. **Sin verificar en navegador ni con capturas** (no hay Playwright en este entorno: `scripts/screenshots` y la paridad visual claro/oscuro, móvil/escritorio quedan pendientes; son de Build/QA o de un entorno con navegador).
+- [x] **WP8.1 — auditoría afinada (`scripts/tailwind-audit.mjs`):** ahora resuelve las clases que llegan por constantes (`className={panel}`, plantillas con `${…}`), ignora comentarios, `@import` y cadenas en el CSS y cuenta solo `@apply` reales. **Medición corregida** con el mismo script sobre `b8da4af` (antes) y sobre el árbol actual (después):
+
+  | Métrica | Antes (`b8da4af`) | Después |
+  |---|---|---|
+  | Atributos `className` | 369 | 369 |
+  | Con alguna utilidad | 362 (98,1 %) | 365 (98,9 %) |
+  | Utilidades en JSX | 2 132 | 2 170 |
+  | Clases semánticas en CSS | 228 (225 sin uso) | **0** |
+  | Líneas de CSS | 2 320 (`styles.css` 2 212) | **263** (4 archivos) |
+  | Líneas con `@apply` | 592 | **0** |
+  | CSS > 400 líneas | `styles.css` | ninguno |
+
+  La medición «antes» de la entrada anterior (71,5 %) subestimaba las utilidades porque no resolvía constantes; esta tabla la reemplaza. Es una heurística estática: no mide clases construidas dinámicamente ni valida el resultado visual. **Metas de §11 cumplidas por medición:** `styles.css` eliminado, `@apply` ≤ 60 y solo en `base.css` (0), 0 clases semánticas, utilidades ≥ 95 %. **Pendiente en WP8:** `check-design.mjs` (sin colores sueltos), kit `core/ui` (§11.4), diálogos al kit (§11.5), accesibilidad/Inter autoalojada (§11.6), `prettier-plugin-tailwindcss` (§11.7) y capturas de paridad.

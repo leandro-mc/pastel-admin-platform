@@ -44,30 +44,48 @@ function classAttributes(source) {
       }
       fragment = source.slice(i + 1, j);
     }
-    attrs.push(
-      stringsIn(fragment)
-        .flatMap((s) => s.split(/\s+/))
-        .filter(Boolean),
-    );
+    const tokens = stringsIn(fragment).flatMap((s) => expand(s).split(/\s+/));
+    // Identificadores sueltos (`className={panel}`, `cn(panel, "x")`) → clases de la constante.
+    const bare = fragment.replace(/"[^"]*"|'[^']*'|`[^`]*`/g, " ");
+    for (const id of bare.match(/[A-Za-z_]\w*/g) ?? [])
+      if (constants.has(id)) tokens.push(...expand(constants.get(id)).split(/\s+/));
+    attrs.push(tokens.filter(Boolean));
   }
   return attrs;
 }
 
 const cssFiles = walk(root, [".css"]);
 const tsxFiles = walk(root, [".tsx"]);
+const tsFiles = walk(root, [".ts", ".tsx"]);
+
+/** `const nombre = "clases…"` (o plantilla) en cualquier archivo: las clases que llegan a `className={nombre}`. */
+const constants = new Map();
+for (const file of tsFiles) {
+  const text = readFileSync(file, "utf8");
+  for (const m of text.matchAll(/\bconst\s+(\w+)\s*=\s*("[^"\n]*"|'[^'\n]*'|`[^`]*`)\s*;/g))
+    constants.set(m[1], m[2].slice(1, -1));
+}
+function expand(value, depth = 0) {
+  if (depth > 3) return value;
+  return value.replace(/\$\{\s*(\w+)\s*\}/g, (_, name) => expand(constants.get(name) ?? "", depth + 1));
+}
 
 let cssLines = 0;
 let applyLines = 0;
 const longCss = [];
 const defined = new Set();
 for (const file of cssFiles) {
-  const text = readFileSync(file, "utf8");
-  const lines = text.split("\n").length;
+  const raw = readFileSync(file, "utf8");
+  const lines = raw.split("\n").length;
   cssLines += lines;
+  // Sin comentarios ni @import (rutas como "./tokens.css" no son selectores) ni cadenas.
+  const text = raw
+    .replace(/\/\*[\s\S]*?\*\//g, "")
+    .replace(/@import[^;]*;/g, "")
+    .replace(/"[^"]*"/g, '""');
   applyLines += text.split("\n").filter((l) => l.includes("@apply")).length;
   if (lines > 400) longCss.push(`${relative(root, file)} (${lines})`);
-  // Selectores de clase fuera de @theme/@import; se quitan comentarios y valores entre llaves de propiedades.
-  const selectors = text.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/\.([A-Za-z_][\w-]*)/g);
+  const selectors = text.matchAll(/\.([A-Za-z_][\w-]*)(?=[\s,.:{[>+~)]|$)/g);
   for (const s of selectors) defined.add(s[1]);
 }
 
