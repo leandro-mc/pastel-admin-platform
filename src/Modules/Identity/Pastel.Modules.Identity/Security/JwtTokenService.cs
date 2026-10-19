@@ -32,6 +32,7 @@ internal sealed class JwtTokenService(IOptions<JwtOptions> options) : ITokenServ
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         var token = new JwtSecurityToken(_options.Issuer, _options.Audience, claims, now.UtcDateTime, expires.UtcDateTime, credentials);
+        token.Header["kid"] = _options.SigningKeyId;
         return (new JwtSecurityTokenHandler().WriteToken(token), expires);
     }
 }
