@@ -190,6 +190,17 @@ Sesión iniciada sobre `origin/refactor/modular-foundation` `3a4febe`. Este ento
 **WP7 — resto** (§10 de `FASE-0-REFACTOR-BASE.md`), en este orden: 7.3 cliente API (`core/api`: `ApiError`, refresco single-flight, zod, reintento de lecturas) y `core/log`; 7.4 proveedores (Auth, Query, tema, tamaño de texto, notificaciones); 7.2 router con guardas y páginas 403/404/error; 7.5 shell; 7.6 migración de Identity a `web/src/modules/identity/` (sustituye `useSettingsAdmin`) y `/ingresar` (§8.4, contrato en «WP5 — Cierre de la unidad de desarrollo»); 7.7 textos sin voseo en `strings.ts`; 7.8 ESLint `no-console`. Mantén la app actual funcionando hasta el cambio de router.
 
 
+
+## WP7 — continuación de desarrollo (2026-10-19, Tipo 2)
+
+- Se reconfirmó que `origin/refactor/modular-foundation` apunta a `e5e0890a79b9fb1fd042c76448555fd2a0f9f69e` al iniciar esta unidad.
+- El siguiente paso funcional sigue siendo WP7.3: cliente API y registro técnico, según el orden de la sección 10 de `FASE-0-REFACTOR-BASE.md`.
+- **Restricción de escritura:** `AGENTS.md` reserva `web/src/core` al orquestador/mantenimiento. Se registra la solicitud `docs/requests/CCR-001-wp7-core-api-log.md` para autorizar la implementación definitiva de `core/api` y `core/log`. No se han modificado archivos protegidos.
+- **Solución provisional:** se conserva el cliente heredado `web/src/lib/api.ts` para que la aplicación actual continúe usando su contrato existente mientras se resuelve la CCR; todavía no satisface todo el contrato objetivo (modelo `ApiError`, refresco single-flight, validación Zod en el borde y reintentos limitados de lecturas). No duplicar el cliente en una segunda ubicación.
+- **Validación:** no se ejecutaron compilación, lint ni pruebas en esta sesión. No se declara validación de Build/QA.
+- **Siguiente paso:** resolver la CCR y, con autorización para modificar la zona protegida, implementar WP7.3 en `web/src/core/api` y `web/src/core/log`; después continuar con proveedores, router, shell, migración de Identity, textos y ESLint según el orden ya documentado.
+
+
 ## Build/QA — separación de validación técnica y deuda de cobertura (2026-10-19)
 
 - Se ajustó `scripts/Validate-PreWP5.ps1` (se conserva el nombre para no romper el comando local existente; la validación ya no se limita a una puerta «previa a WP5»).
