@@ -98,6 +98,12 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - **Detalle del filtro modular:** la lista para seleccionar un subconjunto ahora requiere que los nombres coincidan con la capitalización de las carpetas (por ejemplo, `Brisa;Balance`). El valor predeterminado `*` usado en Docker no depende de este filtro.
 - Próximo paso: actualizar la rama local con `git pull --ff-only origin refactor/modular-foundation` y repetir `docker compose build`. Si pasa, seguir con `docker compose up --build -d` y revisar logs de API; aún falta generar la migración inicial de Identity con EF Core, por lo que un build exitoso no garantiza que la API arranque.
 
+## Segunda incidencia Docker Build — 2026-10-18
+
+- **Resultado reportado por el usuario:** tras resolver MSB4185, `dotnet restore` pasó y la publicación falló en `src/BuildingBlocks/Pastel.Platform/Security/Abstractions.cs(37,60)` con `CS0246: HttpContext could not be found`.
+- **Corrección publicada:** se añadió `using Microsoft.AspNetCore.Http;` al archivo que declara `SessionStateExtensions.GetSessionState(HttpContext)`. El proyecto ya referencia `Microsoft.AspNetCore.App`, así que el problema observado era el namespace ausente, no la referencia de framework.
+- **Validación pendiente:** no se volvió a ejecutar Docker desde este entorno. Repetir `docker compose build` con la rama actual; cualquier error nuevo debe tratarse como un bloqueo distinto. Si compila, aún falta verificar el inicio y generar la migración EF Core de Identity.
+
 ## Validación y entrega conocidas
 
 - **Build de esta sesión bloqueado por el entorno disponible:** comprobé con shell `dotnet --info` (comando no encontrado), `docker --version` (comando no encontrado) y `git ls-remote https://github.com/leandro-mc/pastel-admin-platform.git` (falló porque no se puede resolver `github.com`). No hay .NET SDK, Docker ni acceso DNS a GitHub/NuGet; no se ejecutaron `dotnet build`, `dotnet test`, `dotnet ef` ni `docker compose`. No se afirma que el código compile.
