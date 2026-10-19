@@ -1,7 +1,13 @@
 <Solution>
-  <Project Path="src/Pastel.Domain/Pastel.Domain.csproj" />
-  <Project Path="src/Pastel.Application/Pastel.Application.csproj" />
-  <Project Path="src/Pastel.Infrastructure/Pastel.Infrastructure.csproj" />
-  <Project Path="src/Pastel.Api/Pastel.Api.csproj" />
-  <Project Path="tests/Pastel.Application.Tests/Pastel.Application.Tests.csproj" />
+  <Folder Name="/BuildingBlocks/">
+    <Project Path="src/BuildingBlocks/Pastel.SharedKernel/Pastel.SharedKernel.csproj" />
+    <Project Path="src/BuildingBlocks/Pastel.Platform/Pastel.Platform.csproj" />
+  </Folder>
+  <Folder Name="/Host/">
+    <Project Path="src/Host/Pastel.Host/Pastel.Host.csproj" />
+  </Folder>
+  <Folder Name="/Modules/Identity/">
+    <Project Path="src/Modules/Identity/Pastel.Modules.Identity/Pastel.Modules.Identity.csproj" />
+    <Project Path="src/Modules/Identity/Pastel.Modules.Identity.Tests/Pastel.Modules.Identity.Tests.csproj" />
+  </Folder>
 </Solution>

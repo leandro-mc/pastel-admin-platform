@@ -123,7 +123,7 @@ Después de actualizar código, usa `git switch dev` y `git pull --ff-only origi
 
 ## Desarrollo y ramas
 
-El trabajo diario va en ramas de tarea creadas desde la base indicada por el orquestador (normalmente `dev`; durante una refactorización base puede ser una rama de refactor autorizada). Se permiten commits y pushes de checkpoint para relevo entre agentes. **No abras PR ni integres a `dev` sin autorización explícita del usuario**; con autorización, abre un solo PR por tarea. `main` se reserva para versiones estables y requiere autorización explícita. Lee `AGENTS.md`, `docs/AI_WORKFLOW.md` y `docs/ARCHITECTURE.md` antes de trabajar. La promoción estable usa un PR revisado y un tag `vMAJOR.MINOR.PATCH`.
+El trabajo diario va en ramas nuevas creadas desde `dev`, con un PR de regreso a `dev`. `main` se reserva para versiones estables y no se actualiza sin autorización explícita del usuario. Lee `AGENTS.md`, `docs/AI_WORKFLOW.md` y `docs/ARCHITECTURE.md` antes de trabajar. La promoción estable usa un PR revisado y un tag `vMAJOR.MINOR.PATCH`.
 
 ## Desarrollo sin Docker
 
@@ -151,7 +151,7 @@ Registrar un módulo desde Configuración crea metadatos y permisos en la base, 
 
 ## Comprobaciones de CI
 
-GitHub Actions verifica backend, frontend y arranque Docker con PostgreSQL en pushes a `dev`/`main` y en PRs hacia esas ramas cuando se abren, se reabren, se marcan listos o reciben nuevos commits estando listos. Los pushes a ramas de trabajo y los PR en borrador no ejecutan el CI completo. Cuando este workflow también esté en la rama predeterminada (`main`), se podrá iniciar manualmente en **Actions → CI → Run workflow**, seleccionando la rama objetivo. Consulta la pestaña **Actions**; tener un workflow configurado no significa que ya pasó.
+GitHub Actions verifica backend, frontend y arranque Docker con PostgreSQL en `dev`, `main` y PRs hacia esas ramas. Consulta la pestaña **Actions** del repositorio; tener un workflow configurado no significa que ya pasó.
 
 ## Seguridad y limitaciones
 

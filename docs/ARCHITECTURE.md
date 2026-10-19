@@ -245,7 +245,7 @@ Estándar único en `docs/ERROR_HANDLING_AND_LOGGING.md`. Resumen: los fallos es
 
 ## 15. Desarrollo y pruebas separados
 
-Estándar en `docs/TESTING_STRATEGY.md`. Dev implementa el código y, si su entorno lo permite, compila y ejecuta validaciones; si no puede, declara lo no ejecutado y entrega código sin compilar para el agente con entorno. Build/QA debe tener entorno de compilación y ejecución; en esta etapa se permite combinar ambas responsabilidades para ahorrar sesiones. Un módulo o fase solo se integra a `dev` tras validar el SHA propuesto y recibir autorización explícita del propietario.
+Estándar en `docs/TESTING_STRATEGY.md`. Dev implementa solo el código de la aplicación (sin necesidad de compilar); **Build** compila, corrige y escribe las pruebas unitarias; **QA** escribe el **plan de pruebas** desde la ficha y lo ejecuta en caja negra primero, luego caja gris, automatiza regresión en su propia zona (`tests/.../QA`, `tests/e2e`) y emite un informe. Un módulo o fase solo se integra a `dev` con el informe QA del SHA final aprobado y la autorización del propietario.
 
 ## 16. Decisiones registradas
 

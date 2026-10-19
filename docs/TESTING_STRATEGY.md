@@ -1,36 +1,41 @@
-# Estrategia de pruebas — responsabilidades de desarrollo, build y QA
+# Estrategia de pruebas — desarrollo y pruebas van por separado
 
 ## 1. Regla de oro
-La validación debe ser real, trazable y proporcional al riesgo. Hay tres responsabilidades: Dev (implementación), Build (compilación y pruebas unitarias) y QA (pruebas funcionales, integración y E2E). **En esta etapa se permite combinar Build y QA en la misma sesión/agente** para ahorrar sesiones; cuando se combinen, debe completar ambas responsabilidades, registrar los comandos/resultados y repetir las validaciones afectadas después de corregir código. La revisión independiente sigue siendo preferible para cambios críticos, seguridad o cuando haya capacidad, pero no es obligatoria para cada módulo. La integración a `dev` requiere autorización explícita del propietario.
+**Quien desarrolla no certifica su propio trabajo.** Todo módulo y toda fase se desarrolla con un agente (Dev) y se prueba con **otra sesión de agente distinta** (QA). Nunca el mismo agente hace ambos papeles sobre lo mismo. El agente que corrige código de producto para que compile o pase pruebas (Build) tampoco certifica ese SHA: la certificación la hace QA, en otra sesión. El propietario autoriza la integración a `dev` con el informe de QA a la vista.
 
 ## 2. Tipos de agente
 
 | Tipo | Hace | No hace | Zona de escritura |
 |---|---|---|---|
-| **Dev** | Implementa el código de aplicación y hooks de testabilidad. Si su entorno lo permite, ejecuta build/pruebas locales pertinentes; si no, puede entregar sin compilar y debe declararlo en `PROGRESS.md` e informe. No escribe el plan de pruebas ni certifica resultados no ejecutados | Inventar resultados, ocultar limitaciones, o afirmar que compila sin comprobarlo | Su módulo y documentación de progreso |
-| **Build** (entorno de compilación obligatorio) | Restaura y compila; corrige errores de build/pruebas en el código de producto sin cambiar comportamiento acordado; genera migraciones; escribe/ejecuta pruebas unitarias y de caracterización; informa comandos reales | Cambiar diseño/comportamiento especificado sin CCR; debilitar pruebas para que pasen | Correcciones mínimas, pruebas unitarias/caracterización e informe BUILD |
-| **QA** (entorno de compilación y ejecución obligatorio) | Escribe el plan desde la ficha; ejecuta pruebas funcionales, permisos, aislamiento, errores/logs, accesibilidad, responsive y seguridad básica; automatiza regresión de integración/E2E; reporta defectos reproducibles | Cambiar código de producto como parte de la verificación; si se combina con Build, debe registrar ambas funciones y volver a validar tras corregir | Pruebas QA, planes e informes |
+| **Dev** | Implementa el **código de la aplicación** (backend y frontend) y los hooks de testabilidad (sembrador `Testing`, etiquetas accesibles, `MODULE.md`). **No necesita compilar ni ejecutar**; declara lo que no compiló | Escribir pruebas o planes; dar por aprobado su trabajo; afirmar que algo compila o pasa sin haberlo comprobado | Su módulo (`src/Modules/<M>/**`, `web/src/modules/<m>/**`) |
+| **Build** (con entorno de compilación) | Restaura y compila; **corrige errores de compilación y de pruebas en el código de producto** sin cambiar el diseño ni el comportamiento especificado; genera migraciones; escribe y ejecuta las **pruebas unitarias** (y las de caracterización en la Fase 0); informa con comandos reales | Certificar; cambiar el comportamiento especificado o la arquitectura (eso es un CCR); debilitar pruebas de QA para que pasen | Correcciones mínimas en código de producto (`fix(build): …`), `Pastel.Modules.<M>.Tests`, `*.test.tsx`, `tests/Pastel.IntegrationTests/Foundation/`, `tests/Pastel.ArchitectureTests/`, `docs/testing/reports/<M>-BUILD-<fecha>.md` |
+| **QA** | **Escribe el plan de pruebas** desde la ficha de producto; ejecuta pruebas (funcionales, permisos, aislamiento de datos, validación, errores y logs, accesibilidad, responsive, seguridad básica); **automatiza** regresión de integración y E2E; reporta defectos con reproducción; verifica correcciones | **Modificar código de producto**. Si encuentra un defecto, lo reporta; no lo arregla | `tests/Pastel.IntegrationTests/QA/<M>/**`, `tests/e2e/<m>/**`, `docs/testing/plans/**`, `docs/testing/reports/**` |
 | **Investigación** | Produce documentos (inventarios) | Tocar código | `docs/migration/**` |
 | **Mantenimiento** | Aplica CCR aprobados en zonas protegidas | Funcionalidad de módulos | La zona del CCR |
 
 ## 3. Flujo por módulo (o fase)
 
- ```
-Dev ──► código de aplicación y progreso ──► rama de tarea (puede quedar sin compilar si el entorno no lo permite)
+```
+Dev ──► código de la aplicación + hooks de testabilidad ──► rama feat/<m>   (puede no compilar)
         │
-Build (o agente combinado Build+QA; entorno obligatorio)
-  1. Restaura y compila; corrige errores de build y del código de producto
-  2. Genera migraciones y escribe/ejecuta pruebas unitarias y de caracterización
+Build (sesión con entorno de compilación)
+  1. Restaura y compila; corrige errores de compilación y de pruebas en el código de producto
+  2. Genera migraciones; escribe y ejecuta las pruebas unitarias (y las de caracterización en la Fase 0)
+  3. Informe de build con comandos reales ──► docs/testing/reports/<M>-BUILD-<fecha>.md
         │
-QA (puede ser la misma sesión que Build en esta etapa)
-  1. Escribe/actualiza el plan desde la ficha
-  2. Ejecuta caja negra y caja gris, automatiza integración/E2E y reporta defectos
-  3. Si corrige código como parte del rol Build combinado, vuelve a ejecutar las validaciones afectadas
+QA (otra sesión, distinta de Build)
+  0. Plan de pruebas desde la ficha (puede escribirse antes, en paralelo al desarrollo)
+  1. Pasada de caja negra siguiendo el plan (sin leer la implementación)
+  2. Pasada de caja gris: autorización, validación, errores, logs (lee el código)
+  3. Automatiza regresión (integración y E2E) en su zona
+  4. Informe QA con defectos ──► docs/testing/reports/<M>-QA-<fecha>.md
         │
-Propietario: revisa los resultados y autoriza explícitamente abrir PR y/o integrar a dev
+Build corrige los defectos de código ──► QA reverifica el SHA final
+        │
+Propietario: lee informe QA + valida visualmente ──► autoriza integración a dev
 ```
 
-**Puerta de integración:** build y pruebas obligatorias en verde sobre el SHA propuesto, sin defectos Críticos o Altos abiertos; defectos Medios aceptados por escrito por el propietario. Si Build+QA se combinaron, el informe debe indicarlo y demostrar que las comprobaciones se ejecutaron sobre el SHA final.
+**Puerta de integración:** el informe QA del **SHA final** dice APROBADO con: 0 defectos Críticos o Altos abiertos; Medios aceptados por escrito por el propietario; todos los casos "Obligatorios" del plan ejecutados; y el informe de Build del mismo SHA muestra compilación y pruebas unitarias en verde.
 
 ## 4. Qué entrega cada rol para que el siguiente pueda trabajar
 1. **Dev:** código completo y coherente; `MODULE.md` actualizado (rutas, permisos, códigos de error); `PROGRESS.md` con lo implementado, lo pendiente y **qué no se compiló ni se ejecutó**.
@@ -39,7 +44,7 @@ Propietario: revisa los resultados y autoriza explícitamente abrir PR y/o integ
 4. **Build:** informe de build con comandos exactos y resultados reales; pruebas unitarias; migraciones generadas.
 5. **QA:** **plan de pruebas** `docs/testing/plans/<MODULO>-TEST-PLAN.md` (plantilla en `docs/testing/TEST_PLAN_TEMPLATE.md`), escrito a partir de la **ficha de producto**, no de la implementación: matriz de trazabilidad (criterio de aceptación → casos), roles, casos negativos y de abuso, errores y logs, accesibilidad, datos de prueba y **cómo ejecutar** (comandos exactos, variables, cuentas de prueba por rol tomadas de `PROGRESS.md`).
 
-## 5. Objetividad y ejecución de QA
+## 5. Independencia de QA
 - El plan lo escribe QA a partir de la ficha, sin esperar a Dev, y lo amplía durante la ejecución. Los casos obligatorios mínimos de cada módulo están en su ficha (`docs/modules/<M>.md`, sección "Plan de pruebas — mínimos").
 - Primera pasada **solo con la ficha y el plan**; la lectura del código llega después. Esto evita sesgo de confirmación.
 - QA no reutiliza datos o ayudantes de las pruebas unitarias de Build como oráculo: calcula los resultados esperados desde la ficha (p. ej., montos y repartos de Cosecha, saldos de Balance).
