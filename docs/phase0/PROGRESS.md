@@ -81,7 +81,8 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 
 - **S1 — Jerarquía de privilegios:** `IPrivilegeGuard` aplicado en SetUserRoles, SetUserPermissions, BlockUser, UnblockUser, ResetUserPassword, CreateUser, CreateRole y SetRolePermissions. Rol Administrator inmutable; al promover a administrador se limpian sus excepciones. Cada denegación responde 403 `identity.privilege.*`, genera Warning y auditoría `identity.privilege.denied`. **Documentación agregada** en `docs/SECURITY.md` para la jerarquía y el *break-glass* (commit `b83a052`). La invariante del último administrador se protege en `SetUserRoles` y `BlockUser` con transacción serializable; su prueba bajo concurrencia queda para Build. La implementación aún requiere compilación y revisión automatizada.
 - **Decisión S1:** además de lo literal de §7, un no-Administrator solo agrega a una cuenta roles cuyos permisos ya posee (asignar un rol equivale a conceder sus permisos).
-- S2, S3, S4 y D1 backend: pendientes.
+- **S3 (avance parcial, commit `630cb38`):** `LoginHandler` realiza una verificación PBKDF2 ficticia cuando la cuenta no existe o no tiene hash; el bloqueo de contraseña crece desde 15 minutos hasta 4 horas conforme a ciclos repetidos y se reinicia tras un login válido. Esto reduce la enumeración temporal y reemplaza el bloqueo fijo. **Sin compilar ni ejecutar pruebas**; Build debe verificar que el hash ficticio V3 coincide con las opciones del `PasswordHasher` y revisar tiempos/error paths. Pendiente S3: límite por cuenta en servidor y validación fail-fast de la configuración de producción.
+- S2, resto de S3, S4 y verificación final de D1: pendientes.
 
 ## Validación y entrega conocidas
 
