@@ -52,6 +52,8 @@ services:
       AllowedHosts: ${ALLOWED_HOSTS:-localhost;127.0.0.1}
       Auth__Local__Enabled: ${AUTH_LOCAL_ENABLED:-true}
       Auth__Local__SelfRegistrationEnabled: ${AUTH_LOCAL_SELF_REGISTRATION_ENABLED:-false}
+      Auth__Refresh__ReuseGraceSeconds: ${AUTH_REFRESH_REUSE_GRACE_SECONDS:-10}
+      Identity__Retention__AuditLogRetentionDays: ${AUDIT_LOG_RETENTION_DAYS:-365}
     depends_on:
       db:
         condition: service_healthy
