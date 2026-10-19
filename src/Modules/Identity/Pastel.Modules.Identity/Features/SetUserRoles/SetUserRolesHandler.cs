@@ -31,14 +31,16 @@ internal sealed class SetUserRolesHandler(IdentityDbContext db, SessionIssuer is
             return IdentityErrors.UnknownRoles;
         }
 
-        if (await guard.AuthorizeActionOnUserAsync(user, "set_roles", cancellationToken) is { } denied)
-        {
-            return denied;
-        }
-
+        // Comprueba primero la escalación para que un intento de asignarse Administrator a sí mismo tenga el código
+        // estable identity.privilege.escalation (contrato F0-S101); después aplica la regla general de no editarse a sí mismo.
         if (await guard.AuthorizeRoleAssignmentAsync(user, newRoles, "set_roles", cancellationToken) is { } roleDenied)
         {
             return roleDenied;
+        }
+
+        if (await guard.AuthorizeActionOnUserAsync(user, "set_roles", cancellationToken) is { } denied)
+        {
+            return denied;
         }
 
         var wasAdministrator = user.IsAdministrator();
