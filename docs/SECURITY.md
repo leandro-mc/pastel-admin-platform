@@ -60,3 +60,23 @@ En el entorno `Production`, `ProductionSecurityValidationTask` impide continuar 
 
 `IdentityRetentionService` ejecuta limpieza periódica (24 horas por defecto): elimina refresh tokens expirados hace más del plazo configurado, borra el ciphertext del sucesor cuando vence su ventana de gracia y aplica la retención configurada de auditoría. `Identity:Retention:AuditLogRetentionDays` tiene un valor predeterminado de 365 días y admite entre 30 y 3650 días. Ajuste la retención según las necesidades de seguridad, soporte y cumplimiento del responsable de la plataforma.
 
+
+## Ingreso con Google (OAuth 2.0 / OIDC)
+
+Es opcional: sin `Authentication:Google:ClientId` y `ClientSecret` Google queda desactivado, la API arranca y `GET /api/auth/options` informa `google: false`.
+
+- **Flujo:** `GET /api/auth/google/start?returnUrl=…` redirige a Google (código de autorización con PKCE, ámbitos `openid email profile`, sin guardar tokens de Google). Google vuelve a `/api/auth/google/callback`; la identidad verificada queda 5 minutos en la cookie `__Host-pastel_ext` (`HttpOnly`, `Secure`, `SameSite=Lax`). `GET /api/auth/google/complete` aplica las reglas de cuenta, emite **las mismas cookies de sesión** que el ingreso con contraseña, borra la cookie externa y redirige.
+- **`returnUrl`:** solo rutas internas conocidas (sin esquema ni host, sin `//` ni `/\`, también tras decodificar); si no cumple, se usa `/`. Viaja dentro del estado protegido de OAuth.
+- **Identidad:** la clave estable es el `sub` de Google (tabla `identity.external_logins`), no el correo. Solo se vincula por correo si Google lo declara verificado.
+- **Reglas de cuenta:**
+  | Situación | Resultado |
+  |---|---|
+  | Vínculo existente por `sub` | Ingreso, si la cuenta está activa. El bloqueo por contraseña **no** aplica |
+  | Sin vínculo y correo no verificado | `email_unverified` |
+  | Sin vínculo y existe cuenta con ese correo | Se vincula; se deja la contraseña en nulo, `MustChangePassword=false`, `TokenVersion++` y se revocan los refresh tokens; auditoría `auth.google.linked` |
+  | Sin vínculo y correo nuevo | Se crea una cuenta `Member` sin contraseña (`auth.google.registered`) si `Auth:Google:AllowSignUp` es `true`; si no, `signup_closed` |
+  | Cuenta inactiva | `account_disabled` (mensaje genérico) |
+- **Por qué la vinculación invalida la contraseña:** si alguien creó antes una cuenta con el correo de otra persona (o quedó una contraseña temporal sin usar), esa contraseña y esas sesiones dejan de servir en cuanto la persona dueña del correo ingresa con Google. El costo es que una cuenta vinculada pierde el ingreso por contraseña; para recuperarlo, administración restablece la contraseña. El primer administrador que use su cuenta de Google debe tener el mismo correo en `BOOTSTRAP_ADMIN_EMAIL`.
+- **Errores:** siempre redirigen a `/ingresar?error=<codigo>` con `google_denied`, `email_unverified`, `account_disabled`, `signup_closed` o `failed`. Los registros no incluyen ni el `code` ni el `state` de OAuth, ni el correo.
+- **Configuración:** `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (ver `docs/phase0/GOOGLE_OAUTH_SETUP.md`), `APP_PUBLIC_BASE_URL` (`App:PublicBaseUrl`, define el `redirect_uri` sin depender del proxy) y `AUTH_GOOGLE_ALLOW_SIGNUP`. nginx debe enviar `Host $http_host` y `X-Forwarded-Host $http_host`; con `$host` se pierde el puerto y Google responde `redirect_uri_mismatch`.
+- **Límites conocidos:** el secreto no debe versionarse ni registrarse; rótelo en la consola de Google si se expone. Las claves de Data Protection del esquema de correlación de OAuth deben persistirse antes de producción (ver advertencia de Development en `PROGRESS.md`).

@@ -49,7 +49,9 @@ internal static class GoogleCompleteEndpoint
             return Results.Redirect($"/ingresar?error={GoogleErrorCodes.Failed}");
         }
 
-        var returnUrl = ReturnUrl.Sanitize(external.Properties?.Items.GetValueOrDefault(ExternalSchemes.ReturnUrlItem));
+        string? requestedReturnUrl = null;
+        external.Properties?.Items.TryGetValue(ExternalSchemes.ReturnUrlItem, out requestedReturnUrl);
+        var returnUrl = ReturnUrl.Sanitize(requestedReturnUrl);
         var outcome = await handler.HandleAsync(identity, cancellationToken);
         if (outcome.Session is not { } session)
         {
