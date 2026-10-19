@@ -6,6 +6,7 @@ namespace Pastel.Modules.Identity.Tests;
 
 public sealed class SecurityPolicyTests
 {
+    [Trait("RequirementId", "F0-S211")]
     [Theory]
     [InlineData("shortA1!", false)]
     [InlineData("A9", false)]
