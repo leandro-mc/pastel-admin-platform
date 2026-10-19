@@ -111,6 +111,14 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - **WP1/C1 y pruebas adicionales:** su evidencia de cierre continúa pendiente de Build/QA según el plan. No alterar el estado de estos elementos por inferencia ni atribuir sus tareas al agente Dev de WP5.
 - **Siguiente paso de desarrollo:** sincronizar los cambios publicados según el flujo normal del repositorio, leer `AGENTS.md` y esta bitácora, y comenzar WP5. Build/QA mantiene su trabajo pendiente de validación separado. No abrir PR ni integrar en `dev`/`main` sin autorización explícita del propietario.
 
+## Build/QA — preparación inicial coordinada con el propietario (2026-10-19)
+
+- **Ámbito de trabajo acordado:** el propietario y el asistente realizan Build y QA conjuntamente en esta rama; Dev Tipo 1 retomará el desarrollo pendiente cuando esta pasada permita avanzar hasta el siguiente bloqueo real. Cadencia del asistente: Tipo 2, con checkpoints por unidad de trabajo coherente. No abrir PR ni integrar a `dev`/`main` sin autorización explícita.
+- **Pruebas unitarias añadidas (sin ejecutar):** `src/Modules/Identity/Pastel.Modules.Identity.Tests/GoogleAuthenticationUnitTests.cs` cubre rutas de retorno internas conocidas, redirecciones externas/desconocidas, valores ausentes o demasiado largos, extracción de claims OIDC y rechazo de claims requeridos inválidos. Commit: `5e8d085`. **No se compiló ni ejecutó**: este entorno no dispone del SDK de .NET ni Docker; queda pendiente comprobarlo en la máquina local.
+- **Hallazgo de migraciones WP5:** la migración publicada `20261019050514_InitialIdentity` se creó antes del modelo `ExternalLogin` y no contiene la tabla `identity.external_logins`. Build debe crear una migración incremental a partir del modelo/snapshot actual, revisar su `Up/Down` y probar aplicar todas las migraciones desde una base de pruebas vacía; no editar la migración inicial ya aplicada.
+- **Hallazgo WP6:** los cinco módulos aún requieren sus migraciones iniciales y una compilación de la solución completa, del host con `PastelModules=Identity`, y de cada subconjunto/módulo según el plan.
+- **Limitación del entorno:** se confirmó que esta sesión no tiene `dotnet`, Docker ni PowerShell instalados; por tanto no se afirma ningún resultado nuevo de build, test .NET, migración o ejecución del script. El propietario ejecutará los comandos en Windows y compartirá las salidas para corregirlas aquí.
+
 ## WP5 — Bitácora (Dev, Tipo 1; sin compilar)
 
 Sesión iniciada sobre `origin/refactor/modular-foundation` `0959ff1`. El trabajo local previo de esta sesión (reescrituras de Identity) quedó superado por el remoto y se resguardó en la rama local `backup/dev-superado-local` (no publicada).
