@@ -9,6 +9,8 @@ using Pastel.Modules.Identity.Features.GetCsrfToken;
 using Pastel.Modules.Identity.Features.GetCurrentUser;
 using Pastel.Modules.Identity.Features.GetAuthOptions;
 using Pastel.Modules.Identity.Features.GetUserPermissions;
+using Pastel.Modules.Identity.Features.GoogleComplete;
+using Pastel.Modules.Identity.Features.GoogleStart;
 using Pastel.Modules.Identity.Features.ListAudit;
 using Pastel.Modules.Identity.Features.ListModules;
 using Pastel.Modules.Identity.Features.ListPermissions;
@@ -44,6 +46,7 @@ internal static class IdentityEndpoints
         services.AddScoped<RefreshHandler>();
         services.AddScoped<LogoutHandler>();
         services.AddScoped<ChangePasswordHandler>();
+        services.AddScoped<GoogleCompleteHandler>();
         services.AddScoped<ListUsersHandler>();
         services.AddScoped<CreateUserHandler>();
         services.AddScoped<SetUserRolesHandler>();
@@ -68,6 +71,8 @@ internal static class IdentityEndpoints
         LogoutEndpoint.Map(auth);
         GetCurrentUserEndpoint.Map(auth);
         ChangePasswordEndpoint.Map(auth);
+        GoogleStartEndpoint.Map(auth);
+        GoogleCompleteEndpoint.Map(auth);
 
         var users = apiRoot.MapGroup("/admin/users");
         ListUsersEndpoint.Map(users);

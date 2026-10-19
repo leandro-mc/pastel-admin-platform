@@ -14,6 +14,10 @@ internal static class ExternalSchemes
     public const string Google = "Google";
     public const string ExternalCookie = "ExternalCookie";
     public const string GoogleCallbackPath = "/api/auth/google/callback";
+    public const string CompletePath = "/api/auth/google/complete";
+
+    /// <summary>Clave con la que <c>returnUrl</c> viaja protegido dentro del estado de OAuth.</summary>
+    public const string ReturnUrlItem = "pastel.return_url";
 }
 
 /// <summary>
