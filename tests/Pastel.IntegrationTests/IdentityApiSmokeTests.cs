@@ -1,5 +1,8 @@
 using System.Net;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pastel.Modules.Identity.Persistence;
 using Xunit;
 
 namespace Pastel.IntegrationTests;
@@ -9,6 +12,19 @@ public sealed class IdentityApiSmokeTests : IClassFixture<IdentityApiFactory>
     private readonly IdentityApiFactory _factory;
 
     public IdentityApiSmokeTests(IdentityApiFactory factory) => _factory = factory;
+
+    [RequiresPostgresFact]
+    public async Task Identity_initial_migration_is_applied_and_no_pending_migrations_remain()
+    {
+        // Inicia el host antes de consultar el contexto: el arranque debe aplicar la migración en la base aislada.
+        using var client = _factory.CreateClient();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+
+        var appliedMigrations = await db.Database.GetAppliedMigrationsAsync();
+        Assert.Contains("20261019050514_InitialIdentity", appliedMigrations);
+        Assert.Empty(await db.Database.GetPendingMigrationsAsync());
+    }
 
     [RequiresPostgresFact]
     public async Task Live_endpoint_returns_ok()
