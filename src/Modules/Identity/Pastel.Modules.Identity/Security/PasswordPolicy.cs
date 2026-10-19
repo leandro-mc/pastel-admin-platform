@@ -61,6 +61,6 @@ internal static class PasswordPolicy
         // FormKC normaliza variantes Unicode para que no evadan la lista común. No se recortan espacios:
         // los espacios forman parte válida de una frase de contraseña.
         var comparable = password.Normalize(NormalizationForm.FormKC);
-        return !CommonPasswords.Contains(comparable);
+        return !CommonPasswords.Contains(comparable) && !CommonPasswords.Contains(comparable.Trim());
     }
 }
