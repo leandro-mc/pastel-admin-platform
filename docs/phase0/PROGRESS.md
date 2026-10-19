@@ -214,3 +214,15 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
 - **Estado WP3:** rutas `/api/auth/*` y `/api/admin/users/*` completas. Faltan `/api/admin/roles`, `/permissions`, `/modules`, `/audit`.
 - **Siguiente acción:** slices de roles (`ListRoles`, `CreateRole`, `SetRolePermissions`) y `ListPermissions`.
+
+### S4-07 · WP3.9 · Roles, permisos, módulos y auditoría por slices
+- **Último commit conocido antes:** `f6aba23` (S4-06).
+- **Cambios (Identity):** `Features/ListRoles` (una consulta con permisos y cantidad de personas), `CreateRole` (201; nombre validado; duplicado → `identity.role.name_taken` 409), `SetRolePermissions` (204; Administrator conserva todos),
+  `ListPermissions`, `ListModules` (solo lectura del catálogo sincronizado), `SetModuleEnabled` (`PATCH`, 204; `settings` no se desactiva; audita antes/después),
+  `ListAudit` (`GET /api/admin/audit`: `{ items, page, pageSize, totalCount }`, más recientes primero; filtros `action`, `module`, `actor` (correo), `targetUserId`, `from`, `to`), `Common/LikePattern` (ILIKE literal; también usado por `ListUsers`).
+  **`CreateModule` retirado** (comando, endpoint y contrato): no se recrea. Auditoría de roles y módulos con antes/después.
+- **Decisiones:** `GET /api/admin/audit` reemplaza el parámetro `take` por `page`/`pageSize` (decisión 2); `AuditEntry` incluye `module` y `traceId`.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Estado WP3:** todas las rutas de `/api/auth/*` (salvo `options` y Google, de WP5) y `/api/admin/*` existen como slices.
+- **Pendiente WP3:** retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs` (su lógica ya vive en los slices) y revisar referencias colgantes; revisar `SecurityPolicyTests.cs`; auditar el estado real contra los criterios de §6.
+- **Siguiente acción:** `git rm` de los tres archivos heredados y auditoría de §6 punto por punto.

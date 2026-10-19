@@ -7,8 +7,6 @@ namespace Pastel.Modules.Identity.Features.ListUsers;
 
 internal sealed class ListUsersHandler(IdentityDbContext db)
 {
-    private const int MaxSearchLength = 100;
-
     public async Task<Result<PagedResult<UserSummary>>> HandleAsync(ListUsersQuery query, CancellationToken cancellationToken)
     {
         var status = query.Status?.Trim().ToLowerInvariant();
@@ -24,9 +22,9 @@ internal sealed class ListUsersHandler(IdentityDbContext db)
 
         if (!string.IsNullOrWhiteSpace(query.Search))
         {
-            var term = query.Search.Trim();
-            var pattern = "%" + Escape(term.Length > MaxSearchLength ? term[..MaxSearchLength] : term) + "%";
-            users = users.Where(x => EF.Functions.ILike(x.Email, pattern, "\\") || EF.Functions.ILike(x.DisplayName, pattern, "\\"));
+            var pattern = LikePattern.Contains(query.Search);
+            users = users.Where(x => EF.Functions.ILike(x.Email, pattern, LikePattern.EscapeCharacter)
+                || EF.Functions.ILike(x.DisplayName, pattern, LikePattern.EscapeCharacter));
         }
 
         if (!string.IsNullOrWhiteSpace(query.Role))
@@ -58,7 +56,4 @@ internal sealed class ListUsersHandler(IdentityDbContext db)
             x.Roles.OrderBy(r => r, StringComparer.Ordinal).ToArray())).ToArray();
         return new PagedResult<UserSummary>(items, page.Page, page.PageSize, total);
     }
-
-    /// <summary>Escapa los comodines de <c>ILIKE</c> para que la búsqueda sea literal.</summary>
-    private static string Escape(string value) => value.Replace("\\", "\\\\").Replace("%", "\\%").Replace("_", "\\_");
 }
