@@ -4,7 +4,7 @@ import { RouterProvider } from "react-router";
 import AppProviders from "@/app/AppProviders";
 import { router } from "@/app/router";
 import { installGlobalErrorHandlers } from "@/core/log";
-import "./styles.css";
+import "./core/design/tailwind.css";
 
 installGlobalErrorHandlers();
 

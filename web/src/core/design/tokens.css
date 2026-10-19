@@ -1,8 +1,72 @@
 /*
- * PUENTE TRANSITORIO (WP7 -> WP8). Expone como utilidades de Tailwind (bg-surface, text-fg, border-line, bg-accent...)
- * las variables de color que hoy define src/styles.css. `inline` mantiene el valor vivo: cambia con data-theme y con
- * data-module (module-themes.css). WP8 mueve los valores a este archivo, elimina styles.css y conserva estos nombres.
+ * Tokens de diseño (docs/DESIGN_SYSTEM.md). Fuente única de los valores de color, sombra y foco de la interfaz.
+ *   1. Variables del modo claro (`:root`) y oscuro (`:root[data-theme="dark"]`).
+ *   2. `@theme inline` las expone como utilidades de Tailwind (bg-surface, text-fg, border-line, bg-accent, ...);
+ *      `inline` mantiene el valor vivo: cambia con `data-theme` y con `data-module` (module-themes.css).
+ * Los valores de este archivo son los que tenía `src/styles.css` (eliminado en WP8): no cambia ningún color.
+ * Variables sin utilidad todavía (--sidebar-bg, --secondary*, --sand*, --coral*, --shadow*, --input, --focus,
+ * --accent-subtle) se conservan para los módulos de producto; se exponen como utilidad cuando algo las use.
  */
+:root {
+  color-scheme: light;
+  --app-bg: #f7f6f0;
+  --surface: #fffefa;
+  --surface-raised: #fffefa;
+  --sidebar-bg: #f0f2ec;
+  --text: #26342e;
+  --text-secondary: #526158;
+  --muted: #69756d;
+  --border: #e2e6de;
+  --border-strong: #d2d9cf;
+  --accent: #315b4a;
+  --accent-strong: #243d34;
+  --accent-soft: #e6eee5;
+  --accent-subtle: #e9f0ec;
+  --secondary: #789987;
+  --secondary-soft: #e9f0ec;
+  --sand: #79591c;
+  --sand-soft: #f2e5b5;
+  --coral: #e7a58d;
+  --coral-soft: #f6ddce;
+  --danger: #944735;
+  --danger-soft: #f6ddce;
+  --shadow: 0 16px 42px rgba(38, 52, 46, 0.075);
+  --shadow-soft: 0 4px 18px rgba(38, 52, 46, 0.045);
+  --input: #fffefa;
+  --focus: rgba(49, 91, 74, 0.28);
+  --on-accent: #ffffff;
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --app-bg: #191b20;
+  --surface: #22262d;
+  --surface-raised: #2b313a;
+  --sidebar-bg: #1e2229;
+  --text: #e9eae7;
+  --text-secondary: #c0c6cc;
+  --muted: #a2a9b1;
+  --border: #3b424e;
+  --border-strong: #56606d;
+  --accent: #a6c5b2;
+  --accent-strong: #d4e3d9;
+  --accent-soft: #34473d;
+  --accent-subtle: #2b323a;
+  --secondary: #bccbd6;
+  --secondary-soft: #303a45;
+  --sand: #e8c77a;
+  --sand-soft: #433a2a;
+  --coral: #f0b29b;
+  --coral-soft: #48332e;
+  --danger: #f0a5a0;
+  --danger-soft: #472f32;
+  --shadow: 0 18px 44px rgba(0, 0, 0, 0.3);
+  --shadow-soft: 0 4px 18px rgba(0, 0, 0, 0.19);
+  --input: #1d2128;
+  --focus: rgba(166, 197, 178, 0.48);
+  --on-accent: #19221d;
+}
+
 @theme inline {
   --color-app: var(--app-bg);
   --color-surface: var(--surface);
