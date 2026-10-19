@@ -15,4 +15,7 @@ internal static class IdentityEventIds
     public static readonly EventId PasswordChanged = new(1030, nameof(PasswordChanged));
     public static readonly EventId PrivilegeDenied = new(1040, nameof(PrivilegeDenied));
     public static readonly EventId AdminChange = new(1050, nameof(AdminChange));
+    public static readonly EventId GoogleLogin = new(1060, nameof(GoogleLogin));
+    public static readonly EventId GoogleLinked = new(1061, nameof(GoogleLinked));
+    public static readonly EventId GoogleRejected = new(1062, nameof(GoogleRejected));
 }

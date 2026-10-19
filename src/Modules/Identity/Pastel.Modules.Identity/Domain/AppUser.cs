@@ -29,4 +29,5 @@ internal sealed class AppUser
     public ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
     public ICollection<UserPermissionOverride> PermissionOverrides { get; set; } = new List<UserPermissionOverride>();
     public ICollection<RefreshToken> RefreshTokens { get; set; } = new List<RefreshToken>();
+    public ICollection<ExternalLogin> ExternalLogins { get; set; } = new List<ExternalLogin>();
 }

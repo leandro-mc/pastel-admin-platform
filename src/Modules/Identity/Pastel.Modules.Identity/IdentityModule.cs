@@ -82,6 +82,9 @@ internal sealed class IdentityModule : IPastelModule
         services.AddScoped<IAuditTrail, AuditTrail>();
         services.AddSingleton<IUniqueViolationSource, IdentityUniqueViolations>();
         services.AddIdentityAuthentication();
+        services.AddGoogleSignIn(configuration);
+        // El redirect_uri de Google debe coincidir exacto con App:PublicBaseUrl, sin depender de cómo llegue el proxy.
+        services.Configure<PublicBaseUrlOptions>(options => options.PathPrefixes.Add("/api/auth/google"));
         services.AddIdentityFeatures();
 
         services.AddSingleton<IPastelStartupTask, ProductionSecurityValidationTask>();
