@@ -125,3 +125,10 @@ Sesión iniciada sobre `origin/refactor/modular-foundation` `0959ff1`. El trabaj
 - [ ] `/api/auth/options` con `google` real.
 - [x] **Configuración (§8.3):** `compose.yaml` mapea `GOOGLE_CLIENT_ID`→`Authentication__Google__ClientId`, `GOOGLE_CLIENT_SECRET`→`Authentication__Google__ClientSecret`, `AUTH_GOOGLE_ALLOW_SIGNUP`→`Auth__Google__AllowSignUp` y ya traía `APP_PUBLIC_BASE_URL`→`App__PublicBaseUrl`; `.env.example` los declara vacíos (sin valores reales). nginx: `Host $http_host` y `X-Forwarded-Host $http_host` (conserva el puerto en el `redirect_uri`), y un `location` propio para `/api/auth/google/(start|complete|callback)` con zona `googlelimit` (20 r/min, ráfaga 6).
 - [x] `docs/SECURITY.md`: sección «Ingreso con Google» (flujo, reglas, motivo de invalidar la contraseña al vincular, errores, configuración).
+
+### WP5 — Verificación y limitaciones (Dev, sin compilar)
+
+- **No se compiló ni se ejecutó nada de WP5.** NuGet sigue inaccesible desde este entorno (`api.nuget.org` no resuelve), por lo que no se pueden restaurar EF Core, Npgsql, Serilog ni `Microsoft.AspNetCore.Authentication.Google`.
+- Verificación realizada: compilación parcial sin paquetes (SDK 10.0.112). **Limitación comprobada:** solo detecta errores de sintaxis y de declaraciones; **no revisa cuerpos de métodos** (no reportó `AddGoogle` aunque su paquete falta). No es evidencia de que compile.
+- Revisión manual de APIs: se corrigió `Items.GetValueOrDefault` (no existe para `IDictionary<string,string?>`); ahora usa `TryGetValue`.
+- **Para Build, puntos sensibles de WP5 al compilar:** (1) `AddGoogle`/`GoogleOptions` (`UsePkce`, `ClaimActions.MapJsonKey`, `CorrelationCookie`, `Events.OnRemoteFailure`); (2) `Results.Challenge(properties, [scheme])` con expresión de colección; (3) EF: consultas de `GoogleCompleteHandler` (`Include(User)`), índice único `(user_id, provider)`; (4) **migración:** generar con `dotnet ef` la que crea `identity.external_logins`; (5) con `AllowSignUp` y el rol `MEMBER` ausente el alta crea la cuenta sin rol (igual que `RegisterHandler`).
