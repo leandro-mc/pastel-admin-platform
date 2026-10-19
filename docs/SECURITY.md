@@ -38,3 +38,25 @@ En producción, la aplicación debe negarse a iniciar si la configuración de ar
 ## Límites conocidos de v0.1
 
 No incluye confirmación de correo, recuperación de contraseña por email, MFA ni notificaciones administrativas. El soporte SSO/OIDC se implementará en WP5 de la Fase 0; hasta entonces no debe considerarse disponible. La verificación de bloqueo/versionado de usuario se hace por petición; para una plataforma de mayor escala se puede optimizar con caché invalidable o un proveedor de identidad dedicado, manteniendo el mismo modelo de permisos. Antes de producción, agregar pruebas de integración de los flujos de seguridad, evaluación de dependencias y revisión independiente.
+
+## Contraseñas
+
+La política única del backend es de 12 a 128 caracteres; permite frases largas y espacios y no impone reglas de composición de mayúsculas, minúsculas, números o símbolos. Se rechazan las contraseñas incluidas en la lista común embebida. Los mensajes de validación se generan desde `PasswordPolicy`; el endpoint `/api/auth/options` y su consumo por el cliente quedan pendientes de la integración prevista en WP5/WP7. No duplique la política en el frontend.
+
+## Rotación de claves JWT
+
+Los access tokens incluyen el identificador `kid` en su cabecera. La API valida la clave actual y, opcionalmente, una clave anterior durante una rotación.
+
+Procedimiento recomendado:
+
+1. Genere una clave actual nueva y un `JWT_SIGNING_KEY_ID` nuevo.
+2. Configure temporalmente la clave anterior en `JWT_PREVIOUS_SIGNING_KEY` y su identificador original en `JWT_PREVIOUS_SIGNING_KEY_ID`. Los dos identificadores deben ser distintos y ambas claves deben tener al menos 32 bytes UTF-8.
+3. Tras desplegar y esperar más que la duración máxima del access token, retire la clave anterior y su identificador.
+4. No incluya ninguna clave real en Git, registros o artefactos. La rotación de la clave de firma también cambia la clave derivada usada por la ventana de gracia de refresh; evite rotar exactamente durante una petición concurrente de refresh.
+
+En el entorno `Production`, `ProductionSecurityValidationTask` impide continuar con el correo bootstrap `admin@pastel.local` o secretos conocidos de ejemplo. Configure credenciales propias mediante el almacén de secretos del entorno.
+
+## Retención de datos de sesión y auditoría
+
+`IdentityRetentionService` ejecuta limpieza periódica (24 horas por defecto): elimina refresh tokens expirados hace más del plazo configurado, borra el ciphertext del sucesor cuando vence su ventana de gracia y aplica la retención configurada de auditoría. `Identity:Retention:AuditLogRetentionDays` tiene un valor predeterminado de 365 días y admite entre 30 y 3650 días. Ajuste la retención según las necesidades de seguridad, soporte y cumplimiento del responsable de la plataforma.
+
