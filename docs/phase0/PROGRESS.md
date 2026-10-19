@@ -134,3 +134,10 @@ Después continúa WP5–WP10 en orden conforme a la especificación. No adelant
 - **Corrección publicada:** se agregó `using Pastel.Modules.Identity.Security;` a los tres archivos, sin cambiar la visibilidad de la interfaz ni moverla de módulo. Commits: `93b7246`, `862e763`, `d7ec2cf`.
 - **Validación pendiente:** la corrección se verificó por inspección del código remoto, pero aún no se ejecutó la compilación .NET/Docker. Actualizar la rama local y repetir `docker compose build`. Registrar la próxima salida como un nuevo bloqueo si procede; si ambos contenedores compilan, continuar con el arranque y la migración inicial EF Core de Identity.
 
+## Sexta incidencia Docker Build — 2026-10-18
+
+- **Resultado reportado por el usuario:** tras corregir las referencias de `IPrivilegeGuard`, el build se detuvo en `IdentityEndpoints.cs` (seis errores `CS1061` sobre `IEndpointRouteBuilder.MapGroup`) y `Common/IdentityErrors.cs` (`CS0103` para `PasswordPolicy`).
+- **Causa localizada por inspección estática:** `MapGroup` es una extensión de ASP.NET Core que necesita el namespace `Microsoft.AspNetCore.Builder`; `PasswordPolicy` está en `Pastel.Modules.Identity.Security`, que no se importaba en `IdentityErrors.cs`.
+- **Correcciones publicadas:** `IdentityEndpoints.cs` importa `Microsoft.AspNetCore.Builder` (commit `d346452e`); `IdentityErrors.cs` importa `Pastel.Modules.Identity.Security` (commit `264a8387`). Se preservaron las interfaces y la política de contraseña existentes.
+- **Validación pendiente:** estas correcciones están revisadas estáticamente pero no se han compilado en este entorno. Actualizar la rama y repetir `docker compose build`; no afirmar que el build está limpio hasta ver un resultado real. Si compila, continuar con el arranque y la migración inicial EF Core de Identity, aún pendiente.
+
