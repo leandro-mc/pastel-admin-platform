@@ -32,6 +32,13 @@ internal sealed class SessionIssuer(IdentityDbContext db, ITokenService tokens, 
         return new IssuedSession(access, accessExpires, refresh, refreshExpires, new SessionSummary(UserMapping.ToSummary(user), accessExpires));
     }
 
+    /// <summary>Emite acceso nuevo usando un refresh vigente ya creado por la primera petición concurrente; no agrega otra fila.</summary>
+    public IssuedSession ReissueAccessForExistingRefresh(AppUser user, string refreshToken, DateTimeOffset refreshExpiresAt)
+    {
+        var (access, accessExpires) = tokens.CreateAccessToken(user);
+        return new IssuedSession(access, accessExpires, refreshToken, refreshExpiresAt, new SessionSummary(UserMapping.ToSummary(user), accessExpires));
+    }
+
     /// <summary>Revoca todos los refresh tokens vigentes de la cuenta (cambio de contraseña, bloqueo, cambio de roles).</summary>
     public async Task RevokeAllAsync(Guid userId, CancellationToken cancellationToken)
     {
