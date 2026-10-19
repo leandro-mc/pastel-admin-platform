@@ -47,6 +47,16 @@ internal sealed class IdentityModule : IPastelModule
         services.AddOptions<JwtOptions>()
             .Bind(configuration.GetSection(JwtOptions.SectionName))
             .Validate(x => System.Text.Encoding.UTF8.GetByteCount(x.SigningKey) >= 32, "Jwt:SigningKey debe tener al menos 32 bytes UTF-8.")
+            .Validate(x => !string.IsNullOrWhiteSpace(x.SigningKeyId) && x.SigningKeyId.Length <= 64, "Jwt:SigningKeyId es obligatorio y admite hasta 64 caracteres.")
+            .Validate(x => string.IsNullOrWhiteSpace(x.PreviousSigningKey)
+                || System.Text.Encoding.UTF8.GetByteCount(x.PreviousSigningKey) >= 32, "Jwt:PreviousSigningKey debe tener al menos 32 bytes UTF-8.")
+            .Validate(x => string.IsNullOrWhiteSpace(x.PreviousSigningKey)
+                ? string.IsNullOrWhiteSpace(x.PreviousSigningKeyId)
+                : !string.IsNullOrWhiteSpace(x.PreviousSigningKeyId)
+                    && x.PreviousSigningKeyId.Length <= 64
+                    && !string.Equals(x.SigningKeyId, x.PreviousSigningKeyId, StringComparison.Ordinal)
+                    && !string.Equals(x.SigningKey, x.PreviousSigningKey, StringComparison.Ordinal),
+                "La clave JWT anterior debe tener un identificador distinto y una clave distinta de la actual.")
             .Validate(x => x.AccessTokenMinutes is >= 5 and <= 30, "La vida del token de acceso debe estar entre 5 y 30 minutos.")
             .ValidateOnStart();
         services.AddOptions<AuthOptions>()
@@ -67,6 +77,7 @@ internal sealed class IdentityModule : IPastelModule
         services.AddIdentityAuthentication();
         services.AddIdentityFeatures();
 
+        services.AddSingleton<IPastelStartupTask, ProductionSecurityValidationTask>();
         services.AddSingleton<IPastelStartupTask, CatalogSyncTask>();
         services.AddSingleton<IPastelStartupTask, BootstrapAdminTask>();
 
