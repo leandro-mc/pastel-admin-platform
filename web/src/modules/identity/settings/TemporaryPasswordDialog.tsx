@@ -28,7 +28,7 @@ export function TemporaryPasswordDialog({
     <Dialog title={t.title} description={t.hint} onClose={onClose}>
       <p
         aria-label={t.title}
-        className="select-all rounded-xl border border-line-strong bg-app px-4 py-3 text-center font-mono text-lg text-fg"
+        className="rounded-xl border border-line-strong bg-app px-4 py-3 text-center font-mono text-lg text-fg select-all"
       >
         {password}
       </p>
