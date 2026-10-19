@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -17,6 +18,7 @@ using Pastel.Platform.Modules;
 using Pastel.Platform.Observability;
 using Pastel.Platform.Security;
 using Serilog;
+using Pastel.SharedKernel;
 using Serilog.Formatting.Compact;
 
 namespace Pastel.Platform.Hosting;
@@ -50,7 +52,17 @@ public static class PastelHostingExtensions
         var services = builder.Services;
         var configuration = builder.Configuration;
 
-        services.AddSingleton<UniqueViolationMap>();
+        services.TryAddSingleton<IClock, SystemClock>();
+        services.AddSingleton(provider =>
+        {
+            var map = new UniqueViolationMap();
+            foreach (var source in provider.GetServices<IUniqueViolationSource>())
+            {
+                source.Register(map);
+            }
+
+            return map;
+        });
         services.AddExceptionHandler<PastelExceptionHandler>();
         services.AddProblemDetails(options => options.CustomizeProblemDetails = context =>
         {

@@ -154,3 +154,41 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Observaciones para WP3/WP5 (no son defectos de WP2):** Identity debe llenar `ForcePasswordChangeOptions.AllowedPaths`, registrar `UniqueViolationMap` (correo, nombre de rol) y, en WP5, `PublicBaseUrlOptions.PathPrefixes`.
 - **Validaciones ejecutadas:** lectura de código. No se ejecutó compilación (en esta sesión `dotnet` no está instalado y NuGet no es accesible).
 - **Siguiente acción:** WP3: `IdentityModule` + `BootstrapAdminTask`.
+
+### S4-02 · WP3.4 · Piezas comunes, `BootstrapAdminTask` e `IdentityModule`
+- **Último commit conocido antes:** `dd3ae22` (S4-01).
+- **Cambios (Platform):** `IUniqueViolationSource` (cada módulo registra sus índices únicos al crear `UniqueViolationMap`; resuelve la observación de S4-01).
+- **Cambios (Identity):** `Common/IdentityErrors` (códigos `identity.*`), `Common/FieldErrors`, `Common/Contracts` (mismos campos JSON que los contratos anteriores; `AuditEntry` suma `module` y `traceId`),
+  `Common/UserMapping`; `Security/PasswordPolicy` (regla vigente; WP4 la reemplaza); `Startup/BootstrapAdminTask` (orden 20, crea la cuenta de arranque o restaura el rol y lo audita como `identity.bootstrap.admin_restored`;
+  no registra el correo); `IdentityModule` (`[assembly: PastelModule]`, DbContext, opciones validadas, hasher con 600 000 iteraciones, evaluador/usuario actual/auditoría, tareas de arranque, `Member` con `dashboard.view`
+  como rol sugerido, rutas permitidas con contraseña temporal: `/api/auth/me`, `/change-password`, `/logout`); `Features/IdentityEndpoints` (punto de enlace, aún sin slices).
+- **Decisiones:** (1) la contraseña actual incorrecta en cambio de contraseña pasa de 401 a **400** con `identity.password.current_incorrect` (un 401 dispararía el refresco automático de WP7). (2) `Login` y `Register` respetan `Auth:Local:*` (registro desactivado por defecto, plan §2).
+  (3) Los nombres de índice únicos se buscan por fragmento (`users_NormalizedEmail`, `roles_NormalizedName`) porque las columnas siguen con nombre por defecto.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Sin compilar:** todo lo anterior.
+- **Pendiente WP3:** slices (`Login`, `Register`, `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`, `GetCsrfToken`, administración de usuarios/roles/módulos/permisos/auditoría), retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs` cuando sus slices lo sustituyan, adaptar `SecurityPolicyTests.cs` (movido con `git mv`; lo adapta Build).
+- **Siguiente acción:** `Security/SessionCookies` + `SessionIssuer` y los slices de `/api/auth/*`.
+
+### S4-03 · WP3.5 · Infraestructura de sesión y slices `GetCsrfToken`, `Login`, `Register`
+- **Último commit conocido antes:** `5ad5555` (S4-02).
+- **Cambios (Platform):** `IClock` se registra como `SystemClock` en `AddPastelSecurity` (antes no estaba registrado).
+- **Cambios (Identity):** `Security/TokenSecrets` (hash SHA-256 y secretos opacos), `Security/SessionCookies` (mismas cookies y atributos que antes; `Cache-Control: no-store`),
+  `Security/SessionIssuer` (emite acceso + refresh en la transacción de quien llama; revoca refresh tokens), `JwtBearerSetup` proyecta **en la misma consulta** el estado de sesión y el resumen de la persona
+  (`HttpContext.GetSessionUser()`), de modo que `/api/auth/me` no hace una consulta extra de usuario (meta B1: 2 consultas = estado + permisos).
+  Slices: `Features/GetCsrfToken` (`GET /api/auth/csrf`), `Features/Login` (`POST /api/auth/login`), `Features/Register` (`POST /api/auth/register`, 201); manejadores con `Result`, sin `ex.Message`, sin correo en logs (`LogHasher`).
+  `Features/IdentityEndpoints` ya enlaza los tres bajo `/api/auth`.
+- **Decisiones:** el ingreso de una cuenta sin `PasswordHash` (solo Google) falla con el mismo error genérico; contraseñas de más de 256 caracteres se rechazan antes de calcular el hash; el registro devuelve errores por campo (`identity.register.invalid`).
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Pendiente WP3:** slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword` y toda la administración; retirar `PrivilegeGuard.cs`, `SessionService.cs`, `DatabaseSeeder.cs`.
+- **Siguiente acción:** slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`.
+
+### S4-04 · WP3.6 · Slices `Refresh`, `Logout`, `GetCurrentUser`, `ChangePassword`
+- **Último commit conocido antes:** `b9c8849` (S4-03).
+- **Cambios (Identity):** `Features/Refresh` (rotación en transacción serializable con `TransactionRunner`; la reutilización de un token rotado revoca todas las sesiones y sube `TokenVersion`; ya no se rechaza por `LockoutEnd`, decisión 4),
+  `Features/Logout` (público; revoca el refresh y audita si hay sesión), `Features/GetCurrentUser` (`GET /api/auth/me` con `RequireSession`, usa el resumen de la petición y `IPermissionEvaluator`; respuesta `{ user, permissions }`),
+  `Features/ChangePassword` (204, revoca refresh tokens, `TokenVersion++`, auditoría con antes/después sin secretos, limitado por `auth` de tasa). Todo enlazado en `IdentityEndpoints`.
+- **Rutas `/api/auth/*` completas:** `csrf`, `login`, `register`, `refresh`, `logout`, `me`, `change-password`. `/api/auth/options` y `/api/auth/google/*` corresponden a WP5.
+- **Decisiones:** se mantienen los nombres de acción de auditoría anteriores (`auth.login.*`, `auth.refresh.*`, `user.password.changed`); la ventana de gracia de refresh (S2) queda para WP4.
+- **Validaciones ejecutadas:** `git diff --check`. Sin compilar.
+- **Pendiente WP3:** administración (usuarios, roles, permisos, módulos, auditoría) por slices; retirar `PrivilegeGuard.cs`, `SessionService.cs` y `DatabaseSeeder.cs`.
+- **Siguiente acción:** slices de usuarios: `ListUsers` (paginado y filtrado en servidor), `CreateUser`, `SetUserRoles`, `GetUserPermissions`, `SetUserPermissions`, `BlockUser`, `UnblockUser`, `ResetUserPassword`.
