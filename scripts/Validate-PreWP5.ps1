@@ -175,6 +175,10 @@ try {
         throw "POSTGRES_DB no puede ser '$testDatabase': esa base está reservada exclusivamente para pruebas."
     }
 
+    # Start only PostgreSQL first so Compose can resolve the published port reliably.
+    # This does not start/rebuild the API or web containers and does not remove the database volume.
+    Invoke-RequiredNative -Label "Asegurar que PostgreSQL local esté iniciado" -Executable "docker" -Arguments @("compose", "up", "-d", "db")
+
     # Require the port to be bound to loopback; do not test against an exposed remote database.
     $publishedEndpointLines = & docker compose port db 5432
     if ($LASTEXITCODE -ne 0) {
@@ -185,8 +189,6 @@ try {
         throw "El puerto PostgreSQL debe estar ligado únicamente a loopback (127.0.0.1/localhost/::1). Endpoint actual: '$publishedEndpoint'."
     }
     $hostPort = [int]$Matches["port"]
-
-    Invoke-RequiredNative -Label "Asegurar que PostgreSQL local esté iniciado" -Executable "docker" -Arguments @("compose", "up", "-d", "db")
 
     Write-Section "Esperar a que PostgreSQL esté listo"
     $databaseReady = $false
