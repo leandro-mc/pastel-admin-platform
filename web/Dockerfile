@@ -1,4 +1,7 @@
 FROM node:24-alpine AS build
+# Subconjunto de módulos del frontend ("*" = todos). Lo consume el plugin virtual:pastel-modules (WP7).
+ARG PASTEL_MODULES=*
+ENV PASTEL_MODULES=${PASTEL_MODULES}
 WORKDIR /web
 COPY web/package.json ./
 RUN npm install --no-audit --no-fund

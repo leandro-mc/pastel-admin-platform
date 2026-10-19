@@ -26,7 +26,7 @@ Rama: `refactor/modular-foundation`. Base: `origin/dev`. Este archivo permite re
 | WP | Estado | Compilación |
 |---|---|---|
 | WP1 | Fuera de alcance de Dev (lo hace Build) | n/a |
-| WP2 | En curso. `Pastel.SharedKernel` y `Pastel.Platform` escritos. Falta Host (`Program.cs`, csproj, appsettings, Dockerfile) | SharedKernel: compilado. Platform: solo revisión parcial |
+| WP2 | En curso. `SharedKernel`, `Platform` y `Host` (`Program.cs`, csproj, appsettings, Dockerfile) escritos. Falta compose/.env/nginx de `PASTEL_MODULES`, `docs` y revisión final | SharedKernel: compilado. Platform: solo revisión parcial |
 | WP3 | En curso. Archivos movidos con `git mv` a `src/Modules/Identity/Pastel.Modules.Identity/`; **su contenido aún es el original y debe reescribirse** | Sin compilar |
 | WP4–WP10 | Pendientes | — |
 
@@ -69,3 +69,35 @@ Pendiente (WP10).
 
 ## Próximo paso
 Reescribir contenido de Identity (WP3) y el Host (WP2), luego WP4 y WP5; publicar C2.
+
+---
+
+## Bitácora de checkpoints (sesión 3 en adelante)
+
+Formato: último commit conocido antes del trabajo → WP/subobjetivo → cambios → decisiones → validaciones → limitaciones → pendientes → siguiente acción.
+El SHA que contiene cada entrada se informa en la entrega, no aquí.
+
+### S3-01 · WP2 · Host
+- **Último commit conocido antes:** `81eb62f`.
+- **Cambios:** `Pastel.Host` reescrito. `Program.cs` queda en ~25 líneas encadenando `AddPastelObservability`, `AddPastelSecurity`, `AddPastelModules`,
+  `UsePastelPipeline`, `MapPastelEndpoints`, `InitializePastelAsync` (todo definido en `Pastel.Platform`). `Pastel.Host.csproj`: referencia a Platform e Identity,
+  más referencias por *glob* a `../../Modules/*/Pastel.Modules.*/Pastel.Modules.*.csproj` excluyendo Identity, `*.Tests` y `*.Contracts`, filtradas por `PastelModules`
+  (por defecto `*`; acepta `;` o `,`, carpeta o código, sin distinguir mayúsculas). `appsettings*.json` con Serilog, `Auth:*`, `ReverseProxy:*`, `App:PublicBaseUrl`.
+  `Dockerfile` con `ARG PASTEL_MODULES` y entrada `Pastel.Host.dll`.
+- **Decisiones:** el Dockerfile copia `src/` completo antes de `restore` (el *glob* impide copiar solo los csproj); se pierde parte del caché de capas, se gana coherencia con el subconjunto de módulos.
+  Normalización del filtro con `TextInfo.ToTitleCase` (válida porque las carpetas de módulos son una sola palabra en PascalCase).
+- **Validaciones ejecutadas:** ninguna de compilación (sin `dotnet` ni NuGet). Solo revisión de lectura.
+- **Sin compilar / a verificar por Build:** sintaxis MSBuild del filtro (`ToTitleCase` anidado, transformación de `PastelModuleName`), `dotnet build -p:PastelModules=Identity`
+  y `-p:PastelModules=Brisa;Balance`. `Microsoft.AspNetCore.OpenApi` sin versión (versión central en `Directory.Packages.props`).
+- **Pendiente WP2:** `PASTEL_MODULES` en `compose.yaml`/`.env.example`, claves de configuración nuevas en compose, revisar `Pastel.Platform` contra el plan §5 (lista de verificación).
+- **Siguiente acción:** compose y `.env.example`; luego lista de verificación de §5 contra `Platform`.
+
+### S3-02 · WP2 · Compose, `.env.example` y Dockerfiles
+- **Último commit conocido antes:** `98d9d71` (S3-01).
+- **Cambios:** `compose.yaml` apunta a `src/Host/Pastel.Host/Dockerfile` y pasa `PASTEL_MODULES` como argumento a `api` y `web`; sustituye `ReverseProxy__TrustedAddress` (IP fija)
+  por `ReverseProxy__TrustedNetworks` (subred); añade `App__PublicBaseUrl`, `AllowedHosts` y `Auth__Local__*` por variable. `web/Dockerfile` recibe `ARG/ENV PASTEL_MODULES`.
+  `.env.example` documenta las variables nuevas (sin valores reales).
+- **Decisiones:** `PASTEL_MODULES` admite comas en compose/.env (el csproj las convierte a `;`). Las IP estáticas de compose se mantienen hasta WP9 (la confianza ya no depende de ellas).
+- **Validaciones ejecutadas:** `git diff --check` limpio. No se ejecutó `docker compose config` (Docker no disponible).
+- **Pendiente WP2:** verificar §5 contra `Pastel.Platform` (lista de comprobación); `web/Dockerfile` seguirá con `npm install` hasta WP9 (`npm ci`).
+- **Siguiente acción:** lista de verificación de WP2 §5 contra el código de `Platform`.
