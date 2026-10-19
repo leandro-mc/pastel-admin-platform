@@ -1,13 +1,13 @@
+# Contexto de compilación: la raíz del repositorio.
+# PASTEL_MODULES: subconjunto de módulos a incluir ("*" = todos; Identity siempre). Ver docs/SPLIT_GUIDE.md.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+ARG PASTEL_MODULES=*
 WORKDIR /src
-COPY Directory.Build.props global.json Pastel.slnx ./
-COPY src/Pastel.Domain/Pastel.Domain.csproj src/Pastel.Domain/
-COPY src/Pastel.Application/Pastel.Application.csproj src/Pastel.Application/
-COPY src/Pastel.Infrastructure/Pastel.Infrastructure.csproj src/Pastel.Infrastructure/
-COPY src/Pastel.Api/Pastel.Api.csproj src/Pastel.Api/
-RUN dotnet restore src/Pastel.Api/Pastel.Api.csproj
+COPY Directory.Build.props Directory.Packages.props global.json Pastel.slnx ./
 COPY src/ src/
-RUN dotnet publish src/Pastel.Api/Pastel.Api.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false
+RUN dotnet restore src/Host/Pastel.Host/Pastel.Host.csproj "-p:PastelModules=${PASTEL_MODULES}"
+RUN dotnet publish src/Host/Pastel.Host/Pastel.Host.csproj --configuration Release --no-restore --output /app/publish \
+    /p:UseAppHost=false "-p:PastelModules=${PASTEL_MODULES}"
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 WORKDIR /app
@@ -17,4 +17,4 @@ ENV ASPNETCORE_URLS=http://+:8080 \
 COPY --from=build /app/publish .
 USER $APP_UID
 EXPOSE 8080
-ENTRYPOINT ["dotnet", "Pastel.Api.dll"]
+ENTRYPOINT ["dotnet", "Pastel.Host.dll"]
