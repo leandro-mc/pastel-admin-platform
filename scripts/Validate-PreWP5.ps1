@@ -75,8 +75,8 @@ function Invoke-NativeCheck {
     }
 
     if ($script:LastExitCode -ne 0) {
-        $script:Failures.Add("$Label (código $script:LastExitCode)") | Out-Null
-        Write-Host "FALLÓ: $Label (código $script:LastExitCode)" -ForegroundColor Red
+        $script:Failures.Add("$Label (codigo $script:LastExitCode)") | Out-Null
+        Write-Host "FALLO: $Label (codigo $script:LastExitCode)" -ForegroundColor Red
     }
     else {
         Write-Host "Correcto: $Label" -ForegroundColor Green
@@ -102,7 +102,7 @@ function Invoke-RequiredNative {
     }
 
     if ($code -ne 0) {
-        throw "$Label falló (código $code). Se detiene la preparación por seguridad."
+        throw "$Label fallo (codigo $code). Se detiene la preparacion por seguridad."
     }
 }
 
@@ -127,33 +127,33 @@ try {
         throw "Ejecute el script desde una copia del repositorio que contenga Pastel.slnx."
     }
     if (-not (Test-Path (Join-Path $script:RepoRoot ".env"))) {
-        throw "Falta .env. Créelo a partir de .env.example y configure los secretos locales antes de ejecutar la validación."
+        throw "Falta .env. Creelo a partir de .env.example y configure los secretos locales antes de ejecutar la validacion."
     }
 
     foreach ($tool in @("dotnet", "docker")) {
         if (-not (Get-Command $tool -ErrorAction SilentlyContinue)) {
-            throw "No se encontró '$tool' en PATH."
+            throw ("Required command not found in PATH: {0}" -f $tool)
         }
     }
     if (-not $SkipFrontendChecks -and -not (Get-Command "npm.cmd" -ErrorAction SilentlyContinue)) {
-        throw "No se encontró npm.cmd. Instale Node.js/npm o ejecute con -SkipFrontendChecks."
+        throw "No se encontro npm.cmd. Instale Node.js/npm o ejecute con -SkipFrontendChecks."
     }
 
     # Validate Compose without printing its resolved values (which include secrets).
     $null = & docker compose config --quiet
     if ($LASTEXITCODE -ne 0) {
-        throw "docker compose config --quiet falló. Revise .env y compose.yaml; no se imprimieron secretos."
+        throw "docker compose config --quiet fallo. Revise .env y compose.yaml; no se imprimieron secretos."
     }
 
     $composeJsonLines = & docker compose config --format json
     if ($LASTEXITCODE -ne 0) {
-        throw "No se pudo leer la configuración efectiva de Docker Compose."
+        throw "No se pudo leer la configuracion efectiva de Docker Compose."
     }
     $script:ComposeConfig = (($composeJsonLines | Out-String) | ConvertFrom-Json)
 
     $dbService = $script:ComposeConfig.services.db
     if ($null -eq $dbService) {
-        throw "compose.yaml no declara el servicio PostgreSQL 'db'."
+        throw "compose.yaml does not declare the PostgreSQL service db."
     }
 
     $dbEnvironment = $dbService.environment
@@ -161,7 +161,7 @@ try {
     $dbUserProperty = $dbEnvironment.PSObject.Properties["POSTGRES_USER"]
     $dbPasswordProperty = $dbEnvironment.PSObject.Properties["POSTGRES_PASSWORD"]
     if ($null -eq $dbNameProperty -or $null -eq $dbUserProperty -or $null -eq $dbPasswordProperty) {
-        throw "La configuración efectiva del servicio db debe definir POSTGRES_DB, POSTGRES_USER y POSTGRES_PASSWORD."
+        throw "La configuracion efectiva del servicio db debe definir POSTGRES_DB, POSTGRES_USER y POSTGRES_PASSWORD."
     }
 
     $configuredDatabase = [string]$dbNameProperty.Value
@@ -170,15 +170,15 @@ try {
     if ([string]::IsNullOrWhiteSpace($configuredDatabase) -or
         [string]::IsNullOrWhiteSpace($dbUser) -or
         [string]::IsNullOrWhiteSpace($password)) {
-        throw "La configuración PostgreSQL efectiva tiene valores vacíos."
+        throw "La configuracion PostgreSQL efectiva tiene valores vacios."
     }
     if ($configuredDatabase -ieq $testDatabase) {
-        throw "POSTGRES_DB no puede ser '$testDatabase': esa base está reservada exclusivamente para pruebas."
+        throw ("POSTGRES_DB must not match the reserved test database: {0}" -f $testDatabase)
     }
 
     # Start only PostgreSQL first so Compose can resolve the published port reliably.
     # This does not start/rebuild the API or web containers and does not remove the database volume.
-    Invoke-RequiredNative -Label "Asegurar que PostgreSQL local esté iniciado" -Executable "docker" -Arguments @("compose", "up", "-d", "db")
+    Invoke-RequiredNative -Label "Asegurar que PostgreSQL local este iniciado" -Executable "docker" -Arguments @("compose", "up", "-d", "db")
 
     # Require the port to be bound to loopback; do not test against an exposed remote database.
     $publishedEndpointLines = & docker compose port db 5432
@@ -187,11 +187,12 @@ try {
     }
     $publishedEndpoint = (($publishedEndpointLines | Out-String).Trim() -split "\r?\n")[0].Trim()
     if ($publishedEndpoint -notmatch '^(127\.0\.0\.1|localhost|\[::1\]):(?<port>[0-9]+)$') {
-        throw "El puerto PostgreSQL debe estar ligado únicamente a loopback (127.0.0.1/localhost/::1). Endpoint actual: '$publishedEndpoint'."
+        $message = 'PostgreSQL port must be bound to loopback only. Found endpoint: {0}' -f $publishedEndpoint
+        throw $message
     }
     $hostPort = [int]$Matches["port"]
 
-    Write-Section "Esperar a que PostgreSQL esté listo"
+    Write-Section "Esperar a que PostgreSQL este listo"
     $databaseReady = $false
     for ($attempt = 1; $attempt -le 60; $attempt++) {
         $null = & docker compose exec -T db pg_isready -U $dbUser -d $configuredDatabase 2>&1
@@ -205,11 +206,11 @@ try {
         $null = & docker compose ps
         throw "PostgreSQL no estuvo listo en 120 segundos. Revise docker compose logs db."
     }
-    Write-Host "PostgreSQL está listo." -ForegroundColor Green
+    Write-Host "PostgreSQL esta listo." -ForegroundColor Green
 
     # Only this fixed, dedicated test database is dropped/recreated. The app database and volume remain intact.
-    Invoke-RequiredNative -Label "Recrear únicamente la base aislada de integración '$testDatabase'" -Executable "docker" -Arguments @("compose", "exec", "-T", "db", "psql", "-U", $dbUser, "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", "DROP DATABASE IF EXISTS $testDatabase WITH (FORCE);")
-    Invoke-RequiredNative -Label "Crear la base aislada de integración '$testDatabase'" -Executable "docker" -Arguments @("compose", "exec", "-T", "db", "psql", "-U", $dbUser, "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", "CREATE DATABASE $testDatabase;")
+    Invoke-RequiredNative -Label "Recreate isolated integration test database" -Executable "docker" -Arguments @("compose", "exec", "-T", "db", "psql", "-U", $dbUser, "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", "DROP DATABASE IF EXISTS $testDatabase WITH (FORCE);")
+    Invoke-RequiredNative -Label "Create isolated integration test database" -Executable "docker" -Arguments @("compose", "exec", "-T", "db", "psql", "-U", $dbUser, "-d", "postgres", "-v", "ON_ERROR_STOP=1", "-c", "CREATE DATABASE $testDatabase;")
 
     $script:ConnectionBuilder = [System.Data.Common.DbConnectionStringBuilder]::new()
     $script:ConnectionBuilder["Host"] = "127.0.0.1"
@@ -224,12 +225,12 @@ try {
     New-Item -ItemType Directory -Path $script:TestResultsDirectory -Force | Out-Null
 
     # Backend: Release build/test, plus format validation and strict detection of skipped integration tests.
-    Invoke-NativeCheck -Label "Restaurar solución .NET" -Executable "dotnet" -Arguments @("restore", "Pastel.slnx")
+    Invoke-NativeCheck -Label "Restaurar solucion .NET" -Executable "dotnet" -Arguments @("restore", "Pastel.slnx")
     $restoreSucceeded = ($script:LastExitCode -eq 0)
 
     if ($restoreSucceeded) {
         Invoke-NativeCheck -Label "Verificar formato .NET" -Executable "dotnet" -Arguments @("format", "Pastel.slnx", "--verify-no-changes", "--no-restore")
-        Invoke-NativeCheck -Label "Compilar solución en Release" -Executable "dotnet" -Arguments @("build", "Pastel.slnx", "--configuration", "Release", "--no-restore")
+        Invoke-NativeCheck -Label "Compilar solucion en Release" -Executable "dotnet" -Arguments @("build", "Pastel.slnx", "--configuration", "Release", "--no-restore")
         $buildSucceeded = ($script:LastExitCode -eq 0)
 
         if ($buildSucceeded) {
@@ -245,7 +246,7 @@ try {
             foreach ($trxFile in $trxFiles) {
                 try {
                     [xml]$trx = Get-Content -Path $trxFile.FullName -Raw
-                    $counters = $trx.SelectSingleNode("//*[local-name()='Counters']")
+                    $counters = $trx.SelectSingleNode('//*[local-name()="Counters"]')
                     if ($null -eq $counters) {
                         continue
                     }
@@ -264,18 +265,18 @@ try {
             Write-Section "Resumen verificable de pruebas .NET"
             Write-Host "Resultados TRX: $($trxFiles.Count); total: $totalTests; aprobadas: $passedTests; fallidas/errores: $failedTests; no ejecutadas/omitidas: $notExecutedTests"
             if ($trxParseFailed -or $trxFiles.Count -eq 0 -or $totalTests -lt 21 -or $failedTests -ne 0 -or $notExecutedTests -ne 0 -or $passedTests -ne $totalTests) {
-                $script:Failures.Add("Los resultados TRX no confirman que todas las pruebas .NET (mínimo 21) pasaron sin omisiones.") | Out-Null
+                $script:Failures.Add("Los resultados TRX no confirman que todas las pruebas .NET (minimo 21) pasaron sin omisiones.") | Out-Null
             }
             else {
-                Write-Host "Correcto: ninguna prueba .NET quedó omitida." -ForegroundColor Green
+                Write-Host "Correcto: ninguna prueba .NET quedo omitida." -ForegroundColor Green
             }
         }
         else {
-            $script:Failures.Add("No se ejecutaron pruebas .NET porque falló la compilación.") | Out-Null
+            $script:Failures.Add("No se ejecutaron pruebas .NET porque fallo la compilacion.") | Out-Null
         }
     }
     else {
-        $script:Failures.Add("Se omitieron formato, compilación y pruebas .NET porque falló la restauración.") | Out-Null
+        $script:Failures.Add("Se omitieron formato, compilacion y pruebas .NET porque fallo la restauracion.") | Out-Null
     }
 
     if (-not $SkipFrontendChecks) {
@@ -288,19 +289,19 @@ try {
             Invoke-NativeCheck -Label "Analizar frontend con ESLint" -Executable "npm.cmd" -Arguments @("run", "lint") -WorkingDirectory $webDirectory
         }
         else {
-            $script:Failures.Add("Se omitieron format:check/build/lint del frontend porque falló npm ci.") | Out-Null
+            $script:Failures.Add("Se omitieron format:check/build/lint del frontend porque fallo npm ci.") | Out-Null
         }
     }
     else {
         Write-Host "Frontend omitido por -SkipFrontendChecks."
     }
 
-    Invoke-NativeCheck -Label "Validar la configuración final de Docker Compose" -Executable "docker" -Arguments @("compose", "config", "--quiet")
+    Invoke-NativeCheck -Label "Validar la configuracion final de Docker Compose" -Executable "docker" -Arguments @("compose", "config", "--quiet")
     if (-not $SkipContainerBuild) {
-        Invoke-NativeCheck -Label "Construir las imágenes Docker (sin iniciar la API sobre la base de desarrollo)" -Executable "docker" -Arguments @("compose", "build")
+        Invoke-NativeCheck -Label "Construir las imagenes Docker (sin iniciar la API sobre la base de desarrollo)" -Executable "docker" -Arguments @("compose", "build")
     }
     else {
-        Write-Host "Build de imágenes omitido por -SkipContainerBuild."
+        Write-Host "Build de imagenes omitido por -SkipContainerBuild."
     }
 
     # Presence gate for requirements; QA must also inspect the actual assertions.
@@ -338,30 +339,30 @@ try {
         }
         else {
             $script:CoverageIncomplete = $true
-            Write-Warning "-AllowIncompleteCoverage es solo para diagnóstico; no significa que WP3/WP4 estén cerrados ni autoriza considerar listo WP5."
+            Write-Warning "-AllowIncompleteCoverage es solo para diagnostico; no significa que WP3/WP4 esten cerrados ni autoriza considerar listo WP5."
         }
     }
     else {
-        Write-Host "Correcto: todos los IDs de cobertura exigidos aparecen en el código de pruebas." -ForegroundColor Green
+        Write-Host "Correcto: todos los IDs de cobertura exigidos aparecen en el codigo de pruebas." -ForegroundColor Green
     }
 
     Write-Section "Resumen final"
     Write-Host "Los resultados TRX quedaron en: $script:TestResultsDirectory"
-    Write-Host "La base '$testDatabase' se conserva para inspección y se recreará al volver a ejecutar este script."
-    Write-Host "La base configurada de desarrollo '$configuredDatabase' y el volumen PostgreSQL NO se borraron."
+    Write-Host ("The test database {0} is retained for inspection and recreated on the next run." -f $testDatabase)
+    Write-Host ("The development database {0} and the PostgreSQL volume were not deleted." -f $configuredDatabase)
     if ($script:Failures.Count -gt 0) {
-        Write-Host "VALIDACIÓN NO APROBADA:" -ForegroundColor Red
+        Write-Host "VALIDACION NO APROBADA:" -ForegroundColor Red
         foreach ($failure in $script:Failures) {
             Write-Host "  - $failure" -ForegroundColor Red
         }
-        throw "La validación previa a WP5 no está completa. Corrija los fallos y vuelva a ejecutar el script."
+        throw "La validacion previa a WP5 no esta completa. Corrija los fallos y vuelva a ejecutar el script."
     }
 
     if ($script:CoverageIncomplete) {
-        Write-Host "VALIDACIÓN TÉCNICA TERMINADA, PERO LA COBERTURA PREVIA A WP5 SIGUE INCOMPLETA. NO inicie WP5." -ForegroundColor Yellow
+        Write-Host "VALIDACION TECNICA TERMINADA, PERO LA COBERTURA PREVIA A WP5 SIGUE INCOMPLETA. NO inicie WP5." -ForegroundColor Yellow
     }
     else {
-        Write-Host "VALIDACIÓN TÉCNICA Y COBERTURA PREVIA A WP5 APROBADAS." -ForegroundColor Green
+        Write-Host "VALIDACION TECNICA Y COBERTURA PREVIA A WP5 APROBADAS." -ForegroundColor Green
     }
 }
 finally {
