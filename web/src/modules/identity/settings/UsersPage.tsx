@@ -112,9 +112,9 @@ export function Component() {
   return (
     <section aria-labelledby="users-title" className={panel}>
       <div className="flex flex-wrap items-end justify-between gap-3 p-4">
-        <h2 id="users-title" className="text-lg font-semibold text-fg">
+        <h1 id="users-title" className="text-lg font-semibold text-fg">
           {t.title}
-        </h2>
+        </h1>
         {hasPermission(identityPermissions.usersCreate) ? (
           <button
             type="button"

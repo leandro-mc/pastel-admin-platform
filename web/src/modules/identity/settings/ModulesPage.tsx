@@ -39,9 +39,9 @@ export function Component() {
   return (
     <section aria-labelledby="modules-title" className={panel}>
       <div className="p-4">
-        <h2 id="modules-title" className="text-lg font-semibold text-fg">
+        <h1 id="modules-title" className="text-lg font-semibold text-fg">
           {t.title}
-        </h2>
+        </h1>
         <p className="text-sm text-muted">{t.subtitle}</p>
       </div>
       <QueryState

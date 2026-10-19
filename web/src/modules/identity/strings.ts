@@ -1,5 +1,11 @@
 /** Textos de Identity (español de Costa Rica, trato de usted, sin voseo). */
 export const identityStrings = {
+  module: {
+    name: "Configuración",
+    tagline: "Usuarios, roles, módulos y auditoría",
+    noSections:
+      "Su cuenta no tiene permisos para ver ninguna sección de Configuración. Si lo necesita, solicítelo a administración.",
+  },
   validation: {
     emailRequired: "Escriba su correo electrónico.",
     emailInvalid: "Escriba un correo válido, por ejemplo nombre@correo.com.",

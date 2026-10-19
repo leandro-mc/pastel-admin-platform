@@ -1,4 +1,5 @@
 import { NavLink, Outlet } from "react-router";
+import { useAuth } from "@/core/auth";
 import type { ModuleManifest } from "@/core/modules/types";
 import { shellStrings } from "../strings";
 import Breadcrumbs from "./Breadcrumbs";
@@ -15,7 +16,12 @@ export default function ModuleLayout({
 }: {
   manifest: ModuleManifest;
 }) {
-  const hasNav = manifest.nav.length > 0;
+  const { hasPermission } = useAuth();
+  const items = manifest.nav.filter(
+    (item) =>
+      !item.requiredPermission || hasPermission(item.requiredPermission),
+  );
+  const hasNav = items.length > 0;
   return (
     <div data-module={manifest.code} className={hasNav ? "md:flex" : undefined}>
       {hasNav ? (
@@ -23,7 +29,7 @@ export default function ModuleLayout({
           aria-label={shellStrings.moduleNav(manifest.name)}
           className="fixed inset-x-0 bottom-0 z-30 flex gap-1 border-t border-line bg-surface p-1 md:static md:min-h-[calc(100vh-3.5rem)] md:w-56 md:shrink-0 md:flex-col md:gap-1 md:border-r md:border-t-0 md:p-3"
         >
-          {manifest.nav.map((item) => (
+          {items.map((item) => (
             <NavLink
               key={item.to || "root"}
               to={`${manifest.basePath}${item.to ? `/${item.to}` : ""}`}

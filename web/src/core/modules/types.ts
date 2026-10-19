@@ -9,13 +9,27 @@ export type ModuleNavItem = {
   /** Ruta relativa a `basePath`; cadena vacía para la raíz del módulo. */
   to: string;
   icon: LucideIcon;
+  /** Si se indica, el ítem solo se ofrece a quien tenga este permiso (el servidor autoriza igual). */
+  requiredPermission?: string;
 };
 
 /** Ruta de módulo. `lazy` devuelve un módulo que exporta `Component` (convención de React Router en modo datos). */
 export type ModuleRoute = {
   index?: boolean;
   path?: string;
+  /** Texto de la miga de pan de esta ruta (p. ej. «Usuarios»). Sin valor, no aporta miga. */
+  crumb?: string;
   lazy: () => Promise<{ Component: ComponentType }>;
+};
+
+/**
+ * Ruta de plataforma que aporta un módulo (solo Identity: `/ingresar`, `/cuenta`…). Es absoluta, no cuelga de `basePath`.
+ * `session: true` la envuelve en `RequireAuth`; `false` es pública.
+ */
+export type PlatformRoute = {
+  path: string;
+  session: boolean;
+  lazy: ModuleRoute["lazy"];
 };
 
 /** Contrato de `web/src/modules/<codigo>/manifest.ts` (ver `docs/ARCHITECTURE.md` 9.3). WP7 lo consume desde `virtual:pastel-modules`. */
@@ -34,4 +48,6 @@ export type ModuleManifest = {
   order?: number;
   nav: ModuleNavItem[];
   routes: ModuleRoute[];
+  /** Rutas fuera de `basePath` que el router monta tal cual. Solo las usa el módulo de plataforma Identity. */
+  platformRoutes?: PlatformRoute[];
 };

@@ -22,9 +22,9 @@ export function Component() {
     <section aria-labelledby="roles-title" className={panel}>
       <div className="flex flex-wrap items-start justify-between gap-3 p-4">
         <div>
-          <h2 id="roles-title" className="text-lg font-semibold text-fg">
+          <h1 id="roles-title" className="text-lg font-semibold text-fg">
             {t.title}
-          </h2>
+          </h1>
           <p className="text-sm text-muted">{t.subtitle}</p>
         </div>
         {hasPermission(identityPermissions.rolesCreate) ? (

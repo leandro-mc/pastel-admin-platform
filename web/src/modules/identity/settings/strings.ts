@@ -147,6 +147,7 @@ export const settingsStrings = {
     userTitle: (name: string) => `Accesos de ${name}`,
     roleTitle: (name: string) => `Permisos del rol ${name}`,
     back: "Volver a Configuración",
+    crumb: "Editar accesos",
     notFound: "No se encontró lo que busca.",
     rolesSection: "Roles",
     rolesHint:
