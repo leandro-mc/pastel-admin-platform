@@ -1,7 +1,12 @@
 using System.Data.Common;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.AspNetCore.TestHost;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Pastel.Modules.Identity.Persistence;
 
 namespace Pastel.IntegrationTests;
 
@@ -48,6 +53,20 @@ public sealed class IdentityApiFactory : WebApplicationFactory<global::Program>
                 ["ReverseProxy:TrustedNetworks"] = "127.0.0.0/8;::1/128;172.16.0.0/12",
                 ["App:PublicBaseUrl"] = "http://localhost"
             });
+        });
+
+        // En Minimal Hosting, sustituimos explícitamente las opciones del DbContext después del registro
+        // de módulos. Así, si la configuración de host no propaga el override de ConnectionStrings:Default,
+        // las pruebas siguen conectándose solo a la base verificada más arriba.
+        builder.ConfigureTestServices(services =>
+        {
+            services.RemoveAll<DbContextOptions<IdentityDbContext>>();
+            services.RemoveAll<IdentityDbContext>();
+            services.AddDbContext<IdentityDbContext>(options => options.UseNpgsql(
+                connectionString,
+                npgsql => npgsql
+                    .MigrationsHistoryTable("__EFMigrationsHistory", IdentityDbContext.Schema)
+                    .MigrationsAssembly(typeof(IdentityDbContext).Assembly.GetName().Name)));
         });
     }
 }
