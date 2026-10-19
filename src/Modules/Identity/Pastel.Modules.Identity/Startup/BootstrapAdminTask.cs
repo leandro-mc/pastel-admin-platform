@@ -109,12 +109,14 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
             return (BootstrapResult.LockoutCleared, user.Id);
         }
 
+        var allTokens = await db.RefreshTokens.Where(x => x.UserId == user.Id).ToListAsync(cancellationToken);
+        var activeTokens = allTokens.Count(x => x.RevokedAt is null);
         var beforeState = new
         {
             isActive = user.IsActive,
             lockoutEnd = user.LockoutEnd,
             accessFailedCount = user.AccessFailedCount,
-            activeRefreshTokens = await db.RefreshTokens.CountAsync(x => x.UserId == user.Id && x.RevokedAt == null, cancellationToken),
+            activeRefreshTokens = activeTokens,
         };
         db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = adminRole.Id });
         user.IsActive = true;
@@ -122,15 +124,17 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
         user.AccessFailedCount = 0;
         user.TokenVersion++;
         user.UpdatedAt = now;
-        var activeTokens = await db.RefreshTokens.Where(x => x.UserId == user.Id && x.RevokedAt == null).ToListAsync(cancellationToken);
-        foreach (var token in activeTokens)
+        foreach (var token in allTokens)
         {
-            token.RevokedAt = now;
+            token.RevokedAt ??= now;
+            token.ReplacedByTokenHash = null;
+            token.ReplacedByEncryptedToken = null;
+            token.GraceUntil = null;
         }
 
         audit.Add(new AuditRecord(
             "identity.bootstrap.admin_restored", "identity", null, user.Id, "cuenta de arranque",
-            Before: beforeState, After: new { isAdministrator = true, isActive = true, lockoutEnd = (DateTimeOffset?)null, accessFailedCount = 0, refreshTokensRevoked = activeTokens.Count }));
+            Before: beforeState, After: new { isAdministrator = true, isActive = true, lockoutEnd = (DateTimeOffset?)null, accessFailedCount = 0, refreshTokensRevoked = activeTokens }));
         await db.SaveChangesAsync(cancellationToken);
         return (BootstrapResult.Restored, user.Id);
     }
