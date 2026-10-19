@@ -1,6 +1,6 @@
-namespace Pastel.Domain.Entities;
+namespace Pastel.Modules.Identity.Domain;
 
-public sealed class RolePermission
+internal sealed class RolePermission
 {
     public Guid RoleId { get; set; }
     public AppRole Role { get; set; } = null!;

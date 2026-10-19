@@ -1,20 +1,23 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 
-namespace Pastel.Infrastructure.Persistence;
+namespace Pastel.Modules.Identity.Persistence;
 
-/// <summary>Allows EF tooling to generate/apply migrations without running the web host or its bootstrap seeder.</summary>
-public sealed class AppDbContextFactory : IDesignTimeDbContextFactory<AppDbContext>
+/// <summary>
+/// Permite a las herramientas de EF generar y aplicar migraciones sin ejecutar el host. Las migraciones las genera Build con
+/// <c>dotnet ef migrations add … --project src/Modules/Identity/Pastel.Modules.Identity --startup-project src/Modules/Identity/Pastel.Modules.Identity</c>.
+/// </summary>
+internal sealed class IdentityDbContextFactory : IDesignTimeDbContextFactory<IdentityDbContext>
 {
-    public AppDbContext CreateDbContext(string[] args)
+    public IdentityDbContext CreateDbContext(string[] args)
     {
         var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Default")
-            ?? throw new InvalidOperationException("Set ConnectionStrings__Default before running EF migration commands.");
+            ?? throw new InvalidOperationException("Defina ConnectionStrings__Default antes de ejecutar comandos de migración de EF.");
 
-        var options = new DbContextOptionsBuilder<AppDbContext>()
-            .UseNpgsql(connectionString)
+        var options = new DbContextOptionsBuilder<IdentityDbContext>()
+            .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", IdentityDbContext.Schema))
             .Options;
 
-        return new AppDbContext(options);
+        return new IdentityDbContext(options);
     }
 }

@@ -1,6 +1,6 @@
-namespace Pastel.Domain.Entities;
+namespace Pastel.Modules.Identity.Domain;
 
-public sealed class PermissionDefinition
+internal sealed class PermissionDefinition
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid ModuleId { get; set; }

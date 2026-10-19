@@ -1,6 +1,6 @@
-namespace Pastel.Domain.Entities;
+namespace Pastel.Modules.Identity.Domain;
 
-public sealed class RefreshToken
+internal sealed class RefreshToken
 {
     public Guid Id { get; set; } = Guid.NewGuid();
     public Guid UserId { get; set; }

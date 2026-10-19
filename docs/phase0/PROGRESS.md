@@ -101,3 +101,15 @@ El SHA que contiene cada entrada se informa en la entrega, no aquí.
 - **Validaciones ejecutadas:** `git diff --check` limpio. No se ejecutó `docker compose config` (Docker no disponible).
 - **Pendiente WP2:** verificar §5 contra `Pastel.Platform` (lista de comprobación); `web/Dockerfile` seguirá con `npm install` hasta WP9 (`npm ci`).
 - **Siguiente acción:** lista de verificación de WP2 §5 contra el código de `Platform`.
+
+### S3-03 · WP3.1 · Proyecto Identity, dominio y `IdentityDbContext`
+- **Último commit conocido antes:** `659c439` (S3-02).
+- **Cambios:** se crea `Pastel.Modules.Identity.csproj` (faltaba; `Pastel.slnx` ya lo referenciaba) con `InternalsVisibleTo` para `*.Tests`, `Pastel.IntegrationTests` y `Pastel.ArchitectureTests`.
+  Entidades en `Pastel.Modules.Identity.Domain` y `internal`. `AppUser.PasswordHash` pasa a nullable; `AppUser`, `AppRole` y `ModuleDefinition` llevan `uint Version` (`xmin`, `IsRowVersion()`).
+  `AuditLog` suma `Module` y `TraceId`; `DetailsJson` es `jsonb`. `IdentityDbContext` (esquema `identity`, tablas `users`, `roles`, `user_roles`, `modules`, `permissions`, `role_permissions`,
+  `user_permission_overrides`, `refresh_tokens`, `audit_logs`) y su fábrica de diseño con historial de migraciones en el esquema `identity`.
+- **Decisiones:** todo `internal` salvo lo que exija Platform; `ExternalLogin` se agrega en WP5.
+- **Validaciones ejecutadas:** ninguna de compilación. **Sin migración:** la genera Build con `dotnet ef`.
+- **Sin compilar:** todo el módulo (los demás archivos de Identity aún tienen el contenido original y no compilan con estos tipos).
+- **Pendiente WP3:** `IdentityModule`, evaluador de permisos y estado de sesión, auditoría, catálogo/siembra, JWT y política de contraseñas, slices `Features/*`, pruebas movidas.
+- **Siguiente acción:** `IdentityModule` + catálogo desde código + `IPermissionEvaluator`/`ICurrentUser`/`IAuditTrail`.
