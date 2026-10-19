@@ -10,6 +10,26 @@
     <Project Path="src/Modules/Identity/Pastel.Modules.Identity/Pastel.Modules.Identity.csproj" />
     <Project Path="src/Modules/Identity/Pastel.Modules.Identity.Tests/Pastel.Modules.Identity.Tests.csproj" />
   </Folder>
+  <Folder Name="/Modules/Brisa/">
+    <Project Path="src/Modules/Brisa/Pastel.Modules.Brisa/Pastel.Modules.Brisa.csproj" />
+    <Project Path="src/Modules/Brisa/Pastel.Modules.Brisa.Tests/Pastel.Modules.Brisa.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Modules/Balance/">
+    <Project Path="src/Modules/Balance/Pastel.Modules.Balance/Pastel.Modules.Balance.csproj" />
+    <Project Path="src/Modules/Balance/Pastel.Modules.Balance.Tests/Pastel.Modules.Balance.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Modules/Agora/">
+    <Project Path="src/Modules/Agora/Pastel.Modules.Agora/Pastel.Modules.Agora.csproj" />
+    <Project Path="src/Modules/Agora/Pastel.Modules.Agora.Tests/Pastel.Modules.Agora.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Modules/Cosecha/">
+    <Project Path="src/Modules/Cosecha/Pastel.Modules.Cosecha/Pastel.Modules.Cosecha.csproj" />
+    <Project Path="src/Modules/Cosecha/Pastel.Modules.Cosecha.Tests/Pastel.Modules.Cosecha.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Modules/Huella/">
+    <Project Path="src/Modules/Huella/Pastel.Modules.Huella/Pastel.Modules.Huella.csproj" />
+    <Project Path="src/Modules/Huella/Pastel.Modules.Huella.Tests/Pastel.Modules.Huella.Tests.csproj" />
+  </Folder>
   <Folder Name="/Tests/">
     <Project Path="tests/Pastel.IntegrationTests/Pastel.IntegrationTests.csproj" />
   </Folder>

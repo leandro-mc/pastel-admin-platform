@@ -1,0 +1,18 @@
+using Pastel.Platform.Modules;
+
+namespace Pastel.Modules.__PASCAL__;
+
+/// <summary>Permisos de __NAME__. Formato <c>__CODE__.&lt;recurso&gt;.&lt;accion&gt;</c>; <c>__CODE__.access</c> habilita el módulo en el hub y el router.</summary>
+internal static class __PASCAL__Permissions
+{
+    public const string Code = "__CODE__";
+    public const string Access = "__CODE__.access";
+
+    public static IReadOnlyList<PermissionGroup> Groups { get; } =
+    [
+        new(Code, "__NAME__", __SORT__,
+        [
+            new(Access, "Usar __NAME__", "Entrar a __NAME__."),
+        ]),
+    ];
+}

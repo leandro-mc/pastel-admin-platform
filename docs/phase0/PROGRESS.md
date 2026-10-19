@@ -22,7 +22,7 @@
 | WP3 — Identity | **21/21 pruebas locales confirmadas (16 unitarias + 5 de integración, 0 fallidas y 0 omitidas)** | Build/QA mantiene pendiente la cobertura adicional de caracterización/autorización, traducción SQL de `PermissionEvaluator` y presupuesto de ≤ 2 consultas por petición. Esto no cambia el siguiente WP de desarrollo. |
 | WP4 — Endurecimiento de seguridad | **Implementación de producto registrada; cobertura integrada completa pendiente** | Build/QA: completar la matriz S1–S4 y registrar sus resultados. El runner señala brechas de cobertura de QA; no es una instrucción para el agente Dev ni impide que continúe el siguiente WP de desarrollo. |
 | WP5 — Google OAuth/OIDC | **Backend implementado, sin compilar ni ejecutar** (Dev, Tipo 1). Ver «WP5 — Bitácora» y «WP5 — Verificación y limitaciones» | Build: generar la migración de `identity.external_logins`, compilar y escribir/ejecutar las pruebas de §8.5 con el proveedor remoto falso (gancho descrito en la bitácora). **Diferido a WP7:** pantalla `/ingresar` (§8.4). Prueba real con Google: manual del propietario. |
-| WP6 — Esqueletos/plantilla de módulos | Pendiente; **siguiente WP de desarrollo** | Generador y esqueletos de Brisa, Balance, Ágora, Cosecha y Huella según §9. |
+| WP6 — Esqueletos/plantilla de módulos | **En curso** (Dev, Tipo 1; sin compilar). Ver «WP6 — Bitácora» | Hecho: plantillas y generador. Falta: generar y completar los cinco esqueletos, temas, cierre. |
 | WP7 — Cimientos de frontend/sesión/errores/shell | Pendiente | Router, cliente API, sesión, errores y shell según §10. |
 | WP8 — Tailwind CSS/sistema de diseño | Pendiente | Migración y métricas de auditoría conforme a §11. |
 | WP9 — Infraestructura/CI/repositorio | Pendiente | Ajustes restantes de §12, sin salirse del alcance de Fase 0. |
@@ -143,3 +143,15 @@ Sesión iniciada sobre `origin/refactor/modular-foundation` `0959ff1`. El trabaj
 ## Siguiente paso de desarrollo
 
 **WP6 — Esqueletos y plantilla de módulos** (§9 de `FASE-0-REFACTOR-BASE.md`): generador y esqueletos de Brisa, Balance, Ágora, Cosecha y Huella (módulo, `DbContext` y esquema propios, permisos y roles sugeridos desde sus fichas, `GET /api/<code>/ping`, `MODULE.md`), sin funcionalidades. Leer antes `docs/ARCHITECTURE.md` §4 y la sección «Roles y permisos» de cada `docs/modules/*.md`. Las migraciones de los esqueletos las genera Build.
+
+## WP6 — Bitácora (Dev, Tipo 1; sin compilar)
+
+Sesión iniciada sobre `origin/refactor/modular-foundation` `cdb5cbb` (el trabajo local anterior de esta sesión estaba superado por el remoto y se descartó sin publicar).
+
+- [x] **WP6.1 — Plantilla y generador (`tools/new-module/`):** `new-module.sh` (probado en una copia temporal con un módulo de prueba: genera backend, `.Tests`, frontend y registra `Pastel.slnx`; rechaza códigos inválidos o ya existentes) y `new-module.ps1` (mismas plantillas, solo ASCII, **no ejecutado**: no hay PowerShell en este entorno).
+  Plantillas en `templates/backend` (csproj con `InternalsVisibleTo`, `AssemblyInfo`, `<M>Module`, `<M>Permissions`, `Errors`, `<M>DbContext` con esquema y su fábrica de diseño, `GET /api/<code>/ping` con `<code>.access`, proyecto `.Tests` vacío, `MODULE.md`) y `templates/web` (`manifest.ts`, `strings.ts`, `pages/HomePage.tsx`, `MODULE.md`).
+  `web/src/core/modules/types.ts` define el contrato `ModuleManifest` (§9.3); WP7 lo consume desde `virtual:pastel-modules`.
+- **Decisión:** el generador crea un único permiso `<code>.access` y un rol `<Nombre> — Usuario`; los permisos y roles de cada ficha se completan a mano en los cinco esqueletos (no hay un formato genérico para describirlos).
+- **Pendiente WP6:** generar Brisa, Balance, Ágora, Cosecha y Huella; completar permisos/roles desde `docs/modules/*.md`; `web/src/core/design/module-themes.css`; revisar que el host cargue los cinco.
+- **Para Build:** las migraciones iniciales de los esqueletos las genera Build con `dotnet ef` (Dev no las escribe). **Mientras no existan, `MigrateModuleAsync` falla a propósito** (`No se encontraron migraciones…`) y el host no arranca con un esqueleto incluido: usar `-p:PastelModules=Identity` o generar las migraciones primero.
+- [x] **WP6.2 — Esqueletos generados** con `new-module.sh` (Brisa `ListChecks` orden 10, Balance `Scale` 20, Ágora `Landmark` 30 y Huella `Footprints` 50 con acceso `public` en el manifiesto por tener parte pública, Cosecha `Sprout` 40; registrados en `Pastel.slnx`). Aún con el único permiso `<code>.access`; los permisos y roles de las fichas se completan en el siguiente checkpoint.
