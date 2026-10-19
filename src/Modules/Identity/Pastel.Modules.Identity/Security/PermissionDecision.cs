@@ -1,8 +1,8 @@
-using Pastel.Domain.Entities;
+using Pastel.Modules.Identity.Domain;
 
-namespace Pastel.Application.Contracts;
+namespace Pastel.Modules.Identity.Security;
 
-public static class PermissionDecision
+internal static class PermissionDecision
 {
     public static bool IsAllowed(bool moduleEnabled, bool grantedByRole, PermissionEffect? userOverride)
     {

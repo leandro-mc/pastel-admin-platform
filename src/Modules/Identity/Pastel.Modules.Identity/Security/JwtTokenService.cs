@@ -3,12 +3,16 @@ using System.Security.Claims;
 using System.Text;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using Pastel.Application.Abstractions;
-using Pastel.Domain.Entities;
+using Pastel.Modules.Identity.Domain;
 
-namespace Pastel.Infrastructure.Security;
+namespace Pastel.Modules.Identity.Security;
 
-public sealed class JwtTokenService(IOptions<JwtOptions> options) : ITokenService
+internal interface ITokenService
+{
+    (string Token, DateTimeOffset ExpiresAt) CreateAccessToken(AppUser user);
+}
+
+internal sealed class JwtTokenService(IOptions<JwtOptions> options) : ITokenService
 {
     private readonly JwtOptions _options = options.Value;
 
@@ -23,7 +27,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : ITokenServic
             new(JwtRegisteredClaimNames.Iat, now.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
             new("token_version", user.TokenVersion.ToString()),
             new("email", user.Email),
-            new("name", user.DisplayName)
+            new("name", user.DisplayName),
         };
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_options.SigningKey));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);

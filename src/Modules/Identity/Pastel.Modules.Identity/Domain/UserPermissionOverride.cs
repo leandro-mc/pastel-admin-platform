@@ -1,8 +1,8 @@
-namespace Pastel.Domain.Entities;
+namespace Pastel.Modules.Identity.Domain;
 
-public enum PermissionEffect { Deny = 0, Grant = 1 }
+internal enum PermissionEffect { Deny = 0, Grant = 1 }
 
-public sealed class UserPermissionOverride
+internal sealed class UserPermissionOverride
 {
     public Guid UserId { get; set; }
     public AppUser User { get; set; } = null!;
