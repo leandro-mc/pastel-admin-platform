@@ -19,8 +19,8 @@
 |---|---|---|
 | WP1 — Línea base de pruebas | **Sin evidencia de cierre en esta bitácora; responsabilidad de Build** | Confirmar el resultado de Build y la integración de la línea base en la rama según la sección 4 del plan. Dev no debe rehacerla. |
 | WP2 — SharedKernel, Platform, Host | **Revisión estática registrada como completa** en S4-01 | No se compiló. Build debe verificar los puntos sensibles descritos abajo y validar el proyecto completo. |
-| WP3 — Identity | **Implementación principal de endpoints/slices registrada; falta cierre y limpieza** | Eliminar/adaptar legado, revisar referencias y auditar todos los criterios de §6 del plan. No pasar a WP4 hasta dejar WP3 coherente o documentar un bloqueo real. |
-| WP4 — Endurecimiento de seguridad | Pendiente | Implementar S1–S4, después de cerrar WP3. |
+| WP3 — Identity | **Cerrado como código** (auditoría estática contra §6, sin compilar) | Build: generar la migración inicial con `dotnet ef`, adaptar las pruebas movidas, verificar que EF traduce la consulta de `PermissionEvaluator` y escribir la prueba de ≤ 2 consultas por petición. |
+| WP4 — Endurecimiento de seguridad | **En curso** (S1 → S4) | Ver «Estado de WP4» abajo. |
 | WP5 — Google OAuth/OIDC | Pendiente | Flujo backend, vinculación de cuentas, configuración/proxy, opciones de autenticación y hooks para pruebas de Build. |
 | WP6 — Esqueletos/plantilla de módulos | Pendiente | Generador y esqueletos de Brisa, Balance, Ágora, Cosecha y Huella según §9. |
 | WP7 — Cimientos de frontend/sesión/errores/shell | Pendiente | Router, cliente API, sesión, errores y shell según §10. |
@@ -52,14 +52,17 @@ La bitácora hasta S4-07 registra:
 
 Pendiente para Build en `Pastel.Modules.Identity.Tests`: la carpeta aún usa `RootNamespace` `Pastel.Application.Tests`, una `ProjectReference` a `Pastel.Application` y `using Pastel.Application.Contracts`/`Pastel.Domain.Entities`. Es código de pruebas: lo adapta Build, no Dev.
 
-### Lista de cierre obligatoria para WP3
+### Cierre de WP3 (auditoría contra §6, 2026-10-18)
 
-1. Revisa `IdentityModule.cs`, `Features/IdentityEndpoints.cs`, los manejadores de slices, `IdentityDbContext`, las tareas de inicio y las opciones de configuración.
-2. Busca referencias a `Pastel.Application`, `Pastel.Domain`, `Pastel.Infrastructure`, `AdministrationService`, `AuthService` y `DatabaseSeeder` en el código de producción y en los proyectos. Resuelve las referencias colgantes.
-3. Verifica `IdentityModule` y su registro: DbContext, opciones validadas, `IPermissionEvaluator`, `ICurrentUser`, auditoría, tareas de arranque, `UniqueViolationMap` y rutas permitidas cuando se exige cambiar una contraseña temporal.
-4. Recorre la sección 6 de `FASE-0-REFACTOR-BASE.md` punto por punto: ruta y método HTTP, contrato/cookies, política de permisos, invariantes de administrador, paginación/filtros, auditoría antes/después, catálogo y ausencia de `CreateModule`.
-5. Deja registrado que las pruebas movidas requieren adaptación/ejecución por Build; Dev no escribe ni modifica pruebas como parte de este trabajo.
-6. Publica el cierre de WP3 con un checkpoint. Si hay un bloqueo, descríbelo concretamente y no marques WP3 como completo.
+Contraste estático punto por punto; **sin compilar**.
+
+1. **Datos:** `IdentityDbContext` con esquema `identity`; `PasswordHash` nulo; `Version` (`uint`, `IsRowVersion`, `xmin`) en usuarios, roles y módulos. La migración **no existe**: la genera Build.
+2. **Slices:** 23 endpoints en `Features/*` (ningún archivo > 150 líneas). Rutas y métodos idénticos a los controladores de `dev@b705614` (`/api/auth/*`, `/api/admin/*`, incluido `PATCH /api/admin/modules/{moduleId}`); cookies `__Host-pastel_*` sin cambios.
+3. **Permisos y consultas:** `PermissionEvaluator` es la fuente única (autorización y `/api/auth/me`). `OnTokenValidated` carga una vez el estado de sesión y el resumen de la persona en `HttpContext.Items`; `ForcePasswordChange` lo lee de ahí. Resultado: 1 consulta de sesión + 1 de permisos por petición.
+4. **Catálogo:** códigos de permiso idénticos a los anteriores; `CatalogSyncTask` idempotente (todo a Administrator, roles sugeridos solo si no existen); `Member` recibe `dashboard.view` por `SuggestedRoles`; `BootstrapAdminTask` audita la creación y la restauración (*break-glass*).
+5. `CreateModule` no existe en `src/`.
+6. **Auditoría:** `AuditRecord` con antes/después a `DetailsJson`, módulo y `TraceId`; accesos denegados con límite por minuto; `ListUsers` y `ListAudit` paginan y filtran en el servidor.
+7. **Referencias colgantes:** no quedan en código de producto (se verificaron namespaces `Pastel.*`, tipos clave y versiones centrales de paquetes). Solo el proyecto de pruebas conserva `Pastel.Application`/`Pastel.Domain` (tarea de Build).
 
 ## Siguiente trabajo después de cerrar WP3: WP4
 
