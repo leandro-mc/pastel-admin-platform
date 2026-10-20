@@ -18,6 +18,7 @@ import { linkButton, primaryButton, secondaryButton } from "../styles";
 import { OverridePicker, type OverrideValue } from "./OverridePicker";
 import { QueryState } from "./QueryState";
 import { settingsStrings } from "./strings";
+import { isPlatformPermission, isPlatformRole } from "./permissionsScope";
 import { panel } from "./styles";
 
 const t = settingsStrings.access;
@@ -56,10 +57,18 @@ export function Component() {
     if (!isAdministrator) void overrides.refetch();
   };
 
+  const platformCatalog = (catalog.data ?? []).filter(isPlatformPermission);
+  const platformPermissionIds = new Set(platformCatalog.map((permission) => permission.id));
   const initialOverrides: Record<string, OverrideValue> = {};
   for (const item of overrides.data ?? []) {
-    initialOverrides[item.permissionId] = item.effect;
+    if (platformPermissionIds.has(item.permissionId)) {
+      initialOverrides[item.permissionId] = item.effect;
+    }
   }
+  const platformRoles = (roles.data ?? []).filter(isPlatformRole);
+  const preservedAppRoleIds = (roles.data ?? [])
+    .filter((role) => !isPlatformRole(role) && user.data?.roles.includes(role.name))
+    .map((role) => role.id);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-8 sm:px-6">
@@ -70,10 +79,11 @@ export function Component() {
             // Si los datos se recargan, el formulario vuelve a empezar desde lo guardado.
             key={`${user.dataUpdatedAt}-${overrides.dataUpdatedAt}`}
             user={user.data}
-            roles={roles.data}
-            catalog={catalog.data}
+            roles={platformRoles}
+            catalog={platformCatalog}
             initialOverrides={initialOverrides}
             actorIsOwner={actorIsOwner}
+            preservedAppRoleIds={preservedAppRoleIds}
           />
         ) : null}
       </QueryState>
@@ -95,9 +105,11 @@ type FormProps = {
   roles: Role[];
   catalog: Permission[];
   initialOverrides: Record<string, OverrideValue>;
+  actorIsOwner: boolean;
+  preservedAppRoleIds: string[];
 };
 
-function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }: FormProps & { actorIsOwner: boolean }) {
+function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner, preservedAppRoleIds }: FormProps) {
   const navigate = useNavigate();
   const notify = useNotify();
   const save = useSaveUserAccess();
@@ -138,7 +150,8 @@ function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }
     try {
       await save.mutateAsync({
         userId: user.id,
-        roleIds,
+        // Workspace solo edita los roles de plataforma; las membresías de apps se conservan sin modificarlas.
+        roleIds: [...new Set([...roleIds, ...preservedAppRoleIds])],
         overrides: changes,
         administrator,
       });
@@ -193,7 +206,9 @@ function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }
           <h2 id="roles-heading" className="font-semibold text-fg">
             {t.rolesSection}
           </h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted">{t.rolesHint}</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted">
+            {t.rolesHint} Los roles de cada aplicación se administran allí y se conservan al guardar desde Workspace.
+          </p>
         </header>
         <ul className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           {roles.map((role) => {
