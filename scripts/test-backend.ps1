@@ -72,6 +72,9 @@ fi
 exit 0
 '@
 
+$containerScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($containerScript))
+$dockerCommand = ("echo {0} | base64 -d | sh" -f $containerScriptBase64)
+
 Write-Host "Validacion backend en Docker (copia temporal; el repositorio se monta en solo lectura)." -ForegroundColor Cyan
 Write-Host ("Resultados TRX: {0}" -f $resultsDirectory)
 
@@ -81,7 +84,7 @@ $dockerArguments = @(
     "--mount", ("type=bind,source={0},target=/test-results" -f $resultsDirectory),
     "--entrypoint", "sh",
     "mcr.microsoft.com/dotnet/sdk:10.0",
-    "-lc", $containerScript
+    "-c", $dockerCommand
 )
 
 & docker @dockerArguments
