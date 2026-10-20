@@ -401,9 +401,9 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 
 - [x] **WP9.1 — Instalación reproducible en la imagen web:** el Dockerfile ahora copia `package.json` y `package-lock.json` antes de instalar, y ejecuta `npm ci --no-audit --no-fund`. El script `scripts/test-frontend.ps1` ya usaba `npm ci` y ejecuta Prettier, ESLint, build, pruebas de guardas de diseño y auditorías.
 - [x] **Higiene de archivos:** se añadieron `.editorconfig` y `.gitattributes` para codificación UTF-8, finales de línea y reglas básicas de indentación. `.gitignore` ignora `*.tsbuildinfo`; se retiró del repositorio el `web/tsconfig.tsbuildinfo` generado, que TypeScript regenera al compilar.
-- [x] **Autorización de CCR-004:** el propietario autorizó el 2026-10-20 los cambios de Compose, Nginx, CI y documentos de nivel raíz definidos en la solicitud. La implementación se registra en el siguiente checkpoint; las rutas de Identity/Build siguen fuera de esta CCR.
+- [x] **Autorización de CCR-004:** el propietario autorizó el 2026-10-20 los cambios de Compose, Nginx, CI y documentos de nivel raíz definidos en la solicitud; el lote se publicó en `0d825508`.
 - **Validación de esta tanda:** revisión estática de los archivos fuente obtenidos desde GitHub. **Sin ejecutar** `npm ci`, Docker build, `docker compose config`, pruebas ni auditorías. No se declara la imagen validada ni WP9 cerrado.
-- **Siguiente paso:** resolver CCR-004 con el propietario; una vez autorizado el trabajo en zonas protegidas, cerrar WP9 y continuar WP10. La aprobación de la solicitud no equivaldría a aprobación de Build/QA ni a autorización para fusionar.
+- **Siguiente paso:** completar WP10 documental y registrar el sembrador de Testing como pendiente por zona protegida; Build/QA validará este lote. La CCR no equivale a aprobación de Build/QA ni a autorización para fusionar.
 
 
 ## WP9 — Infraestructura Compose/Nginx y documentación operativa (Dev, Tipo 2, 2026-10-20)

@@ -76,9 +76,13 @@ jobs:
         run: |
           docker compose up -d
           for attempt in $(seq 1 40); do
-            api_healthy="$(docker compose ps --status healthy --services | grep -cx api || true)"
+            api_container="$(docker compose ps -q api)"
+            api_health="unknown"
+            if [ -n "$api_container" ]; then
+              api_health="$(docker inspect --format '{{.State.Health.Status}}' "$api_container" 2>/dev/null || true)"
+            fi
             modules_created="$(docker compose exec -T db psql -U pastel -d pastel -tAc "SELECT to_regclass('identity.modules') IS NOT NULL;" 2>/dev/null | tr -d '[:space:]' || true)"
-            if [ "$api_healthy" -eq 1 ] && [ "$modules_created" = "t" ] && curl -fsS http://127.0.0.1:8080/health/web >/dev/null; then
+            if [ "$api_health" = "healthy" ] && [ "$modules_created" = "t" ] && curl -fsS http://127.0.0.1:8080/health/web >/dev/null; then
               echo "API readiness is healthy, identity.modules exists, and the web container responds."
               docker compose down -v
               exit 0
