@@ -47,20 +47,20 @@ export function Component() {
   };
 
   return (
-    <div className="auth-page">
-      <header className="auth-topbar">
-        <Link to={routes.home} className="auth-brand" aria-label="Pastel, ir al inicio">
-          <span className="auth-brand-mark">
+    <div className="auth-page flex min-h-screen flex-col">
+      <header className="auth-topbar flex items-center justify-between gap-4">
+        <Link to={routes.home} className="auth-brand inline-flex items-center gap-3" aria-label="Pastel, ir al inicio">
+          <span className="auth-brand-mark grid place-items-center">
             <Flower2 aria-hidden="true" size={23} strokeWidth={1.7} />
           </span>
-          <span className="auth-brand-copy">
+          <span className="auth-brand-copy flex flex-col">
             <strong>pastel</strong>
             <small>WORKSPACE</small>
           </span>
         </Link>
         <button
           type="button"
-          className="auth-theme-button"
+          className="auth-theme-button grid size-11 place-items-center"
           aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
           title={theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
           onClick={toggleTheme}
@@ -73,26 +73,26 @@ export function Component() {
         </button>
       </header>
 
-      <main className="auth-main">
-        <section className="auth-story" aria-labelledby="auth-story-title">
-          <div className="auth-story-content">
-            <span className="auth-eyebrow">Un espacio para crecer</span>
-            <h2 id="auth-story-title" className="auth-hero-title">
+      <main className="auth-main mx-auto grid w-full gap-8">
+        <section className="auth-story relative overflow-hidden rounded-3xl border" aria-labelledby="auth-story-title">
+          <div className="auth-story-content relative z-10 max-w-2xl">
+            <span className="auth-eyebrow inline-flex items-center gap-2">Un espacio para crecer</span>
+            <h2 id="auth-story-title" className="auth-hero-title font-semibold leading-tight tracking-tight">
               Todo en su lugar.
               <br />
               <span>Todo fluye mejor.</span>
             </h2>
-            <p className="auth-hero-copy">
+            <p className="auth-hero-copy leading-relaxed">
               Una forma más tranquila de gestionar su equipo, organizar accesos y
               construir algo grande.
             </p>
-            <div className="auth-feature-list">
+            <div className="auth-feature-list grid gap-3">
               {benefits.map(({ icon: Icon, title, text }) => (
-                <div className="auth-feature" key={title}>
-                  <span className="auth-feature-icon">
+                <div className="auth-feature grid items-center gap-3" key={title}>
+                  <span className="auth-feature-icon grid size-11 place-items-center">
                     <Icon aria-hidden="true" size={20} strokeWidth={1.8} />
                   </span>
-                  <span className="auth-feature-copy">
+                  <span className="auth-feature-copy flex flex-col gap-1">
                     <strong>{title}</strong>
                     <small>{text}</small>
                   </span>
@@ -100,30 +100,30 @@ export function Component() {
               ))}
             </div>
           </div>
-          <div className="auth-orbit-art" aria-hidden="true">
-            <div className="auth-orbit-ring" />
-            <div className="auth-orbit-core">
+          <div className="auth-orbit-art absolute grid aspect-square place-items-center" aria-hidden="true">
+            <div className="auth-orbit-ring absolute aspect-square rounded-full" />
+            <div className="auth-orbit-core relative grid size-24 place-items-center">
               <Flower2 size={54} strokeWidth={1.25} />
             </div>
-            <span className="auth-orbit-dot auth-orbit-dot-a" />
-            <span className="auth-orbit-dot auth-orbit-dot-b" />
-            <span className="auth-orbit-dot auth-orbit-dot-c" />
+            <span className="auth-orbit-dot auth-orbit-dot-a absolute block rounded-full" />
+            <span className="auth-orbit-dot auth-orbit-dot-b absolute block rounded-full" />
+            <span className="auth-orbit-dot auth-orbit-dot-c absolute block rounded-full" />
           </div>
         </section>
 
-        <section className="auth-card-column" aria-label={registering ? "Registro de cuenta" : "Ingreso a Pastel"}>
+        <section className="auth-card-column flex w-full items-center justify-center" aria-label={registering ? "Registro de cuenta" : "Ingreso a Pastel"}>
           <div className={[card, "auth-form-card", "flex flex-col gap-5"].join(" ")}>
             <header className="flex flex-col gap-1">
-              <span className="auth-card-kicker">
+              <span className="auth-card-kicker inline-flex size-11 items-center justify-center">
                 <KeyRound aria-hidden="true" size={21} />
               </span>
-              <span className="auth-eyebrow">
+              <span className="auth-eyebrow inline-flex items-center gap-2">
                 {registering ? "Crear su espacio" : "Qué bueno tenerle de vuelta"}
               </span>
-              <h1 className="auth-form-heading">
+              <h1 className="auth-form-heading text-2xl font-semibold tracking-tight">
                 {registering ? t.register.title : t.login.title}
               </h1>
-              <p className="auth-form-subtitle">
+              <p className="auth-form-subtitle text-sm leading-relaxed">
                 {registering ? t.register.subtitle : t.login.subtitle}
               </p>
             </header>
@@ -177,9 +177,9 @@ export function Component() {
         </section>
       </main>
 
-      <footer className="auth-footer">
+      <footer className="auth-footer flex flex-wrap items-center justify-between gap-3 border-t py-4 text-sm">
         <span>© {new Date().getFullYear()} Pastel Workspace</span>
-        <span className="auth-footer-note">
+        <span className="auth-footer-note inline-flex items-center gap-2">
           Su seguridad es parte de todo
           <Flower2 aria-hidden="true" size={15} />
         </span>
