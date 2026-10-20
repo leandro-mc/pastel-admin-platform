@@ -42,6 +42,9 @@ internal static class IdentityPermissions
             new(ModulesRead, "Ver módulos", "Consultar los módulos registrados."),
             new(ModulesManage, "Administrar módulos", "Activar o desactivar módulos."),
             new(AuditRead, "Ver auditoría", "Consultar los eventos de auditoría administrativos."),
+        ]),
+        new("platform", "Plataforma", 200,
+        [
             new(WorkspaceAccess, "Acceder a Pastel Workspace", "Entrar al espacio de administración global de la plataforma."),
             new(OwnerPrivilege, "Propietario y superusuario", "Privilegio reservado al rol Owner/Superuser; no se concede a administradores generales ni a roles de aplicaciones."),
         ]),
