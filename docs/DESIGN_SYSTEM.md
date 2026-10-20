@@ -1,5 +1,7 @@
 # Sistema de diseño y guía de experiencia de usuario
 
+> La visión de aplicaciones y disponibilidad de cada app está en [`docs/product/PASTEL-PRODUCT-AND-UX.md`](product/PASTEL-PRODUCT-AND-UX.md). Ese documento define el modelo de producto; esta guía define la experiencia y la implementación visual.
+
 La experiencia de usuario es la prioridad número uno. Muchas personas distintas usarán Pastel, incluidas personas mayores y con poca práctica tecnológica. Ante una duda entre "más bonito" y "más claro", gana lo más claro.
 
 ## 1. Principios
@@ -98,12 +100,16 @@ Los estados siempre llevan icono y texto; el verde de éxito nunca sustituye al 
 
 ## 4. Estructura de pantallas
 
-- **Shell:** barra superior con marca, selector de módulos, ayuda, preferencias y menú de cuenta. Migas de pan en pantallas de segundo nivel.
-- **Navegación del módulo:** barra inferior de pestañas en móvil (máximo 5 elementos con icono y etiqueta) y barra lateral en escritorio. Siempre se ve dónde se está (`aria-current="page"`) y cómo volver al hub.
-- **Cada página:** título claro (h1 único), descripción corta opcional, acción principal visible, contenido. Sin desplazamiento horizontal a 320 px.
-- **Tablas:** en móvil se convierten en listas de tarjetas con los campos clave; las acciones por fila caben en un menú con nombre accesible.
-- **Diálogos:** solo para tareas breves; las tareas largas son páginas completas (como el editor de accesos actual).
-- **Tema claro/oscuro** y respeto a `prefers-color-scheme` en la primera visita.
+- Pastel es un anfitrión de apps independientes, no un dashboard de tarjetas. La visión y los destinos por app están definidos en `docs/product/PASTEL-PRODUCT-AND-UX.md`.
+- **Shell:** marca floral común, selector desplegable de app, nombre y tema correspondientes a la app seleccionada, ayuda, preferencias y menú de cuenta. Login/registro usan la identidad Pastel Workspace.
+- La marca/nombre lleva al inicio de la app activa. La ruta raíz va a Ágora; el catálogo de apps vive en el selector/configuración, no como landing de cada sesión.
+- **Navegación de app:** sidebar en escritorio y navegación táctil equivalente en móvil. La app actual se distingue mediante icono, texto y estado (`aria-current="page"`), no solo color. No arrastrar acciones de un módulo a otro.
+- **Configuración por app:** puede reutilizar estructura y componentes compartidos, pero solo lista y edita miembros, roles, permisos y datos del contexto actual. El rol de una app no se hereda a otra ni equivale a Workspace.
+- **Cada página:** título claro (un `h1`), descripción corta opcional, acción principal visible, contenido jerarquizado. Sin desplazamiento horizontal a 320 px.
+- **Tablas:** en móvil se convierten en listas de tarjetas o se adaptan con prioridad explícita a los campos clave; no imponer una tabla ilegible ni scroll horizontal por defecto.
+- **Diálogos:** solo para tareas breves; tareas largas son páginas completas. Mantener encabezados, navegación, estados y pie de página del lenguaje visual acordado.
+- **Tema claro/oscuro** disponible desde login/registro y cuenta, consistente entre rutas y respetuoso de la preferencia guardada.
+- Las composiciones editoriales y elementos de marca del diseño original deben conservarse cuando sea posible. La refactorización de CSS no justifica simplificar ni eliminar diseño, navegación, contenido o controles visibles.
 
 ## 5. Componentes y patrones (resumen normativo)
 
@@ -170,11 +176,18 @@ Los estados siempre llevan icono y texto; el verde de éxito nunca sustituye al 
 - Manual por módulo antes de entregar: recorrido solo con teclado, 320 px y 200 % de zoom, modo oscuro, lector de pantalla en un flujo clave, texto "Muy grande".
 - Cada entrega de UI incluye capturas (claro, oscuro, móvil) para validación visual del propietario.
 
-## 11. Tailwind: cómo se aplica el diseño en el código
+## 11. Implementación visual: Tailwind CSS 4 + CSS de componentes gobernado
 
-- **Utilidades en el JSX**; lo compartido son componentes de `@/core/ui` con variantes (`cva`), no clases con `@apply`. Prohibido `@apply` fuera de `core/design/base.css` (máximo 60 líneas en total).
-- Los colores salen de **tokens** expuestos con `@theme inline` (`bg-surface`, `text-fg`, `border-line`, `bg-accent`, `text-accent-strong`, `bg-accent-soft`). Nunca hexadecimales ni valores arbitrarios de color (`bg-[#…]`).
-- El color del módulo lo da `data-module`; no se escriben variantes por módulo en los componentes.
-- Modo oscuro por variables; `dark:` solo si un caso no se resuelve con tokens.
-- Orden de clases con `prettier-plugin-tailwindcss`. Un componente no debería superar ~200 líneas.
-- `scripts/tailwind-audit.mjs` y `scripts/check-design.mjs` vigilan estas reglas en CI.
+Pastel **mantiene Tailwind CSS 4**. La migración anterior demostró que la política de cero clases semánticas y la sustitución de componentes completos llevaron a una interfaz genérica; no demuestra una limitación de Tailwind.
+
+- **Tailwind utilities:** composición local de JSX, layout, grid/flex, espaciado, breakpoints, tipografía utilitaria y estados simples.
+- **Componentes compartidos:** botones, campos, menús, diálogos, tarjetas, tablas, avisos y estados viven en componentes reutilizables de `@/core/ui` con variantes explícitas. Reutilizar comportamiento y patrones sin obligar a todas las apps a compartir la misma pantalla de negocio.
+- **Tokens CSS:** colores, superficies, sombras, foco y tema se declaran una sola vez en `core/design/tokens.css` y `core/design/module-themes.css`, expuestos como utilidades mediante `@theme inline`. No hexadecimales sueltos ni valores arbitrarios de color en JSX o CSS de componentes.
+- **CSS de componentes permitido:** `core/design/components/*.css` para composiciones expresivas y acotadas que no se describen bien con una lista enorme de utilidades (por ejemplo, composición editorial del login, ilustración floral/geométrica o detalles del shell). Debe usar variables/tokens, mantener cada archivo por debajo de 400 líneas y no duplicar reglas por app.
+- **Prohibido** convertir toda la aplicación en selectores CSS globales, agregar estilos inline arbitrarios, repetir estilos iguales en cada módulo o usar `@apply` fuera de `core/design/base.css`. El objetivo es CSS gobernado y componentes visuales legibles, no prohibir todo CSS.
+- El color del módulo lo da `data-module`; los componentes leen `--accent*` en vez de condicionales por app. En oscuro las variables cambian; `dark:` se usa solo cuando no se resuelve con tokens.
+- Ordenar las clases con `prettier-plugin-tailwindcss`; mantener componentes enfocados y con una responsabilidad clara.
+- `scripts/tailwind-audit.mjs` mide cobertura de utilidades, clases de componente acotadas/sin uso, tamaño CSS y `@apply`. No debe imponer cero clases semánticas si esas clases viven únicamente en la carpeta permitida. `scripts/check-design.mjs` sigue bloqueando morados, símbolos de IA, color fuera de tokens y `@apply` no permitido.
+- No cambiar a otro framework sin una prueba comparativa documentada de una pantalla representativa que valore fidelidad visual, accesibilidad, mantenibilidad, legibilidad, CSS generado y facilidad de trabajo para agentes.
+- Cada entrega de UI conserva captura de referencia y requiere revisión visual de propietario en claro/oscuro, escritorio/móvil; el CI por sí solo no valida UX.
+
