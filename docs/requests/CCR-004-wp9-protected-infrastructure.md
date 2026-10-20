@@ -1,6 +1,6 @@
 # CCR-004 — Cierre de WP9 en rutas protegidas
 
-- **Estado:** propuesta pendiente de decisión explícita del propietario; no implementada.
+- **Estado:** aprobada explícitamente por el propietario el 2026-10-20; implementación WP9 en curso.
 - **Fecha:** 2026-10-20.
 - **Ámbito:** WP9 de `docs/phase0/FASE-0-REFACTOR-BASE.md`.
 - **Motivo:** los cambios que quedan afectan rutas reservadas por AGENTS.md (`compose.yaml`, `deploy/nginx/default.conf`, `.github/**` y documentos de nivel raíz en `docs/`). Este cambio de control no autoriza modificar esas rutas por sí mismo. Mientras se decide, se completan únicamente los ajustes no protegidos y de bajo riesgo.

@@ -80,3 +80,15 @@ Es opcional: sin `Authentication:Google:ClientId` y `ClientSecret` Google queda 
 - **Errores:** siempre redirigen a `/ingresar?error=<codigo>` con `google_denied`, `email_unverified`, `account_disabled`, `signup_closed` o `failed`. Los registros no incluyen ni el `code` ni el `state` de OAuth, ni el correo.
 - **Configuración:** `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (ver `docs/phase0/GOOGLE_OAUTH_SETUP.md`), `APP_PUBLIC_BASE_URL` (`App:PublicBaseUrl`, define el `redirect_uri` sin depender del proxy) y `AUTH_GOOGLE_ALLOW_SIGNUP`. nginx debe enviar `Host $http_host` y `X-Forwarded-Host $http_host`; con `$host` se pierde el puerto y Google responde `redirect_uri_mismatch`.
 - **Límites conocidos:** el secreto no debe versionarse ni registrarse; rótelo en la consola de Google si se expone. Las claves de Data Protection del esquema de correlación de OAuth deben persistirse antes de producción (ver advertencia de Development en `PROGRESS.md`).
+
+
+## Cómo reportar una vulnerabilidad
+
+No publique credenciales, tokens, datos personales ni detalles que permitan explotar una vulnerabilidad en un issue o comentario público.
+
+1. Para un hallazgo que pueda afectar a usuarios, utilice primero el canal privado de reporte de vulnerabilidades de GitHub del repositorio, si está habilitado. Si no aparece esa opción, contacte de forma privada con el responsable del repositorio mediante un canal que ya se haya verificado con él.
+2. Incluya una descripción breve, el impacto observado, la versión o SHA afectado, los pasos mínimos para reproducirlo y, cuando sea posible, una mitigación temporal. Use datos de prueba y redacte valores sensibles de logs y capturas.
+3. No adjunte secretos, cookies, encabezados de autorización, tokens OAuth, dumps de producción ni bases de datos reales. No pruebe el hallazgo contra sistemas ajenos o entornos sin autorización.
+4. Permita que el responsable confirme el alcance y coordine una corrección antes de hacer pública la información. No se promete un plazo de respuesta específico; si existe explotación activa, indíquelo al inicio del reporte privado.
+
+Los problemas de seguridad no se gestionan como solicitudes ordinarias de funcionalidad. Mantenga el detalle técnico y los artefactos de reproducción en el canal privado hasta acordar una divulgación coordinada.

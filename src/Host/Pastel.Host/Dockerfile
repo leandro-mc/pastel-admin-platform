@@ -10,6 +10,11 @@ RUN dotnet publish src/Host/Pastel.Host/Pastel.Host.csproj --configuration Relea
     /p:UseAppHost=false "-p:PastelModules=${PASTEL_MODULES}"
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+# curl se usa exclusivamente para consultar /health/ready en el healthcheck de Compose.
+USER root
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl \
+    && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 ENV ASPNETCORE_URLS=http://+:8080 \
     ASPNETCORE_HTTP_PORTS=8080 \

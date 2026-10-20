@@ -21,6 +21,7 @@ jobs:
   backend:
     if: inputs.confirm_validation == true
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - name: Backend format, build, and unit tests in Docker
@@ -30,6 +31,7 @@ jobs:
   frontend:
     if: inputs.confirm_validation == true
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - name: Frontend format, lint, build, and design audits in Docker
@@ -39,6 +41,7 @@ jobs:
   database-integration:
     if: inputs.confirm_validation == true
     runs-on: ubuntu-latest
+    timeout-minutes: 25
     env:
       POSTGRES_DB: pastel
       POSTGRES_USER: pastel
@@ -54,9 +57,12 @@ jobs:
   container-build:
     if: inputs.confirm_validation == true
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     env:
       # Disposable placeholders used only for Compose interpolation during image builds.
       POSTGRES_PASSWORD: ci-only-Postgres-Password-2026!
+      POSTGRES_HOST: db
+      NGINX_TRUSTED_PROXY_CIDR: 172.30.0.0/24
       JWT_SIGNING_KEY: ci-only-not-a-real-signing-key-keep-over-32-bytes-2026
       BOOTSTRAP_ADMIN_PASSWORD: ci-only-Bootstrap-Password-2026!
     steps:
@@ -70,15 +76,15 @@ jobs:
         run: |
           docker compose up -d
           for attempt in $(seq 1 40); do
-            api_running="$(docker compose ps --status running --services | grep -cx api || true)"
+            api_healthy="$(docker compose ps --status healthy --services | grep -cx api || true)"
             modules_created="$(docker compose exec -T db psql -U pastel -d pastel -tAc "SELECT to_regclass('identity.modules') IS NOT NULL;" 2>/dev/null | tr -d '[:space:]' || true)"
-            if [ "$api_running" -eq 1 ] && [ "$modules_created" = "t" ] && curl -fsS http://127.0.0.1:8080/health/web >/dev/null; then
-              echo "API is running, identity.modules exists, and the web container responds."
+            if [ "$api_healthy" -eq 1 ] && [ "$modules_created" = "t" ] && curl -fsS http://127.0.0.1:8080/health/web >/dev/null; then
+              echo "API readiness is healthy, identity.modules exists, and the web container responds."
               docker compose down -v
               exit 0
             fi
             sleep 2
           done
-          docker compose logs --no-color api db
+          docker compose logs --no-color api db web
           docker compose down -v
           exit 1
