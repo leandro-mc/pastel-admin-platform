@@ -12,7 +12,7 @@ Ejecute desde la raiz del repositorio con PowerShell y Docker Desktop iniciado:
 
 En la línea base comprobada antes de agregar estos scripts, npm run format:check informó 112 archivos sin formato. Ejecute primero **.\scripts\format-frontend.ps1** para aplicar el formato y después **.\scripts\test-frontend.ps1** para verificarlo. La comprobación no se salta ni acepta esa deuda.
 
-Los comandos de .NET y Node se ejecutan en contenedores (mcr.microsoft.com/dotnet/sdk:10.0 y node:24-alpine). El repositorio se monta en solo lectura y cada contenedor usa una copia temporal, limpia de .env, .git, node_modules, bin y obj. Los resultados TRX se guardan en la carpeta temporal del sistema, fuera del repositorio.
+Los comandos de validación de .NET y Node se ejecutan en contenedores (mcr.microsoft.com/dotnet/sdk:10.0 y node:24-alpine). En los scripts de prueba, el repositorio se monta en solo lectura y cada contenedor usa una copia temporal, limpia de .env, .git, node_modules, bin y obj. La excepción explícita es format-frontend.ps1: monta el repositorio con escritura para copiar de vuelta únicamente las rutas administradas por Prettier; no copia node_modules ni modifica rutas fuera de ese conjunto. Los resultados TRX se guardan en la carpeta temporal del sistema, fuera del repositorio.
 
 ## Seguridad de las pruebas PostgreSQL
 
