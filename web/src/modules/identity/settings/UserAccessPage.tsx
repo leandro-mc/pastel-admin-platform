@@ -215,7 +215,7 @@ function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner, 
             const isOwnerRole = role.name === OWNER;
             const hasHuellaPrivilege = role.permissions.some((code) => code.startsWith("huella."));
             const hasCosechaPrivilege = role.permissions.some((code) => code.startsWith("cosecha."));
-            const roleLocked = isOwnerRole || hasHuellaPrivilege || (hasCosechaPrivilege && !actorIsOwner);
+            const roleLocked = isOwnerRole || (isOwnerTarget && role.name === ADMINISTRATOR) || hasHuellaPrivilege || (hasCosechaPrivilege && !actorIsOwner);
             const explanation = isOwnerRole
               ? "Reservado; solo lo establece el bootstrap."
               : hasHuellaPrivilege
