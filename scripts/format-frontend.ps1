@@ -57,13 +57,17 @@ echo "Formato aplicado a los archivos administrados por Prettier."
 echo "Revise git diff antes de crear un commit."
 '@
 
+$normalizedContainerScript = [regex]::Replace($containerScript, "`r`n?", "`n")
+$containerScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($normalizedContainerScript))
+$dockerCommand = ("echo {0} | base64 -d | sh" -f $containerScriptBase64)
+
 Write-Host "Aplicando Prettier en Docker. Este comando modifica el working tree, pero no crea commits." -ForegroundColor Yellow
 $dockerArguments = @(
     "run", "--rm",
     "--mount", ("type=bind,source={0},target=/repo" -f $repoRoot),
     "--entrypoint", "sh",
     "node:24-alpine",
-    "-lc", $containerScript
+    "-c", $dockerCommand
 )
 
 & docker @dockerArguments
