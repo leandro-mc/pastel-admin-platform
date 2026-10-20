@@ -1,4 +1,4 @@
-# ADR-0001 — Ventana de gracia para refresh tokens concurrentes
+# ADR-0009 — Ventana de gracia para refresh tokens concurrentes
 
 - Estado: propuesta implementada en código; pendiente de validación por Build.
 - Fecha: 2026-10-18.
