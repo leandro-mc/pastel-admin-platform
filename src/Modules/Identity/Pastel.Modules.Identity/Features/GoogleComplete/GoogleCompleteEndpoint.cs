@@ -51,7 +51,10 @@ internal static class GoogleCompleteEndpoint
 
         string? requestedReturnUrl = null;
         external.Properties?.Items.TryGetValue(ExternalSchemes.ReturnUrlItem, out requestedReturnUrl);
-        var returnUrl = ReturnUrl.Sanitize(requestedReturnUrl);
+        var returnUrl = string.Equals(requestedReturnUrl, ReturnUrl.RememberLastApp, StringComparison.Ordinal)
+            || !ReturnUrl.IsSafe(requestedReturnUrl)
+                ? "/ingresar"
+                : ReturnUrl.Sanitize(requestedReturnUrl);
         var outcome = await handler.HandleAsync(identity, cancellationToken);
         if (outcome.Session is not { } session)
         {
