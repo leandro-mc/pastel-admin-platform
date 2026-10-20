@@ -64,40 +64,46 @@ export function Component() {
   const date = new Intl.DateTimeFormat("es-CR", { dateStyle: "long" }).format(
     new Date(user.createdAt),
   );
-  const maxCard = card.replace("max-w-md", "max-w-none");
+  const maxCard = `${card.replace("max-w-md", "max-w-none")} shadow-sm`;
 
   return (
-    <section className="mx-auto flex w-full max-w-4xl flex-col gap-6 p-4 sm:p-8">
-      <header>
-        <h1 className="text-2xl font-semibold text-fg">{t.title}</h1>
-        <p className="text-sm text-muted">{t.subtitle}</p>
+    <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">Mi espacio / Perfil y seguridad</p>
+          <h1 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">{t.title}</h1>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{t.subtitle}</p>
+        </div>
+        <span className={user.isActive ? "inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-strong" : "inline-flex items-center gap-2 rounded-full bg-danger-soft px-3 py-1.5 text-xs font-semibold text-danger"}>
+          <ShieldCheck aria-hidden="true" size={15} />
+          {user.isActive ? "Cuenta activa" : "Cuenta bloqueada"}
+        </span>
       </header>
 
       <div className="grid gap-6 lg:grid-cols-[3fr_2fr]">
         <section aria-labelledby="profile-title" className={maxCard}>
-          <div className="flex items-center gap-4">
-            <span
-              aria-hidden="true"
-              className="flex size-16 items-center justify-center rounded-full bg-accent-soft text-xl font-semibold text-accent-strong"
-            >
+          <div className="mb-5 flex items-start justify-between gap-3 border-b border-line pb-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-strong">Información personal</p>
+              <h2 id="profile-title" className="mt-1 text-lg font-bold tracking-tight text-fg">{user.displayName}</h2>
+              <p className="break-all text-sm text-muted">{user.email}</p>
+            </div>
+            <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-lg font-bold text-accent-strong">
               {initials(user.displayName)}
             </span>
-            <div>
-              <h2 id="profile-title" className="text-lg font-semibold text-fg">
-                {user.displayName}
-              </h2>
-              <p className="text-sm text-muted">{user.email}</p>
-              <p className="text-sm font-medium text-accent-strong">
-                {t.active}
-              </p>
-            </div>
           </div>
           <dl className="mt-6 grid gap-4 sm:grid-cols-2">
             <Detail label={t.name}>{user.displayName}</Detail>
             <Detail label={t.email}>{user.email}</Detail>
             <Detail label={t.createdAt}>{date}</Detail>
             <Detail label={t.roles}>
-              {user.roles.join(", ") || t.noRoles}
+              {user.roles.length > 0 ? (
+                <span className="flex flex-wrap gap-1.5 pt-1">
+                  {user.roles.map((role) => (
+                    <span key={role} className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong">{role}</span>
+                  ))}
+                </span>
+              ) : t.noRoles}
             </Detail>
           </dl>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
@@ -116,10 +122,16 @@ export function Component() {
         </section>
 
         <section aria-labelledby="security-title" className={maxCard}>
-          <h2 id="security-title" className="text-lg font-semibold text-fg">
-            {t.securityTitle}
-          </h2>
-          <p className="mb-2 text-sm text-muted">{t.securityHint}</p>
+          <div className="mb-3 flex items-start justify-between gap-3 border-b border-line pb-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-strong">Protección de la cuenta</p>
+              <h2 id="security-title" className="mt-1 text-lg font-bold tracking-tight text-fg">{t.securityTitle}</h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted">{t.securityHint}</p>
+            </div>
+            <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong">
+              <ShieldCheck aria-hidden="true" size={21} />
+            </span>
+          </div>
           <ul>
             <SecurityRow
               icon={KeyRound}

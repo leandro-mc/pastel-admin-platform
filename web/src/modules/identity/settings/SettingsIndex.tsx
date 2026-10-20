@@ -7,12 +7,11 @@ import {
   KeyRound,
   ScrollText,
   ShieldCheck,
-  Sun,
+  UserRound,
   UsersRound,
 } from "lucide-react";
 import { Link } from "react-router";
 import { useAuth } from "@/core/auth";
-import { usePreferences } from "@/core/preferences";
 import { identityPermissions, settingsPaths } from "../paths";
 
 const settingsSections = [
@@ -49,7 +48,6 @@ const settingsSections = [
 /** Inicio privado de Workspace: una bienvenida y accesos administrativos, nunca un catálogo de subapps. */
 export function Component() {
   const { user, permissions, hasPermission } = useAuth();
-  const { theme, toggleTheme } = usePreferences();
   const sections = settingsSections.filter((item) =>
     hasPermission(item.permission),
   );
@@ -106,22 +104,17 @@ export function Component() {
                 to={firstDestination}
                 className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-accent-strong px-4 py-2.5 text-sm font-semibold text-on-accent shadow-sm transition hover:opacity-90 focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
               >
-                Ir a configuración
+                Administrar espacio
                 <ArrowRight aria-hidden="true" size={16} />
               </Link>
             ) : null}
-            <button
-              type="button"
-              onClick={toggleTheme}
+            <Link
+              to={routes.account}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-line bg-surface/80 px-4 py-2.5 text-sm font-semibold text-fg transition hover:bg-surface focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
             >
-              {theme === "light" ? (
-                <Sun aria-hidden="true" size={17} />
-              ) : (
-                <Activity aria-hidden="true" size={17} />
-              )}
-              {theme === "light" ? "Personalizar apariencia" : "Cambiar a modo claro"}
-            </button>
+              <UserRound aria-hidden="true" size={17} />
+              Mi cuenta
+            </Link>
           </div>
         </div>
         <div className="workspace-welcome-art" aria-hidden="true">

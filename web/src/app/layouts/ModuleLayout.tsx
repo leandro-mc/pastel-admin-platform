@@ -1,4 +1,4 @@
-import { NavLink, Outlet } from "react-router";
+import { NavLink, Outlet, useLocation } from "react-router";
 import { useAuth } from "@/core/auth";
 import type { ModuleManifest } from "@/core/modules/types";
 import { shellStrings } from "../strings";
@@ -29,6 +29,8 @@ export default function ModuleLayout({
   manifest: ModuleManifest;
 }) {
   const { hasPermission } = useAuth();
+  const { pathname } = useLocation();
+  const isModuleHome = pathname === manifest.basePath || pathname === `${manifest.basePath}/`;
   const items = manifest.nav.filter(
     (item) =>
       !item.requiredPermission || hasPermission(item.requiredPermission),
@@ -97,7 +99,7 @@ export default function ModuleLayout({
             : "min-w-0 flex-1"
         }
       >
-        <Breadcrumbs />
+        {isModuleHome ? null : <Breadcrumbs />}
         <Outlet />
       </div>
     </div>
