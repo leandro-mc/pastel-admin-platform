@@ -404,6 +404,7 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] **Autorización de CCR-004:** el propietario autorizó el 2026-10-20 los cambios de Compose, Nginx, CI y documentos de nivel raíz definidos en la solicitud; el lote se publicó en `0d825508`.
 - **Validación de esta tanda:** revisión estática de los archivos fuente obtenidos desde GitHub. **Sin ejecutar** `npm ci`, Docker build, `docker compose config`, pruebas ni auditorías. No se declara la imagen validada ni WP9 cerrado.
 - **Siguiente paso:** completar WP10 documental y registrar el sembrador de Testing como pendiente por zona protegida; Build/QA validará este lote. La CCR no equivale a aprobación de Build/QA ni a autorización para fusionar.
+- **Revisión estática del runner:** se aseguró que la auditoría NuGet sea parte del resumen final y que sus hallazgos produzcan una salida fallida. Esta corrección no se ha ejecutado.
 
 
 ## WP9 — Infraestructura Compose/Nginx y documentación operativa (Dev, Tipo 2, 2026-10-20)

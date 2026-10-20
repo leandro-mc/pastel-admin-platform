@@ -42,7 +42,7 @@ echo ""
 echo "=== Auditar paquetes vulnerables NuGet ==="
 vulnerability_output="$(dotnet list Pastel.slnx package --vulnerable --include-transitive 2>&1)"
 vulnerability_status=$?
-printf '%s\\n' "$vulnerability_output"
+printf '%s\n' "$vulnerability_output"
 if [ "$vulnerability_status" -eq 0 ] && printf '%s' "$vulnerability_output" | grep -Eiq 'has the following vulnerable packages'; then
   echo "FALLO: NuGet informa uno o más paquetes vulnerables."
   vulnerability_status=1
@@ -77,8 +77,8 @@ else
   echo "Se omiten las pruebas unitarias porque fallo la compilacion."
 fi
 
-printf '\nResumen de fases: formato=%s; build=%s; pruebas=%s\n' "$format_status" "$build_status" "$test_status"
-if [ "$format_status" -ne 0 ] || [ "$build_status" -ne 0 ] || [ "$test_status" -ne 0 ]; then
+printf '\nResumen de fases: vulnerabilidades=%s; formato=%s; build=%s; pruebas=%s\n' "$vulnerability_status" "$format_status" "$build_status" "$test_status"
+if [ "$vulnerability_status" -ne 0 ] || [ "$format_status" -ne 0 ] || [ "$build_status" -ne 0 ] || [ "$test_status" -ne 0 ]; then
   exit 1
 fi
 exit 0
