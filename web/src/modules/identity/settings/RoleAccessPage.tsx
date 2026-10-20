@@ -12,6 +12,7 @@ import { linkButton, primaryButton, secondaryButton } from "../styles";
 import { PermissionPicker } from "./PermissionPicker";
 import { QueryState } from "./QueryState";
 import { settingsStrings } from "./strings";
+import { isPlatformPermission, isPlatformRole } from "./permissionsScope";
 import { panel } from "./styles";
 
 const t = settingsStrings.access;
@@ -40,11 +41,23 @@ export function Component() {
         onRetry={retry}
       >
         {role && catalog.data ? (
-          <RoleAccessForm
-            key={`${role.id}-${roles.dataUpdatedAt}`}
-            role={role}
-            catalog={catalog.data}
-          />
+          role.isSystemRole ? (
+            <RoleAccessForm
+              key={`${role.id}-${roles.dataUpdatedAt}`}
+              role={role}
+              catalog={catalog.data}
+            />
+          ) : isPlatformRole(role) ? (
+            <RoleAccessForm
+              key={`${role.id}-${roles.dataUpdatedAt}`}
+              role={role}
+              catalog={catalog.data.filter(isPlatformPermission)}
+            />
+          ) : (
+            <p role="status" className="rounded-xl border border-line bg-surface p-5 text-sm leading-relaxed text-muted">
+              Este rol pertenece a una aplicación. Sus permisos se administran dentro de la configuración de esa app, no desde Pastel Workspace.
+            </p>
+          )
         ) : (
           <p role="status" className="p-6 text-sm text-muted">
             {t.notFound}
