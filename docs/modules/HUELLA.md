@@ -9,7 +9,6 @@ Perfil profesional web **del Owner/Superuser de Pastel**, editable en privado y 
 
 | Rol | Quién | Qué puede |
 |---|---|---|
-| **Visitante público** | Cualquier persona, sin cuenta | Ver la versión publicada y abrir sus enlaces; imprimir/guardar como PDF |
 | **Owner/Superuser** | Único propietario de la plataforma | Crear/editar su perfil, previsualizar, publicar/despublicar, controlar visibilidad y regenerar el enlace público |
 | **Administrator general** | Administración de la plataforma, distinto de Owner | No puede acceder al contenido privado ni editar el perfil de Huella |
 | **Visitante público** | Cualquier persona con el enlace vigente, sin cuenta | Ver la última versión publicada y abrir sus enlaces; imprimir/guardar como PDF |
@@ -35,12 +34,12 @@ Permisos: `huella.access` (entrar al panel), `huella.profile.manage` (editar y p
 ## 5. Reglas y detalles
 - **Privacidad:** control de qué se muestra; correo y teléfono ocultos salvo elección explícita; validar enlaces (solo `https`, sin credenciales en la URL); no exponer datos internos.
 - **CV en PDF (MVP):** hoja de estilos de impresión + botón "Guardar como PDF" (impresión del navegador). Un PDF generado en el servidor queda para una etapa posterior.
-- **Vista previa al compartir (importante para reclutadores):** las plataformas de mensajería leen metadatos sin ejecutar JavaScript. El agente debe proponer y documentar en un ADR el método más simple para entregar `title`, `description` y `og:*` del perfil publicado en `/huella/:slug` (p. ej. el servidor devuelve el HTML de la aplicación con metadatos inyectados), sin añadir un servidor Node. Si requiere cambios en `nginx` o en zonas protegidas, solicitarlo por CCR.
+- **Vista previa al compartir (importante para reclutadores):** las plataformas de mensajería leen metadatos sin ejecutar JavaScript. El agente debe proponer y documentar en un ADR el método más simple para entregar `title`, `description` y `og:*` del perfil publicado en `/huella/p/:token` (p. ej. el servidor devuelve el HTML de la aplicación con metadatos inyectados), sin añadir un servidor Node. Si requiere cambios en `nginx` o en zonas protegidas, solicitarlo por CCR.
 - **Público:** endpoints anónimos con límite de tasa y caché; sin cookies de sesión; sin datos del borrador. Requerir token vigente en la ruta, almacenar solo su hash, y mantener el token fuera de logs/referrers.
 - **No indexación:** el HTML inicial contiene `<meta name="robots" content="noindex,nofollow,noarchive">` y la respuesta HTML lleva `X-Robots-Tag: noindex, nofollow, noarchive`. No depender solo de `robots.txt`; este documento noindex aplica al perfil público, no a toda la plataforma.
 - **Accesibilidad y diseño:** tipografía clara, buen contraste, orden semántico (un `h1`, secciones con `h2`), imprimible.
 - Entrada de datos con límites de longitud; texto plano o Markdown mínimo sanitizado.
-- Auditoría: publicar, despublicar y cambio de slug.
+- Auditoría: publicar, despublicar y regenerar/revocar el enlace público (sin registrar el token en claro).
 
 ## 6. Fuera del MVP
 Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (requiere almacenamiento de archivos), PDF del servidor, analítica de visitas, dominio propio por perfil, internacionalización del perfil.
@@ -49,7 +48,7 @@ Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (r
 - Owner/Superuser crea el perfil, ve la vista previa, publica y obtiene un enlace largo y aleatorio que funciona sin sesión; despublica y el enlace deja de mostrar contenido.
 - El perfil público responde con meta robots y `X-Robots-Tag` noindex; los crawlers no deben indexarlo.
 - Lo editado después de publicar **no** aparece públicamente hasta una nueva publicación.
-- Pruebas de integración: permisos (propietario ajeno, anónimo), slug reservado/duplicado, privacidad de contacto, snapshot inmutable.
+- Pruebas de integración: autorización exclusiva de Owner/Superuser, tokens ausentes/mal formados/vencidos/revocados, regeneración que invalida el token anterior, privacidad de contacto y snapshot inmutable.
 - Revisión de accesibilidad, 320 px, claro/oscuro, impresión; `MODULE.md` actualizados; compila y pasa pruebas aislado (`PASTEL_MODULES=huella`).
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
