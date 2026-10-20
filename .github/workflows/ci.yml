@@ -1,7 +1,6 @@
 name: CI
 on:
-  # Work-in-progress branches can receive frequent checkpoint pushes without
-  # starting an expensive full CI run each time.
+  # Validate the active modular-foundation branch on each checkpoint push; other WIP branches stay quiet.
   push:
     branches: [main, dev]
   pull_request:
