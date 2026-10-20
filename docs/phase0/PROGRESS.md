@@ -430,7 +430,7 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] Se añadieron ADR breves para las decisiones de monolito modular, stack/router, Google OAuth, esquemas/migraciones, sistema visual, subset builds, Tailwind 4 y errores/logs. El ADR de ventana de gracia de refresh se renumera a ADR-0009 para evitar colisión con la serie de arquitectura requerida por WP10.
 - [x] Se crea `docs/SPLIT_GUIDE.md`, con el contrato `PASTEL_MODULES`, la diferencia entre códigos minúsculos usados en Docker y nombres PascalCase de MSBuild, ejemplos de construcción y advertencias de seguridad/datos.
 - [x] `docs/SECURITY.md` se actualiza para reflejar que Google OAuth es opcional pero está implementado, que `/api/auth/options` publica la política actual y que existe un proceso privado para reportar vulnerabilidades. `docs/TESTING.md` documenta comandos actuales, auditoría de dependencias, base de pruebas aislada y CI manual.
-- [x] **Datos de prueba disponibles en esta rama:** el único acceso reproducible documentado es la cuenta bootstrap local `admin@pastel.local`; su contraseña viene de `BOOTSTRAP_ADMIN_PASSWORD` en el archivo `.env`. El valor de `.env.example` (`Pastel-Dev-Only-2026!`) es solo un ejemplo de desarrollo; reemplácelo antes del arranque y nunca lo use fuera de su máquina. El primer inicio fuerza cambio de contraseña. Bootstrap restaura los roles de sistema Owner/Superuser y Administrator, por lo que esa cuenta privilegiada no sirve para comprobar el aislamiento de un usuario Member.
+- [x] **Datos de prueba disponibles en esta rama:** está la cuenta bootstrap local `admin@pastel.local` (contraseña provista solo mediante `BOOTSTRAP_ADMIN_PASSWORD` en el `.env`, con cambio de contraseña forzado). Además, `TestingSeedUsersTask` proporciona fixtures independientes de Owner/Superuser, Administrator y Member; las credenciales sintéticas están en «Datos para pruebas» al final de este documento. Son solo para bases locales Development/Testing, y aún deben validarse con Build.
 - [x] **Sembrador de Testing publicado en CCR-005:** `TestingSeedUsersTask` crea/rehabilita `test.owner@pastel.local`, `test.admin@pastel.local` y `test.member@pastel.local`, solo con `TestingSeed:Enabled=true` en Development/Testing. Se bloquea por guardia de producción y audita sin credenciales. **Sin compilar ni ejecutar**; pendiente de Build.
 - **Comandos locales:** copiar `.env.example` a `.env`, revisar los valores locales y ejecutar `docker compose up -d --build`; verificar `docker compose ps` y `docker compose logs --tail 150 api web db`. Las pruebas de integración usan `pastel_integration_tests` mediante `scripts/test-database.ps1`, y no deben apuntar a la base normal.
 - **Validación de esta tanda:** solo edición/revisión estática del contenido; **sin** build, formato, pruebas, Docker ni CI. Las ejecuciones históricas registradas arriba no validan el HEAD de este checkpoint.
@@ -468,11 +468,11 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 
 - **Corrección del smoke de CI:** se eliminó la excepción que configuraba `NGINX_TRUSTED_PROXY_CIDR=172.30.0.0/24` solo para el job de contenedor. El smoke usa ahora el default seguro `192.0.2.0/24`, igual que el entorno local, para no confiar en un `X-Forwarded-For` falsificado desde la conexión cliente. La política sigue sin despacho automático y no se ejecutó.
 
-## WP10 — Inventario de documentación Identity pendiente (2026-10-20)
+## WP10 — Inventario de documentación Identity (2026-10-20)
 
-- En el árbol publicado se comprobó que faltan `src/Modules/Identity/MODULE.md`, `web/src/modules/identity/MODULE.md` y `docs/modules/IDENTITY.md`. No se crearon porque Identity y sus documentos de contrato están dentro de áreas protegidas por `AGENTS.md`.
-- La [CCR-007](../requests/CCR-007-identity-module-documentation.md) detalla el contenido solicitado para cada ficha. Queda pendiente de autorización específica del propietario antes de escribir en esas rutas.
-- El documento de pruebas `docs/testing/plans/FASE-0-TEST-PLAN.md`, caso F0-I07, todavía describe triggers push/PR que no coinciden con CI manual. No lo edité porque corresponde a QA; el propietario del plan debe actualizar la descripción operativa sin quitar los controles exigidos.
+- [x] Se crearon `src/Modules/Identity/MODULE.md`, `web/src/modules/identity/MODULE.md` y `docs/modules/IDENTITY.md` en el commit `1912589`; ambas fichas `MODULE.md` respetan el límite de 120 líneas.
+- [ ] Build/QA debe cotejar las rutas, permisos, tareas de arranque y límites de producto documentados contra la implementación real; estas fichas no equivalen a validar Identity.
+- **Pendiente de QA:** `docs/testing/plans/FASE-0-TEST-PLAN.md`, caso F0-I07, todavía describe triggers de push/PR que no coinciden con CI manual. QA debe alinear la descripción del mecanismo de disparo sin quitar ni debilitar los controles obligatorios.
 
 ## Datos para pruebas
 
