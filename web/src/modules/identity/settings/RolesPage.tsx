@@ -8,6 +8,7 @@ import { primaryButton, secondaryButton } from "../styles";
 import { CreateRoleDialog } from "./CreateRoleDialog";
 import { QueryState } from "./QueryState";
 import { settingsStrings } from "./strings";
+import { isPlatformRole } from "./permissionsScope";
 import { chip, chipNeutral, panel } from "./styles";
 
 const t = settingsStrings.roles;
@@ -16,6 +17,7 @@ const t = settingsStrings.roles;
 export function Component() {
   const { hasPermission } = useAuth();
   const roles = useRoles();
+  const platformRoles = (roles.data ?? []).filter(isPlatformRole);
   const [creating, setCreating] = useState(false);
 
   return (
@@ -32,7 +34,7 @@ export function Component() {
             {t.title} y permisos
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
-            {t.subtitle} Revise el alcance de cada rol antes de modificar sus permisos.
+            {t.subtitle} Revise el alcance de cada rol de plataforma. Los roles de negocio se administran dentro de cada aplicación.
           </p>
         </div>
         {hasPermission(identityPermissions.rolesCreate) ? (
@@ -49,7 +51,7 @@ export function Component() {
       <section className={`${panel} overflow-hidden shadow-sm`} aria-label="Roles registrados">
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
           <div>
-            <h2 className="font-semibold text-fg">Roles de acceso</h2>
+            <h2 className="font-semibold text-fg">Roles de plataforma</h2>
             <p className="mt-0.5 text-sm text-muted">
               {roles.data
                 ? settingsStrings.common.total(roles.data.length)
@@ -66,13 +68,13 @@ export function Component() {
           error={roles.error}
           onRetry={() => void roles.refetch()}
         >
-          {roles.data && roles.data.length === 0 ? (
+          {roles.data && platformRoles.length === 0 ? (
             <p role="status" className="p-6 text-sm text-muted">
               {t.empty}
             </p>
           ) : (
             <ul className="grid gap-4 p-4 sm:grid-cols-2 xl:grid-cols-3">
-              {roles.data?.map((role) => (
+              {platformRoles.map((role) => (
                 <li
                   key={role.id}
                   className="flex min-w-0 flex-col gap-4 rounded-2xl border border-line bg-surface p-5 shadow-sm transition duration-150 hover:border-accent/50 hover:shadow-md"
