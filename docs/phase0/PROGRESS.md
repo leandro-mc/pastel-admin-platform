@@ -462,3 +462,6 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Límite pendiente de dependencias de accesibilidad:** no agregué `eslint-plugin-jsx-a11y`, Vitest ni `vitest-axe` a mano porque su instalación requiere actualizar de forma coherente `web/package.json` y `package-lock.json`; este entorno no puede ejecutar npm para generar el lockfile. Se solicita ese bloque como CCR separada.
 
 - **Bloqueo de dependencias para WP9/WP10:** se registra [CCR-006](../requests/CCR-006-frontend-accessibility-and-test-tooling.md) para aprobar los paquetes de accesibilidad, pruebas unitarias React y Playwright. No se editó `web/package.json` ni `package-lock.json` de forma parcial; deben actualizarse juntos con npm y probarse con `npm ci`.
+
+- **Auditoría de fronteras:** se añadió `scripts/check-module-boundaries.mjs`, sin dependencias, para detectar imports alias/relativos entre subapps, imports directos de subapps desde `core`/shell, referencias de implementación .NET entre módulos y ausencia del contrato de descubrimiento `IPastelModule`/`PastelModuleAttribute`. `scripts/test-frontend.ps1` ejecuta la auditoría sobre la copia temporal de CI.
+- **Estado de validación:** el script es código nuevo y **no se ha ejecutado**. Build debe probarlo sobre el HEAD; si revela violaciones reales, corregirlas por lote antes de despachar CI.
