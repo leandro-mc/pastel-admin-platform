@@ -66,9 +66,6 @@ export function Component() {
     }
   }
   const platformRoles = (roles.data ?? []).filter(isPlatformRole);
-  const preservedAppRoleIds = (roles.data ?? [])
-    .filter((role) => !isPlatformRole(role) && user.data?.roles.includes(role.name))
-    .map((role) => role.id);
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-8 sm:px-6">
@@ -83,7 +80,6 @@ export function Component() {
             catalog={platformCatalog}
             initialOverrides={initialOverrides}
             actorIsOwner={actorIsOwner}
-            preservedAppRoleIds={preservedAppRoleIds}
           />
         ) : null}
       </QueryState>
@@ -106,10 +102,9 @@ type FormProps = {
   catalog: Permission[];
   initialOverrides: Record<string, OverrideValue>;
   actorIsOwner: boolean;
-  preservedAppRoleIds: string[];
 };
 
-function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner, preservedAppRoleIds }: FormProps) {
+function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }: FormProps) {
   const navigate = useNavigate();
   const notify = useNotify();
   const save = useSaveUserAccess();
@@ -150,8 +145,8 @@ function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner, 
     try {
       await save.mutateAsync({
         userId: user.id,
-        // Workspace solo edita los roles de plataforma; las membresías de apps se conservan sin modificarlas.
-        roleIds: [...new Set([...roleIds, ...preservedAppRoleIds])],
+        // El endpoint de Workspace solo modifica roles de plataforma y conserva las membresías de apps en el servidor.
+        roleIds,
         overrides: changes,
         administrator,
       });

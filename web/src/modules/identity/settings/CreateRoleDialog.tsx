@@ -41,6 +41,9 @@ export function CreateRoleDialog({ onClose }: { onClose: () => void }) {
   const [permissionIds, setPermissionIds] = useState<string[]>([]);
   const [failure, setFailure] = useState<ShownError | null>(null);
   const availablePermissions = (catalog.data ?? []).filter(isPlatformPermission);
+  const hasSettingsPermission = permissionIds.some((id) =>
+    availablePermissions.some((permission) => permission.id === id && permission.code.startsWith("settings.")),
+  );
   const {
     register,
     handleSubmit,
@@ -49,6 +52,7 @@ export function CreateRoleDialog({ onClose }: { onClose: () => void }) {
   } = useForm<Values>({ resolver: zodResolver(schema) });
 
   const submit = handleSubmit(async (values) => {
+    if (!hasSettingsPermission) return;
     setFailure(null);
     try {
       await create.mutateAsync({ ...values, permissionIds });
@@ -97,6 +101,11 @@ export function CreateRoleDialog({ onClose }: { onClose: () => void }) {
           <p className="text-xs leading-relaxed text-muted">
             Workspace permite configurar la plataforma. Los permisos funcionales de Brisa, Balance, Ágora, Cosecha y Huella se administran dentro de cada aplicación.
           </p>
+          {!hasSettingsPermission ? (
+            <p role="status" className="text-xs font-medium text-muted">
+              Seleccione al menos un permiso de configuración de plataforma para crear este rol.
+            </p>
+          ) : null}
         </div>
         <div className="flex flex-wrap justify-end gap-3">
           <button type="button" onClick={onClose} className={secondaryButton}>
@@ -104,7 +113,7 @@ export function CreateRoleDialog({ onClose }: { onClose: () => void }) {
           </button>
           <button
             type="submit"
-            disabled={create.isPending}
+            disabled={create.isPending || !hasSettingsPermission}
             className={primaryButton}
           >
             {create.isPending

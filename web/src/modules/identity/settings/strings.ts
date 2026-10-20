@@ -120,9 +120,9 @@ export const settingsStrings = {
     toggleOff: (name: string) => `Desactivar ${name}`,
     permissions: (count: number) =>
       count === 1 ? "1 permiso" : `${count} permisos`,
-    enabledOk: "Módulo activado.",
-    disabledOk: "Módulo desactivado.",
-    empty: "No hay módulos registrados.",
+    enabledOk: "Aplicación activada.",
+    disabledOk: "Aplicación desactivada.",
+    empty: "No hay aplicaciones registradas.",
   },
   audit: {
     title: "Registro de auditoría",

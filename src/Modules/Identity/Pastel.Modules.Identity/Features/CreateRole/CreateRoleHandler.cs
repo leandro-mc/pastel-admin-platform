@@ -45,6 +45,10 @@ internal sealed partial class CreateRoleHandler(IdentityDbContext db, IAuditTrai
         {
             return IdentityErrors.UnknownPermissions;
         }
+        if (!permissions.Any(permission => permission.Code.StartsWith("settings.", StringComparison.Ordinal)))
+        {
+            return IdentityErrors.RoleRequiresPlatformPermission;
+        }
 
         if (await guard.AuthorizeGrantAsync(permissions.Select(x => x.Code).ToArray(), "create_role", null, cancellationToken) is { } denied)
         {

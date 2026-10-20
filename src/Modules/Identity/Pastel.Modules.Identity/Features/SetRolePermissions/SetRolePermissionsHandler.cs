@@ -19,6 +19,10 @@ internal sealed class SetRolePermissionsHandler(IdentityDbContext db, IAuditTrai
         {
             return IdentityErrors.RoleNotFound;
         }
+        if (!PlatformRoleScope.IsPlatformRole(role))
+        {
+            return IdentityErrors.PrivilegeAppScopeRequired;
+        }
 
         if (await guard.AuthorizeRoleEditAsync(role, "set_role_permissions", cancellationToken) is { } denied)
         {

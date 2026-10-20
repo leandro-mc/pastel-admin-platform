@@ -61,6 +61,10 @@ internal static class IdentityErrors
         "identity.role.name_taken", "Ya existe un rol con ese nombre.",
         new Dictionary<string, string[]> { ["name"] = ["Ya existe un rol con ese nombre."] });
 
+    public static readonly Error RoleRequiresPlatformPermission = Error.Validation(
+        "identity.role.platform_scope_required", "Un rol de Workspace debe incluir al menos un permiso de configuración de plataforma.",
+        new Dictionary<string, string[]> { ["permissionIds"] = ["Seleccione al menos un permiso settings.*. Los roles funcionales pertenecen a cada app."] });
+
     // Jerarquía de privilegios (S1): todas son 403
     public static readonly Error PrivilegeAdministratorRoleRequired = Error.Forbidden(
         "identity.privilege.escalation", "Solo una persona administradora puede asignar o quitar el rol Administrator.");

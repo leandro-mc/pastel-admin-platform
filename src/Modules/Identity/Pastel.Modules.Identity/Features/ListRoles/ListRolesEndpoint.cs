@@ -22,6 +22,10 @@ internal static class ListRolesEndpoint
         {
             query = query.Where(x => x.Id == id);
         }
+        else
+        {
+            query = PlatformRoleScope.Filter(query);
+        }
 
         var rows = await query.OrderBy(x => x.Name)
             .Select(x => new
@@ -30,7 +34,12 @@ internal static class ListRolesEndpoint
                 x.Name,
                 x.Description,
                 x.IsSystemRole,
-                Permissions = x.RolePermissions.Select(p => new { p.PermissionId, p.Permission.Code }).ToList(),
+                // Workspace solo recibe códigos/IDs de permisos de plataforma. Incluso Owner/Superuser
+                // gestiona permisos funcionales desde la app correspondiente, no desde este endpoint global.
+                Permissions = x.RolePermissions
+                    .Where(p => p.Permission.Code == IdentityPermissions.DashboardView
+                        || p.Permission.Code.StartsWith("settings."))
+                    .Select(p => new { p.PermissionId, p.Permission.Code }).ToList(),
                 UserCount = x.UserRoles.Count(),
             })
             .ToListAsync(cancellationToken);

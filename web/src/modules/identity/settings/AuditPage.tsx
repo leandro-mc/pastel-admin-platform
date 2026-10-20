@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useAuth } from "@/core/auth";
-import { useAudit, useModules } from "../api/queries";
-import { identityPermissions } from "../paths";
+import { useAudit } from "../api/queries";
 import { inputClass, secondaryButton } from "../styles";
 import { Pager } from "./Pager";
 import { QueryState } from "./QueryState";
@@ -42,10 +40,6 @@ export function Component() {
   const { values, page, update, reset } = useUrlFilters(defaults);
   const [action, setAction] = useState(values.action);
   const [actor, setActor] = useState(values.actor);
-  const modules = useModules({
-    enabled: hasPermission(identityPermissions.modulesRead),
-  });
-
   const audit = useAudit({
     page,
     pageSize: DEFAULT_PAGE_SIZE,
@@ -107,23 +101,17 @@ export function Component() {
             onChange={(event) => setActor(event.target.value)}
           />
         </label>
-        {modules.data ? (
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-fg">
-            {t.module}
-            <select
-              className={selectClass}
-              value={values.module}
-              onChange={(event) => update({ module: event.target.value })}
-            >
-              <option value="">{t.allModules}</option>
-              {modules.data.map((module) => (
-                <option key={module.id} value={module.code}>
-                  {module.name}
-                </option>
-              ))}
-            </select>
-          </label>
-        ) : null}
+        <label className="flex flex-col gap-1.5 text-sm font-medium text-fg">
+          {t.module}
+          <select
+            className={selectClass}
+            value={values.module}
+            onChange={(event) => update({ module: event.target.value })}
+          >
+            <option value="">Toda la plataforma</option>
+            <option value="identity">Identidad y administración</option>
+          </select>
+        </label>
         <label className="flex flex-col gap-1.5 text-sm font-medium text-fg">
           {t.from}
           <input
