@@ -37,11 +37,11 @@ En producción, la aplicación debe negarse a iniciar si la configuración de ar
 
 ## Límites conocidos de v0.1
 
-No incluye confirmación de correo, recuperación de contraseña por email, MFA ni notificaciones administrativas. El soporte SSO/OIDC se implementará en WP5 de la Fase 0; hasta entonces no debe considerarse disponible. La verificación de bloqueo/versionado de usuario se hace por petición; para una plataforma de mayor escala se puede optimizar con caché invalidable o un proveedor de identidad dedicado, manteniendo el mismo modelo de permisos. Antes de producción, agregar pruebas de integración de los flujos de seguridad, evaluación de dependencias y revisión independiente.
+No incluye confirmación de correo, recuperación de contraseña por email, MFA ni notificaciones administrativas. Google OAuth 2.0/OIDC ya está implementado de forma opcional, conforme a la sección «Ingreso con Google»; requiere configurar las credenciales en el entorno. La verificación de bloqueo/versionado de usuario se hace por petición; cualquier optimización debe mantener el mismo modelo de permisos. Antes de producción, agregar pruebas de integración completas de los flujos de seguridad, evaluación de dependencias y revisión independiente.
 
 ## Contraseñas
 
-La política única del backend es de 12 a 128 caracteres; permite frases largas y espacios y no impone reglas de composición de mayúsculas, minúsculas, números o símbolos. Se rechazan las contraseñas incluidas en la lista común embebida. Los mensajes de validación se generan desde `PasswordPolicy`; el endpoint `/api/auth/options` y su consumo por el cliente quedan pendientes de la integración prevista en WP5/WP7. No duplique la política en el frontend.
+La política única del backend es de 12 a 128 caracteres; permite frases largas y espacios y no impone reglas de composición de mayúsculas, minúsculas, números o símbolos. Se rechazan contraseñas incluidas en la lista común embebida. Los mensajes y requisitos se derivan de `PasswordPolicy`; `GET /api/auth/options` publica las opciones actuales para que el frontend adapte los formularios sin duplicar la política. Las comprobaciones de Build deben confirmar que las opciones servidas y la política efectiva siguen alineadas.
 
 ## Rotación de claves JWT
 
@@ -80,6 +80,18 @@ Es opcional: sin `Authentication:Google:ClientId` y `ClientSecret` Google queda 
 - **Errores:** siempre redirigen a `/ingresar?error=<codigo>` con `google_denied`, `email_unverified`, `account_disabled`, `signup_closed` o `failed`. Los registros no incluyen ni el `code` ni el `state` de OAuth, ni el correo.
 - **Configuración:** `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (ver `docs/phase0/GOOGLE_OAUTH_SETUP.md`), `APP_PUBLIC_BASE_URL` (`App:PublicBaseUrl`, define el `redirect_uri` sin depender del proxy) y `AUTH_GOOGLE_ALLOW_SIGNUP`. nginx debe enviar `Host $http_host` y `X-Forwarded-Host $http_host`; con `$host` se pierde el puerto y Google responde `redirect_uri_mismatch`.
 - **Límites conocidos:** el secreto no debe versionarse ni registrarse; rótelo en la consola de Google si se expone. Las claves de Data Protection del esquema de correlación de OAuth deben persistirse antes de producción (ver advertencia de Development en `PROGRESS.md`).
+
+
+## Cómo reportar una vulnerabilidad
+
+No publique credenciales, tokens, datos personales ni detalles que permitan explotar una vulnerabilidad en un issue o comentario público.
+
+1. Para un hallazgo que pueda afectar a usuarios, utilice primero el canal privado de reporte de vulnerabilidades de GitHub del repositorio, si está habilitado. Si no aparece esa opción, contacte de forma privada con el responsable del repositorio mediante un canal que ya se haya verificado con él.
+2. Incluya una descripción breve, el impacto observado, la versión o SHA afectado, los pasos mínimos para reproducirlo y, cuando sea posible, una mitigación temporal. Use datos de prueba y redacte valores sensibles de logs y capturas.
+3. No adjunte secretos, cookies, encabezados de autorización, tokens OAuth, dumps de producción ni bases de datos reales. No pruebe el hallazgo contra sistemas ajenos o entornos sin autorización.
+4. Permita que el responsable confirme el alcance y coordine una corrección antes de hacer pública la información. No se promete un plazo de respuesta específico; si existe explotación activa, indíquelo al inicio del reporte privado.
+
+Los problemas de seguridad no se gestionan como solicitudes ordinarias de funcionalidad. Mantenga el detalle técnico y los artefactos de reproducción en el canal privado hasta acordar una divulgación coordinada.
 
 
 ## Cómo reportar una vulnerabilidad
