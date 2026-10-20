@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router";
-import { Flower2 } from "lucide-react";
+import { Flower2, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/core/auth";
+import { usePreferences } from "@/core/preferences";
 import { productModules } from "../modules";
 import { routes } from "../routes";
 import { shellStrings } from "../strings";
@@ -12,6 +13,7 @@ import { barButton } from "./styles";
 /** Marca y contexto dinámico: la flor permanece; el nombre y el destino corresponden a la app actual. */
 export default function TopBar() {
   const { status } = useAuth();
+  const { theme, toggleTheme } = usePreferences();
   const { pathname } = useLocation();
   const current = productModules.find(
     (module) =>
@@ -46,6 +48,19 @@ export default function TopBar() {
         <ModuleSwitcher />
         <div className="ml-auto flex items-center gap-1">
           <HelpButton />
+          <button
+            type="button"
+            className={barButton}
+            aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
+            title={theme === "light" ? "Modo oscuro" : "Modo claro"}
+            onClick={toggleTheme}
+          >
+            {theme === "light" ? (
+              <Moon aria-hidden="true" className="size-5" />
+            ) : (
+              <Sun aria-hidden="true" className="size-5" />
+            )}
+          </button>
           {status === "authenticated" ? (
             <AccountMenu />
           ) : pathname !== routes.login ? (
