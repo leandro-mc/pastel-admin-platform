@@ -29,11 +29,11 @@ export const strings = {
 export const shellStrings = {
   brand: "Pastel",
   home: "Inicio",
-  modules: "Módulos",
+  modules: "Aplicaciones",
   help: {
     button: "Ayuda",
     title: "¿Necesita ayuda?",
-    body: "Si algo no funciona o necesita acceso a un módulo, comuníquese con administración. Si ve un código de soporte, indíquelo al escribir.",
+    body: "Si algo no funciona o necesita acceso a una aplicación, comuníquese con administración. Si ve un código de soporte, indíquelo al escribir.",
   },
   account: {
     menu: "Cuenta",
@@ -52,9 +52,9 @@ export const shellStrings = {
   moduleNav: (name: string) => `Navegación de ${name}`,
   hub: {
     title: "Inicio",
-    anonymous: "Inicie sesión para ver sus módulos.",
+    anonymous: "Inicie sesión para ver sus aplicaciones.",
     empty:
-      "Todavía no tiene módulos asignados. Solicite acceso a administración.",
+      "Todavía no tiene aplicaciones asignadas. Solicite acceso a administración.",
     open: "Abrir",
   },
 } as const;
