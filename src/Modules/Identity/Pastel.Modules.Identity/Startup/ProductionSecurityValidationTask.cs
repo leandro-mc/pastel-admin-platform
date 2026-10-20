@@ -28,6 +28,12 @@ internal sealed class ProductionSecurityValidationTask(
         var bootstrapPassword = configuration["Bootstrap:AdminPassword"];
         var signingKey = configuration["Jwt:SigningKey"];
         var previousSigningKey = configuration["Jwt:PreviousSigningKey"];
+        var testingSeedEnabled = configuration.GetValue<bool>("TestingSeed:Enabled");
+
+        if (testingSeedEnabled)
+        {
+            problems.Add("TestingSeed:Enabled debe ser false en Production");
+        }
 
         if (string.IsNullOrWhiteSpace(bootstrapEmail)
             || string.Equals(bootstrapEmail, "admin@pastel.local", StringComparison.OrdinalIgnoreCase))

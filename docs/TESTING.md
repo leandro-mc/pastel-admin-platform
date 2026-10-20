@@ -51,3 +51,16 @@ Las ejecuciones correctas registradas en esta bitácora pertenecen a SHA anterio
 ## Build aislado por subapp y CodeQL
 
 El workflow manual `.github/workflows/ci.yml` contiene un job `module-isolation` que construye backend y frontend con una sola subapp de negocio por fila; Identity permanece incluido. El workflow opcional `.github/workflows/codeql.yml` analiza C# y JavaScript/TypeScript y solo corre con `confirm_scan=true`. Ambos workflows requieren comprobación manual del propietario y no se ejecutaron con este cambio. El proyecto de pruebas de arquitectura y el resultado de cada build por subconjunto siguen pendientes de Build/QA.
+
+
+## Fixtures de autenticación QA (solo local)
+
+Compose local habilita el sembrador mediante `TESTING_SEED_ENABLED=true`. Las credenciales fijas y sintéticas son:
+
+- Owner/Superuser: `test.owner@pastel.local` / `Local-Only-Test-Owner-2026!`
+- Administrator sin rol Owner: `test.admin@pastel.local` / `Local-Only-Test-Admin-2026!`
+- Member: `test.member@pastel.local` / `Local-Only-Test-Member-2026!`
+
+El sembrador corre al arrancar después del catálogo y Bootstrap. Se permite solo con la opción explícita en `Development`/`Testing`; en `Production` su configuración provoca un fallo deliberado de inicio. Ajuste `TESTING_SEED_ENABLED=false` para todo entorno compartido. El código y las credenciales se publican porque solo sirven para datos locales sintéticos; no son cuentas productivas.
+
+**No validado:** el seeder requiere build y pruebas de integración de Build. Tampoco se instalaron las dependencias de pruebas frontend de CCR-006 porque el entorno no pudo acceder al registry de npm.

@@ -18,4 +18,5 @@ internal static class IdentityEventIds
     public static readonly EventId GoogleLogin = new(1060, nameof(GoogleLogin));
     public static readonly EventId GoogleLinked = new(1061, nameof(GoogleLinked));
     public static readonly EventId GoogleRejected = new(1062, nameof(GoogleRejected));
+    public static readonly EventId TestingSeed = new(1070, nameof(TestingSeed));
 }

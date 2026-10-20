@@ -90,6 +90,7 @@ internal sealed class IdentityModule : IPastelModule
         services.AddSingleton<IPastelStartupTask, ProductionSecurityValidationTask>();
         services.AddSingleton<IPastelStartupTask, CatalogSyncTask>();
         services.AddSingleton<IPastelStartupTask, BootstrapAdminTask>();
+        services.AddSingleton<IPastelStartupTask, TestingSeedUsersTask>();
         services.AddHostedService<IdentityRetentionService>();
 
         // Con contraseña temporal solo se permite lo necesario para cambiarla o salir.

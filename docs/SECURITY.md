@@ -27,6 +27,12 @@ Este mecanismo es el acceso de emergencia (*break-glass*), no un sustituto de la
 
 En producción, la aplicación debe negarse a iniciar si la configuración de arranque o la clave de firma JWT todavía contienen valores inseguros de ejemplo (requisito de WP4). No publiques ni documentes valores reales de estas credenciales.
 
+## Cuentas de prueba locales
+
+`TestingSeedUsersTask` solo crea fixtures cuando `TestingSeed:Enabled=true` y el entorno es `Development` o `Testing`. Produce las cuentas `test.owner@pastel.local`, `test.admin@pastel.local` y `test.member@pastel.local` con los roles exactos de prueba y las contraseñas locales documentadas en `docs/phase0/PROGRESS.md`. No registra contraseñas ni tokens. Cuando restaura una cuenta, invalida sesiones y registra un evento de auditoría sin credenciales.
+
+La protección se aplica tanto en la tarea como en `ProductionSecurityValidationTask`: si se activa el sembrador en `Production`, la API falla al iniciar. Las credenciales fixture están deliberadamente fijas, son públicas y no constituyen secretos; solo son admisibles para una base de datos sintética local. En cualquier despliegue compartido, configure `TESTING_SEED_ENABLED=false`. No use las cuentas ni sus contraseñas fuera de Development/Testing.
+
 ## Principios de operación
 
 - Denegar por defecto, validar cada petición y aplicar mínimo privilegio.

@@ -1,6 +1,6 @@
 # CCR-007 — Fichas técnicas del módulo Identity
 
-- **Estado:** propuesta pendiente de autorización explícita.
+- **Estado:** autorizada por el propietario el 2026-10-20; las tres fichas se crean en esta tanda, pendiente de lectura/validación Build/QA.
 - **Fecha:** 2026-10-20.
 - **Ámbito:** WP10 de `docs/phase0/FASE-0-REFACTOR-BASE.md`.
 - **Motivo:** durante el inventario se confirmó que faltan `src/Modules/Identity/MODULE.md`, `web/src/modules/identity/MODULE.md` y `docs/modules/IDENTITY.md`. El módulo Identity y la documentación de contratos están reservados como áreas protegidas en `AGENTS.md`; no se crearán esas fichas por iniciativa propia.
@@ -15,4 +15,4 @@
 
 ## Límites
 
-Esta CCR autoriza la documentación del módulo únicamente si el propietario la aprueba. No autoriza cambios de código en Identity, cambios del modelo de permisos/sesiones, migraciones, ejecución de CI o integración en `dev`/`main`.
+Las tres fichas fueron creadas sin modificar modelos, migraciones ni reglas de producto. Build/QA debe cotejarlas con los contratos y las rutas actuales. Esta CCR no autoriza ejecutar CI ni integrar en `dev`/`main`.

@@ -15,7 +15,7 @@ namespace Pastel.Modules.Identity.Startup;
 
 /// <summary>
 /// Cuenta de arranque (<c>Bootstrap:AdminEmail</c> y <c>Bootstrap:AdminPassword</c>). Crea/recupera la cuenta con los roles de sistema
-/// Administrator y Owner/Superuser. Solo esta tarea asigna Owner/Superuser; las APIs de administración no pueden conceder ni quitar ese rol.
+/// Administrator y Owner/Superuser. En Production, esta es la única tarea que asigna Owner/Superuser; TestingSeedUsersTask solo crea un fixture Owner con una opción explícita en Development/Testing. Las APIs de administración no pueden conceder ni quitar ese rol.
 /// También puede quitar el bloqueo temporal de inicio por contraseña de esa cuenta con el evento <c>identity.bootstrap.admin_lockout_cleared</c>: acceso de emergencia
 /// (<i>break-glass</i>). Se ejecuta después de sincronizar el catálogo (orden 20).
 /// </summary>
