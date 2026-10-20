@@ -394,3 +394,5 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - Revisión estática del contrato de roles: Owner/Superuser y Administrator siguen diferenciados; creación/asignación ordinaria no puede conceder el rol Owner; Workspace filtra permisos de aplicación; Huella y Cosecha permanecen restringidos en guardas. Esto no reemplaza pruebas de autorización integradas.
 - Funcionalidad todavía pendiente y documentada como tal: entidades/API/ruta pública y snapshot de Huella; catálogo/membresías persistentes por app y UI/API de gestión de Cosecha por Owner; feed real de Ágora. No se presenta ninguna de estas funciones como lista.
 - Validación de esta tanda: **sin compilar y sin validación de navegador**. CI no se despachó y no se integró en `dev` ni `main`. Build/QA deberá ejecutar formato, lint, build, pruebas de autorización/retorno y capturas claras/oscuras en escritorio/móvil antes de considerar cerrada la recuperación visual.
+
+- Final consistency pass: `contextLabel` in the top bar is deliberately `Workspace`/`Pastel`, not the selected app name; the selected app remains identified only by the sidebar card below the refresh control.

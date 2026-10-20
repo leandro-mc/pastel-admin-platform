@@ -84,9 +84,8 @@ export default function RootLayout() {
       ?? availableModules.find((module) => module.code === "agora")
       ?? null
     : null);
-  const contextLabel = currentModule?.code === "identity"
-    ? "Workspace"
-    : currentModule?.name ?? "Pastel";
+  // The selected app is identified in the sidebar card; do not repeat its name in the top bar.
+  const contextLabel = currentModule?.code === "identity" ? "Workspace" : "Pastel";
   const currentPage = pageTitle(pathname, currentModule, matches);
 
   useEffect(() => {
