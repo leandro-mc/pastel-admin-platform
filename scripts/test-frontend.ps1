@@ -66,7 +66,8 @@ fi
 exit 0
 '@
 
-$containerScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($containerScript))
+$normalizedContainerScript = [regex]::Replace($containerScript, "`r`n?", "`n")
+$containerScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($normalizedContainerScript))
 $dockerCommand = ("echo {0} | base64 -d | sh" -f $containerScriptBase64)
 
 Write-Host "Validacion frontend en Docker (copia temporal; el repositorio se monta en solo lectura)." -ForegroundColor Cyan
