@@ -453,3 +453,5 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - `docs/phase0/FASE-0-REFACTOR-BASE.md` §12.4 ahora describe el modo manual de CI que realmente está publicado y diferencia los jobs implementados de las guardas todavía pendientes de Build.
 - **Pendiente de reconciliación por QA:** `docs/testing/plans/FASE-0-TEST-PLAN.md`, caso F0-I07, todavía describe triggers push/PR. No modifiqué el plan obligatorio porque su mantenimiento pertenece a QA; debe alinearse la descripción del mecanismo de disparo sin quitar ni debilitar los controles que el caso exige.
 - No se modificaron pruebas ni se ejecutó CI.
+
+- **Corrección estática de endurecimiento Compose:** se quitó `cap_drop: [ALL]` únicamente del servicio PostgreSQL de desarrollo. El entrypoint oficial puede requerir capacidades de ownership/cambio de usuario al inicializar el volumen; API y web mantienen el drop completo. La base local sigue con `no-new-privileges`, límites, rotación de logs y publicación del puerto solo en `127.0.0.1`. Falta verificar el primer arranque y un volumen existente con Docker.
