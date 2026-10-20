@@ -77,6 +77,9 @@ internal static class IdentityErrors
     public static readonly Error PrivilegeOwnerPermissionRequired = Error.Forbidden(
         "identity.privilege.owner_permission_required", "Solo Owner/Superuser puede conceder privilegios de Workspace, Cosecha o Huella.");
 
+    public static readonly Error PrivilegeAppScopeRequired = Error.Forbidden(
+        "identity.privilege.app_scope_required", "Los permisos funcionales de una aplicación se administran desde la configuración de esa aplicación, no desde Workspace.");
+
     public static readonly Error PrivilegeSelfAction = Error.Forbidden(
         "identity.privilege.self_action_not_allowed", "No puede realizar esta acción sobre su propia cuenta.");
 
