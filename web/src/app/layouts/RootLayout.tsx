@@ -2,6 +2,8 @@ import { useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { RouterProvider } from "react-aria-components";
 import { strings } from "../strings";
+import { routes } from "../routes";
+import AppFooter from "./AppFooter";
 import TopBar from "../shell/TopBar";
 
 /** Al cambiar de ruta el foco pasa al `h1` de la página (lectores de pantalla y teclado), no en la carga inicial. */
@@ -26,21 +28,23 @@ function useFocusHeadingOnNavigation(): void {
 export default function RootLayout() {
   useFocusHeadingOnNavigation();
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const isStandaloneAuth = pathname === routes.login;
   return (
     <RouterProvider navigate={(to, options) => void navigate(to, options)}>
+      <div className="flex min-h-screen flex-col">
       <a
         href="#contenido"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-surface-raised focus:px-4 focus:py-2 focus:text-fg focus:ring-2 focus:ring-accent-strong"
       >
         {strings.skipToContent}
       </a>
-      <TopBar />
-      <main
-        id="contenido"
-        className="min-h-[calc(100vh-3.5rem)] bg-app text-fg"
-      >
+      {isStandaloneAuth ? null : <TopBar />}
+      <main id="contenido" className="flex-1 bg-app text-fg">
         <Outlet />
       </main>
+      {isStandaloneAuth ? null : <AppFooter />}
+      </div>
     </RouterProvider>
   );
 }

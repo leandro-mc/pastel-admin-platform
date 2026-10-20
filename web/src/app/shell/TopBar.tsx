@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { Flower2 } from "lucide-react";
 import { useAuth } from "@/core/auth";
-import { soleProductModule } from "../modules";
+import { productModules } from "../modules";
 import { routes } from "../routes";
 import { shellStrings } from "../strings";
 import AccountMenu from "./AccountMenu";
@@ -9,25 +9,39 @@ import HelpButton from "./HelpButton";
 import ModuleSwitcher from "./ModuleSwitcher";
 import { barButton } from "./styles";
 
-/** Barra superior. Neutra: el color pertenece a cada módulo. Con un solo módulo en el paquete adopta su marca. */
+/** Marca y contexto dinámico: la flor permanece; el nombre y el destino corresponden a la app actual. */
 export default function TopBar() {
   const { status } = useAuth();
   const { pathname } = useLocation();
-  const brand = soleProductModule;
-  const BrandIcon = brand?.icon ?? Flower2;
+  const current = productModules.find(
+    (module) =>
+      pathname === module.basePath || pathname.startsWith(module.basePath + "/"),
+  );
+  const isWorkspace = pathname.startsWith(routes.settings);
+  const agora = productModules.find((module) => module.code === "agora");
+  const appName = current?.name ?? (isWorkspace ? "Pastel Workspace" : agora?.name ?? shellStrings.brand);
+  const home = current?.basePath ?? (isWorkspace ? routes.settings : agora?.basePath ?? routes.home);
 
   return (
     <header
-      data-module={brand?.code}
+      data-module={current?.code}
       className="sticky top-0 z-40 border-b border-line bg-surface"
     >
-      <div className="mx-auto flex h-14 max-w-7xl items-center gap-2 px-3 sm:px-4">
+      <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 sm:px-5">
         <Link
-          to={routes.home}
-          className={`${barButton} gap-2 pl-0 text-base font-semibold`}
+          to={home}
+          className={`${barButton} gap-2 pl-1 text-left`}
+          aria-label={`Ir al inicio de ${appName}`}
         >
-          <BrandIcon aria-hidden="true" className="size-6 text-accent" />
-          <span>{brand?.name ?? shellStrings.brand}</span>
+          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl rounded-bl-sm border border-line-strong bg-accent-soft text-accent-strong">
+            <Flower2 aria-hidden="true" className="size-6" strokeWidth={1.7} />
+          </span>
+          <span className="flex min-w-0 flex-col items-start leading-tight">
+            <strong className="truncate text-base font-bold tracking-tight text-fg sm:text-lg">{appName}</strong>
+            <small className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted">
+              {isWorkspace ? "Workspace" : "App"}
+            </small>
+          </span>
         </Link>
         <ModuleSwitcher />
         <div className="ml-auto flex items-center gap-1">
