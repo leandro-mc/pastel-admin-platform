@@ -30,7 +30,13 @@ internal sealed class ListUsersHandler(IdentityDbContext db)
         if (!string.IsNullOrWhiteSpace(query.Role))
         {
             var role = query.Role.Trim().ToUpperInvariant();
-            users = users.Where(x => x.UserRoles.Any(r => r.Role.NormalizedName == role));
+            users = users.Where(x => x.UserRoles.Any(r =>
+                r.Role.NormalizedName == role
+                && (r.Role.IsSystemRole
+                    || (r.Role.RolePermissions.Any(p => p.Permission.Code.StartsWith("settings."))
+                        && !r.Role.RolePermissions.Any(p =>
+                            p.Permission.Code != IdentityPermissions.DashboardView
+                            && !p.Permission.Code.StartsWith("settings."))))));
         }
 
         users = status switch
@@ -54,7 +60,14 @@ internal sealed class ListUsersHandler(IdentityDbContext db)
                 x.AccessFailedCount,
                 x.LockoutEnd,
                 x.CreatedAt,
-                Roles = x.UserRoles.Select(r => r.Role.Name).ToList(),
+                // El directorio global solo presenta roles de plataforma; la membresía de cada app se ve allí.
+                Roles = x.UserRoles
+                    .Where(r => r.Role.IsSystemRole
+                        || (r.Role.RolePermissions.Any(p => p.Permission.Code.StartsWith("settings."))
+                            && !r.Role.RolePermissions.Any(p =>
+                                p.Permission.Code != IdentityPermissions.DashboardView
+                                && !p.Permission.Code.StartsWith("settings."))))
+                    .Select(r => r.Role.Name).ToList(),
             })
             .ToListAsync(cancellationToken);
 
