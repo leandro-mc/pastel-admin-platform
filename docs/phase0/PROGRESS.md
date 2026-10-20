@@ -43,8 +43,8 @@ Archivos clave del checkpoint: `web/src/modules/identity/pages/LoginPage.tsx`, `
 | WP6 — Esqueletos/plantilla de módulos | **Código y migraciones iniciales de los cinco esquemas compilados y aplicados durante las pruebas locales de integración.** Ver «WP6 — Bitácora». | Ejecutar las pruebas de arquitectura y validar los subconjuntos con `-p:PastelModules=Identity` según el plan. Las migraciones de los contextos esqueleto solo crean sus esquemas e historiales; todavía no crean tablas de dominio. |
 | WP7 — Cimientos de frontend/sesión/errores/shell | **Recuperación visual amplia y contratos de destino tras login actualizados; sin validar el HEAD actual.** Workspace y roles usan permiso global explícito. | Build/QA en navegador y pruebas; resolver regresiones de shell/rutas/retorno, asegurar que el selector refleje acceso real y no un catálogo simulado. |
 | WP8 — Recuperación visual + sistema de diseño Tailwind | **Implementación visual amplia publicada, enfoque Tailwind híbrido; sin compilar desde estos cambios.** | Build/QA sobre el HEAD actual; Prettier, ESLint, TypeScript/Vite, pruebas, `check-design`, `tailwind-audit`; capturas antes/después en ambas apariencias, escritorio/móvil; corregir regresiones y solicitar aprobación visual del propietario. |
-| WP9 — Infraestructura/CI/repositorio | **Parcial; CCR-004 autorizada** | Reproducibilidad e infraestructura están en actualización. Sigue pendiente validación Build y el resto de guardarraíles WP9 no implementados. |
-| WP10 — Testabilidad/documentación/datos | **Parcial — documentación en esta tanda** | Guía de subset builds, ADR 0001–0008 y guía de test data; faltan el sembrador de Testing, las pruebas de Build y la limpieza documental completa. |
+| WP9 — Infraestructura/CI/repositorio | **Implementación amplia; Build pendiente** | Se completaron Compose/Nginx/CI manual, auditorías de dependencias, matriz de compilación por subapp y workflow CodeQL opcional; falta validar los jobs y el proyecto de pruebas de arquitectura que corresponde a Build. |
+| WP10 — Testabilidad/documentación/datos | **Parcial — documentación en esta tanda** | Guía de subset builds, ADR 0001–0009 y datos para Build; faltan el sembrador de Testing, las pruebas de Build y la limpieza documental completa. |
 
 ## WP2 — Resultado conocido y limitaciones
 
@@ -414,7 +414,8 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] **Nginx:** la configuración se genera desde plantilla con CIDR de proxy de confianza configurable, conserva `Host $http_host`, reenvía `X-Forwarded-For` preservando la cadena, habilita compresión y fija `Cache-Control immutable` solo a activos bajo `/assets/` con hash. `index.html` no se cachea. Las cabeceras defensivas proceden de un único snippet incluido también en las ubicaciones que declaran sus propias cabeceras.
 - [x] **CI y docs:** workflow continúa manual y con `confirm_validation=true`; se definieron límites de tiempo por job y el smoke ahora espera la salud real del API. README se reescribió para la arquitectura modular actual; `docs/AI_WORKFLOW.md` ya no contradice la política CI; `docs/SECURITY.md` incorpora cómo reportar vulnerabilidades.
 - [x] **Auditoría de dependencias:** `scripts/test-backend.ps1` ejecuta `dotnet list package --vulnerable --include-transitive` y falla si NuGet informa paquetes vulnerables; `scripts/test-frontend.ps1` incluye `npm audit --audit-level=high`. **Sin ejecutar sobre el HEAD actual.**
-- [ ] **Guardarraíles restantes de WP9:** las pruebas de arquitectura, aislamiento automatizado por módulo y CodeQL opcional requieren implementación/validación adicional. No hay evidencia de que estén integrados al workflow actual.
+- [x] **Aislamiento de compilación y CodeQL opcional definidos:** la matriz `module-isolation` construye backend y frontend para una subapp de negocio por fila, y `.github/workflows/codeql.yml` ofrece análisis manual de C# y TypeScript/JavaScript.
+- [ ] **Pendiente de Build/QA:** validar estos jobs y crear/ejecutar el proyecto `Pastel.ArchitectureTests` y demás controles de arquitectura que correspondan a Build.
 - **Validación de este lote:** lectura y edición estática de archivos fuente; **sin ejecutar** Docker, `docker compose config`, Nginx, `npm ci`, .NET, pruebas ni CI. Las nuevas comprobaciones de salud necesitan validarse sobre imagen construida.
 - **Siguiente paso:** concluir WP10 documental/ADRs, registrar la brecha del sembrador de Testing por su zona protegida, y entregar a Build para los comandos y pruebas de integración pendientes.
 
@@ -436,3 +437,11 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Siguiente paso:** revisar el resto de referencias antiguas con los hallazgos de §13, obtener autorización específica de CCR-005 si se desea el sembrador, y pasar el HEAD a Build para generar/validar migraciones y ejecutar pruebas. Esta fase no se declara aprobada.
 
 - **Corrección estática adicional WP9:** se definió explícitamente `OFS=","` en la normalización de `PASTEL_MODULES`; al reasignar campos, awk debe conservar la coma para producir `Brisa,Balance`, no una lista separada por espacios. Sigue **sin ejecutar Docker/build**, así que Build debe verificar tanto `*` como `brisa,balance`.
+
+## WP9 — Matriz de subset builds y CodeQL opcional (Dev, Tipo 2, 2026-10-20)
+
+- [x] `.github/workflows/ci.yml` agrega `module-isolation`: matriz por Ágora, Brisa, Balance, Cosecha y Huella que construye las imágenes backend/frontend con un único módulo de negocio por vez; Identity permanece siempre incluido.
+- [x] Se actualizan los pasos de checkout a `actions/checkout@v6` y se añade `.github/workflows/codeql.yml` con `github/codeql-action@v4` para C# y TypeScript/JavaScript, activado únicamente mediante `workflow_dispatch` y confirmación `confirm_scan=true`.
+- **Política operativa:** no se añadió trigger automático y no se despachó CI ni CodeQL. Que el workflow esté definido no indica resultado de compilación ni análisis.
+- [ ] **Pendiente de Build:** verificar sintaxis YAML/Compose, construir todas las filas de la matriz, ejecutar CodeQL manualmente solo después de la autorización del propietario y completar `Pastel.ArchitectureTests`/los controles de arquitectura que le corresponden a Build.
+- **Validación de esta tanda:** revisión estática. **Sin ejecutar** Docker, CodeQL, frontend, .NET o CI sobre este SHA.
