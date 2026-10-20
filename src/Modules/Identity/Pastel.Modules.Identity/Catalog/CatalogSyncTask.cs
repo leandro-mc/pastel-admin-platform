@@ -121,7 +121,8 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             .Where(x => x.RoleId != admin.Id && x.RoleId != owner.Id)
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
-                || x.Permission.Code.StartsWith("huella."))
+                || x.Permission.Code.StartsWith("huella.")
+                || x.Permission.Code.StartsWith("cosecha."))
             .ToListAsync(cancellationToken);
         db.RolePermissions.RemoveRange(legacyRestricted);
 
