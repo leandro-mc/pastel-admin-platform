@@ -157,9 +157,10 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             db.Roles.Remove(role);
         }
 
-        // Los overrides exclusivos del sistema o Huella nunca se conservan. Overrides normales de cada app
-        // se preservan para no perder configuración mientras sus propios endpoints no estén implementados.
-        // Para Cosecha se conservan únicamente excepciones que el Owner/Superuser haya concedido.
+        // Los overrides exclusivos del sistema y Huella nunca se conservan. Las excepciones de apps
+        // solo se mantienen si fueron concedidas por una cuenta Owner/Superuser; las anteriores de
+        // Administrators generales se retiran para aplicar el nuevo límite. Los endpoints de Workspace
+        // no pueden consultar ni modificar overrides de apps; cada módulo recibirá sus propios endpoints.
         var ownerUserIds = await db.UserRoles
             .Where(x => x.RoleId == owner.Id)
             .Select(x => x.UserId)
@@ -168,7 +169,8 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
                 || x.Permission.Code.StartsWith("huella.")
-                || (x.Permission.Code.StartsWith("cosecha.")
+                || (!(x.Permission.Code == IdentityPermissions.DashboardView
+                    || x.Permission.Code.StartsWith("settings."))
                     && !ownerUserIds.Contains(x.AssignedByUserId ?? Guid.Empty)))
             .ToListAsync(cancellationToken);
         db.UserPermissionOverrides.RemoveRange(restrictedOverrides);
