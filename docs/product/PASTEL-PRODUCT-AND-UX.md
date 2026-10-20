@@ -37,21 +37,21 @@ Cada subaplicación tiene objetivos, navegación, usuarios miembros, permisos, c
 | **Ágora** | Pública y obligatoria. Toda persona la puede ver; toda cuenta la conserva activa. No se puede desactivar. | Entrada inicial al sistema; feed y funcionalidades públicas disponibles sin registrarse. Después de autenticarse, sigue siendo el destino por defecto si no existe una ruta de retorno o preferencia válida. |
 | **Brisa** | App de producto seleccionable/activable por el usuario que cumpla los requisitos de acceso. | Navegación, tema, inicio, miembros, roles, permisos y configuración de Brisa. |
 | **Balance** | App de producto seleccionable/activable por el usuario que cumpla los requisitos de acceso. | Navegación, tema, inicio, miembros, roles, permisos y configuración de Balance. |
-| **Huella** | Caso especial descrito por el propietario: la mantiene su propietario y no se descubre mediante búsqueda, listado público ni catálogo general. La interpretación provisional es que solo el propietario general puede añadirla/administrarla; confirmar abajo. | Panel privado para actualizar el perfil y administrar el enlace público. El perfil solo se muestra a quien conoce el enlace; no exige registro para consultarlo. |
+| **Huella** | Exclusiva del Owner/Superuser y de su único perfil personal. No es una opción de autoactivación, no está en búsquedas ni en el catálogo público. | El Owner/Superuser edita el borrador, publica y administra un enlace de capacidad largo, revocable y regenerable. Cualquier persona con el enlace vigente puede ver únicamente la versión publicada, sin registro. El perfil público lleva noindex,nofollow,noarchive. |
 | **Cosecha** | App privada, excluida del catálogo de autoactivación. Solo el propietario/superusuario global autoriza el acceso a cada cuenta. | Sus miembros reciben exclusivamente los permisos que se les concedieron en Cosecha. |
-| **Pastel Workspace** | App interna de plataforma; visible en el selector solo para el privilegio global de superusuario/administrador general confirmado. No se ofrece en el catálogo regular. | Inicio/centro de administración global: identidad, usuarios, roles/permisos de plataforma, catálogo global y administración de aplicaciones. |
+| **Pastel Workspace** | App interna de plataforma, fuera del catálogo ordinario. La pueden abrir las cuentas con el permiso de plataforma platform.workspace.access: los roles de sistema Owner/Superuser y Administrator general. | Inicio/centro de administración global. Owner/Superuser tiene alcance de plataforma completo; Administrator general administra usuarios, roles y funciones de plataforma dentro de su conjunto de permisos, pero no adquiere permisos de negocio de cada app ni privilegios exclusivos de Owner. |
 
-No asumir que tener acceso a Workspace da acceso a los datos de todas las apps; se define como capacidad de administración de plataforma. Tampoco asumir que ser administrador de Brisa/Balance/Ágora concede administración global.
+Tener acceso a Workspace no equivale a una membresía ni concede automáticamente permisos de negocio de todas las apps. Los roles de sistema son distintos: **Owner/Superuser** tiene alcance global completo y es el único propietario de Huella; **Administrator** es administración general de plataforma, no es propietario y no puede conceder roles o permisos reservados. Los permisos funcionales de Brisa, Balance y Ágora siguen siendo propios de sus ámbitos.
 
 ## 4. Inicio, selector y navegación
 
 1. Una visita anónima a `/` conduce a **Ágora**, no a un hub de tarjetas. Si Ágora todavía no tiene su feed construido, mostrar su propia página pública/estado de módulo, no una pantalla de selección.
 2. El login y el registro conservan la marca **Pastel Workspace**, porque son puertas de entrada de la plataforma. En ellas se recupera la composición visual original descrita en §7.
-3. Tras iniciar sesión, el selector solo incluye apps activas y autorizadas para esa persona. Las apps que puede añadir se administran en Configuración/Catálogo, no se mezclan como tarjetas en el inicio. Cosecha queda fuera del catálogo ordinario y Workspace fuera para cuentas comunes.
+3. Tras iniciar sesión, el selector solo incluye apps activas y autorizadas para esa persona. Las apps que puede añadir se administran en Configuración/Catálogo, no se mezclan como tarjetas en el inicio. Cosecha y Huella quedan fuera de la autoactivación; Workspace aparece solo si la sesión contiene el permiso platform.workspace.access.
 4. Ágora no se puede quitar de la lista de apps activas. Una cuenta nueva comienza con Ágora activa.
 5. Seleccionar otra app cambia el contexto completo: nombre, color, navegación, destino inicial, rutas y configuración disponible. La app seleccionada se distingue también mediante texto/icono/estado, nunca solo por color.
 6. La flor se conserva como marca común; el nombre principal del shell y el subtítulo representan la app seleccionada (por ejemplo, «Ágora» / «App»). Cuando el contexto sea Workspace, debe identificar expresamente «Pastel Workspace». El selector se representa como control desplegable/chip cercano a la marca, siguiendo el concepto del diseño original.
-7. Al pulsar la marca/nombre se vuelve al inicio de la app actual; no se cambia accidentalmente a un hub global. Las rutas profundas y un `returnUrl` validado deben seguir funcionando. La resolución de app activa debe derivarse de la ruta/manifiesto, no de un estado visual independiente que pueda quedar desincronizado.
+7. Al pulsar la marca/nombre se vuelve al inicio de la app actual; no se cambia accidentalmente a un hub global. Después de login, un returnUrl interno y válido tiene prioridad; si no existe, la primera entrada abre Ágora y los inicios posteriores vuelven a la última app de producto usada. Por ahora la preferencia se guarda localmente en el navegador; no representa una preferencia sincronizada entre dispositivos. La resolución de app activa debe derivarse de la ruta/manifiesto, no de un estado visual independiente que pueda quedar desincronizado.
 8. El shell persiste en escritorio y móvil: navegación lateral en escritorio, patrón táctil equivalente en móvil, foco visible, ayuda, preferencias y menú de cuenta. No desaparecerá el footer ni se retirarán funciones originales sin decisión aprobada.
 9. La UI filtra enlaces por permisos, pero la API sigue siendo autoridad. Una ruta no autorizada no se vuelve segura por ocultar un botón.
 
@@ -136,33 +136,49 @@ Una entrega de UI no se considera completa solo porque compile o pase ESLint/CI.
 - [ ] Comparativa de capturas en claro/oscuro, escritorio/móvil, incluyendo login, inicio, usuarios, permisos/roles y cuenta.
 - [ ] Build/QA ejecuta build, tests y un recorrido real en navegador; el propietario valida visualmente. No se inventan resultados.
 
-## 10. Preguntas al propietario antes de cerrar el modelo de producto
+## 10. Decisiones de producto confirmadas por el propietario (2026-10-19)
 
-Las reglas siguientes son propuestas, no comportamiento ya implementado. Se pueden usar para restaurar el aspecto y las rutas sin alterar autorización del backend, pero se deben confirmar antes de diseñar un flujo de permisos definitivo.
+Estas decisiones sustituyen las preguntas provisionales anteriores. Aplicarlas en el frontend no sustituye la autorización del servidor.
 
-### Q1. ¿Quién puede entrar a Pastel Workspace?
+### 10.1 Owner/Superuser frente a Administrator general
 
-**Recomendación:** definir un privilegio global distinto de los administradores de una app. Solo ese privilegio muestra Workspace. En el modelo actual existe el rol de sistema `Administrator`, pero no se debe asumir que un administrador local de Brisa/Balance también recibe Workspace. Conviene confirmar si el rol actual es el privilegio global deseado o si se introducirá un rol explícito de propietario/superusuario.
+- Owner/Superuser y Administrator son roles de sistema distintos e inmutables mediante las APIs de administración.
+- El bootstrap configurado (Bootstrap:AdminEmail) crea o restaura la cuenta propietaria con ambos roles. Solo el bootstrap establece/restaura la membresía Owner; un endpoint de usuarios no puede asignarla, quitarla ni transferirla.
+- Ambos roles reciben platform.workspace.access y pueden abrir Pastel Workspace. Owner/Superuser posee además todos los permisos de las apps y los privilegios reservados; Administrator tiene los permisos de plataforma (dashboard.view, settings.* y Workspace) y no hereda permisos funcionales de las apps.
+- Solo Owner puede conceder permisos de Cosecha o gestionar sus accesos, y el rol Owner no puede crearse como rol personalizado ni asignarse desde UI/API. El rol Administrator puede administrar cuentas/roles de plataforma, pero una asignación de rol normal se valida contra los permisos efectivos del actor.
+- platform.owner, platform.workspace.access y huella.* no se conceden por rol personalizado ni excepción individual; se asignan únicamente por el seeding de los roles de sistema. Cosecha puede tener roles de app, pero solo Owner puede concederlos.
 
-### Q2. ¿Quién puede usar Huella?
+### 10.2 Huella: el perfil personal del propietario
 
-**Interpretación provisional:** solo el propietario general puede activar y editar la app Huella personal; no se ofrece a cuentas normales ni aparece en búsquedas. El perfil compartido es público solo por enlace. Si lo que desea es que cada usuario pueda tener su propia Huella y solo el enlace sea privado, eso cambia la visibilidad del catálogo y la gestión de perfiles.
+- Huella corresponde únicamente a la cuenta Owner/Superuser. Los usuarios regulares no pueden activarla, editarla ni recibir permisos huella.*.
+- La página pública no requiere registro y solo se puede llegar a través del enlace compartido. No se debe construir un buscador, directorio, botón público de descubrimiento ni incluir perfiles en un catálogo.
+- El enlace usa un token aleatorio opaco de alta entropía independiente de un nombre/slug. Recomendación de implementación: mínimo 32 bytes aleatorios, codificación Base64URL y almacenamiento únicamente del hash del token. Nunca derivarlo del correo, nombre ni ID del propietario.
+- Regenerar el enlace crea un token nuevo e invalida inmediatamente el anterior. El enlace vigente funciona como secreto de acceso: cualquier persona que lo tenga puede leer la última versión publicada sin autenticarse.
+- El perfil y sus respuestas HTML/PDF/metadatos deben indicar noindex,nofollow,noarchive. La entrega pública debe incluir la meta robots en el HTML inicial y la cabecera X-Robots-Tag; robots.txt por sí solo no garantiza la desindexación. No exponer el token en logs, analítica, mensajes de error ni referencias de terceros.
+- Los datos de contacto permanecen ocultos por defecto. La página pública solo presenta los datos incluidos explícitamente en la instantánea publicada. El borrador nunca se sirve de forma anónima.
 
-### Q3. ¿Qué hacer al iniciar sesión?
+**Estado real:** la base Huella es todavía un esqueleto sin tablas de perfil, ruta pública o API de enlace. Los criterios de token/hash, publicación, revocación/regeneración y noindex son ahora obligatorios en su ficha, pero no se afirma que estén implementados en este checkpoint.
 
-**Recomendación:** la ruta de retorno validada tiene prioridad. Sin `returnUrl`, la primera entrada va a Ágora. En sesiones posteriores, se puede conservar la última app usada (con Ágora como fallback) o abrir siempre Ágora. Hay que decidir si se desea recordar la última app.
+### 10.3 Destino después del login y retorno
 
-### Q4. ¿Cómo debe protegerse el enlace de Huella?
+1. Un returnUrl que pase la validación de ruta interna tiene prioridad sobre cualquier preferencia.
+2. Si no hay returnUrl válido ni app recordada, la primera entrada conduce a Ágora.
+3. En logins posteriores se recuerda la última app de producto que la persona usó; visitar Workspace, cuenta, login o una página interna de configuración no sustituye la última app.
+4. El código actual usa una preferencia no sensible almacenada en localStorage por navegador. Por tanto, el recuerdo no se sincroniza entre equipos/perfiles de navegador. Si se necesita una preferencia por cuenta, debe acordarse e implementarse un contrato de servidor en una etapa posterior.
+5. Nunca confiar en returnUrl para autorización: al llegar a la ruta, los guardas de sesión/permisos y el backend siguen siendo obligatorios.
 
-**Recomendación:** identificador público largo y no adivinable, datos de perfil explícitamente públicos, opción de regenerar/revocar el enlace, límites de consultas y `noindex` para evitar su aparición en buscadores. El enlace seguiría permitiendo lectura pública sin registro, como se describió. Confirmar si también desea desindexación o si compartir en buscadores es intencional.
+### 10.4 Catálogo de apps
 
-### Q5. ¿Qué apps se pueden autoactivar durante registro?
+- Ágora está siempre activa y no se puede quitar.
+- Brisa y Balance se ofrecen como opt-in cuando la cuenta cumple los requisitos, y se podrán añadir/desactivar desde Configuración cuando exista la persistencia de membresías.
+- Huella no se ofrece a usuarios regulares. Cosecha se concede exclusivamente por Owner. Workspace se muestra solo a roles con platform.workspace.access.
+- El catálogo/autogestión de apps aún necesita contratos de persistencia y UI; no simular la activación con controles que no guarden cambios.
 
-**Recomendación propuesta:** Ágora está activa y no removible; Brisa y Balance se ofrecen como opt-in; Huella se oculta para cuentas normales hasta resolver Q2; Cosecha solo por concesión del propietario; Workspace solo para el privilegio global. Después, la lista personal se gestiona desde Configuración.
+### 10.5 Decisiones ya cerradas y pendientes técnicos
 
-### Q6. ¿Cómo distinguir tema y navegación propios de una app de los comunes?
+Cerrado: separación Owner/Administrator general; Huella solo del propietario; returnUrl válido prioritario y última app posterior; enlace Huella aleatorio, revocable/regenerable, solo por enlace y excluido de indexación.
 
-**Propuesta:** cada manifiesto declara identidad, acento, inicio, navegación, disponibilidad y metadatos de acceso; el shell comparte componentes, no procesos de negocio. Solo autenticación, identidad común, preferencias generales, ayuda y notificaciones pueden ser transversales. Cada app decide el resto de su experiencia.
+Pendiente de implementación funcional: entidades/tablas/API de Huella, emisión segura y almacenamiento hash del token, regeneración/revocación, página pública por token y respuesta con noindex; selección y membresías persistentes por app; preferencia de última app sincronizada entre dispositivos (no requerida por decisión actual). Todo ello requiere Build/QA y pruebas de seguridad antes de considerarse terminado.
 
 ## 11. Orden de implementación
 
