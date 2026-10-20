@@ -3,6 +3,7 @@
 @import "./tokens.css";
 @import "./module-themes.css";
 @import "./components/auth.css";
+@import "./components/workspace.css";
 @import "./base.css";
 
 /* El modo oscuro lo decide `data-theme` (preferencias del usuario), no el sistema operativo. */
