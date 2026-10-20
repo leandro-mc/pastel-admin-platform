@@ -1,0 +1,31 @@
+/* Ajustes frente al mockup: lado editorial despejado, beneficios sin tarjetas y panel de acceso más ancho. */
+.auth-main { width: min(1534px, 82%); grid-template-columns: minmax(0, 1.18fr) minmax(0, 0.88fr); gap: 7.3%; padding: 1rem 0 2.2rem; }
+.auth-story { min-height: auto; overflow: visible; padding: 0.2rem 0 0.6rem; border: 0; border-radius: 0; background: transparent; box-shadow: none; }
+.auth-story .auth-eyebrow { margin-bottom: 2.1rem; }
+.auth-hero-title { max-width: none; font-size: clamp(2.9rem, 3.62vw, 4.375rem); letter-spacing: -0.06em; }
+.auth-hero-copy { max-width: 34rem; margin: 1.65rem 0 1.8rem; font-size: 0.95rem; line-height: 1.8; }
+.auth-feature-list { max-width: 34rem; gap: 1rem; margin-top: 1.8rem; }
+.auth-feature { gap: 0.9rem; padding: 0; border: 0; border-radius: 0; background: transparent; }
+.auth-feature-icon { width: 2.95rem; height: 2.95rem; border-radius: 0.8rem; background: var(--surface); }
+.auth-feature-copy strong { font-size: 0.8rem; font-weight: 800; }
+.auth-feature-copy small { font-size: 0.75rem; }
+.auth-orbit-art { right: -2rem; bottom: -5rem; width: min(18rem, 46%); opacity: 0.55; }
+.auth-form-card { max-width: 32.5rem; padding: clamp(1.75rem, 3vw, 2.6rem) clamp(1.6rem, 2.75vw, 2.65rem) 1.9rem; border-radius: 1.55rem; }
+@media (max-width: 900px) {
+  .auth-main { width: 90%; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4%; padding-block: 1rem 2rem; }
+  .auth-story { padding: 0.2rem 0; }
+  .auth-hero-title { font-size: clamp(2.6rem, 4.2vw, 3.75rem); letter-spacing: -0.045em; }
+  .auth-story .auth-eyebrow { margin-bottom: 1.4rem; }
+  .auth-orbit-art { right: -2rem; bottom: -4rem; width: 12rem; opacity: 0.25; }
+  .auth-feature { gap: 0.7rem; }
+  .auth-form-card { padding: 1.8rem 1.6rem; }
+}
+@media (max-width: 680px) {
+  .auth-main { width: 90%; grid-template-columns: minmax(0, 1fr); gap: 1.6rem; padding-block: 0.6rem 1.5rem; }
+  .auth-story { padding: 0.2rem 0; }
+  .auth-hero-title { font-size: clamp(2.4rem, 9vw, 3.2rem); }
+  .auth-story .auth-eyebrow { margin-bottom: 1.2rem; }
+  .auth-orbit-art { right: -4rem; bottom: -4rem; width: 10rem; opacity: 0.16; }
+  .auth-card-column { justify-content: stretch; }
+  .auth-form-card { max-width: none; }
+}

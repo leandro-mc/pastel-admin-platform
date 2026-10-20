@@ -1,74 +1,33 @@
+import { ChevronRight, Moon, PanelLeftClose, PanelLeftOpen, Sun } from "lucide-react";
 import { Link, useLocation } from "react-router";
-import { Flower2, Moon, Sun } from "lucide-react";
 import { useAuth } from "@/core/auth";
 import { usePreferences } from "@/core/preferences";
-import { productModules } from "../modules";
 import { routes } from "../routes";
 import { shellStrings } from "../strings";
 import AccountMenu from "./AccountMenu";
-import HelpButton from "./HelpButton";
-import ModuleSwitcher from "./ModuleSwitcher";
 import { barButton } from "./styles";
 
-/** Marca y contexto dinámico: la flor permanece; el nombre y el destino corresponden a la app actual. */
-export default function TopBar() {
+type Props = { pageTitle: string; contextLabel: string; sidebarCollapsed: boolean; onToggleSidebar: () => void };
+
+/** La barra superior identifica la sección; el nombre de la app activa vive en la barra lateral. */
+export default function TopBar({ pageTitle, contextLabel, sidebarCollapsed, onToggleSidebar }: Props) {
   const { status } = useAuth();
   const { theme, toggleTheme } = usePreferences();
   const { pathname } = useLocation();
-  const current = productModules.find(
-    (module) =>
-      pathname === module.basePath || pathname.startsWith(module.basePath + "/"),
-  );
-  const isWorkspace = pathname.startsWith(routes.settings);
-  const agora = productModules.find((module) => module.code === "agora");
-  const appName = current?.name ?? (isWorkspace ? "Pastel Workspace" : agora?.name ?? shellStrings.brand);
-  const home = current?.basePath ?? (isWorkspace ? routes.settings : agora?.basePath ?? routes.home);
-
   return (
-    <header
-      data-module={current?.code}
-      className="sticky top-0 z-40 border-b border-line bg-surface"
-    >
-      <div className="mx-auto flex min-h-16 max-w-7xl items-center gap-2 px-3 sm:px-5">
-        <Link
-          to={home}
-          className={`${barButton} gap-2 pl-1 text-left`}
-          aria-label={`Ir al inicio de ${appName}`}
-        >
-          <span className="flex size-10 shrink-0 items-center justify-center rounded-xl rounded-bl-sm border border-line-strong bg-accent-soft text-accent-strong">
-            <Flower2 aria-hidden="true" className="size-6" strokeWidth={1.7} />
-          </span>
-          <span className="flex min-w-0 flex-col items-start leading-tight">
-            <strong className="truncate text-base font-bold tracking-tight text-fg sm:text-lg">{appName}</strong>
-            <small className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted">
-              {isWorkspace ? "Workspace" : "App"}
-            </small>
-          </span>
-        </Link>
-        <ModuleSwitcher />
-        <div className="ml-auto flex items-center gap-1">
-          <HelpButton />
-          <button
-            type="button"
-            className={barButton}
-            aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
-            title={theme === "light" ? "Modo oscuro" : "Modo claro"}
-            onClick={toggleTheme}
-          >
-            {theme === "light" ? (
-              <Moon aria-hidden="true" className="size-5" />
-            ) : (
-              <Sun aria-hidden="true" className="size-5" />
-            )}
-          </button>
-          {status === "authenticated" ? (
-            <AccountMenu />
-          ) : pathname !== routes.login ? (
-            <Link to={routes.login} className={barButton}>
-              {shellStrings.account.signIn}
-            </Link>
-          ) : null}
-        </div>
+    <header className="workspace-topbar">
+      <div className="workspace-topbar-left">
+        <button type="button" className="workspace-collapse-button" aria-label={sidebarCollapsed ? "Expandir menú lateral" : "Colapsar menú lateral"} title={sidebarCollapsed ? "Expandir menú lateral" : "Colapsar menú lateral"} onClick={onToggleSidebar}>
+          {sidebarCollapsed ? <PanelLeftOpen aria-hidden="true" size={22} /> : <PanelLeftClose aria-hidden="true" size={22} />}
+        </button>
+        <nav className="workspace-breadcrumbs" aria-label="Ubicación actual"><span>{contextLabel}</span><ChevronRight aria-hidden="true" /><strong>{pageTitle}</strong></nav>
+      </div>
+      <div className="workspace-topbar-actions">
+        <span className="workspace-topbar-note">Su espacio de trabajo</span>
+        <button type="button" className="workspace-theme-button" aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"} title={theme === "light" ? "Modo oscuro" : "Modo claro"} onClick={toggleTheme}>
+          {theme === "light" ? <Moon aria-hidden="true" size={20} /> : <Sun aria-hidden="true" size={20} />}
+        </button>
+        {status === "authenticated" ? <AccountMenu /> : pathname !== routes.login ? <Link to={routes.login} className={barButton}>{shellStrings.account.signIn}</Link> : null}
       </div>
     </header>
   );
