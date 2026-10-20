@@ -171,6 +171,17 @@ internal sealed class PrivilegeGuard(
         IReadOnlyCollection<string> permissionCodes, string action, Guid? targetUserId, CancellationToken cancellationToken)
     {
         // These boundaries apply even to Administrator, whose ordinary administrative permissions are broad.
+        // Workspace role creation/editing only accepts platform permissions, regardless of actor.
+        // App-specific roles are managed by the selected app, not from this global API.
+        if ((action == "create_role" || action == "set_role_permissions")
+            && permissionCodes.Any(code => !PlatformRoleScope.IsPlatformPermissionCode(code)))
+        {
+            return await DenyAsync(
+                IdentityErrors.PrivilegeAppScopeRequired, action, targetUserId, null,
+                new { permissions = permissionCodes.Where(code => !PlatformRoleScope.IsPlatformPermissionCode(code)).ToArray() },
+                cancellationToken);
+        }
+
         // Owner and Workspace permissions belong only to the two seeded system roles; they are never
         // grantable to custom roles or direct user overrides, even by Owner.
         if (permissionCodes.Any(code =>

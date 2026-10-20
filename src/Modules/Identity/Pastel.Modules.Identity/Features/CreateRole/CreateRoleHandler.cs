@@ -45,6 +45,10 @@ internal sealed partial class CreateRoleHandler(IdentityDbContext db, IAuditTrai
         {
             return IdentityErrors.UnknownPermissions;
         }
+        if (permissions.Any(permission => !PlatformRoleScope.IsPlatformPermissionCode(permission.Code)))
+        {
+            return IdentityErrors.PrivilegeAppScopeRequired;
+        }
         if (!permissions.Any(permission => permission.Code.StartsWith("settings.", StringComparison.Ordinal)))
         {
             return IdentityErrors.RoleRequiresPlatformPermission;

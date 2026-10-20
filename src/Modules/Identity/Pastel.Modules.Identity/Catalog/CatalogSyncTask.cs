@@ -12,7 +12,7 @@ namespace Pastel.Modules.Identity.Catalog;
 /// <summary>
 /// Sincroniza el catálogo declarado en código con la base. Administrator conserva administración general,
 /// pero no recibe privilegios reservados a Owner/Superuser ni permisos de Huella/Cosecha.
-/// Owner/Superuser se mantiene como rol de sistema con un conjunto explícito y reducido de permisos.
+/// Owner/Superuser se mantiene como rol de sistema con alcance global completo.
 /// </summary>
 internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSyncTask> logger) : IPastelStartupTask
 {
@@ -125,9 +125,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             .ToListAsync(cancellationToken);
         db.RolePermissions.RemoveRange(legacyRestricted);
 
-        // Owner es un rol de sistema reservado al bootstrap. Tiene Workspace, configuración global y acceso a
-        // Cosecha/Huella; no adquiere automáticamente permisos de Brisa/Balance.
-        // Owner/Superuser obtiene la plataforma completa y los permisos de todas las apps.
+        // Owner es un rol de sistema reservado al bootstrap y recibe todos los permisos de plataforma y apps.
         // Administrator general solo recibe dashboard + settings + entrada a Workspace.
         var ownerDesired = allPermissions.Select(p => p.Id).ToHashSet();
         var ownerLinks = await db.RolePermissions.Include(x => x.Permission)
@@ -159,13 +157,21 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             db.Roles.Remove(role);
         }
 
-        // En Workspace las excepciones directas se limitan a permisos de plataforma.
-        // Los permisos de negocio de cada app se administran dentro del ámbito de esa app, mediante sus roles.
+        // Los overrides exclusivos del sistema y Huella nunca se conservan. Las excepciones de apps
+        // solo se mantienen si fueron concedidas por una cuenta Owner/Superuser; las anteriores de
+        // Administrators generales se retiran para aplicar el nuevo límite. Los endpoints de Workspace
+        // no pueden consultar ni modificar overrides de apps; cada módulo recibirá sus propios endpoints.
+        var ownerUserIds = await db.UserRoles
+            .Where(x => x.RoleId == owner.Id)
+            .Select(x => x.UserId)
+            .ToArrayAsync(cancellationToken);
         var restrictedOverrides = await db.UserPermissionOverrides.Include(x => x.Permission)
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
-                || !(x.Permission.Code == IdentityPermissions.DashboardView
-                    || x.Permission.Code.StartsWith("settings.")))
+                || x.Permission.Code.StartsWith("huella.")
+                || (!(x.Permission.Code == IdentityPermissions.DashboardView
+                    || x.Permission.Code.StartsWith("settings."))
+                    && !ownerUserIds.Contains(x.AssignedByUserId ?? Guid.Empty)))
             .ToListAsync(cancellationToken);
         db.UserPermissionOverrides.RemoveRange(restrictedOverrides);
 
