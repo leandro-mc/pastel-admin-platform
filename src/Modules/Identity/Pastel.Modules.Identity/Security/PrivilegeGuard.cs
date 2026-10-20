@@ -140,9 +140,18 @@ internal sealed class PrivilegeGuard(
         }
 
         var willBeAdministrator = newRoles.Any(x => x.NormalizedName == AdministratorRules.NormalizedName);
-        if (target.IsAdministrator() != willBeAdministrator && !ActorIsAdministrator)
+        var currentlyAdministrator = target.IsAdministrator();
+        if (currentlyAdministrator != willBeAdministrator && !ActorIsAdministrator)
         {
             return await DenyAsync(IdentityErrors.PrivilegeAdministratorRoleRequired, action, target.Id, target.Email, null, cancellationToken);
+        }
+
+        // Administrator puede asignar el rol general de administración. No se consideran sus permisos
+        // de sistema como una concesión personalizada; cualquier otro rol añadido aún se valida aparte.
+        if (ActorIsAdministrator && willBeAdministrator && !currentlyAdministrator)
+        {
+            var administratorRoleId = newRoles.Single(x => x.NormalizedName == AdministratorRules.NormalizedName).Id;
+            addedRoleIds = addedRoleIds.Where(id => id != administratorRoleId).ToArray();
         }
 
         if (addedRoleIds.Length == 0)
