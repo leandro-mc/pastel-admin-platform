@@ -34,14 +34,15 @@ export default function RootLayout() {
   const { status, user } = useAuth();
   const availableModules = useAccessibleModules();
   const isStandaloneAuth = pathname === routes.login;
-  const accessibleProductPaths = availableModules
+  const accessibleProductKey = availableModules
     .filter((module) => module.code !== "identity")
-    .map((module) => module.basePath);
+    .map((module) => module.basePath)
+    .join("|");
   useEffect(() => {
     if (status === "authenticated" && user?.id) {
-      rememberCurrentApp(pathname, user.id, accessibleProductPaths);
+      rememberCurrentApp(pathname, user.id, accessibleProductKey.split("|").filter(Boolean));
     }
-  }, [pathname, status, user?.id, accessibleProductPaths.join("|")]);
+  }, [pathname, status, user?.id, accessibleProductKey]);
   return (
     <RouterProvider navigate={(to, options) => void navigate(to, options)}>
       <div className="flex min-h-screen flex-col">
