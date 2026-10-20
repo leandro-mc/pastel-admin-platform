@@ -14,9 +14,9 @@ using Pastel.SharedKernel;
 namespace Pastel.Modules.Identity.Startup;
 
 /// <summary>
-/// Cuenta de arranque (<c>Bootstrap:AdminEmail</c> y <c>Bootstrap:AdminPassword</c>). Crea la cuenta con contraseña temporal si no existe y,
-/// si existe sin el rol Administrator, lo restaura y lo audita (<c>identity.bootstrap.admin_restored</c>). También puede quitar el bloqueo
-/// temporal de inicio por contraseña de esa cuenta con el evento <c>identity.bootstrap.admin_lockout_cleared</c>: acceso de emergencia
+/// Cuenta de arranque (<c>Bootstrap:AdminEmail</c> y <c>Bootstrap:AdminPassword</c>). Crea/recupera la cuenta con los roles de sistema
+/// Administrator y Owner/Superuser. Solo esta tarea asigna Owner/Superuser; las APIs de administración no pueden conceder ni quitar ese rol.
+/// También puede quitar el bloqueo temporal de inicio por contraseña de esa cuenta con el evento <c>identity.bootstrap.admin_lockout_cleared</c>: acceso de emergencia
 /// (<i>break-glass</i>). Se ejecuta después de sincronizar el catálogo (orden 20).
 /// </summary>
 internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<BootstrapAdminTask> logger) : IPastelStartupTask
@@ -56,6 +56,11 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
                     IdentityEventIds.BootstrapAdmin,
                     "Se restauró el rol Administrator de la cuenta de arranque {UserId}", outcome.UserId);
                 break;
+            case BootstrapResult.OwnerRestored:
+                logger.LogWarning(
+                    IdentityEventIds.BootstrapAdmin,
+                    "Se restauró el rol Owner/Superuser de la cuenta de arranque {UserId}", outcome.UserId);
+                break;
             case BootstrapResult.LockoutCleared:
                 logger.LogWarning(
                     IdentityEventIds.BootstrapAdmin,
@@ -74,24 +79,37 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
         CancellationToken cancellationToken)
     {
         var adminRole = await db.Roles.SingleAsync(r => r.NormalizedName == AppRole.AdministratorName.ToUpperInvariant(), cancellationToken);
+        var ownerRole = await db.Roles.SingleAsync(r => r.NormalizedName == AppRole.OwnerName.ToUpperInvariant(), cancellationToken);
         var normalized = email.ToUpperInvariant();
         var user = await db.Users.SingleOrDefaultAsync(u => u.NormalizedEmail == normalized, cancellationToken);
 
         if (user is null)
         {
-            user = new AppUser { Email = email, NormalizedEmail = normalized, DisplayName = "Administrador", MustChangePassword = true };
+            user = new AppUser
+            {
+                Email = email,
+                NormalizedEmail = normalized,
+                DisplayName = "Administrador",
+                MustChangePassword = true,
+            };
             user.PasswordHash = hasher.HashPassword(user, password);
             db.Users.Add(user);
             db.UserRoles.Add(new UserRole { User = user, Role = adminRole });
+            db.UserRoles.Add(new UserRole { User = user, Role = ownerRole });
             audit.Add(new AuditRecord(
                 "identity.bootstrap.admin_created", "identity", null, user.Id, "cuenta de arranque",
-                After: new { roles = new[] { adminRole.Name }, mustChangePassword = true }));
+                After: new { roles = new[] { adminRole.Name, ownerRole.Name }, mustChangePassword = true }));
             await db.SaveChangesAsync(cancellationToken);
             return (BootstrapResult.Created, user.Id);
         }
 
         var now = clock.UtcNow;
-        if (await db.UserRoles.AnyAsync(ur => ur.UserId == user.Id && ur.RoleId == adminRole.Id, cancellationToken))
+        var hasAdministrator = await db.UserRoles.AnyAsync(
+            ur => ur.UserId == user.Id && ur.RoleId == adminRole.Id, cancellationToken);
+        var hasOwner = await db.UserRoles.AnyAsync(
+            ur => ur.UserId == user.Id && ur.RoleId == ownerRole.Id, cancellationToken);
+
+        if (hasAdministrator && hasOwner)
         {
             if (user.LockoutEnd is not { } lockoutEnd || lockoutEnd <= now)
             {
@@ -117,8 +135,19 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
             lockoutEnd = user.LockoutEnd,
             accessFailedCount = user.AccessFailedCount,
             activeRefreshTokens = activeTokens,
+            hasAdministrator,
+            hasOwner,
         };
-        db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = adminRole.Id });
+
+        if (!hasAdministrator)
+        {
+            db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = adminRole.Id });
+        }
+        if (!hasOwner)
+        {
+            db.UserRoles.Add(new UserRole { UserId = user.Id, RoleId = ownerRole.Id });
+        }
+
         user.IsActive = true;
         user.LockoutEnd = null;
         user.AccessFailedCount = 0;
@@ -132,11 +161,23 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
             token.GraceUntil = null;
         }
 
+        var action = !hasAdministrator
+            ? "identity.bootstrap.admin_restored"
+            : "identity.bootstrap.owner_restored";
         audit.Add(new AuditRecord(
-            "identity.bootstrap.admin_restored", "identity", null, user.Id, "cuenta de arranque",
-            Before: beforeState, After: new { isAdministrator = true, isActive = true, lockoutEnd = (DateTimeOffset?)null, accessFailedCount = 0, refreshTokensRevoked = activeTokens }));
+            action, "identity", null, user.Id, "cuenta de arranque",
+            Before: beforeState,
+            After: new
+            {
+                isAdministrator = true,
+                isOwner = true,
+                isActive = true,
+                lockoutEnd = (DateTimeOffset?)null,
+                accessFailedCount = 0,
+                refreshTokensRevoked = activeTokens,
+            }));
         await db.SaveChangesAsync(cancellationToken);
-        return (BootstrapResult.Restored, user.Id);
+        return (!hasAdministrator ? BootstrapResult.Restored : BootstrapResult.OwnerRestored, user.Id);
     }
 
     private enum BootstrapResult
@@ -144,6 +185,7 @@ internal sealed class BootstrapAdminTask(IConfiguration configuration, ILogger<B
         Unchanged,
         Created,
         Restored,
+        OwnerRestored,
         LockoutCleared,
     }
 }
