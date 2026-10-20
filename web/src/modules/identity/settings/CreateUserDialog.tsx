@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { isApiError } from "@/core/api";
-import { useAuth, useAuthOptions } from "@/core/auth";
+import { useAuthOptions } from "@/core/auth";
 import { useNotify } from "@/core/notifications";
 import { useCreateUser } from "../api/mutations";
 import { useRoles } from "../api/queries";
@@ -15,6 +15,7 @@ import { labelClass, primaryButton, secondaryButton } from "../styles";
 import { Dialog } from "./Dialog";
 import { QueryState } from "./QueryState";
 import { settingsStrings } from "./strings";
+import { isPlatformRole } from "./permissionsScope";
 
 const t = settingsStrings.createUser;
 const v = identityStrings.validation;
@@ -35,21 +36,15 @@ function buildSchema(min: number, max: number) {
 /** Alta de una cuenta con contraseña temporal (debe cambiarla al ingresar) y roles iniciales. */
 export function CreateUserDialog({ onClose }: { onClose: () => void }) {
   const notify = useNotify();
-  const { user: actor } = useAuth();
-  const actorIsOwner = actor?.roles.includes("Owner/Superuser") ?? false;
   const options = useAuthOptions();
   const roles = useRoles();
   const create = useCreateUser();
   const [roleIds, setRoleIds] = useState<string[]>([]);
   const [failure, setFailure] = useState<ShownError | null>(null);
   const policy = options.data?.passwordPolicy;
-  const assignableRoles = (roles.data ?? []).filter((role) => {
-    if (role.name === "Owner/Superuser") return false;
-    if (role.permissions.some((code) => code === "platform.owner" || code.startsWith("huella."))) return false;
-    if (!actorIsOwner && role.permissions.some((code) => code.startsWith("cosecha."))) return false;
-    return true;
-  });
-
+  const assignableRoles = (roles.data ?? []).filter(
+    (role) => role.name !== "Owner/Superuser" && isPlatformRole(role),
+  );
   const {
     register,
     handleSubmit,
@@ -142,7 +137,7 @@ export function CreateUserDialog({ onClose }: { onClose: () => void }) {
             </ul>
           </QueryState>
           <p className="text-xs leading-relaxed text-muted">
-            Owner/Superuser y los permisos exclusivos de Huella no se asignan desde esta pantalla. El acceso a Cosecha solo puede concederlo Owner/Superuser.
+            Aquí se asignan los roles generales de plataforma. Los roles y miembros de cada app se gestionan desde la configuración de esa aplicación; Owner/Superuser es exclusivo del bootstrap.
           </p>
         </fieldset>
         <div className="flex flex-wrap justify-end gap-3">

@@ -53,6 +53,25 @@ internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrai
             return IdentityErrors.UnknownPermissions;
         }
 
+        // Este endpoint pertenece a Workspace. Los permisos de negocio de una subapp se gestionan
+        // desde su propio ámbito, incluso cuando el actor sea Owner/Superuser.
+        var crossAppChanges = changes
+            .Where(change =>
+            {
+                var code = permissions[change.PermissionId].Code;
+                return code != IdentityPermissions.DashboardView
+                    && !code.StartsWith("settings.", StringComparison.Ordinal);
+            })
+            .Select(change => permissions[change.PermissionId].Code)
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        if (crossAppChanges.Length > 0)
+        {
+            return await guard.AuthorizeGrantAsync(crossAppChanges, "set_permissions", userId, cancellationToken) is { } scopedDenied
+                ? scopedDenied
+                : IdentityErrors.PrivilegeAppScopeRequired;
+        }
+
         var granted = changes.Where(x => x.Effect == PermissionEffect.Grant).Select(x => permissions[x.PermissionId].Code).ToArray();
         if (await guard.AuthorizeGrantAsync(granted, "set_permissions", userId, cancellationToken) is { } grantDenied)
         {

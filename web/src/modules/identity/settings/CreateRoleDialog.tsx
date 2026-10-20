@@ -3,7 +3,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { isApiError } from "@/core/api";
-import { useAuth } from "@/core/auth";
 import { useNotify } from "@/core/notifications";
 import { useCreateRole } from "../api/mutations";
 import { usePermissionCatalog } from "../api/queries";
@@ -15,6 +14,7 @@ import { Dialog } from "./Dialog";
 import { PermissionPicker } from "./PermissionPicker";
 import { QueryState } from "./QueryState";
 import { settingsStrings } from "./strings";
+import { isPlatformPermission } from "./permissionsScope";
 
 const t = settingsStrings.createRole;
 const nameRule = /^[A-Za-z][A-Za-z0-9 _.-]{1,63}$/;
@@ -36,17 +36,11 @@ type Values = z.infer<typeof schema>;
 
 export function CreateRoleDialog({ onClose }: { onClose: () => void }) {
   const notify = useNotify();
-  const { user: actor } = useAuth();
-  const actorIsOwner = actor?.roles.includes("Owner/Superuser") ?? false;
   const catalog = usePermissionCatalog();
   const create = useCreateRole();
   const [permissionIds, setPermissionIds] = useState<string[]>([]);
   const [failure, setFailure] = useState<ShownError | null>(null);
-  const availablePermissions = (catalog.data ?? []).filter((permission) => {
-    if (permission.code === "platform.owner" || permission.code === "platform.workspace.access" || permission.code.startsWith("huella.")) return false;
-    if (!actorIsOwner && permission.code.startsWith("cosecha.")) return false;
-    return true;
-  });
+  const availablePermissions = (catalog.data ?? []).filter(isPlatformPermission);
   const {
     register,
     handleSubmit,
@@ -101,7 +95,7 @@ export function CreateRoleDialog({ onClose }: { onClose: () => void }) {
             ) : null}
           </QueryState>
           <p className="text-xs leading-relaxed text-muted">
-            Los privilegios de Owner/Superuser, el acceso a Workspace y los permisos de Huella pertenecen a roles de sistema. Solo Owner/Superuser puede administrar permisos de Cosecha.
+            Workspace permite configurar la plataforma. Los permisos funcionales de Brisa, Balance, Ágora, Cosecha y Huella se administran dentro de cada aplicación.
           </p>
         </div>
         <div className="flex flex-wrap justify-end gap-3">

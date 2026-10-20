@@ -146,17 +146,17 @@ export const settingsStrings = {
   access: {
     userTitle: (name: string) => `Accesos de ${name}`,
     roleTitle: (name: string) => `Permisos del rol ${name}`,
-    back: "Volver a Configuración",
+    back: "Volver a Workspace",
     crumb: "Editar accesos",
     notFound: "No se encontró lo que busca.",
     rolesSection: "Roles",
     rolesHint:
-      "Los roles dan los permisos base. Administrator incluye todos los permisos.",
+      "Los roles asignados determinan los permisos base dentro de su ámbito. Los roles de cada app se administran desde esa aplicación.",
     overridesSection: "Excepciones individuales",
     overridesHint:
       "Conceda o deniegue un permiso solo a esta persona. «Heredar» usa lo que dan sus roles.",
     overridesAdmin:
-      "Una cuenta Administrator no admite excepciones: modifique sus roles.",
+      "Las cuentas con rol de sistema no admiten excepciones individuales. Sus privilegios se sincronizan desde el catálogo.",
     search: "Buscar permisos",
     inherit: "Heredar",
     grant: "Conceder",
@@ -175,7 +175,7 @@ export const settingsStrings = {
     saved: "Accesos guardados.",
     savedRole: "Permisos del rol guardados.",
     roleSystemHint:
-      "Administrator siempre conserva todos los permisos y no se puede reducir.",
+      "Los roles de sistema (Administrator y Owner/Superuser) se sincronizan desde el catálogo y no se pueden modificar.",
     selectAll: "Seleccionar todos",
     clearAll: "Quitar todos",
     selectedCount: (count: number) =>

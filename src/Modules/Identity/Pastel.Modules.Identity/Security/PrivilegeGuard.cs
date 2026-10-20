@@ -186,6 +186,20 @@ internal sealed class PrivilegeGuard(
                     || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray() }, cancellationToken);
         }
 
+        // Workspace cannot issue one-off grants for app permissions, even for Owner.
+        // App memberships/overrides belong to the selected app's own settings scope.
+        if (string.Equals(action, "set_permissions", StringComparison.Ordinal)
+            && permissionCodes.Any(code =>
+                code != IdentityPermissions.DashboardView
+                && !code.StartsWith("settings.", StringComparison.Ordinal)))
+        {
+            return await DenyAsync(
+                IdentityErrors.PrivilegeAppScopeRequired, action, targetUserId, null,
+                new { permissions = permissionCodes.Where(code =>
+                    code != IdentityPermissions.DashboardView
+                    && !code.StartsWith("settings.", StringComparison.Ordinal)).ToArray() }, cancellationToken);
+        }
+
         if (!ActorIsOwner && permissionCodes.Any(code =>
                 code.StartsWith("cosecha.", StringComparison.Ordinal)))
         {
