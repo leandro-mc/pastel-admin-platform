@@ -9,7 +9,7 @@ COPY src/ src/
 RUN set -eu; \
     modules="$PASTEL_MODULES"; \
     if [ "$modules" != "*" ]; then \
-      modules="$(printf '%s' "$modules" | awk -F',' '{ for (i = 1; i <= NF; i++) { gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i); $i = toupper(substr($i, 1, 1)) substr($i, 2) } print }')"; \
+      modules="$(printf '%s' "$modules" | awk -F',' 'BEGIN { OFS="," } { for (i = 1; i <= NF; i++) { gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i); $i = toupper(substr($i, 1, 1)) substr($i, 2) } print }')"; \
     fi; \
     dotnet restore src/Host/Pastel.Host/Pastel.Host.csproj "-p:PastelModules=$modules" && \
     dotnet publish src/Host/Pastel.Host/Pastel.Host.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false "-p:PastelModules=$modules"

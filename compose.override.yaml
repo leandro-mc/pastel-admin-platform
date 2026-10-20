@@ -19,10 +19,10 @@ services:
       retries: 12
     networks:
       - pastel_net
+    # El entrypoint oficial necesita poder preparar permisos y cambiar a postgres al inicializar el volumen.
+    # Este servicio es solo de desarrollo y el puerto se publica exclusivamente en loopback.
     security_opt:
       - no-new-privileges:true
-    cap_drop:
-      - ALL
     mem_limit: 512m
     cpus: 1.00
     logging:

@@ -46,3 +46,8 @@ El workflow de GitHub Actions es **manual únicamente**. `.github/workflows/ci.y
 ## Estado de validación
 
 Las ejecuciones correctas registradas en esta bitácora pertenecen a SHA anteriores. Después se modificaron seguridad, shell, Compose, Nginx y los scripts de verificación. **El HEAD actual de `refactor/modular-foundation` debe considerarse sin validar** hasta ejecutar los comandos anteriores y registrar el SHA exacto que se comprobó. No se debe inferir un resultado verde de las ejecuciones históricas ni del hecho de que el workflow esté configurado.
+
+
+## Build aislado por subapp y CodeQL
+
+El workflow manual `.github/workflows/ci.yml` contiene un job `module-isolation` que construye backend y frontend con una sola subapp de negocio por fila; Identity permanece incluido. El workflow opcional `.github/workflows/codeql.yml` analiza C# y JavaScript/TypeScript y solo corre con `confirm_scan=true`. Ambos workflows requieren comprobación manual del propietario y no se ejecutaron con este cambio. El proyecto de pruebas de arquitectura y el resultado de cada build por subconjunto siguen pendientes de Build/QA.

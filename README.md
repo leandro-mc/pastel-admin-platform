@@ -132,3 +132,8 @@ Revise [docs/SECURITY.md](docs/SECURITY.md), [docs/ARCHITECTURE.md](docs/ARCHITE
 La CI es deliberadamente **manual**. No hay triggers automáticos de push o pull request: el propietario debe autorizar el despacho después de completar y revisar el lote y ejecutar localmente las comprobaciones posibles. Desde GitHub Actions, seleccione **CI → Run workflow**, elija la rama y confirme `confirm_validation=true`. Que el workflow exista o que un commit tenga status vacío no demuestra que pasó las comprobaciones.
 
 El desarrollo continúa en la rama asignada por el orquestador. No abra PR ni fusione a `dev` o `main` sin autorización explícita. `main` queda reservada para versiones estables aprobadas.
+
+
+### Proxy inverso y direcciones IP confiables
+
+Por defecto, `NGINX_TRUSTED_PROXY_CIDR` usa `192.0.2.0/24`, un rango reservado para documentación/pruebas; no corresponde a un proxy de la instalación y evita confiar en un `X-Forwarded-For` suministrado por un cliente. Si coloca un proxy inverso real delante de Nginx, configure esta variable con la IP o el CIDR más limitado posible de ese proxy y ajuste `REVERSE_PROXY_TRUSTED_NETWORKS` con la dirección real de los saltos que ASP.NET debe aceptar. **No confíe en toda la subred de Docker si incluye conexiones de clientes que puedan falsificar encabezados.** Las variables de confianza deben reflejar la topología real, no ser valores copiados a ciegas de este ejemplo.
