@@ -12,9 +12,16 @@ namespace Pastel.Modules.Identity.Features.SetUserRoles;
 
 internal sealed class SetUserRolesHandler(IdentityDbContext db, SessionIssuer issuer, IAuditTrail audit, ICurrentUser currentUser, IClock clock, IPrivilegeGuard guard)
 {
-    public Task<Result<string[]>> HandleAsync(Guid userId, SetUserRolesRequest request, CancellationToken cancellationToken) =>
-        // Transacción serializable: dos cambios concurrentes no pueden dejar la plataforma sin administradores activos.
-        TransactionRunner.RunSerializableAsync(db, token => ApplyAsync(userId, request, token), cancellationToken);
+    public Task<Result<string[]>> HandleAsync(
+        Guid userId,
+        SetUserRolesRequest request,
+        CancellationToken cancellationToken) =>
+        // Transacción serializable: impide que los cambios concurrentes dejen a la plataforma
+        // sin administradores activos.
+        TransactionRunner.RunSerializableAsync(
+            db,
+            token => ApplyAsync(userId, request, token),
+            cancellationToken);
 
     private async Task<Result<string[]>> ApplyAsync(Guid userId, SetUserRolesRequest request, CancellationToken cancellationToken)
     {

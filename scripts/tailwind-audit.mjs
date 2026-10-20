@@ -125,5 +125,24 @@ const result = {
   cssFilesOver400Lines: longCss,
 };
 
+const checkMode = process.argv.includes("--check");
+const violations = [];
+
+if (checkMode) {
+  if (result.utilityPercent < 95) violations.push(`utilityPercent es ${result.utilityPercent}; el minimo es 95.`);
+  if (result.semanticClassesDefined !== 0) violations.push(`semanticClassesDefined es ${result.semanticClassesDefined}; se esperaba 0.`);
+  if (result.applyLines > 60) violations.push(`applyLines es ${result.applyLines}; el maximo es 60.`);
+  if (result.cssFilesOver400Lines.length > 0) violations.push(`Hay archivos CSS con mas de 400 lineas: ${result.cssFilesOver400Lines.join(", ")}.`);
+}
+
 if (process.argv.includes("--json")) console.log(JSON.stringify(result, null, 2));
 else for (const [k, v] of Object.entries(result)) console.log(`${k}: ${Array.isArray(v) ? v.join(", ") || "-" : v}`);
+
+if (checkMode) {
+  if (violations.length > 0) {
+    for (const violation of violations) console.error(`tailwind-audit: ${violation}`);
+    process.exitCode = 1;
+  } else {
+    console.log("tailwind-audit: metas de migracion cumplidas.");
+  }
+}

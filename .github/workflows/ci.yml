@@ -1,11 +1,10 @@
 name: CI
 on:
-  # Work-in-progress branches can receive frequent checkpoint pushes without
-  # starting an expensive full CI run each time.
+  # Validate the active modular-foundation branch on each checkpoint push; other WIP branches stay quiet.
   push:
-    branches: [main, dev]
+    branches: [main, dev, refactor/modular-foundation]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, refactor/modular-foundation]
     types: [opened, reopened, ready_for_review, synchronize]
   workflow_dispatch:
 
@@ -18,34 +17,37 @@ permissions:
 
 jobs:
   backend:
-    # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: 10.0.x
-      - run: dotnet restore Pastel.slnx
-      - run: dotnet build Pastel.slnx --configuration Release --no-restore
-      - run: dotnet test Pastel.slnx --configuration Release --no-build --no-restore
+      - name: Backend format, build, and unit tests in Docker
+        shell: pwsh
+        run: ./scripts/test-backend.ps1
 
   frontend:
-    # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: web
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-      - run: npm install --no-audit --no-fund
-      - run: npm run format:check
-      - run: npm run build
-      - run: npm run lint
+      - name: Frontend format, lint, build, and design audits in Docker
+        shell: pwsh
+        run: ./scripts/test-frontend.ps1
+
+  database-integration:
+    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    runs-on: ubuntu-latest
+    env:
+      POSTGRES_DB: pastel
+      POSTGRES_USER: pastel
+      POSTGRES_PASSWORD: ci-only-Postgres-Password-2026!
+      JWT_SIGNING_KEY: ci-only-not-a-real-signing-key-keep-over-32-bytes-2026
+      BOOTSTRAP_ADMIN_PASSWORD: ci-only-Bootstrap-Password-2026!
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run HTTP and PostgreSQL integration tests in Docker
+        shell: pwsh
+        run: ./scripts/test-database.ps1
 
   container-build:
     # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
