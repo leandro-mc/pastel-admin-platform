@@ -11,16 +11,12 @@ import {
   Separator,
 } from "react-aria-components";
 import { useAuth } from "@/core/auth";
-import { usePreferences, type TextSize, type Theme } from "@/core/preferences";
+import { usePreferences, type TextSize } from "@/core/preferences";
 import { routes } from "../routes";
 import { shellStrings } from "../strings";
 import { barButton, menuHeader, menuItem, popover } from "./styles";
 
 const { account } = shellStrings;
-const themes: { id: Theme; label: string }[] = [
-  { id: "light", label: account.light },
-  { id: "dark", label: account.dark },
-];
 const sizes: { id: TextSize; label: string }[] = [
   { id: "normal", label: account.normal },
   { id: "large", label: account.large },
@@ -38,10 +34,10 @@ function Checked({ label, selected }: { label: string; selected: boolean }) {
   );
 }
 
-/** Menú de cuenta: Mi cuenta, tema, tamaño de texto y cierre de sesión. */
+/** Menú de cuenta: perfil, tamaño de texto y cierre de sesión. El tema tiene control directo en la barra superior. */
 export default function AccountMenu() {
   const { user, logout } = useAuth();
-  const { theme, setTheme, textSize, setTextSize } = usePreferences();
+  const { textSize, setTextSize } = usePreferences();
   const navigate = useNavigate();
   if (!user) return null;
   const initial = user.displayName.trim().charAt(0).toUpperCase() || "?";
@@ -74,27 +70,6 @@ export default function AccountMenu() {
             >
               {account.mine}
             </MenuItem>
-          </MenuSection>
-          <Separator className="my-1 border-t border-line" />
-          <MenuSection
-            selectionMode="single"
-            selectedKeys={[theme]}
-            onSelectionChange={(keys) => {
-              const next = [...keys][0];
-              if (next === "light" || next === "dark") setTheme(next);
-            }}
-          >
-            <Header className={menuHeader}>{account.theme}</Header>
-            {themes.map((t) => (
-              <MenuItem
-                key={t.id}
-                id={t.id}
-                textValue={t.label}
-                className={menuItem}
-              >
-                <Checked label={t.label} selected={theme === t.id} />
-              </MenuItem>
-            ))}
           </MenuSection>
           <Separator className="my-1 border-t border-line" />
           <MenuSection
