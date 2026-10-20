@@ -12,5 +12,11 @@ export function isPlatformPermission(permission: Permission): boolean {
 /** Los roles de sistema son visibles para explicar la jerarquía; otros roles deben tener solo permisos globales. */
 export function isPlatformRole(role: Role): boolean {
   if (role.isSystemRole) return true;
-  return role.permissions.length > 0 && role.permissions.every(isPlatformPermissionCode);
+  // El permiso compartido dashboard.view también puede aparecer en roles de producto como Member.
+  // Un rol personalizado pertenece a Workspace solo cuando tiene al menos un permiso settings.*
+  // y ninguno fuera del ámbito de plataforma.
+  return (
+    role.permissions.some((code) => code.startsWith("settings.")) &&
+    role.permissions.every(isPlatformPermissionCode)
+  );
 }
