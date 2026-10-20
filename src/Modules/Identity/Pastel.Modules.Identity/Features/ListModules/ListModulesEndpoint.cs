@@ -22,8 +22,12 @@ internal static class ListModulesEndpoint
             .ToListAsync(cancellationToken);
         return Results.Ok(rows.Select(x => new ModuleSummary(
             x.Id, x.Code, x.Name, x.Description, x.IsEnabled, x.SortOrder,
-            x.Permissions.OrderBy(p => p.Code, StringComparer.Ordinal)
-                .Select(p => new PermissionSummary(p.Id, x.Code, x.Name, p.Code, p.Name, p.Description, p.IsSystemPermission))
-                .ToArray())).ToArray());
+            // La administración global ve el registro y estado de las apps; sus permisos quedan en cada app.
+            (x.Code is "dashboard" or "settings"
+                ? x.Permissions.Where(p => p.Code == IdentityPermissions.DashboardView || p.Code.StartsWith("settings."))
+                    .OrderBy(p => p.Code, StringComparer.Ordinal)
+                    .Select(p => new PermissionSummary(p.Id, x.Code, x.Name, p.Code, p.Name, p.Description, p.IsSystemPermission))
+                    .ToArray()
+                : Array.Empty<PermissionSummary>())).ToArray());
     }
 }
