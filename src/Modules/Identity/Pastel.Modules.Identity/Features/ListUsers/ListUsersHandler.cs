@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Pastel.Modules.Identity.Common;
 using Pastel.Modules.Identity.Persistence;
+using Pastel.Modules.Identity.Security;
 using Pastel.SharedKernel;
 
 namespace Pastel.Modules.Identity.Features.ListUsers;
