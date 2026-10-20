@@ -43,3 +43,12 @@
 ## Límites
 
 Los cambios descritos quedaron implementados en la rama de trabajo, pero **WP9 no se considera cerrado** hasta que Build/QA valide Compose, healthchecks, construcción/arranque de imágenes, Nginx y el workflow actualizado. Esta CCR no autoriza despliegues, ejecución manual de CI, apertura de PR ni integración en `dev`/`main`.
+
+
+## Incidente de arranque local — 2026-10-20
+
+El propietario ejecutó `docker compose config --quiet` correctamente y `docker compose up -d --build`; la imagen de API se publicó y la compilación del frontend `tsc -b && vite build` terminó correctamente. Durante el arranque, PostgreSQL y la API figuraron saludables, pero Nginx reinició con `unknown directive "8,}\\.(?:css|js|mjs|svg|png|jpe?g|webp|woff2?)$"` en `/etc/nginx/conf.d/default.conf:81`.
+
+Causa: la expresión regular de `location` de assets con hash contiene el cuantificador `{8,}` sin comillas. Nginx interpreta la llave de apertura como delimitador de bloque y parte la expresión, fallando la configuración. La expresión completa se encierra ahora entre comillas; conserva el filtro de archivos con hash y sus políticas de caché/seguridad.
+
+**Pendiente de Build local:** reconstruir y confirmar que el contenedor web permanezca `healthy`, que `http://localhost:8080/health/web` devuelva 200, que `http://localhost:8080/` sirva la app y que el proxy a `/api/auth/options` responda. No ejecutar CI ni considerar WP9 cerrado hasta completar las comprobaciones.

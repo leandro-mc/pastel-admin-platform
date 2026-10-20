@@ -503,3 +503,11 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Diseño/accesibilidad:** los controles tienen etiquetas y ayudas/errores asociados, foco visible y objetivos táctiles amplios; los diálogos usan React Aria; los estados se anuncian como `alert`/`status`. No se añadieron colores literales, morados ni iconografía de IA.
 - **Validación:** se publica sin compilar ni ejecutar pruebas en este entorno. No se modificaron `package.json`/`package-lock.json`; no se ejecutó CI, no se abrió PR y no se integró en `dev`/`main`.
 - **Build/QA pendiente:** validar TypeScript, Prettier/ESLint, uso de React Aria, accesibilidad, comportamiento y paridad visual sobre este HEAD; corregir defectos y ejecutar pruebas después de cualquier arreglo.
+
+
+## Incidente Nginx en Build local — 2026-10-20
+
+- **Evidencia del propietario:** `docker compose config --quiet` finalizó correctamente; `docker compose up -d --build` construyó las imágenes de API y web. En los logs, PostgreSQL y API aparecen saludables y el publish Release del backend y `npm run build` del frontend terminaron correctamente.
+- **Causa de la web inaccesible:** Nginx reiniciaba con `unknown directive "8,}\\.(?:css|js|mjs|svg|png|jpe?g|webp|woff2?)$"` en la línea 81 de su configuración generada. La expresión de assets con hash usaba el cuantificador regex `{8,}` sin comillas, que el parser de Nginx interpreta como delimitador de bloque.
+- **Corrección publicada en este lote:** se encierra la expresión completa de `location ~*` entre comillas; se mantienen la expresión y las reglas de caché originales. La actualización estática todavía requiere reconstrucción y validación local.
+- **Siguiente comprobación del propietario:** actualizar la rama, ejecutar `docker compose config --quiet`, reconstruir y arrancar; revisar salud de los tres servicios, `/health/web`, la página raíz y `/api/auth/options`. No eliminar volúmenes, no exponer secretos y no despachar CI sin autorización separada.
