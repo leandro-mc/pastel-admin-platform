@@ -66,13 +66,16 @@ fi
 exit 0
 '@
 
+$containerScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($containerScript))
+$dockerCommand = ("echo {0} | base64 -d | sh" -f $containerScriptBase64)
+
 Write-Host "Validacion frontend en Docker (copia temporal; el repositorio se monta en solo lectura)." -ForegroundColor Cyan
 $dockerArguments = @(
     "run", "--rm",
     "--mount", ("type=bind,source={0},target=/repo,readonly" -f $script:RepoRoot),
     "--entrypoint", "sh",
     "node:24-alpine",
-    "-lc", $containerScript
+    "-c", $dockerCommand
 )
 
 & docker @dockerArguments
