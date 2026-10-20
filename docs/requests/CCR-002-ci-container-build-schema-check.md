@@ -21,7 +21,7 @@ El código de `IdentityDbContext` establece el esquema predeterminado `identity`
 
 ## Riesgo y validación
 
-El cambio solo afecta la aserción SQL de la prueba de arranque. No usa `EnsureCreated` ni modifica la base real del desarrollador. La validación definitiva requiere que el job `container-build` ejecute de nuevo y pase el chequeo completo. Hasta que el nuevo run termine, la corrección se considera publicada pero pendiente de verificación en CI.
+El cambio solo afecta la aserción SQL de la prueba de arranque. No usa `EnsureCreated` ni modifica la base real del desarrollador. Validación completada: el run de CI [39356389334](https://github.com/leandro-mc/pastel-admin-platform/actions/runs/39356389334) terminó en verde. Pasaron `Validate Compose configuration`, `Build API and web images` y `Start the stack and verify the initial database schema`, además de los trabajos `backend`, `frontend` y `database-integration`.
 
 ## Decisión
 
