@@ -67,9 +67,9 @@ internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrai
             .ToArray();
         if (crossAppChanges.Length > 0)
         {
-            return await guard.AuthorizeGrantAsync(crossAppChanges, "set_permissions", userId, cancellationToken) is { } scopedDenied
-                ? scopedDenied
-                : IdentityErrors.PrivilegeAppScopeRequired;
+            var scopedDenied = await guard.AuthorizeGrantAsync(
+                crossAppChanges, "set_permissions", userId, cancellationToken);
+            return scopedDenied ?? IdentityErrors.PrivilegeAppScopeRequired;
         }
 
         var granted = changes.Where(x => x.Effect == PermissionEffect.Grant).Select(x => permissions[x.PermissionId].Code).ToArray();
