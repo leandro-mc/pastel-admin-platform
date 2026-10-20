@@ -3,8 +3,8 @@ FROM node:24-alpine AS build
 ARG PASTEL_MODULES=*
 ENV PASTEL_MODULES=${PASTEL_MODULES}
 WORKDIR /web
-COPY web/package.json ./
-RUN npm install --no-audit --no-fund
+COPY web/package.json web/package-lock.json ./
+RUN npm ci --no-audit --no-fund
 COPY web/ ./
 RUN npm run build
 

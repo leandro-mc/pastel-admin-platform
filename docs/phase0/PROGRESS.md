@@ -43,7 +43,7 @@ Archivos clave del checkpoint: `web/src/modules/identity/pages/LoginPage.tsx`, `
 | WP6 — Esqueletos/plantilla de módulos | **Código y migraciones iniciales de los cinco esquemas compilados y aplicados durante las pruebas locales de integración.** Ver «WP6 — Bitácora». | Ejecutar las pruebas de arquitectura y validar los subconjuntos con `-p:PastelModules=Identity` según el plan. Las migraciones de los contextos esqueleto solo crean sus esquemas e historiales; todavía no crean tablas de dominio. |
 | WP7 — Cimientos de frontend/sesión/errores/shell | **Recuperación visual amplia y contratos de destino tras login actualizados; sin validar el HEAD actual.** Workspace y roles usan permiso global explícito. | Build/QA en navegador y pruebas; resolver regresiones de shell/rutas/retorno, asegurar que el selector refleje acceso real y no un catálogo simulado. |
 | WP8 — Recuperación visual + sistema de diseño Tailwind | **Implementación visual amplia publicada, enfoque Tailwind híbrido; sin compilar desde estos cambios.** | Build/QA sobre el HEAD actual; Prettier, ESLint, TypeScript/Vite, pruebas, `check-design`, `tailwind-audit`; capturas antes/después en ambas apariencias, escritorio/móvil; corregir regresiones y solicitar aprobación visual del propietario. |
-| WP9 — Infraestructura/CI/repositorio | Pendiente | Ajustes restantes de §12, sin salirse del alcance de Fase 0. |
+| WP9 — Infraestructura/CI/repositorio | **Parcial — WP9.1 + higiene básica** | Falta el alcance de Compose/Nginx/documentación/CI protegido, propuesto en [CCR-004](../requests/CCR-004-wp9-protected-infrastructure.md); no se modificaron esas rutas. |
 | WP10 — Testabilidad/documentación/datos | Pendiente | Hooks para Build, documentación, ADR y datos de prueba conforme a §13. |
 
 ## WP2 — Resultado conocido y limitaciones
@@ -396,3 +396,12 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - Validación de esta tanda: **sin compilar y sin validación de navegador**. CI no se despachó y no se integró en `dev` ni `main`. Build/QA deberá ejecutar formato, lint, build, pruebas de autorización/retorno y capturas claras/oscuras en escritorio/móvil antes de considerar cerrada la recuperación visual.
 
 - Final consistency pass: `contextLabel` in the top bar is deliberately `Workspace`/`Pastel`, not the selected app name; the selected app remains identified only by the sidebar card below the refresh control.
+
+## WP9 — Reproducibilidad del frontend e higiene del repositorio (Dev, Tipo 2, 2026-10-20)
+
+- [x] **WP9.1 — Instalación reproducible en la imagen web:** el Dockerfile ahora copia `package.json` y `package-lock.json` antes de instalar, y ejecuta `npm ci --no-audit --no-fund`. El script `scripts/test-frontend.ps1` ya usaba `npm ci` y ejecuta Prettier, ESLint, build, pruebas de guardas de diseño y auditorías.
+- [x] **Higiene de archivos:** se añadieron `.editorconfig` y `.gitattributes` para codificación UTF-8, finales de línea y reglas básicas de indentación. `.gitignore` ignora `*.tsbuildinfo`; se retiró del repositorio el `web/tsconfig.tsbuildinfo` generado, que TypeScript regenera al compilar.
+- [ ] **Resto de WP9 bloqueado por zona de escritura:** Compose, configuración Nginx, workflow y documentos de nivel raíz requieren seguimiento mediante [CCR-004](../requests/CCR-004-wp9-protected-infrastructure.md). La política de CI manual se conserva; no se despachó ningún workflow.
+- **Validación de esta tanda:** revisión estática de los archivos fuente obtenidos desde GitHub. **Sin ejecutar** `npm ci`, Docker build, `docker compose config`, pruebas ni auditorías. No se declara la imagen validada ni WP9 cerrado.
+- **Siguiente paso:** resolver CCR-004 con el propietario; una vez autorizado el trabajo en zonas protegidas, cerrar WP9 y continuar WP10. La aprobación de la solicitud no equivaldría a aprobación de Build/QA ni a autorización para fusionar.
+
