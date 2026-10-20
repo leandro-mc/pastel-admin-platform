@@ -1,3 +1,4 @@
+import { Button } from "@/core/ui";
 import { primaryButton, secondaryButton } from "../styles";
 import { Dialog } from "./Dialog";
 import { settingsStrings } from "./strings";
@@ -21,17 +22,19 @@ export function ConfirmDialog({
   return (
     <Dialog title={title} description={message} onClose={onClose}>
       <div className="flex flex-wrap justify-end gap-3">
-        <button type="button" onClick={onClose} className={secondaryButton}>
+        <Button variant="secondary" className={secondaryButton} onClick={onClose}>
           {settingsStrings.common.cancel}
-        </button>
-        <button
-          type="button"
+        </Button>
+        <Button
+          variant="primary"
+          className={primaryButton}
           onClick={onConfirm}
           disabled={pending}
-          className={primaryButton}
+          loading={pending}
+          loadingLabel={settingsStrings.common.saving}
         >
           {pending ? settingsStrings.common.saving : confirmLabel}
-        </button>
+        </Button>
       </div>
     </Dialog>
   );

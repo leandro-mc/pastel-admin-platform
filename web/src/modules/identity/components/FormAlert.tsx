@@ -1,18 +1,16 @@
-import { identityStrings } from "../strings";
-import { errorAlert } from "../styles";
+import { Alert } from "@/core/ui";
 import type { ShownError } from "../errors";
+import { identityStrings } from "../strings";
 
-/** Aviso de error de un formulario: el mensaje y, si existe, el código de soporte. */
+/** Aviso de error de formulario con el mensaje y código de soporte disponibles. */
 export function FormAlert({ error }: { error: ShownError | null }) {
   if (!error) return null;
   return (
-    <div role="alert" className={errorAlert}>
-      <p>{error.message}</p>
-      {error.traceId ? (
-        <p className="mt-1 text-xs text-muted">
-          {identityStrings.supportCode}: <code>{error.traceId}</code>
-        </p>
-      ) : null}
-    </div>
+    <Alert
+      variant="error"
+      message={error.message}
+      supportCode={error.traceId}
+      supportCodeLabel={identityStrings.supportCode}
+    />
   );
 }
