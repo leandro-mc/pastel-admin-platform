@@ -9,7 +9,6 @@ import { settingsStrings } from "./strings";
 import {
   mutedCell,
   panel,
-  selectClass,
   table,
   tableScroll,
   td,
@@ -18,14 +17,12 @@ import {
 import { DEFAULT_PAGE_SIZE, useUrlFilters } from "./urlFilters";
 
 const t = settingsStrings.audit;
-const defaults: Record<"action" | "module" | "actor" | "from" | "to", string> =
-  {
-    action: "",
-    module: "",
-    actor: "",
-    from: "",
-    to: "",
-  };
+const defaults: Record<"action" | "actor" | "from" | "to", string> = {
+  action: "",
+  actor: "",
+  from: "",
+  to: "",
+};
 
 /** Convierte el día elegido (hora local) al instante que espera la API; vacío si no hay día. */
 function toInstant(day: string, endOfDay: boolean): string {
@@ -43,7 +40,7 @@ export function Component() {
     page,
     pageSize: DEFAULT_PAGE_SIZE,
     action: values.action,
-    module: values.module,
+    module: "",
     actor: values.actor,
     targetUserId: "",
     from: toInstant(values.from, false),
@@ -75,6 +72,7 @@ export function Component() {
           {t.title}
         </h1>
         <p className="text-sm text-muted">{t.subtitle}</p>
+        <p className="mt-2 inline-flex items-center rounded-full border border-line bg-surface-raised px-3 py-1 text-xs font-semibold text-muted">Ámbito: identidad y administración de plataforma</p>
       </div>
 
       <form
@@ -99,17 +97,6 @@ export function Component() {
             value={actor}
             onChange={(event) => setActor(event.target.value)}
           />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-fg">
-          {t.module}
-          <select
-            className={selectClass}
-            value={values.module}
-            onChange={(event) => update({ module: event.target.value })}
-          >
-            <option value="">Toda la plataforma</option>
-            <option value="identity">Identidad y administración</option>
-          </select>
         </label>
         <label className="flex flex-col gap-1.5 text-sm font-medium text-fg">
           {t.from}
