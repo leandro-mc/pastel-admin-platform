@@ -4,7 +4,7 @@ import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { useAuth, useAuthOptions } from "@/core/auth";
 import { usePreferences } from "@/core/preferences";
 import { routes } from "@/core/routes";
-import { getRememberedAppPath } from "@/app/modules";
+import { getRememberedAppPath, useAccessibleModules } from "@/core/modules/catalog";
 import { FormAlert } from "../components/FormAlert";
 import { GoogleButton } from "../components/GoogleButton";
 import { PasswordLoginForm } from "../components/PasswordLoginForm";
@@ -28,6 +28,10 @@ export function Component() {
   const navigate = useNavigate();
   const auth = useAuth();
   const options = useAuthOptions();
+  const accessibleModules = useAccessibleModules();
+  const accessibleProductPaths = accessibleModules
+    .filter((module) => module.code !== "identity")
+    .map((module) => module.basePath);
   const { theme, toggleTheme } = usePreferences();
   const requestedReturnUrl = params.get("returnUrl");
   const explicitReturnUrl = isSafeReturnUrl(requestedReturnUrl)
@@ -37,7 +41,7 @@ export function Component() {
     auth.status === "authenticated" ? auth.user?.id : undefined;
   const returnUrl = explicitReturnUrl
     ?? (authenticatedUserId
-      ? getRememberedAppPath(authenticatedUserId) ?? routes.home
+      ? getRememberedAppPath(authenticatedUserId, accessibleProductPaths) ?? routes.home
       : routes.home);
   const googleError = googleErrorMessage(params.get("error"));
   const registering = params.get("modo") === "registro";
@@ -65,7 +69,7 @@ export function Component() {
       <header className="auth-topbar flex items-center justify-between gap-4">
         <Link to={routes.home} className="auth-brand inline-flex items-center gap-3" aria-label="Pastel, ir al inicio">
           <span className="auth-brand-mark grid place-items-center">
-            <Flower2 aria-hidden="true" size={23} strokeWidth={1.7} />
+            <Flower2 aria-hidden="true" size={29} strokeWidth={1.7} />
           </span>
           <span className="auth-brand-copy flex flex-col">
             <strong>pastel</strong>
@@ -131,7 +135,7 @@ export function Component() {
               <span className="auth-card-kicker inline-flex size-11 items-center justify-center">
                 <KeyRound aria-hidden="true" size={21} />
               </span>
-              <span className="auth-eyebrow inline-flex items-center gap-2">
+              <span className="auth-eyebrow auth-card-eyebrow inline-flex items-center gap-2">
                 {registering ? "Crear su espacio" : "Qué bueno tenerle de vuelta"}
               </span>
               <h1 className="auth-form-heading text-2xl font-semibold tracking-tight">
@@ -161,9 +165,12 @@ export function Component() {
             ) : registering && options.data.localRegistration ? (
               <>
                 <RegisterForm policy={options.data.passwordPolicy} onSuccess={done} />
-                <button type="button" onClick={() => setMode("ingreso")} className={linkButton}>
-                  {t.register.toLogin}
-                </button>
+                <div className="auth-registration-line">
+                  <span>{t.register.toLoginPrompt}</span>
+                  <button type="button" onClick={() => setMode("ingreso")} className="auth-registration-link">
+                    {t.register.toLogin}
+                  </button>
+                </div>
               </>
             ) : (
               <>
@@ -177,16 +184,27 @@ export function Component() {
                     <PasswordLoginForm onSuccess={done} />
                   )
                 ) : null}
-                {!options.data.google && !options.data.localLogin ? (
+                {!options.data.google && !options.data.localLogin && !options.data.localRegistration ? (
                   <p role="alert" className={errorAlert}>{t.login.noMethods}</p>
                 ) : null}
-                {options.data.localLogin && options.data.localRegistration ? (
-                  <button type="button" onClick={() => setMode("registro")} className={linkButton}>
-                    {t.login.toRegister}
-                  </button>
+                {options.data.localRegistration ? (
+                  <div className="auth-registration-line">
+                    <span>{t.login.toRegisterPrompt}</span>
+                    <button type="button" onClick={() => setMode("registro")} className="auth-registration-link">
+                      {t.login.toRegister}
+                    </button>
+                  </div>
                 ) : null}
               </>
             )}
+            <div className="auth-card-foot">
+              Al continuar, acepta usar este espacio de forma responsable y segura.
+            </div>
+          </div>
+          <div className="auth-privacy-note">
+            <span><ShieldCheck aria-hidden="true" size={17} /> Sesión protegida</span>
+            <b aria-hidden="true">·</b>
+            <span>Privacidad primero</span>
           </div>
         </section>
       </main>

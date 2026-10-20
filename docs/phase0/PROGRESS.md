@@ -2,7 +2,7 @@
 
 > **Fuente de verdad para el relevo.** Este archivo resume el estado actual y los siguientes pasos; no agregues resúmenes iniciales repetidos. El detalle de sesiones anteriores se conserva en [`PROGRESS-HISTORY.md`](./PROGRESS-HISTORY.md), solo como historial. Si existe una discrepancia, inspecciona el código y actualiza este documento.
 
-Última reconciliación documental: 2026-10-19 (hora local de Costa Rica; los logs de prueba están en UTC).
+Última reconciliación documental: 2026-10-20 (hora local de Costa Rica; los logs de prueba están en UTC).
 
 ## Repositorio y reglas vigentes
 
@@ -10,7 +10,7 @@
 - Rama de trabajo: `refactor/modular-foundation`. Antes de tocar archivos, confirma el HEAD real con `git fetch origin`, `git status --short --branch` y `git log --oneline --decorate -10`.
 - Base de integración documentada: `dev` en `7ba6f1c80ad1025acc3333096ff3878b3226b0f4`. No integres cambios nuevos de `dev` por iniciativa propia.
 - No abrir PR, hacer merge ni integrar en `dev` sin autorización explícita del propietario. Autorizar un PR no autoriza su merge.
-- **Tipo de agente por tarea:** el orquestador lo indica en cada asignación; no se infiere del progreso anterior. Para el siguiente agente de la cadena de desarrollo, el propietario asignó **Tipo 1**: checkpoint con commit + push coherente al menos cada 3 minutos e incluir `PROGRESS.md` según `AGENTS.md`. Sigue aplicando la prohibición de force push, reescritura de historia compartida y publicación de secretos.
+- **Tipo de agente y cadencia:** esta tanda se ejecuta como **Tipo 2**; agrupa la unidad lógica en un solo commit. Sigue aplicando la prohibición de force push, reescritura de historia compartida y publicación de secretos.
 - Dev implementa código de producto; no escribe pruebas ni planes de pruebas. No inventes resultados ni afirmes que algo compila si no se verificó. Sigue las instrucciones de `FASE-0-REFACTOR-BASE.md` y declara de forma explícita lo que quedó sin compilar/validar. Build/QA se encarga de pruebas, compilación completa y migraciones EF Core.
 
 ## Prioridad crítica activa — recuperación de UX y modelo multiapp (CCR-003)
@@ -382,3 +382,17 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - Se refinó el login respecto al mockup: se retiró el panel envolvente del lado editorial, se redujo el efecto de “tarjetas dentro de tarjeta” para los beneficios y se dio más ancho al formulario.
 - La estructura se publicó en el commit `7d5f8c6`; este checkpoint añade dos ajustes de revisión: restaurar el import de `base.css` y mantener selector + app activa accesibles en el dock móvil. Ambos lotes siguen **sin build y sin validación visual del navegador por parte del agente**.
 - CI no se despachó; el workflow sigue manual. No se integró en `dev` ni `main`. La revisión de permisos, los flujos de autenticación y las pantallas de Workspace continúan requiriendo la validación del propietario/Build-QA.
+
+
+## Revisión de consistencia de UX y producto — 2026-10-20
+
+- Se contrastaron los contratos en `PASTEL-PRODUCT-AND-UX.md`, `CCR-003`, `DESIGN_SYSTEM.md`, WP7/WP8 y la ficha de Huella con el frontend/backend actual.
+- Inconsistencias corregidas en este checkpoint: el logo del shell siempre enviaba a `/` (Ágora) aunque la persona estuviera en otra app; la app recordada se comprobaba contra el catálogo pero no contra los permisos actuales; Identity importaba `getRememberedAppPath` desde `@/app/modules`, rompiendo la regla de dependencia de módulos hacia `@/core/*`; el sidebar no ofrecía una entrada visible a Mi cuenta; con el sidebar colapsado en móvil desaparecía el texto de la app activa.
+- Mejoras visuales del acceso: marca y wordmark más fieles al mockup, eliminación de la línea decorativa previa al eyebrow, jerarquía y espaciado del encabezado de tarjeta, texto legal dentro de la tarjeta, privacidad debajo y copy de registro/inicio en línea. El registro y los métodos de acceso siguen dependiendo de `/api/auth/options`.
+- Preferencia de texto: se añade `Pequeño` al 90 % antes de `Normal` (100 %), `Grande` (115 %) y `Muy grande` (130 %); sigue siendo una preferencia local no sensible.
+- Alineación documental: el selector oficial queda descrito en la sidebar, con la app activa inmediatamente debajo; el logo vuelve al inicio de la app activa. La barra superior conserva breadcrumb, tema y cuenta.
+- Revisión estática del contrato de roles: Owner/Superuser y Administrator siguen diferenciados; creación/asignación ordinaria no puede conceder el rol Owner; Workspace filtra permisos de aplicación; Huella y Cosecha permanecen restringidos en guardas. Esto no reemplaza pruebas de autorización integradas.
+- Funcionalidad todavía pendiente y documentada como tal: entidades/API/ruta pública y snapshot de Huella; catálogo/membresías persistentes por app y UI/API de gestión de Cosecha por Owner; feed real de Ágora. No se presenta ninguna de estas funciones como lista.
+- Validación de esta tanda: **sin compilar y sin validación de navegador**. CI no se despachó y no se integró en `dev` ni `main`. Build/QA deberá ejecutar formato, lint, build, pruebas de autorización/retorno y capturas claras/oscuras en escritorio/móvil antes de considerar cerrada la recuperación visual.
+
+- Final consistency pass: `contextLabel` in the top bar is deliberately `Workspace`/`Pastel`, not the selected app name; the selected app remains identified only by the sidebar card below the refresh control.

@@ -38,10 +38,12 @@ export const shellStrings = {
   account: {
     menu: "Cuenta",
     mine: "Mi cuenta",
+    profileDescription: "Perfil y seguridad",
     theme: "Tema",
     light: "Claro",
     dark: "Oscuro",
     textSize: "Tamaño de texto",
+    small: "Pequeño",
     normal: "Normal",
     large: "Grande",
     xlarge: "Muy grande",

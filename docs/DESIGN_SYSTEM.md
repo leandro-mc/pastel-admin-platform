@@ -94,14 +94,14 @@ Los estados siempre llevan icono y texto; el verde de éxito nunca sustituye al 
 - Fuente: **Inter variable autoalojada** (`@fontsource-variable/inter`); la política de seguridad solo permite fuentes del propio sitio. Alternativas del sistema como respaldo.
 - Base **16 px**; texto de lectura nunca menor de 16 px; etiquetas de formulario de 14–16 px en negrita media.
 - Escala: 12 / 14 / 16 / 18 / 20 / 24 / 30 / 36. Interlineado 1,5 en párrafos, 1,25 en títulos.
-- **Tamaño de texto ajustable** (Normal 100 %, Grande 115 %, Muy grande 130 %) en el menú de cuenta; se aplica con `font-size` del elemento raíz y toda la interfaz usa `rem`. Se guarda como preferencia no sensible.
+- **Tamaño de texto ajustable** en el menú de cuenta: Pequeño 90 %, Normal 100 %, Grande 115 % y Muy grande 130 %. Normal es la opción recomendada; la escala se aplica a la raíz, por lo que también ajusta medidas expresadas en `rem`, y se guarda como preferencia no sensible.
 - Espaciado en múltiplos de 4 px. Contenido de lectura con ancho máximo de ~70 caracteres.
 - Radios 8–12 px. Sombras suaves; los bordes comunican la estructura, no solo la sombra.
 
 ## 4. Estructura de pantallas
 
 - Pastel es un anfitrión de apps independientes, no un dashboard de tarjetas. La visión y los destinos por app están definidos en `docs/product/PASTEL-PRODUCT-AND-UX.md`.
-- **Shell:** marca floral común, selector desplegable de app, nombre y tema correspondientes a la app seleccionada, ayuda, preferencias y menú de cuenta. Login/registro usan la identidad Pastel Workspace.
+- **Shell:** marca floral común, selector desplegable en la sidebar con icono de actualización y tarjeta de la app activa inmediatamente debajo; la barra superior muestra la ubicación, el tema y la cuenta sin repetir el nombre de la app. Ayuda, preferencias, menú de cuenta y footer permanecen disponibles. Login/registro usan la identidad Pastel Workspace.
 - La marca/nombre lleva al inicio de la app activa. La ruta raíz va a Ágora; el catálogo de apps vive en el selector/configuración, no como landing de cada sesión.
 - **Navegación de app:** sidebar en escritorio y navegación táctil equivalente en móvil. La app actual se distingue mediante icono, texto y estado (`aria-current="page"`), no solo color. No arrastrar acciones de un módulo a otro.
 - **Configuración por app:** puede reutilizar estructura y componentes compartidos, pero solo lista y edita miembros, roles, permisos y datos del contexto actual. El rol de una app no se hereda a otra ni equivale a Workspace.

@@ -18,6 +18,7 @@ import { barButton, menuHeader, menuItem, popover } from "./styles";
 
 const { account } = shellStrings;
 const sizes: { id: TextSize; label: string }[] = [
+  { id: "small", label: account.small },
   { id: "normal", label: account.normal },
   { id: "large", label: account.large },
   { id: "xlarge", label: account.xlarge },
@@ -77,7 +78,7 @@ export default function AccountMenu() {
             selectedKeys={[textSize]}
             onSelectionChange={(keys) => {
               const next = [...keys][0];
-              if (next === "normal" || next === "large" || next === "xlarge")
+              if (next === "small" || next === "normal" || next === "large" || next === "xlarge")
                 setTextSize(next);
             }}
           >
