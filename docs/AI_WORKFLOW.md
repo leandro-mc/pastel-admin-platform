@@ -35,6 +35,29 @@ No cambies de rama si hay cambios locales sin guardar o sin permiso del usuario.
 - Para relevos, haz commits pequeños y coherentes y publica checkpoints cuando el siguiente agente necesite acceder a ellos. Mantén un `PROGRESS.md` por tarea/fase con SHA actual, cambios hechos, decisiones, comandos ejecutados, limitaciones, pendientes y el siguiente paso concreto. El siguiente agente inspecciona rama, `git status`, historial y progreso antes de continuar.
 - No integres ramas de agentes entre sí ni cambies su base por iniciativa propia. Coordina el orden y la base con el orquestador para evitar que una tarea dependiente se construya sobre una arquitectura todavía en transición.
 
+## 1.1 Gobierno obligatorio de UX/frontend (CCR-003)
+
+Antes de crear o modificar cualquier pantalla, componente compartido, CSS, tema, navegación o manifiesto de aplicación, cada agente debe leer:
+
+- `docs/product/PASTEL-PRODUCT-AND-UX.md`: visión de producto, modelo multiapp, acceso/disponibilidad y decisiones abiertas.
+- `docs/DESIGN_SYSTEM.md`: lenguaje visual, accesibilidad, tokens y reglas de implementación.
+- La sección WP8 de `docs/phase0/FASE-0-REFACTOR-BASE.md` y `docs/phase0/PROGRESS.md`.
+- La CCR aprobada aplicable, incluida `docs/requests/CCR-003-ux-recovery-and-app-model.md`.
+- Los componentes originales pertinentes en `dev` y la comparación «Antes/Ahora» adjunta a la conversación CCR-003. `dev` es referencia visual/histórica; nunca se copia de él código a una rama nueva sin revisar contratos y arquitectura vigentes.
+
+### Reglas que no son negociables
+
+1. **La UX es un requisito funcional.** Build verde, TypeScript correcto o auditoría Tailwind no significan que una pantalla sea visualmente aceptable.
+2. **No reemplazar una interfaz trabajada por una tarjeta centrada, listado genérico o cuadrícula de aplicaciones como atajo.** Preservar la jerarquía, las composiciones, los controles, el footer y los estados de la referencia, o registrar y solicitar aprobación explícita del cambio.
+3. **La ruta raíz lleva a Ágora.** El selector desplegable cambia la app actual; no convertir el inicio cotidiano en un catálogo de tarjetas. Workspace es administración global privilegiada; Cosecha no es autoactivable y Ágora no se puede desactivar.
+4. **No confundir shell compartido con experiencia de negocio compartida.** Las apps comparten login, identidad, tokens/componentes y navegación anfitriona, pero cada manifiesto/página conserva sus flujos, navegación, roles, permisos y configuración por ámbito. Nunca asumir que un rol de una app otorga permisos en otra.
+5. **No simular capacidades.** No inventar conteos, publicaciones, datos, persistencia de apps o resultados de seguridad. Si una API o decisión de producto no existe, presentar un estado honesto y registrar el trabajo requerido.
+6. **Mantener Tailwind 4 salvo evidencia comparativa.** Utilidades para layout/espaciado/responsive/estados simples; tokens CSS como fuente de verdad para color; CSS de componente pequeño y gobernado para composiciones editoriales/brand. Prohibidos colores dispersos, estilos arbitrarios por pantalla y CSS global de conveniencia. Las clases semánticas solo viven en `web/src/core/design/components/` y deben usarse.
+7. **Identidad y permisos reales.** Ocultar opciones en frontend es presentación, no autorización. No cambiar roles, políticas, entidades o contrato de API para hacer encajar el diseño sin la aprobación de producto y seguridad.
+8. **Accesibilidad forma parte del diseño.** Validar teclado, foco, labels, errores, contraste claro/oscuro, zoom, tamaños táctiles, lectores de pantalla y responsive; no aprobar por apariencia de escritorio únicamente.
+9. **Capturas obligatorias antes de cerrar UI.** Guardar/revisar, como mínimo, acceso/registro, home de Workspace, home de Ágora, directorio de usuarios, lista de roles, editor de permisos y cuenta; en tema claro y oscuro, escritorio y móvil. Comparar visualmente con la referencia; explicar diferencias intencionales.
+10. **Reportar honestamente el SHA validado.** Si el agente no dispone de navegador o entorno ejecutable, registrar «sin compilar/sin validación visual» en `PROGRESS.md` y el relevo. No afirmar que un lote pasa pruebas hasta ejecutar Build/QA sobre el SHA actual. Antes de declarar Fase 0 terminada, se necesita aceptación visual del propietario.
+
 ## 2. Convención de nombres
 
 Usa minúsculas, kebab-case y una rama por objetivo coherente:

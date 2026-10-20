@@ -93,8 +93,6 @@ export function Component() {
             </span>
           </div>
           <dl className="mt-6 grid gap-4 sm:grid-cols-2">
-            <Detail label={t.name}>{user.displayName}</Detail>
-            <Detail label={t.email}>{user.email}</Detail>
             <Detail label={t.createdAt}>{date}</Detail>
             <Detail label={t.roles}>
               {user.roles.length > 0 ? (

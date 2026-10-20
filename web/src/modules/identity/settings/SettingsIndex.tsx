@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 import { useAuth } from "@/core/auth";
+import { routes } from "@/core/routes";
 import { identityPermissions, settingsPaths } from "../paths";
 
 const settingsSections = [
@@ -90,9 +91,9 @@ export function Component() {
     >
       <section className="workspace-welcome" aria-labelledby="workspace-welcome-title">
         <div className="workspace-welcome-copy">
-          <span className="workspace-eyebrow">Tu espacio, a tu ritmo</span>
+          <span className="workspace-eyebrow">Su espacio, a su ritmo</span>
           <h1 id="workspace-welcome-title" className="workspace-welcome-title">
-            ¡Qué bueno verte, {firstName}!
+            ¡Qué gusto tenerle, {firstName}!
           </h1>
           <p>
             Todo lo importante para administrar Pastel, en un espacio claro,
@@ -139,10 +140,10 @@ export function Component() {
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
             <h2 id="workspace-summary-title" className="text-lg font-bold tracking-tight text-fg">
-              Tu resumen
+              Su resumen
             </h2>
             <p className="mt-1 text-sm text-muted">
-              Un vistazo rápido a tu cuenta y sus capacidades.
+              Un vistazo rápido a su cuenta y sus capacidades.
             </p>
           </div>
           <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-muted">
@@ -173,10 +174,10 @@ export function Component() {
             <div>
               <span className="workspace-eyebrow">Para empezar</span>
               <h2 id="workspace-actions-title" className="mt-1 text-lg font-bold tracking-tight text-fg">
-                Tu espacio, a tu manera
+                Su espacio, a su manera
               </h2>
               <p className="mt-1 text-sm text-muted">
-                Accesos administrativos disponibles para tu cuenta.
+                Accesos administrativos disponibles para su cuenta.
               </p>
             </div>
             <span className="hidden size-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong sm:flex">
@@ -236,7 +237,7 @@ export function Component() {
             <div className="flex items-center justify-between gap-3 border-b border-line py-3">
               <dt className="text-sm text-muted">Estado de la cuenta</dt>
               <dd className="inline-flex items-center gap-2 text-sm font-semibold text-fg">
-                <span className={user.isActive ? "size-2 rounded-full bg-accent" : "size-2 rounded-full bg-danger"} />
+                <span className={user.isActive ? "inline-block size-2 rounded-full bg-accent" : "inline-block size-2 rounded-full bg-danger"} />
                 {user.isActive ? "Activa" : "Bloqueada"}
               </dd>
             </div>
