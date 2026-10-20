@@ -131,13 +131,16 @@ internal sealed class PrivilegeGuard(
             }
         }
 
-        if (ActorIsPrivileged)
+        // Owner puede administrar las membresías de todas las apps. Administrator general puede
+        // promover o retirar el rol Administrator, pero los demás roles deben estar limitados a
+        // los permisos que el actor posee realmente.
+        if (ActorIsOwner)
         {
             return null;
         }
 
         var willBeAdministrator = newRoles.Any(x => x.NormalizedName == AdministratorRules.NormalizedName);
-        if (target.IsAdministrator() != willBeAdministrator)
+        if (target.IsAdministrator() != willBeAdministrator && !ActorIsAdministrator)
         {
             return await DenyAsync(IdentityErrors.PrivilegeAdministratorRoleRequired, action, target.Id, target.Email, null, cancellationToken);
         }
@@ -185,7 +188,7 @@ internal sealed class PrivilegeGuard(
                     || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray() }, cancellationToken);
         }
 
-        if (ActorIsPrivileged || permissionCodes.Count == 0)
+        if (ActorIsOwner || permissionCodes.Count == 0)
         {
             return null;
         }
@@ -209,7 +212,7 @@ internal sealed class PrivilegeGuard(
                 new { role = role.Name }, cancellationToken);
         }
 
-        if (!ActorIsPrivileged && ActorRoles.Any(r => string.Equals(r, role.Name, StringComparison.OrdinalIgnoreCase)))
+        if (!ActorIsOwner && ActorRoles.Any(r => string.Equals(r, role.Name, StringComparison.OrdinalIgnoreCase)))
         {
             return await DenyAsync(IdentityErrors.PrivilegeOwnRoleProtected, action, null, role.Name, new { role = role.Name }, cancellationToken);
         }
