@@ -103,14 +103,21 @@ try {
     if ([string]::IsNullOrWhiteSpace($dbContainerId)) {
         throw "No se encontro el contenedor PostgreSQL tras iniciarlo."
     }
-    $networkOutput = @(& docker inspect --format '{{range $name, $config := .NetworkSettings.Networks}}{{$name}}{{"\n"}}{{end}}' $dbContainerId)
+    $networkJson = ((& docker inspect --format '{{json .NetworkSettings.Networks}}' $dbContainerId) | Out-String).Trim()
     if ($LASTEXITCODE -ne 0) {
         throw "No se pudo resolver la red Docker del servicio db."
     }
-    $networkName = @($networkOutput | ForEach-Object { ([string]$_).Trim() } | Where-Object { -not [string]::IsNullOrWhiteSpace($_) } | Select-Object -First 1)
-    if ($networkName.Count -ne 1) {
+    try {
+        $networkConfig = $networkJson | ConvertFrom-Json
+    }
+    catch {
+        throw "No se pudo interpretar la informacion de la red Docker del servicio db."
+    }
+    $networkProperties = @($networkConfig.PSObject.Properties | Where-Object { -not [string]::IsNullOrWhiteSpace($_.Name) } | Select-Object -First 1)
+    if ($networkProperties.Count -ne 1) {
         throw "No se pudo determinar una red Docker para conectar el ejecutor de pruebas."
     }
+    $networkName = [string]$networkProperties[0].Name
 
     $connectionBuilder = [System.Data.Common.DbConnectionStringBuilder]::new()
     $connectionBuilder["Host"] = "db"
@@ -138,18 +145,21 @@ dotnet test tests/Pastel.IntegrationTests/Pastel.IntegrationTests.csproj \
   --results-directory /test-results
 '@
 
+$containerScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($containerScript))
+$dockerCommand = ("echo {0} | base64 -d | sh" -f $containerScriptBase64)
+
     Write-Host "Ejecutando las pruebas HTTP + PostgreSQL en un contenedor .NET 10." -ForegroundColor Cyan
     Write-Host ("Resultados TRX: {0}" -f $resultsDirectory)
     $dockerArguments = @(
         "run", "--rm",
-        "--network", [string]$networkName[0],
+        "--network", $networkName,
         "--mount", ("type=bind,source={0},target=/repo,readonly" -f $script:RepoRoot),
         "--mount", ("type=bind,source={0},target=/test-results" -f $resultsDirectory),
         "--env", "PASTEL_TEST_CONNECTION_STRING",
         "--env", "ConnectionStrings__Default",
         "--entrypoint", "sh",
         "mcr.microsoft.com/dotnet/sdk:10.0",
-        "-lc", $containerScript
+        "-c", $dockerCommand
     )
 
     & docker @dockerArguments
