@@ -19,10 +19,8 @@ internal sealed class HuellaModule : IPastelModule
 
     public IReadOnlyList<PermissionGroup> Permissions => HuellaPermissions.Groups;
 
-    public IReadOnlyList<SuggestedRole> SuggestedRoles { get; } =
-    [
-        new("Huella — Propietario", "Edita y publica su propio perfil.", [HuellaPermissions.Access, HuellaPermissions.ProfileManage]),
-    ];
+    // Huella es el perfil personal del Owner/Superuser; no se ofrece como rol para otras cuentas.
+    public IReadOnlyList<SuggestedRole> SuggestedRoles { get; } = [];
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
         services.AddPastelDbContext<HuellaDbContext>(configuration, HuellaDbContext.Schema);
