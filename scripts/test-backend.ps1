@@ -39,6 +39,18 @@ if [ "$restore_status" -ne 0 ]; then
 fi
 
 echo ""
+echo "=== Auditar paquetes vulnerables NuGet ==="
+vulnerability_output="$(dotnet list Pastel.slnx package --vulnerable --include-transitive 2>&1)"
+vulnerability_status=$?
+printf '%s\\n' "$vulnerability_output"
+if [ "$vulnerability_status" -eq 0 ] && printf '%s' "$vulnerability_output" | grep -Eiq 'has the following vulnerable packages'; then
+  echo "FALLO: NuGet informa uno o más paquetes vulnerables."
+  vulnerability_status=1
+elif [ "$vulnerability_status" -eq 0 ]; then
+  echo "Correcto: no se detectaron paquetes vulnerables por NuGet."
+fi
+
+echo ""
 echo "=== Verificar formato .NET ==="
 format_output=$(dotnet format Pastel.slnx --verify-no-changes --no-restore 2>&1)
 format_status=$?
