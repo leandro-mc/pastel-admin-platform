@@ -447,3 +447,9 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Validación de esta tanda:** revisión estática. **Sin ejecutar** Docker, CodeQL, frontend, .NET o CI sobre este SHA.
 
 - **Ajuste estático CodeQL:** el workflow separa los pasos de inicialización: C# usa `build-mode: manual` y ejecuta `dotnet build`; JavaScript/TypeScript usa la inicialización estándar sin pasarle una opción de modo de compilación propia de lenguajes compilados. El workflow sigue **sin ejecutar**.
+
+## Reconciliación de instrucciones de CI — 2026-10-20
+
+- `docs/phase0/FASE-0-REFACTOR-BASE.md` §12.4 ahora describe el modo manual de CI que realmente está publicado y diferencia los jobs implementados de las guardas todavía pendientes de Build.
+- **Pendiente de reconciliación por QA:** `docs/testing/plans/FASE-0-TEST-PLAN.md`, caso F0-I07, todavía describe triggers push/PR. No modifiqué el plan obligatorio porque su mantenimiento pertenece a QA; debe alinearse la descripción del mecanismo de disparo sin quitar ni debilitar los controles que el caso exige.
+- No se modificaron pruebas ni se ejecutó CI.
