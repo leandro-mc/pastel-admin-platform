@@ -357,3 +357,19 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Smoke test Docker Compose — APROBADO:** el run de CI `39356389334` (commit `100d277`) pasó la validación de Compose, construcción de las imágenes y arranque de la pila. Los cuatro trabajos (`backend`, `frontend`, `database-integration` y `container-build`) terminaron en verde. Se corrigió el chequeo de esquema para inspeccionar `identity.modules`; detalle en la [CCR-002](../requests/CCR-002-ci-container-build-schema-check.md).
 - **Cobertura pendiente:** todavía faltan pruebas de componentes React (Vitest/Testing Library) y E2E de navegador (Playwright); las ocho pruebas actuales cubren reglas estáticas de diseño, no todos los flujos visuales.
 - **Seguridad de pruebas:** el runner recreó solamente la base `pastel_integration_tests`. No se eliminó la base de desarrollo ni el volumen.
+
+
+## Build local reportado por el propietario — 2026-10-20
+
+- El propietario reportó `docker compose up -d --build` fallando durante `dotnet publish` por CS0103 en `Features/ListUsers/ListUsersHandler.cs`: `IdentityPermissions` pertenece a `Pastel.Modules.Identity.Security`, pero el archivo no importaba ese espacio de nombres. Se añadió el `using` correspondiente en este checkpoint.
+- Esta corrección es estática y aún debe confirmarse repitiendo el build desde el estado actualizado. No se ejecutó `dotnet` ni un build Docker en el entorno del agente.
+- Los 23 archivos que fallaron Prettier en el run 311 continúan pendientes de formateo y verificación con Prettier real; no se deben considerar resueltos por el cambio anterior.
+- CI permanece manual. No se ha despachado ningún workflow; la validación integral requiere autorización explícita del propietario una vez corregidos y revisados los fallos conocidos.
+
+
+## Error de arranque del API reportado por el propietario — 2026-10-20
+
+- Tras corregir el import de `IdentityPermissions` en `ListUsersHandler.cs`, el propietario consiguió compilar la imagen, pero reportó que `pastel-admin-api-1` entra en reinicio durante el arranque y `GET /api/auth/options` devuelve 504 desde Nginx.
+- Causa identificada en el log: `ModuleLoader.Validate` exige que cada permiso empiece con el código de su grupo. `platform.workspace.access` y `platform.owner` estaban declarados erróneamente dentro del grupo `settings`, por lo que el API fallaba antes de registrar rutas.
+- Corrección publicada en este checkpoint: los permisos `platform.*` pasan al grupo explícito `platform`, sin debilitar la validación; se actualiza la regla correspondiente en `docs/ARCHITECTURE.md`.
+- El cambio aún requiere que el propietario reconstruya/reinicie la API y confirme que `/api/auth/options` responde. No se ejecutó Compose ni CI desde este entorno.

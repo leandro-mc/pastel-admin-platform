@@ -27,7 +27,7 @@ Descartado: microservicios (operación excesiva), Clean Architecture por módulo
 2. Los tipos son `internal` por defecto. Lo público de un módulo vive en su `*.Contracts`.
 3. Un esquema por módulo (`identity`, `brisa`, `balance`, `agora`, `cosecha`, `huella`). **Sin claves foráneas ni joins entre esquemas**; se referencia por ID.
 4. `Pastel.Platform` y `Pastel.SharedKernel` **no referencian módulos**. `Pastel.Host` no contiene reglas de negocio.
-5. Todo permiso empieza con el código del módulo: `cosecha.orders.manage`.
+5. Todo permiso funcional de una aplicación empieza con el código del módulo: `cosecha.orders.manage`. Identity puede declarar permisos transversales de plataforma bajo el grupo `platform` y el prefijo `platform.*`; esos permisos son reservados y no se conceden desde la administración de roles de una aplicación.
 6. Frontend: `web/src/modules/<m>` solo importa de `@/core/*`. `core` y `app` solo conocen los módulos por el manifiesto generado.
 7. Quitar un módulo = borrar sus carpetas. El resto debe compilar y pasar sus pruebas.
 
