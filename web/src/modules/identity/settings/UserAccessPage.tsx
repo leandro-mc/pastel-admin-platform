@@ -1,6 +1,7 @@
 import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
+import { useAuth } from "@/core/auth";
 import { useNotify } from "@/core/notifications";
 import { useSaveUserAccess } from "../api/mutations";
 import {
@@ -21,9 +22,12 @@ import { panel } from "./styles";
 
 const t = settingsStrings.access;
 const ADMINISTRATOR = "Administrator";
+const OWNER = "Owner/Superuser";
 
 /** `/configuracion/accesos/usuario/:userId`: roles y excepciones individuales de una persona. */
 export function Component() {
+  const { user: actor } = useAuth();
+  const actorIsOwner = actor?.roles.includes(OWNER) ?? false;
   const { userId = "" } = useParams();
   const user = useUser(userId);
   const roles = useRoles();
@@ -69,6 +73,7 @@ export function Component() {
             roles={roles.data}
             catalog={catalog.data}
             initialOverrides={initialOverrides}
+            actorIsOwner={actorIsOwner}
           />
         ) : null}
       </QueryState>
@@ -92,7 +97,7 @@ type FormProps = {
   initialOverrides: Record<string, OverrideValue>;
 };
 
-function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
+function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }: FormProps & { actorIsOwner: boolean }) {
   const navigate = useNavigate();
   const notify = useNotify();
   const save = useSaveUserAccess();
@@ -106,6 +111,8 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
   const administratorId = roles.find((r) => r.name === ADMINISTRATOR)?.id;
   const administrator =
     administratorId !== undefined && roleIds.includes(administratorId);
+  const isOwnerTarget = user.roles.includes(OWNER);
+  const ownerEditBlocked = isOwnerTarget && !actorIsOwner;
   const grantedByRole = useMemo(
     () =>
       new Set(
@@ -175,6 +182,11 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
           </div>
         </div>
       </header>
+      {ownerEditBlocked ? (
+        <p role="status" className="rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm leading-relaxed text-muted">
+          Esta es la cuenta del propietario. Sus accesos solo pueden revisarse o administrarse desde la propia identidad Owner/Superuser.
+        </p>
+      ) : null}
 
       <section aria-labelledby="roles-heading" className={`${panel} overflow-hidden shadow-sm`}>
         <header className="border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
@@ -184,14 +196,26 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
           <p className="mt-1 text-sm leading-relaxed text-muted">{t.rolesHint}</p>
         </header>
         <ul className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
-          {roles.map((role) => (
+          {roles.map((role) => {
+            const isOwnerRole = role.name === OWNER;
+            const hasHuellaPrivilege = role.permissions.some((code) => code.startsWith("huella."));
+            const hasCosechaPrivilege = role.permissions.some((code) => code.startsWith("cosecha."));
+            const roleLocked = isOwnerRole || hasHuellaPrivilege || (hasCosechaPrivilege && !actorIsOwner);
+            const explanation = isOwnerRole
+              ? "Reservado; solo lo establece el bootstrap."
+              : hasHuellaPrivilege
+                ? "Huella es el perfil privado del propietario y no se asigna a otras cuentas."
+                : hasCosechaPrivilege && !actorIsOwner
+                  ? "Solo Owner/Superuser puede conceder acceso a Cosecha."
+                  : null;
+            return (
             <li key={role.id}>
               <label className="flex h-full min-h-20 cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface p-4 text-sm text-fg transition-colors hover:border-accent/50 hover:bg-surface-raised has-[:checked]:border-accent-strong has-[:checked]:bg-accent-soft/60">
                 <input
                   type="checkbox"
                   className="mt-0.5 size-5 shrink-0 accent-accent-strong"
                   checked={roleIds.includes(role.id)}
-                  disabled={save.isPending}
+                  disabled={save.isPending || ownerEditBlocked || roleLocked}
                   onChange={() => toggleRole(role.id)}
                 />
                 <span className="min-w-0 flex-1">
@@ -200,10 +224,12 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
                     <span className="mt-1 block leading-relaxed text-muted">{role.description}</span>
                   ) : null}
                   {role.isSystemRole ? <span className="mt-2 inline-flex rounded-full border border-line px-2 py-0.5 text-xs font-medium text-muted">Rol de sistema</span> : null}
+                  {explanation ? <span className="mt-2 block text-xs leading-relaxed text-muted">{explanation}</span> : null}
                 </span>
               </label>
             </li>
-          ))}
+          );
+          })}
         </ul>
       </section>
 
@@ -226,7 +252,7 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
               catalog={catalog}
               overrides={overrides}
               grantedByRole={grantedByRole}
-              disabled={save.isPending}
+              disabled={save.isPending || ownerEditBlocked}
               onChange={(permissionId, value) =>
                 setOverrides((current) => ({
                   ...current,
@@ -241,12 +267,12 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
 
       <FormAlert error={error} />
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-4">
-        <p className="text-sm text-muted">Los cambios se aplican cuando guarda los accesos.</p>
+        <p className="text-sm text-muted">{ownerEditBlocked ? "Edición no disponible para esta cuenta." : "Los cambios se aplican cuando guarda los accesos."}</p>
         <div className="flex flex-wrap gap-3">
         <button
           type="button"
           className={primaryButton}
-          disabled={save.isPending}
+          disabled={save.isPending || ownerEditBlocked}
           onClick={() => void onSave()}
         >
           {save.isPending ? t.saving : t.save}

@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { Outlet, useLocation, useNavigate } from "react-router";
 import { RouterProvider } from "react-aria-components";
+import { useAuth } from "@/core/auth";
 import { strings } from "../strings";
 import { routes } from "../routes";
 import { rememberCurrentApp } from "../modules";
@@ -30,10 +31,11 @@ export default function RootLayout() {
   useFocusHeadingOnNavigation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { status } = useAuth();
   const isStandaloneAuth = pathname === routes.login;
   useEffect(() => {
-    rememberCurrentApp(pathname);
-  }, [pathname]);
+    if (status === "authenticated") rememberCurrentApp(pathname);
+  }, [pathname, status]);
   return (
     <RouterProvider navigate={(to, options) => void navigate(to, options)}>
       <div className="flex min-h-screen flex-col">

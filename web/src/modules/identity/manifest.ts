@@ -25,8 +25,8 @@ export default {
   order: 900,
   basePath: settingsPaths.root,
   access: "permission",
-  // Basta con un permiso de Configuración; cada pestaña exige el suyo.
-  requiredAnyPermission: Object.values(identityPermissions),
+  // Solo cuentas con el permiso explícito de Workspace entran al espacio global; cada pestaña exige el suyo.
+  requiredAnyPermission: [identityPermissions.workspaceAccess],
   nav: [
     {
       label: tabs.users,
