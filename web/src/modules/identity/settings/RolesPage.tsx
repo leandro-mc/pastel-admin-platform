@@ -54,7 +54,7 @@ export function Component() {
             <h2 className="font-semibold text-fg">Roles de plataforma</h2>
             <p className="mt-0.5 text-sm text-muted">
               {roles.data
-                ? settingsStrings.common.total(roles.data.length)
+                ? settingsStrings.common.total(platformRoles.length)
                 : "Roles y permisos disponibles en la plataforma."}
             </p>
           </div>
