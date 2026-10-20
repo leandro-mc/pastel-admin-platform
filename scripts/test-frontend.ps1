@@ -46,6 +46,7 @@ cd /tmp/work/web || exit 92
 npm ci --no-audit --no-fund
 install_status=$?
 if [ "$install_status" -eq 0 ]; then
+  run_check "Auditoría de dependencias (npm audit)" npm audit --audit-level=high
   run_check "Prettier" npm run format:check
   run_check "ESLint" npm run lint
   run_check "TypeScript + Vite build" npm run build

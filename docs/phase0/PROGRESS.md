@@ -43,7 +43,7 @@ Archivos clave del checkpoint: `web/src/modules/identity/pages/LoginPage.tsx`, `
 | WP6 — Esqueletos/plantilla de módulos | **Código y migraciones iniciales de los cinco esquemas compilados y aplicados durante las pruebas locales de integración.** Ver «WP6 — Bitácora». | Ejecutar las pruebas de arquitectura y validar los subconjuntos con `-p:PastelModules=Identity` según el plan. Las migraciones de los contextos esqueleto solo crean sus esquemas e historiales; todavía no crean tablas de dominio. |
 | WP7 — Cimientos de frontend/sesión/errores/shell | **Recuperación visual amplia y contratos de destino tras login actualizados; sin validar el HEAD actual.** Workspace y roles usan permiso global explícito. | Build/QA en navegador y pruebas; resolver regresiones de shell/rutas/retorno, asegurar que el selector refleje acceso real y no un catálogo simulado. |
 | WP8 — Recuperación visual + sistema de diseño Tailwind | **Implementación visual amplia publicada, enfoque Tailwind híbrido; sin compilar desde estos cambios.** | Build/QA sobre el HEAD actual; Prettier, ESLint, TypeScript/Vite, pruebas, `check-design`, `tailwind-audit`; capturas antes/después en ambas apariencias, escritorio/móvil; corregir regresiones y solicitar aprobación visual del propietario. |
-| WP9 — Infraestructura/CI/repositorio | Pendiente | Ajustes restantes de §12, sin salirse del alcance de Fase 0. |
+| WP9 — Infraestructura/CI/repositorio | **Parcial; CCR-004 autorizada** | Reproducibilidad e infraestructura están en actualización. Sigue pendiente validación Build y el resto de guardarraíles WP9 no implementados. |
 | WP10 — Testabilidad/documentación/datos | Pendiente | Hooks para Build, documentación, ADR y datos de prueba conforme a §13. |
 
 ## WP2 — Resultado conocido y limitaciones
@@ -396,3 +396,30 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - Validación de esta tanda: **sin compilar y sin validación de navegador**. CI no se despachó y no se integró en `dev` ni `main`. Build/QA deberá ejecutar formato, lint, build, pruebas de autorización/retorno y capturas claras/oscuras en escritorio/móvil antes de considerar cerrada la recuperación visual.
 
 - Final consistency pass: `contextLabel` in the top bar is deliberately `Workspace`/`Pastel`, not the selected app name; the selected app remains identified only by the sidebar card below the refresh control.
+
+## WP9 — Reproducibilidad del frontend e higiene del repositorio (Dev, Tipo 2, 2026-10-20)
+
+- [x] **WP9.1 — Instalación reproducible en la imagen web:** el Dockerfile ahora copia `package.json` y `package-lock.json` antes de instalar, y ejecuta `npm ci --no-audit --no-fund`. El script `scripts/test-frontend.ps1` ya usaba `npm ci` y ejecuta Prettier, ESLint, build, pruebas de guardas de diseño y auditorías.
+- [x] **Higiene de archivos:** se añadieron `.editorconfig` y `.gitattributes` para codificación UTF-8, finales de línea y reglas básicas de indentación. `.gitignore` ignora `*.tsbuildinfo`; se retiró del repositorio el `web/tsconfig.tsbuildinfo` generado, que TypeScript regenera al compilar.
+- [x] **Autorización de CCR-004:** el propietario autorizó el 2026-10-20 los cambios de Compose, Nginx, CI y documentos de nivel raíz definidos en la solicitud; el lote se publicó en `0d825508`.
+- **Validación de esta tanda:** revisión estática de los archivos fuente obtenidos desde GitHub. **Sin ejecutar** `npm ci`, Docker build, `docker compose config`, pruebas ni auditorías. No se declara la imagen validada ni WP9 cerrado.
+- **Siguiente paso:** completar WP10 documental y registrar el sembrador de Testing como pendiente por zona protegida; Build/QA validará este lote. La CCR no equivale a aprobación de Build/QA ni a autorización para fusionar.
+- **Revisión estática del runner:** se aseguró que la auditoría NuGet sea parte del resumen final y que sus hallazgos produzcan una salida fallida. Esta corrección no se ha ejecutado.
+
+
+## WP9 — Infraestructura Compose/Nginx y documentación operativa (Dev, Tipo 2, 2026-10-20)
+
+- [x] **Compose por entorno:** el archivo base conecta a PostgreSQL externo mediante `POSTGRES_HOST`; `compose.override.yaml` mantiene PostgreSQL local para desarrollo. Los servicios ya no dependen de IPs fijas; el CIDR de proxy confiable se configura por variable.
+- [x] **Arranque y salud:** API tiene healthcheck real contra `/health/ready`, web contra `/health/web`; el frontend espera a API saludable y el override espera a la base saludable. Se añadieron límites de recursos, `cap_drop: [ALL]`, `no-new-privileges` y rotación de logs JSON.
+- [x] **Nginx:** la configuración se genera desde plantilla con CIDR de proxy de confianza configurable, conserva `Host $http_host`, reenvía `X-Forwarded-For` preservando la cadena, habilita compresión y fija `Cache-Control immutable` solo a activos bajo `/assets/` con hash. `index.html` no se cachea. Las cabeceras defensivas proceden de un único snippet incluido también en las ubicaciones que declaran sus propias cabeceras.
+- [x] **CI y docs:** workflow continúa manual y con `confirm_validation=true`; se definieron límites de tiempo por job y el smoke ahora espera la salud real del API. README se reescribió para la arquitectura modular actual; `docs/AI_WORKFLOW.md` ya no contradice la política CI; `docs/SECURITY.md` incorpora cómo reportar vulnerabilidades.
+- [x] **Auditoría de dependencias:** `scripts/test-backend.ps1` ejecuta `dotnet list package --vulnerable --include-transitive` y falla si NuGet informa paquetes vulnerables; `scripts/test-frontend.ps1` incluye `npm audit --audit-level=high`. **Sin ejecutar sobre el HEAD actual.**
+- [ ] **Guardarraíles restantes de WP9:** las pruebas de arquitectura, aislamiento automatizado por módulo y CodeQL opcional requieren implementación/validación adicional. No hay evidencia de que estén integrados al workflow actual.
+- **Validación de este lote:** lectura y edición estática de archivos fuente; **sin ejecutar** Docker, `docker compose config`, Nginx, `npm ci`, .NET, pruebas ni CI. Las nuevas comprobaciones de salud necesitan validarse sobre imagen construida.
+- **Siguiente paso:** concluir WP10 documental/ADRs, registrar la brecha del sembrador de Testing por su zona protegida, y entregar a Build para los comandos y pruebas de integración pendientes.
+
+## WP9 — Normalización del subconjunto de módulos en Docker (revisión estática, 2026-10-20)
+
+- Se detectó una discrepancia entre el contrato documentado en `.env.example` (códigos en minúsculas, como `brisa,balance`) y `Pastel.Host.csproj` (nombres de carpetas en PascalCase). El frontend debe conservar los códigos minúsculos, pero MSBuild espera nombres `Brisa,Balance`.
+- `src/Host/Pastel.Host/Dockerfile` normaliza únicamente el argumento usado en restore/publish de .NET (capitaliza la primera letra de cada código), mientras el frontend mantiene `PASTEL_MODULES` original. El valor `*` conserva el comportamiento anterior.
+- La revisión es estática; **sin ejecutar** una compilación de todos los módulos ni subconjuntos. Build debe probar `*` y al menos un subconjunto con Docker/Linux antes de considerar confirmado el comportamiento.
