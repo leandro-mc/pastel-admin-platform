@@ -121,8 +121,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             .Where(x => x.RoleId != admin.Id && x.RoleId != owner.Id)
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
-                || x.Permission.Code.StartsWith("huella.")
-                || x.Permission.Code.StartsWith("cosecha."))
+                || x.Permission.Code.StartsWith("huella."))
             .ToListAsync(cancellationToken);
         db.RolePermissions.RemoveRange(legacyRestricted);
 
@@ -160,12 +159,13 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             db.Roles.Remove(role);
         }
 
-        // No conservar excepciones individuales para privilegios exclusivos: las apps privadas se conceden
-        // por roles, y el rol Owner/Superuser conserva Huella/Cosecha de forma explícita.
+        // En Workspace las excepciones directas se limitan a permisos de plataforma.
+        // Los permisos de negocio de cada app se administran dentro del ámbito de esa app, mediante sus roles.
         var restrictedOverrides = await db.UserPermissionOverrides.Include(x => x.Permission)
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
-                || x.Permission.Code.StartsWith("huella."))
+                || !(x.Permission.Code == IdentityPermissions.DashboardView
+                    || x.Permission.Code.StartsWith("settings.", StringComparison.Ordinal)))
             .ToListAsync(cancellationToken);
         db.UserPermissionOverrides.RemoveRange(restrictedOverrides);
 
