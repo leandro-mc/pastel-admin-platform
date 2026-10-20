@@ -169,7 +169,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
                 || x.Permission.Code.StartsWith("huella.")
                 || (x.Permission.Code.StartsWith("cosecha.")
-                    && (x.AssignedByUserId == null || !ownerUserIds.Contains(x.AssignedByUserId.Value))))
+                    && !ownerUserIds.Contains(x.AssignedByUserId ?? Guid.Empty)))
             .ToListAsync(cancellationToken);
         db.UserPermissionOverrides.RemoveRange(restrictedOverrides);
 
