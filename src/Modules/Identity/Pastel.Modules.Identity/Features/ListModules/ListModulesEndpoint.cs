@@ -20,11 +20,12 @@ internal static class ListModulesEndpoint
         var rows = await db.Modules.AsNoTracking().Include(x => x.Permissions)
             .OrderBy(x => x.SortOrder).ThenBy(x => x.Name)
             .ToListAsync(cancellationToken);
+
         return Results.Ok(rows.Select(x => new ModuleSummary(
             x.Id, x.Code, x.Name, x.Description, x.IsEnabled, x.SortOrder,
-            // La administración global ve el registro y estado de las apps; sus permisos quedan en cada app.
-            (x.Code is "dashboard" or "settings"
-                ? x.Permissions.Where(p => p.Code == IdentityPermissions.DashboardView || p.Code.StartsWith("settings."))
+            x.Code is "dashboard" or "settings"
+                ? x.Permissions
+                    .Where(p => p.Code == IdentityPermissions.DashboardView || p.Code.StartsWith("settings."))
                     .OrderBy(p => p.Code, StringComparer.Ordinal)
                     .Select(p => new PermissionSummary(p.Id, x.Code, x.Name, p.Code, p.Name, p.Description, p.IsSystemPermission))
                     .ToArray()

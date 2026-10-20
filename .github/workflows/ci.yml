@@ -1,15 +1,17 @@
 name: CI
 on:
-  # Validate the active modular-foundation branch on each checkpoint push; other WIP branches stay quiet.
-  push:
-    branches: [main, dev, refactor/modular-foundation]
-  pull_request:
-    branches: [main, dev, refactor/modular-foundation]
-    types: [opened, reopened, ready_for_review, synchronize]
+  # Manual-only by design: never spend a CI run on each development push.
+  # Dispatch once per reviewed batch, after local validation and explicit approval.
   workflow_dispatch:
+    inputs:
+      confirm_validation:
+        description: "Confirmo que el lote está completo y listo para validación integral."
+        required: true
+        type: boolean
+        default: false
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -17,7 +19,7 @@ permissions:
 
 jobs:
   backend:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    if: inputs.confirm_validation == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,7 +28,7 @@ jobs:
         run: ./scripts/test-backend.ps1
 
   frontend:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    if: inputs.confirm_validation == true
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -35,7 +37,7 @@ jobs:
         run: ./scripts/test-frontend.ps1
 
   database-integration:
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    if: inputs.confirm_validation == true
     runs-on: ubuntu-latest
     env:
       POSTGRES_DB: pastel
@@ -50,8 +52,7 @@ jobs:
         run: ./scripts/test-database.ps1
 
   container-build:
-    # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
-    if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
+    if: inputs.confirm_validation == true
     runs-on: ubuntu-latest
     env:
       # Disposable placeholders used only for Compose interpolation during image builds.

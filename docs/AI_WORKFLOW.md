@@ -32,8 +32,18 @@ No cambies de rama si hay cambios locales sin guardar o sin permiso del usuario.
 
 - Durante una refactorización de la base, **no supongas que la arquitectura objetivo ya está implementada en `dev`**. El orquestador debe indicar la rama y el SHA base que corresponde a cada tarea. Sigue el código real de esa base y las instrucciones de la fase; no mezcles automáticamente el código antiguo con el objetivo de la refactorización.
 - Cada agente trabaja en una rama por tarea coherente y con una zona de escritura definida. Los módulos/proyectos independientes pueden avanzar en paralelo; evita que dos agentes editen los mismos archivos compartidos. `BuildingBlocks`, `Identity`, shell/core, configuración global, CI y documentación raíz siguen protegidos salvo asignación expresa del orquestador o CCR autorizado.
-- Para relevos, haz commits pequeños y coherentes y publica checkpoints cuando el siguiente agente necesite acceder a ellos. Mantén un `PROGRESS.md` por tarea/fase con SHA actual, cambios hechos, decisiones, comandos ejecutados, limitaciones, pendientes y el siguiente paso concreto. El siguiente agente inspecciona rama, `git status`, historial y progreso antes de continuar.
+- Para relevos, un agente **Tipo 2 agrupa en un único commit cada unidad de trabajo completa**; no publica commits por archivo ni por ajuste pequeño. Mantén un `PROGRESS.md` por tarea/fase con SHA, cambios, decisiones, comandos, limitaciones y siguiente paso, actualizado dentro de ese mismo commit.
 - No integres ramas de agentes entre sí ni cambies su base por iniciativa propia. Coordina el orden y la base con el orquestador para evitar que una tarea dependiente se construya sobre una arquitectura todavía en transición.
+
+## 1.0 Reglas duras de commits y CI
+
+- El workflow CI es manual únicamente. Ningún push a una rama de trabajo inicia CI; el despacho exige `confirm_validation=true`.
+- **Prohibido usar CI como bucle de feedback durante la implementación.** No dispatch ni push de prueba. Primero completa el lote, inspecciona todo el diff y ejecuta localmente format/lint/build/tests/auditorías.
+- Un agente Tipo 2 hace **un commit por lote lógico**, con código, documentación y `PROGRESS.md` relacionados. No hagas un commit por cada archivo o cada pequeño ajuste.
+- Las GitHub Contents APIs de escritura crean commits automáticamente: nunca las utilices secuencialmente para un conjunto de archivos relacionado. Usa Git Data API (blobs, tree, commit y ref update) para publicar el lote con un commit.
+- Ante un CI fallido, revisa todos los logs relevantes y agrupa arreglos; no vuelvas a despachar CI hasta completar validaciones locales y obtener autorización explícita.
+- Si no hay herramientas locales suficientes, registra el lote como **sin validar** y deja la validación para Build/QA; no uses CI como sustituto del entorno.
+- No reescribas el historial compartido ni fuerces una ref sin autorización explícita. Nunca integres a `dev` ni `main` sin autorización del propietario.
 
 ## 1.1 Gobierno obligatorio de UX/frontend (CCR-003)
 
