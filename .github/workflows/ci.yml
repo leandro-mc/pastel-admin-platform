@@ -4,7 +4,7 @@ on:
   push:
     branches: [main, dev, refactor/modular-foundation]
   pull_request:
-    branches: [main, dev]
+    branches: [main, dev, refactor/modular-foundation]
     types: [opened, reopened, ready_for_review, synchronize]
   workflow_dispatch:
 
@@ -17,7 +17,6 @@ permissions:
 
 jobs:
   backend:
-    # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
@@ -27,7 +26,6 @@ jobs:
         run: ./scripts/test-backend.ps1
 
   frontend:
-    # Draft PRs are checkpoints, not validation requests. CI runs when marked ready.
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     steps:
@@ -37,7 +35,6 @@ jobs:
         run: ./scripts/test-frontend.ps1
 
   database-integration:
-    # Uses a dedicated database named pastel_integration_tests; it never starts the API or web service.
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     runs-on: ubuntu-latest
     env:

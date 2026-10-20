@@ -34,4 +34,4 @@ Aún no hay pruebas de componentes React ni de recorridos E2E en navegador. Las 
 
 ## Flujo de CI
 
-GitHub Actions ejecuta las verificaciones especializadas en los cambios dirigidos a **dev** o **main**. Las pruebas locales de la rama de trabajo se pueden lanzar con **test-all.ps1** sin integrar ni fusionar ramas.
+GitHub Actions ejecuta las verificaciones especializadas en pushes a **main**, **dev** y **refactor/modular-foundation**, y en solicitudes de integración dirigidas a **main**, **dev** o **refactor/modular-foundation**. Las pruebas locales de la rama de trabajo se pueden lanzar con **test-all.ps1** sin integrar ni fusionar ramas.

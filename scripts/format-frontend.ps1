@@ -23,16 +23,33 @@ cd /tmp/work/web
 npm ci --no-audit --no-fund
 npm run format
 
-# Copy back only paths included by the repository's Prettier script.
-cp -a /tmp/work/web/src/. /repo/web/src/
-cp -a /tmp/work/web/vite.config.ts /repo/web/vite.config.ts
-if [ -d /tmp/work/web/vite ]; then
-  mkdir -p /repo/web/vite
-  cp -a /tmp/work/web/vite/. /repo/web/vite/
-fi
-for file in eslint.config.js package.json package-lock.json .prettierrc.json tsconfig*.json; do
+# Copy back only extensions and paths included by the repository's Prettier script.
+find /tmp/work/web/src -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.css' \) -exec sh -c '
+  for source do
+    relative=${source#/tmp/work/web/src/}
+    destination="/repo/web/src/$relative"
+    mkdir -p "$(dirname "$destination")"
+    cp -p "$source" "$destination"
+  done
+' sh {} +
+
+find /tmp/work/web/vite -type f -name '*.ts' -exec sh -c '
+  for source do
+    relative=${source#/tmp/work/web/vite/}
+    destination="/repo/web/vite/$relative"
+    mkdir -p "$(dirname "$destination")"
+    cp -p "$source" "$destination"
+  done
+' sh {} +
+
+for file in vite.config.ts eslint.config.js package.json package-lock.json .prettierrc.json; do
   if [ -f "/tmp/work/web/$file" ]; then
-    cp -a "/tmp/work/web/$file" /repo/web/
+    cp -p "/tmp/work/web/$file" /repo/web/
+  fi
+done
+for source in /tmp/work/web/tsconfig*.json; do
+  if [ -f "$source" ]; then
+    cp -p "$source" /repo/web/
   fi
 done
 

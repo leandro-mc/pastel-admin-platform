@@ -10,6 +10,10 @@ $script:RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $testDatabase = "pastel_integration_tests"
 $connectionBuilder = $null
 $dbPassword = $null
+$hadPreviousTestConnectionString = Test-Path Env:PASTEL_TEST_CONNECTION_STRING
+$previousTestConnectionString = $env:PASTEL_TEST_CONNECTION_STRING
+$hadPreviousDefaultConnectionString = Test-Path Env:ConnectionStrings__Default
+$previousDefaultConnectionString = $env:ConnectionStrings__Default
 $resultsDirectory = Join-Path ([System.IO.Path]::GetTempPath()) ("pastel-database-tests-" + [guid]::NewGuid().ToString("N"))
 New-Item -ItemType Directory -Path $resultsDirectory -Force | Out-Null
 
@@ -115,7 +119,10 @@ try {
     $connectionBuilder["Username"] = $dbUser
     $connectionBuilder["Password"] = $dbPassword
     $connectionBuilder["GSS Encryption Mode"] = "Disable"
+    # Configure process environment before the child test process creates WebApplicationBuilder.
+    # ConfigureAppConfiguration in WebApplicationFactory is applied too late for eager module registration.
     $env:PASTEL_TEST_CONNECTION_STRING = $connectionBuilder.ConnectionString
+    $env:ConnectionStrings__Default = $connectionBuilder.ConnectionString
 
     $containerScript = @'
 set -e
@@ -139,6 +146,7 @@ dotnet test tests/Pastel.IntegrationTests/Pastel.IntegrationTests.csproj \
         "--mount", ("type=bind,source={0},target=/repo,readonly" -f $script:RepoRoot),
         "--mount", ("type=bind,source={0},target=/test-results" -f $resultsDirectory),
         "--env", "PASTEL_TEST_CONNECTION_STRING",
+        "--env", "ConnectionStrings__Default",
         "--entrypoint", "sh",
         "mcr.microsoft.com/dotnet/sdk:10.0",
         "-lc", $containerScript
@@ -157,7 +165,16 @@ dotnet test tests/Pastel.IntegrationTests/Pastel.IntegrationTests.csproj \
     Write-Host ("La base de desarrollo '{0}' y el volumen de PostgreSQL no se eliminaron." -f $configuredDatabase) -ForegroundColor Green
 }
 finally {
-    Remove-Item Env:PASTEL_TEST_CONNECTION_STRING -ErrorAction SilentlyContinue
+    if ($hadPreviousTestConnectionString) {
+        $env:PASTEL_TEST_CONNECTION_STRING = $previousTestConnectionString
+    } else {
+        Remove-Item Env:PASTEL_TEST_CONNECTION_STRING -ErrorAction SilentlyContinue
+    }
+    if ($hadPreviousDefaultConnectionString) {
+        $env:ConnectionStrings__Default = $previousDefaultConnectionString
+    } else {
+        Remove-Item Env:ConnectionStrings__Default -ErrorAction SilentlyContinue
+    }
     $dbPassword = $null
     if ($null -ne $connectionBuilder) {
         $connectionBuilder.Clear()
