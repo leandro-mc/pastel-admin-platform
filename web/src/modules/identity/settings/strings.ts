@@ -6,7 +6,7 @@ export const settingsStrings = {
   tabs: {
     users: "Usuarios",
     roles: "Roles",
-    modules: "Módulos",
+    modules: "Aplicaciones",
     audit: "Auditoría",
   },
   common: {
@@ -111,9 +111,9 @@ export const settingsStrings = {
     created: "Rol creado.",
   },
   modules: {
-    title: "Módulos",
+    title: "Aplicaciones",
     subtitle:
-      "Los módulos se declaran en el código; aquí solo se activan o desactivan.",
+      "Revise y administre la disponibilidad global de las aplicaciones declaradas en Pastel.",
     enabled: "Activo",
     disabled: "Desactivado",
     toggleOn: (name: string) => `Activar ${name}`,
@@ -129,8 +129,8 @@ export const settingsStrings = {
     subtitle: "Eventos administrativos más recientes. Solo lectura.",
     action: "Evento",
     actionSearch: "Filtrar por evento",
-    module: "Módulo",
-    allModules: "Todos",
+    module: "Aplicación",
+    allModules: "Todas",
     actor: "Actor (correo)",
     from: "Desde",
     to: "Hasta",
