@@ -8,7 +8,7 @@ const link =
   "group flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-xs font-medium text-muted outline-none transition-colors hover:bg-accent-soft/70 hover:text-fg focus-visible:ring-3 focus-visible:ring-accent-strong/45 aria-[current=page]:bg-accent-soft aria-[current=page]:font-semibold aria-[current=page]:text-accent-strong md:min-h-11 md:flex-none md:flex-row md:justify-start md:gap-3 md:px-3 md:text-sm md:shadow-none aria-[current=page]:md:shadow-sm";
 
 const navigationPanel =
-  "fixed inset-x-0 bottom-0 z-30 flex min-h-0 flex-col gap-3 border-t border-line bg-surface px-2 py-2 shadow-[0_-8px_30px_rgba(0,0,0,0.035)] md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-64 md:shrink-0 md:gap-5 md:overflow-y-auto md:border-r md:border-t-0 md:px-4 md:py-5 md:shadow-none";
+  "fixed inset-x-0 bottom-0 z-30 flex min-h-0 flex-col gap-3 border-t border-line bg-surface px-2 py-2 shadow-[var(--shadow-soft)] md:sticky md:top-16 md:h-[calc(100vh-4rem)] md:w-64 md:shrink-0 md:gap-5 md:overflow-y-auto md:border-r md:border-t-0 md:px-4 md:py-5 md:shadow-none";
 
 const ContextIcon = ({ manifest }: { manifest: ModuleManifest }) => {
   const Icon = manifest.icon;
