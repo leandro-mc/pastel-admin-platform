@@ -43,3 +43,34 @@ export function useAccessibleModules(): readonly ModuleManifest[] {
   const access = { isAuthenticated: status === "authenticated", hasPermission };
   return allModules.filter((m) => canAccess(m, access));
 }
+
+
+const LAST_APP_KEY = "pastel-last-app";
+
+/**
+ * Guarda únicamente la raíz de una aplicación de producto que existe en este paquete.
+ * No guarda rutas de Workspace, cuenta, login ni rutas arbitrarias procedentes de la URL.
+ */
+export function rememberCurrentApp(pathname: string): void {
+  const active = productModules.find(
+    (module) =>
+      pathname === module.basePath || pathname.startsWith(module.basePath + "/"),
+  );
+  if (!active) return;
+
+  try {
+    window.localStorage.setItem(LAST_APP_KEY, active.basePath);
+  } catch {
+    // Las preferencias no sensibles pueden no estar disponibles en navegación privada.
+  }
+}
+
+/** Raíz de la última aplicación real usada; nunca se devuelve un valor arbitrario de localStorage. */
+export function getRememberedAppPath(): string | null {
+  try {
+    const saved = window.localStorage.getItem(LAST_APP_KEY);
+    return productModules.find((module) => module.basePath === saved)?.basePath ?? null;
+  } catch {
+    return null;
+  }
+}
