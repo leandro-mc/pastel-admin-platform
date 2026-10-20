@@ -58,7 +58,7 @@ export function Component() {
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-5 px-4 py-8 sm:px-6">
       <BackLink />
       <QueryState isPending={isPending} error={error} onRetry={retry}>
         {user.data && roles.data && catalog.data ? (
@@ -144,25 +144,49 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold text-fg">
-          {t.userTitle(user.displayName)}
-        </h1>
-        <p className="text-sm text-muted">
-          {user.email} · {user.isActive ? t.accountActive : t.accountBlocked} ·{" "}
-          {t.summaryUser(roleIds.length, administrator ? 0 : changes.length)}
-        </p>
+      <header className="flex flex-wrap items-start justify-between gap-4">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">
+            Centro de control / Usuarios
+          </p>
+          <h1 className="break-words text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+            {t.userTitle(user.displayName)}
+          </h1>
+          <p className="mt-1 break-all text-sm text-muted">{user.email}</p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <span className={user.isActive ? "rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-strong" : "rounded-full bg-danger-soft px-3 py-1 text-xs font-semibold text-danger"}>
+              {user.isActive ? t.accountActive : t.accountBlocked}
+            </span>
+            {user.roles.map((role) => (
+              <span key={role} className="rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted">
+                {role}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="grid min-w-40 grid-cols-2 gap-2">
+          <div className="rounded-2xl border border-line bg-surface p-3 shadow-sm">
+            <span className="block text-xs font-semibold text-muted">Roles</span>
+            <strong className="mt-1 block text-2xl font-bold text-fg">{roleIds.length}</strong>
+          </div>
+          <div className="rounded-2xl border border-line bg-surface p-3 shadow-sm">
+            <span className="block text-xs font-semibold text-muted">Excepciones</span>
+            <strong className="mt-1 block text-2xl font-bold text-fg">{administrator ? 0 : changes.length}</strong>
+          </div>
+        </div>
       </header>
 
-      <section aria-labelledby="roles-heading" className={`${panel} p-4`}>
-        <h2 id="roles-heading" className="text-lg font-semibold text-fg">
-          {t.rolesSection}
-        </h2>
-        <p className="pb-2 text-sm text-muted">{t.rolesHint}</p>
-        <ul>
+      <section aria-labelledby="roles-heading" className={`${panel} overflow-hidden shadow-sm`}>
+        <header className="border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
+          <h2 id="roles-heading" className="font-semibold text-fg">
+            {t.rolesSection}
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">{t.rolesHint}</p>
+        </header>
+        <ul className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           {roles.map((role) => (
             <li key={role.id}>
-              <label className="flex min-h-11 items-start gap-3 py-2 text-sm text-fg">
+              <label className="flex h-full min-h-20 cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface p-4 text-sm text-fg transition-colors hover:border-accent/50 hover:bg-surface-raised has-[:checked]:border-accent-strong has-[:checked]:bg-accent-soft/60">
                 <input
                   type="checkbox"
                   className="mt-0.5 size-5 shrink-0 accent-accent-strong"
@@ -170,11 +194,12 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
                   disabled={save.isPending}
                   onChange={() => toggleRole(role.id)}
                 />
-                <span>
-                  <span className="font-medium">{role.name}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block font-semibold text-fg">{role.name}</span>
                   {role.description ? (
-                    <span className="block text-muted">{role.description}</span>
+                    <span className="mt-1 block leading-relaxed text-muted">{role.description}</span>
                   ) : null}
+                  {role.isSystemRole ? <span className="mt-2 inline-flex rounded-full border border-line px-2 py-0.5 text-xs font-medium text-muted">Rol de sistema</span> : null}
                 </span>
               </label>
             </li>
@@ -182,10 +207,14 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
         </ul>
       </section>
 
-      <section aria-labelledby="overrides-heading" className={`${panel} p-4`}>
-        <h2 id="overrides-heading" className="text-lg font-semibold text-fg">
-          {t.overridesSection}
-        </h2>
+      <section aria-labelledby="overrides-heading" className={`${panel} overflow-hidden shadow-sm`}>
+        <header className="border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
+          <h2 id="overrides-heading" className="font-semibold text-fg">
+            {t.overridesSection}
+          </h2>
+          <p className="mt-1 text-sm leading-relaxed text-muted">Ajustes que afectan únicamente a esta cuenta, sin modificar los permisos de sus roles.</p>
+        </header>
+        <div className="flex flex-col gap-4 p-4 sm:p-5">
         {administrator ? (
           <p role="status" className="text-sm text-muted">
             {t.overridesAdmin}
@@ -207,10 +236,13 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
             />
           </>
         )}
+        </div>
       </section>
 
       <FormAlert error={error} />
-      <div className="flex flex-wrap gap-3">
+      <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-4">
+        <p className="text-sm text-muted">Los cambios se aplican cuando guarda los accesos.</p>
+        <div className="flex flex-wrap gap-3">
         <button
           type="button"
           className={primaryButton}
@@ -222,7 +254,8 @@ function UserAccessForm({ user, roles, catalog, initialOverrides }: FormProps) {
         <Link to={settingsPaths.users} className={secondaryButton}>
           {t.cancel}
         </Link>
-      </div>
+        </div>
+      </footer>
     </div>
   );
 }
