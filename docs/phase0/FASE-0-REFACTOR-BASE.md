@@ -227,7 +227,7 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 
 1. **Sembrador `Testing`:** usuarios de prueba por rol con inicio local, solo en `Development`/`Testing`; **se niega a ejecutarse en `Production`** (Build escribe la prueba).
 2. **Datos para pruebas:** en `docs/phase0/PROGRESS.md`, sección «Datos para pruebas»: cuentas de prueba (nombres y claves **de prueba**), comandos de arranque y qué implementaste, para que QA amplíe `docs/testing/plans/FASE-0-TEST-PLAN.md`. No edites ni debilites los casos obligatorios.
-3. **Documentos:** `README.md` (arranque, estructura, comandos, cómo probar Google), `docs/SECURITY.md` (OAuth, vinculación, jerarquía de privilegios, *break-glass*, límites), `docs/AI_WORKFLOW.md` (protocolo en paralelo, Dev/Build/QA, CCR, `PROGRESS.md`), `docs/SPLIT_GUIDE.md` (desplegar un solo módulo), ADR 0001–0008 (`docs/adr/`: monolito modular, stack/router, Google OAuth, esquemas y migraciones, paleta, compilación por subconjunto, Tailwind, errores y logs).
+3. **Documentos:** `README.md` (arranque, estructura, comandos, cómo probar Google), `docs/SECURITY.md` (OAuth, vinculación, jerarquía de privilegios, *break-glass*, límites), `docs/AI_WORKFLOW.md` (protocolo en paralelo, Dev/Build/QA, CCR, `PROGRESS.md`), `docs/SPLIT_GUIDE.md` (desplegar un solo módulo), ADR 0001–0009 (`docs/adr/`: monolito modular, stack/router, Google OAuth, esquemas y migraciones, paleta, compilación por subconjunto, Tailwind, errores y logs).
 4. `MODULE.md` backend y frontend de cada módulo (≤ 120 líneas, estado "marcador").
 5. Elimina referencias obsoletas (`Pastel.Api`, `Pastel.Application`, paleta Brisa, `screen`, `npm install`).
 

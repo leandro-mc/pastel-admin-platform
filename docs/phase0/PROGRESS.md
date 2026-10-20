@@ -44,7 +44,7 @@ Archivos clave del checkpoint: `web/src/modules/identity/pages/LoginPage.tsx`, `
 | WP7 — Cimientos de frontend/sesión/errores/shell | **Recuperación visual amplia y contratos de destino tras login actualizados; sin validar el HEAD actual.** Workspace y roles usan permiso global explícito. | Build/QA en navegador y pruebas; resolver regresiones de shell/rutas/retorno, asegurar que el selector refleje acceso real y no un catálogo simulado. |
 | WP8 — Recuperación visual + sistema de diseño Tailwind | **Implementación visual amplia publicada, enfoque Tailwind híbrido; sin compilar desde estos cambios.** | Build/QA sobre el HEAD actual; Prettier, ESLint, TypeScript/Vite, pruebas, `check-design`, `tailwind-audit`; capturas antes/después en ambas apariencias, escritorio/móvil; corregir regresiones y solicitar aprobación visual del propietario. |
 | WP9 — Infraestructura/CI/repositorio | **Implementación amplia; dependencias y Build pendientes** | Infraestructura/CI/manual, matriz por subapp y CodeQL están definidos. Falta validar jobs, proyecto de pruebas de arquitectura, y aprobar/instalar herramientas de accesibilidad en [CCR-006](../requests/CCR-006-frontend-accessibility-and-test-tooling.md). |
-| WP10 — Testabilidad/documentación/datos | **Parcial — documentación en esta tanda** | Guía de subset builds, ADR 0001–0009 y datos para Build; faltan sembrador de Testing ([CCR-005](../requests/CCR-005-testing-only-seeder.md)), herramientas/pruebas frontend ([CCR-006](../requests/CCR-006-frontend-accessibility-and-test-tooling.md)) y validación Build/QA. |
+| WP10 — Testabilidad/documentación/datos | **Parcial — documentación en esta tanda** | Guía de subset builds, ADR 0001–0009 y datos para Build; faltan sembrador de Testing ([CCR-005](../requests/CCR-005-testing-only-seeder.md)), herramientas/pruebas frontend ([CCR-006](../requests/CCR-006-frontend-accessibility-and-test-tooling.md)), fichas Identity ([CCR-007](../requests/CCR-007-identity-module-documentation.md)) y validación Build/QA. |
 
 ## WP2 — Resultado conocido y limitaciones
 
@@ -467,3 +467,9 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Estado de validación:** el script es código nuevo y **no se ha ejecutado**. Build debe probarlo sobre el HEAD; si revela violaciones reales, corregirlas por lote antes de despachar CI.
 
 - **Corrección del smoke de CI:** se eliminó la excepción que configuraba `NGINX_TRUSTED_PROXY_CIDR=172.30.0.0/24` solo para el job de contenedor. El smoke usa ahora el default seguro `192.0.2.0/24`, igual que el entorno local, para no confiar en un `X-Forwarded-For` falsificado desde la conexión cliente. La política sigue sin despacho automático y no se ejecutó.
+
+## WP10 — Inventario de documentación Identity pendiente (2026-10-20)
+
+- En el árbol publicado se comprobó que faltan `src/Modules/Identity/MODULE.md`, `web/src/modules/identity/MODULE.md` y `docs/modules/IDENTITY.md`. No se crearon porque Identity y sus documentos de contrato están dentro de áreas protegidas por `AGENTS.md`.
+- La [CCR-007](../requests/CCR-007-identity-module-documentation.md) detalla el contenido solicitado para cada ficha. Queda pendiente de autorización específica del propietario antes de escribir en esas rutas.
+- El documento de pruebas `docs/testing/plans/FASE-0-TEST-PLAN.md`, caso F0-I07, todavía describe triggers push/PR que no coinciden con CI manual. No lo edité porque corresponde a QA; el propietario del plan debe actualizar la descripción operativa sin quitar los controles exigidos.
