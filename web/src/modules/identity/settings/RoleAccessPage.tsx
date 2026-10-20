@@ -69,8 +69,8 @@ function RoleAccessForm({
     role.permissionIds,
   );
   const [error, setError] = useState<ShownError | null>(null);
-  // Administrator es del sistema: conserva todos los permisos y la API no lo deja modificar.
-  const locked = role.name === "Administrator";
+  // Los roles de sistema (Administrator y Owner/Superuser) son inmutables.
+  const locked = role.isSystemRole;
 
   const onSave = async () => {
     setError(null);
@@ -119,7 +119,7 @@ function RoleAccessForm({
         <div className="flex flex-col gap-4 p-4 sm:p-5">
           {locked ? (
             <p role="status" className="rounded-xl border border-line bg-accent-soft px-4 py-3 text-sm leading-relaxed text-fg">
-              {t.roleSystemHint}
+              {role.name === "Owner/Superuser" ? "Owner/Superuser es un rol reservado: sus privilegios se sincronizan desde código y no se pueden modificar." : t.roleSystemHint}
             </p>
           ) : null}
           <PermissionPicker
