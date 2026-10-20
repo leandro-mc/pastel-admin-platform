@@ -178,7 +178,7 @@ Estas decisiones sustituyen las preguntas provisionales anteriores. Aplicarlas e
 
 Cerrado: separación Owner/Administrator general; Huella solo del propietario; returnUrl válido prioritario y última app posterior; enlace Huella aleatorio, revocable/regenerable, solo por enlace y excluido de indexación.
 
-Pendiente de implementación funcional: entidades/tablas/API de Huella, emisión segura y almacenamiento hash del token, regeneración/revocación, página pública por token y respuesta con noindex; selección y membresías persistentes por app; preferencia de última app sincronizada entre dispositivos (no requerida por decisión actual). Todo ello requiere Build/QA y pruebas de seguridad antes de considerarse terminado.
+Pendiente de implementación funcional: entidades/tablas/API de Huella, emisión segura y almacenamiento hash del token, regeneración/revocación, página pública por token y respuesta con noindex; selección y membresías persistentes por app; endpoints y UI de configuración de cada app (incluida la concesión de Cosecha por Owner); preferencia de última app sincronizada entre dispositivos (no requerida por decisión actual). Hasta que existan dichos endpoints, Workspace rechaza gestionar permisos funcionales de apps. La sincronización del catálogo puede retirar overrides de app concedidos por cuentas que no son Owner; los concedidos por Owner se conservan temporalmente para no perder configuración autorizada. **La tabla de membresías `UserRoles` no guarda quién asignó cada rol**, por lo que no se puede certificar autoría de las membresías históricas de Cosecha; requieren revisión/auditoría antes de una migración destructiva. Todo ello requiere Build/QA y pruebas de seguridad antes de considerarse terminado.
 
 ## 11. Orden de implementación
 
