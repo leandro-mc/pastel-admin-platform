@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from "react-router";
 import { RouterProvider } from "react-aria-components";
 import { strings } from "../strings";
 import { routes } from "../routes";
+import { rememberCurrentApp } from "../modules";
 import AppFooter from "./AppFooter";
 import TopBar from "../shell/TopBar";
 
@@ -30,6 +31,9 @@ export default function RootLayout() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const isStandaloneAuth = pathname === routes.login;
+  useEffect(() => {
+    rememberCurrentApp(pathname);
+  }, [pathname]);
   return (
     <RouterProvider navigate={(to, options) => void navigate(to, options)}>
       <div className="flex min-h-screen flex-col">
