@@ -43,10 +43,15 @@ internal sealed class CreateUserHandler(IdentityDbContext db, IPasswordHasher<Ap
         }
 
         var roleIds = (request.RoleIds ?? []).Distinct().ToArray();
-        var roles = await db.Roles.Where(x => roleIds.Contains(x.Id)).ToListAsync(cancellationToken);
+        var roles = await db.Roles.Include(x => x.RolePermissions).ThenInclude(x => x.Permission)
+            .Where(x => roleIds.Contains(x.Id)).ToListAsync(cancellationToken);
         if (roles.Count != roleIds.Length)
         {
             return IdentityErrors.UnknownRoles;
+        }
+        if (roles.Any(role => !PlatformRoleScope.IsPlatformRole(role)))
+        {
+            return IdentityErrors.PrivilegeAppScopeRequired;
         }
 
         var user = new AppUser { Email = request.Email!.Trim(), NormalizedEmail = email, DisplayName = displayName, MustChangePassword = true };
