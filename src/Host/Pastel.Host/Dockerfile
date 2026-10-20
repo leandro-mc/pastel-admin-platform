@@ -1,13 +1,18 @@
 # Contexto de compilación: la raíz del repositorio.
-# PASTEL_MODULES: subconjunto de módulos a incluir ("*" = todos; Identity siempre). Ver docs/SPLIT_GUIDE.md.
+# PASTEL_MODULES usa códigos de aplicación en minúsculas (p. ej. brisa,balance).
+# Se convierten a nombres de carpeta PascalCase para MSBuild; Identity siempre se incluye.
 FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
 ARG PASTEL_MODULES=*
 WORKDIR /src
 COPY Directory.Build.props Directory.Packages.props global.json Pastel.slnx ./
 COPY src/ src/
-RUN dotnet restore src/Host/Pastel.Host/Pastel.Host.csproj "-p:PastelModules=${PASTEL_MODULES}"
-RUN dotnet publish src/Host/Pastel.Host/Pastel.Host.csproj --configuration Release --no-restore --output /app/publish \
-    /p:UseAppHost=false "-p:PastelModules=${PASTEL_MODULES}"
+RUN set -eu; \
+    modules="$PASTEL_MODULES"; \
+    if [ "$modules" != "*" ]; then \
+      modules="$(printf '%s' "$modules" | awk -F',' '{ for (i = 1; i <= NF; i++) { gsub(/^[[:space:]]+|[[:space:]]+$/, "", $i); $i = toupper(substr($i, 1, 1)) substr($i, 2) } print }')"; \
+    fi; \
+    dotnet restore src/Host/Pastel.Host/Pastel.Host.csproj "-p:PastelModules=$modules" && \
+    dotnet publish src/Host/Pastel.Host/Pastel.Host.csproj --configuration Release --no-restore --output /app/publish /p:UseAppHost=false "-p:PastelModules=$modules"
 
 FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
 # curl se usa exclusivamente para consultar /health/ready en el healthcheck de Compose.

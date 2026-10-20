@@ -417,3 +417,9 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [ ] **Guardarraíles restantes de WP9:** las pruebas de arquitectura, aislamiento automatizado por módulo y CodeQL opcional requieren implementación/validación adicional. No hay evidencia de que estén integrados al workflow actual.
 - **Validación de este lote:** lectura y edición estática de archivos fuente; **sin ejecutar** Docker, `docker compose config`, Nginx, `npm ci`, .NET, pruebas ni CI. Las nuevas comprobaciones de salud necesitan validarse sobre imagen construida.
 - **Siguiente paso:** concluir WP10 documental/ADRs, registrar la brecha del sembrador de Testing por su zona protegida, y entregar a Build para los comandos y pruebas de integración pendientes.
+
+## WP9 — Normalización del subconjunto de módulos en Docker (revisión estática, 2026-10-20)
+
+- Se detectó una discrepancia entre el contrato documentado en `.env.example` (códigos en minúsculas, como `brisa,balance`) y `Pastel.Host.csproj` (nombres de carpetas en PascalCase). El frontend debe conservar los códigos minúsculos, pero MSBuild espera nombres `Brisa,Balance`.
+- `src/Host/Pastel.Host/Dockerfile` normaliza únicamente el argumento usado en restore/publish de .NET (capitaliza la primera letra de cada código), mientras el frontend mantiene `PASTEL_MODULES` original. El valor `*` conserva el comportamiento anterior.
+- La revisión es estática; **sin ejecutar** una compilación de todos los módulos ni subconjuntos. Build debe probar `*` y al menos un subconjunto con Docker/Linux antes de considerar confirmado el comportamiento.
