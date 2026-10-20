@@ -4,12 +4,13 @@ import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { useAuth, useAuthOptions } from "@/core/auth";
 import { usePreferences } from "@/core/preferences";
 import { routes } from "@/core/routes";
+import { getRememberedAppPath } from "@/app/modules";
 import { FormAlert } from "../components/FormAlert";
 import { GoogleButton } from "../components/GoogleButton";
 import { PasswordLoginForm } from "../components/PasswordLoginForm";
 import { RegisterForm } from "../components/RegisterForm";
 import { describeError } from "../errors";
-import { safeReturnUrl } from "../returnUrl";
+import { isSafeReturnUrl, safeReturnUrl } from "../returnUrl";
 import { googleErrorMessage, identityStrings } from "../strings";
 import { card, errorAlert, linkButton, secondaryButton } from "../styles";
 
@@ -28,7 +29,10 @@ export function Component() {
   const auth = useAuth();
   const options = useAuthOptions();
   const { theme, toggleTheme } = usePreferences();
-  const returnUrl = safeReturnUrl(params.get("returnUrl"));
+  const requestedReturnUrl = params.get("returnUrl");
+  const returnUrl = isSafeReturnUrl(requestedReturnUrl)
+    ? safeReturnUrl(requestedReturnUrl)
+    : getRememberedAppPath() ?? routes.home;
   const googleError = googleErrorMessage(params.get("error"));
   const registering = params.get("modo") === "registro";
   const [showPassword, setShowPassword] = useState(false);
