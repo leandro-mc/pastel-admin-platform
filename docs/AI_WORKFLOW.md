@@ -39,7 +39,7 @@ No cambies de rama si hay cambios locales sin guardar o sin permiso del usuario.
 
 Antes de crear o modificar cualquier pantalla, componente compartido, CSS, tema, navegación o manifiesto de aplicación, cada agente debe leer:
 
-- `docs/product/PASTEL-PRODUCT-AND-UX.md`: visión de producto, modelo multiapp, acceso/disponibilidad y decisiones abiertas.
+- `docs/product/PASTEL-PRODUCT-AND-UX.md`: visión de producto, modelo multiapp, decisiones confirmadas y pendientes.
 - `docs/DESIGN_SYSTEM.md`: lenguaje visual, accesibilidad, tokens y reglas de implementación.
 - La sección WP8 de `docs/phase0/FASE-0-REFACTOR-BASE.md` y `docs/phase0/PROGRESS.md`.
 - La CCR aprobada aplicable, incluida `docs/requests/CCR-003-ux-recovery-and-app-model.md`.
@@ -57,6 +57,11 @@ Antes de crear o modificar cualquier pantalla, componente compartido, CSS, tema,
 8. **Accesibilidad forma parte del diseño.** Validar teclado, foco, labels, errores, contraste claro/oscuro, zoom, tamaños táctiles, lectores de pantalla y responsive; no aprobar por apariencia de escritorio únicamente.
 9. **Capturas obligatorias antes de cerrar UI.** Guardar/revisar, como mínimo, acceso/registro, home de Workspace, home de Ágora, directorio de usuarios, lista de roles, editor de permisos y cuenta; en tema claro y oscuro, escritorio y móvil. Comparar visualmente con la referencia; explicar diferencias intencionales.
 10. **Reportar honestamente el SHA validado.** Si el agente no dispone de navegador o entorno ejecutable, registrar «sin compilar/sin validación visual» en `PROGRESS.md` y el relevo. No afirmar que un lote pasa pruebas hasta ejecutar Build/QA sobre el SHA actual. Antes de declarar Fase 0 terminada, se necesita aceptación visual del propietario.
+11. **Separar Owner/Superuser de Administrator general.** Son roles de sistema distintos, inmutables mediante las APIs ordinarias. La cuenta de arranque configurada recibe ambos; solo el bootstrap establece/restaura Owner. Workspace exige el permiso explícito `platform.workspace.access`, otorgado únicamente a los roles del sistema.
+12. **Limitar Workspace a la plataforma.** El Administrador general conserva `dashboard.view` y `settings.*`, pero no recibe automáticamente permisos de negocio de las apps. Desde Workspace solo se editan roles/overrides de plataforma; nunca borrar por accidente membresías existentes de una app al guardar accesos globales. Los permisos funcionales y su configuración pertenecen al ámbito de la app, y el backend valida todos los cambios; ocultar controles no basta.
+13. **Privilegios reservados no asignables.** Ningún rol personalizado ni excepción directa puede obtener `platform.owner`, `platform.workspace.access` ni `huella.*`. Solo Owner concede acceso a Cosecha. El frontend no debe presentar Owner como rol asignable en creación de usuarios ni ofrecer roles de app en la administración de roles de Workspace.
+14. **Huella solo pertenece al Owner/Superuser.** No crear un rol de usuario regular para Huella, ni directorio/buscador/autoactivación. El contrato público usa un token opaco, generado criptográficamente (mínimo 32 bytes aleatorios, Base64URL), cuyo hash es lo único que se almacena. La regeneración invalida inmediatamente el enlace anterior. Solo el snapshot publicado se puede servir en público; ningún borrador o dato privado se expone. Se requieren meta robots y cabecera `X-Robots-Tag: noindex,nofollow,noarchive`; el token nunca se añade a logs ni telemetría. Huella aún es un esqueleto: documentar el pendiente sin fingir que el enlace ya funciona.
+15. **Regreso tras login.** `returnUrl` interno validado tiene prioridad; sin él, primer inicio va a Ágora y los siguientes a la última app de producto usada. El estado guardado en navegador no se presenta como una preferencia sincronizada entre dispositivos. Las guardas de ruta y el backend siguen siendo autoridad.
 
 ## 2. Convención de nombres
 
