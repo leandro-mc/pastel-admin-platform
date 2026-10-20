@@ -115,7 +115,7 @@ function RoleAccessForm({
             Permisos
           </span>
           <strong className="mt-1 block text-2xl font-bold tracking-tight text-fg">
-            {locked ? catalog.length : permissionIds.length}
+            {permissionIds.length}
             <span className="text-sm font-medium text-muted"> / {catalog.length}</span>
           </strong>
           <span className="text-xs text-muted">seleccionados</span>
@@ -137,7 +137,7 @@ function RoleAccessForm({
           ) : null}
           <PermissionPicker
             catalog={catalog}
-            selected={new Set(locked ? catalog.map((permission) => permission.id) : permissionIds)}
+            selected={new Set(permissionIds)}
             onChange={setPermissionIds}
             disabled={locked || save.isPending}
           />
