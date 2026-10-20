@@ -62,7 +62,6 @@ jobs:
       # Disposable placeholders used only for Compose interpolation during image builds.
       POSTGRES_PASSWORD: ci-only-Postgres-Password-2026!
       POSTGRES_HOST: db
-      NGINX_TRUSTED_PROXY_CIDR: 172.30.0.0/24
       JWT_SIGNING_KEY: ci-only-not-a-real-signing-key-keep-over-32-bytes-2026
       BOOTSTRAP_ADMIN_PASSWORD: ci-only-Bootstrap-Password-2026!
     steps:

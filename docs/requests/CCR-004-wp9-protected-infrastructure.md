@@ -12,7 +12,7 @@
 - Separar PostgreSQL del stack principal y dejarlo como servicio de desarrollo en el override, de acuerdo con WP9. La configuración base deberá conectarse a una base externa sin exponer credenciales.
 - Añadir healthchecks reales para API (`/health/ready`) y web (`/health/web`) y dependencias con `service_healthy` cuando exista una dependencia de arranque.
 - Aplicar `cap_drop: [ALL]`, límites de recursos razonables y rotación de logs (`json-file`, `max-size`, `max-file`) a los servicios compatibles; validar que PostgreSQL conserva el funcionamiento normal en el entorno local.
-- Retirar IP estáticas y usar DNS de servicios de Compose. Mantener la validación del proxy confiable por CIDR configurable, no por una IP de contenedor fija.
+- Retirar IP estáticas y usar DNS de servicios de Compose. Mantener la validación del proxy confiable por CIDR configurable, no por una IP de contenedor fija. El valor predeterminado de Nginx usa `192.0.2.0/24` (rango reservado) para no confiar en `X-Forwarded-For` hasta que se configure la dirección/CIDR real del proxy frontal.
 - No alterar las variables de secretos ni publicar valores reales.
 
 ### 2. Nginx — plantilla `deploy/nginx/default.conf.template` y snippet de cabeceras (implementado; sin validar)

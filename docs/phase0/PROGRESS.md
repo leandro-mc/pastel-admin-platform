@@ -465,3 +465,5 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 
 - **Auditoría de fronteras:** se añadió `scripts/check-module-boundaries.mjs`, sin dependencias, para detectar imports alias/relativos entre subapps, imports directos de subapps desde `core`/shell, referencias de implementación .NET entre módulos y ausencia del contrato de descubrimiento `IPastelModule`/`PastelModuleAttribute`. `scripts/test-frontend.ps1` ejecuta la auditoría sobre la copia temporal de CI.
 - **Estado de validación:** el script es código nuevo y **no se ha ejecutado**. Build debe probarlo sobre el HEAD; si revela violaciones reales, corregirlas por lote antes de despachar CI.
+
+- **Corrección del smoke de CI:** se eliminó la excepción que configuraba `NGINX_TRUSTED_PROXY_CIDR=172.30.0.0/24` solo para el job de contenedor. El smoke usa ahora el default seguro `192.0.2.0/24`, igual que el entorno local, para no confiar en un `X-Forwarded-For` falsificado desde la conexión cliente. La política sigue sin despacho automático y no se ejecutó.
