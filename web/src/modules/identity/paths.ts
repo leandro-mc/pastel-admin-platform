@@ -26,4 +26,6 @@ export const identityPermissions = {
   modulesRead: "settings.modules.read",
   modulesManage: "settings.modules.manage",
   auditRead: "settings.audit.read",
+  workspaceAccess: "platform.workspace.access",
+  ownerPrivilege: "platform.owner",
 } as const;
