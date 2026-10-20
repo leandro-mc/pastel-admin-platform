@@ -35,7 +35,6 @@ export default function ModuleSwitcher() {
       <Button
         className={`${barButton} min-w-0 border border-line bg-app`}
         aria-label={`Cambiar aplicación; actual: ${currentName}`}
-        title="Cambiar aplicación"
       >
         {current ? (
           <current.icon aria-hidden="true" className="size-4 shrink-0 text-accent" />

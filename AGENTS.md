@@ -15,10 +15,20 @@ Detalle: `docs/TESTING_STRATEGY.md`.
 El tipo de agente debe indicarse al asignar **cada tarea** y es independiente del rol funcional (Dev, Build, QA, Investigación o Mantenimiento).
 
 - **Tipo 1 — checkpoint frecuente:** publicar commit + push con progreso coherente **al menos cada 3 minutos**, incluyendo la actualización correspondiente de `PROGRESS.md`. No esperar a completar una WP o subobjetivo.
-- **Tipo 2 — checkpoint por unidad de trabajo:** no tiene un límite fijo de 3 minutos. Conviene publicar commits periódicos, pero agrupar cambios relacionados en una unidad coherente y revisable; evitar commits mínimos por cada ajuste. Actualizar `PROGRESS.md` en el mismo commit cuando registre ese avance y publicar antes de cambiar de tarea/contexto o ante riesgo de interrupción.
+- **Tipo 2 — checkpoint por unidad de trabajo:** no tiene un límite fijo de tiempo. **Agrupar por defecto todos los cambios relacionados de una unidad lógica en un único commit** (código, configuración, documentación y progreso que correspondan). No crear commits por archivo, por cada arreglo pequeño ni como mecanismo de actualización durante la implementación. Solo crear un segundo commit si empieza una unidad funcional distinta, una corrección post-validación claramente separada o si el propietario lo solicita.
 - **Tipo no indicado:** preguntar al orquestador/propietario y no continuar con cambios de implementación hasta recibir la clasificación. No inferir el tipo por el rol ni por la tarea.
 
 La clasificación controla la **frecuencia** de guardado, no la obligación de trabajar con seguridad, revisar el diff, mantener la documentación, evitar secretos ni informar con honestidad qué se validó.
+
+## Reglas duras de desarrollo, commits y CI
+
+1. **Una unidad de trabajo, un commit.** Un agente Tipo 2 trabaja en una tanda coherente; revisa todas las modificaciones y registra el progreso una sola vez, en el mismo commit. No hagas commits de prueba para inspeccionar resultados.
+2. **No uses la API de Contents para guardar archivos relacionados uno por uno.** Las llamadas `create_file`, `update_file` y `delete_file` crean cada una un commit independiente y pueden disparar automatizaciones. Para un lote utiliza blobs + un árbol Git + un commit + un único movimiento de referencia. Si no puedes agrupar, no publiques el lote parcialmente.
+3. **CI nunca se usa como bucle interactivo de depuración.** El workflow `.github/workflows/ci.yml` es manual y requiere `confirm_validation=true`. No lo ejecutes durante desarrollo, no lo despaches por cada corrección y no alteres los checks para simular una aprobación.
+4. **Antes de validar en CI:** termina la unidad de trabajo, inspecciona el diff completo, ejecuta localmente todas las comprobaciones posibles (format, lint, build, pruebas y auditorías) y corrige todos los fallos conocidos en una sola tanda. Solo después, y con autorización explícita del propietario, se hace un despacho manual integral.
+5. **Si el entorno no permite validar:** dilo expresamente en `PROGRESS.md` y en la entrega; no dispares CI para sustituir un entorno local ausente. El estado es "sin validar" hasta la etapa Build/QA acordada.
+6. **Después de un CI fallido:** lee los logs de todos los jobs que fallaron, agrupa causas relacionadas, realiza las correcciones en un solo lote y no reintentes hasta tener comprobaciones locales y autorización explícita. Cancelar un run anterior, si la herramienta disponible lo permite, no sustituye estas reglas.
+7. **Historial compartido:** no reescribas, fuerces ni hagas squash del historial existente de la rama sin autorización explícita. La cadencia eficiente se aplica a los próximos lotes; no justifica destruir commits ajenos o checkpoints preexistentes.
 
 ## Ruta de lectura (en orden, y nada más salvo necesidad)
 1. Este archivo. 2. Tu módulo: `src/Modules/<M>/MODULE.md` y `web/src/modules/<m>/MODULE.md`, más `docs/modules/<M>.md`. 3. `docs/ARCHITECTURE.md` §2–5. 4. `docs/DESIGN_SYSTEM.md` si tocas UI. 5. `docs/ERROR_HANDLING_AND_LOGGING.md` siempre que escribas endpoints, pantallas o logs. 6. `docs/SECURITY.md` si tocas acceso, permisos o datos personales. 7. `docs/AI_WORKFLOW.md` (ramas, commits).
