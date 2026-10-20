@@ -17,7 +17,8 @@ internal sealed class ListAuditHandler(IdentityDbContext db)
         }
 
         var page = PageRequest.Normalize(query.Page, query.PageSize);
-        var logs = db.AuditLogs.AsNoTracking().AsQueryable();
+        // Workspace muestra auditoría global de identidad/plataforma, no los eventos internos de cada app.
+        var logs = db.AuditLogs.AsNoTracking().Where(x => x.Module == "identity").AsQueryable();
 
         if (!string.IsNullOrWhiteSpace(query.Action))
         {
