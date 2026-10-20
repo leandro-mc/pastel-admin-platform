@@ -68,6 +68,15 @@ internal static class IdentityErrors
     public static readonly Error PrivilegeAdministratorAccountProtected = Error.Forbidden(
         "identity.privilege.administrator_account_protected", "Solo una persona administradora puede actuar sobre una cuenta de administración.");
 
+    public static readonly Error PrivilegeOwnerAccountProtected = Error.Forbidden(
+        "identity.privilege.owner_account_protected", "La cuenta del propietario está protegida y solo puede administrarla el propio Owner/Superuser.");
+
+    public static readonly Error PrivilegeOwnerRoleProtected = Error.Forbidden(
+        "identity.privilege.owner_role_protected", "El rol Owner/Superuser está reservado a la cuenta de arranque y no se puede asignar ni retirar desde la administración.");
+
+    public static readonly Error PrivilegeOwnerPermissionRequired = Error.Forbidden(
+        "identity.privilege.owner_permission_required", "Solo Owner/Superuser puede conceder privilegios de Workspace, Cosecha o Huella.");
+
     public static readonly Error PrivilegeSelfAction = Error.Forbidden(
         "identity.privilege.self_action_not_allowed", "No puede realizar esta acción sobre su propia cuenta.");
 
@@ -78,7 +87,7 @@ internal static class IdentityErrors
         "identity.privilege.own_role_protected", "No puede modificar un rol que usted mismo tiene.");
 
     public static readonly Error PrivilegeSystemRoleImmutable = Error.Forbidden(
-        "identity.privilege.system_role_immutable", "El rol Administrator es de sistema y no se puede modificar.");
+        "identity.privilege.system_role_immutable", "Los roles de sistema no se pueden modificar.");
 
     // Módulos
     public static readonly Error ModuleNotFound = Error.NotFound("identity.module.not_found", "No se encontró el módulo.");
