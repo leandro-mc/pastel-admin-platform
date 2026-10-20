@@ -145,7 +145,8 @@ dotnet test tests/Pastel.IntegrationTests/Pastel.IntegrationTests.csproj \
   --results-directory /test-results
 '@
 
-$containerScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($containerScript))
+$normalizedContainerScript = [regex]::Replace($containerScript, "`r`n?", "`n")
+$containerScriptBase64 = [Convert]::ToBase64String([System.Text.Encoding]::UTF8.GetBytes($normalizedContainerScript))
 $dockerCommand = ("echo {0} | base64 -d | sh" -f $containerScriptBase64)
 
     Write-Host "Ejecutando las pruebas HTTP + PostgreSQL en un contenedor .NET 10." -ForegroundColor Cyan
