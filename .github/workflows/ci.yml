@@ -70,9 +70,9 @@ jobs:
           docker compose up -d
           for attempt in $(seq 1 40); do
             api_running="$(docker compose ps --status running --services | grep -cx api || true)"
-            modules_created="$(docker compose exec -T db psql -U pastel -d pastel -tAc "SELECT to_regclass('public.\"Modules\"') IS NOT NULL;" 2>/dev/null | tr -d '[:space:]' || true)"
+            modules_created="$(docker compose exec -T db psql -U pastel -d pastel -tAc "SELECT to_regclass('identity.modules') IS NOT NULL;" 2>/dev/null | tr -d '[:space:]' || true)"
             if [ "$api_running" -eq 1 ] && [ "$modules_created" = "t" ] && curl -fsS http://127.0.0.1:8080/health/web >/dev/null; then
-              echo "API is running, EF migrations created Modules, and the web container responds."
+              echo "API is running, identity.modules exists, and the web container responds."
               docker compose down -v
               exit 0
             fi

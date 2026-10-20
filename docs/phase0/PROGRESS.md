@@ -336,5 +336,6 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 
 - **Estado actual: los tres bloques de `test-all.ps1` pasan.** Se corrigieron los spans de formato de `SetUserRolesHandler.cs`; el control `dotnet format --verify-no-changes` quedó limpio.
 - **Migraciones WP5/WP6:** la migración incremental de `ExternalLogin` y las migraciones iniciales de Brisa, Balance, Ágora, Cosecha y Huella compilaron y se aplicaron durante el inicio del host en las pruebas de integración. Las cinco pruebas HTTP + PostgreSQL aprobaron.
-- **Pendiente:** ejecutar el smoke test independiente de `docker compose` para la pila completa. Las pruebas de componentes React y E2E de navegador (Vitest/Testing Library y Playwright) también siguen pendientes; las ocho pruebas actuales cubren reglas estáticas de diseño, no todos los flujos visuales.
+- **Smoke test Docker Compose:** el run de CI `39355182030` construyó ambas imágenes e inició DB/API/web, pero falló el chequeo final porque buscaba `public."Modules"` en vez de `identity.modules`. La CCR-002 documenta la causa y la corrección de la consulta. La confirmación final queda pendiente de que la nueva ejecución de `container-build` termine en verde.
+- **Cobertura pendiente:** todavía faltan pruebas de componentes React (Vitest/Testing Library) y E2E de navegador (Playwright); las ocho pruebas actuales cubren reglas estáticas de diseño, no todos los flujos visuales.
 - **Seguridad de pruebas:** el runner recreó solamente la base `pastel_integration_tests`. No se eliminó la base de desarrollo ni el volumen.
