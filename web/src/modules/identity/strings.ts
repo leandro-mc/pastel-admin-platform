@@ -1,10 +1,10 @@
 /** Textos de Identity (español de Costa Rica, trato de usted, sin voseo). */
 export const identityStrings = {
   module: {
-    name: "Configuración",
-    tagline: "Usuarios, roles, módulos y auditoría",
+    name: "Pastel Workspace",
+    tagline: "Administración global de la plataforma",
     noSections:
-      "Su cuenta no tiene permisos para ver ninguna sección de Configuración. Si lo necesita, solicítelo a administración.",
+      "Su cuenta no tiene permisos para ver ninguna sección de Pastel Workspace. Si lo necesita, solicítelo a administración.",
   },
   validation: {
     emailRequired: "Escriba su correo electrónico.",
