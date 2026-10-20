@@ -74,9 +74,9 @@ export function Component() {
           <h1 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">{t.title}</h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{t.subtitle}</p>
         </div>
-        <span className="inline-flex items-center gap-2 rounded-full border border-line bg-surface px-3 py-1.5 text-xs font-semibold text-muted">
+        <span className={user.isActive ? "inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-strong" : "inline-flex items-center gap-2 rounded-full bg-danger-soft px-3 py-1.5 text-xs font-semibold text-danger"}>
           <ShieldCheck aria-hidden="true" size={15} />
-          Cuenta protegida
+          {user.isActive ? "Cuenta activa" : "Cuenta bloqueada"}
         </span>
       </header>
 
@@ -91,17 +91,6 @@ export function Component() {
             <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-lg font-bold text-accent-strong">
               {initials(user.displayName)}
             </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span
-              aria-hidden="true"
-              className="flex size-16 items-center justify-center rounded-full bg-accent-soft text-xl font-semibold text-accent-strong"
-            >
-              {initials(user.displayName)}
-            </span>
-            <div>
-              <p className="text-sm font-semibold text-accent-strong">{t.active}</p>
-            </div>
           </div>
           <dl className="mt-6 grid gap-4 sm:grid-cols-2">
             <Detail label={t.name}>{user.displayName}</Detail>
