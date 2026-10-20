@@ -159,18 +159,23 @@ internal sealed class PrivilegeGuard(
         IReadOnlyCollection<string> permissionCodes, string action, Guid? targetUserId, CancellationToken cancellationToken)
     {
         // These boundaries apply even to Administrator, whose ordinary administrative permissions are broad.
-        if (permissionCodes.Any(code => code == IdentityPermissions.OwnerPrivilege)
-            && (action == "create_role" || action == "set_role_permissions" || action == "set_permissions"))
+        // Owner and Workspace permissions belong only to the two seeded system roles; they are never
+        // grantable to custom roles or direct user overrides, even by Owner.
+        if (permissionCodes.Any(code =>
+                code == IdentityPermissions.OwnerPrivilege
+                || code == IdentityPermissions.WorkspaceAccess
+                || code.StartsWith("huella.", StringComparison.Ordinal)))
         {
             return await DenyAsync(
                 IdentityErrors.PrivilegeOwnerRoleProtected, action, targetUserId, null,
-                new { permissions = permissionCodes.Where(code => code == IdentityPermissions.OwnerPrivilege).ToArray() }, cancellationToken);
+                new { permissions = permissionCodes.Where(code =>
+                    code == IdentityPermissions.OwnerPrivilege
+                    || code == IdentityPermissions.WorkspaceAccess
+                    || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray() }, cancellationToken);
         }
 
         if (!ActorIsOwner && permissionCodes.Any(code =>
-                code == IdentityPermissions.WorkspaceAccess
-                || code.StartsWith("cosecha.", StringComparison.Ordinal)
-                || code.StartsWith("huella.", StringComparison.Ordinal)))
+                code.StartsWith("cosecha.", StringComparison.Ordinal)))
         {
             return await DenyAsync(
                 IdentityErrors.PrivilegeOwnerPermissionRequired, action, targetUserId, null,
@@ -178,19 +183,6 @@ internal sealed class PrivilegeGuard(
                     code == IdentityPermissions.WorkspaceAccess
                     || code.StartsWith("cosecha.", StringComparison.Ordinal)
                     || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray() }, cancellationToken);
-        }
-
-        if (permissionCodes.Any(code => code.StartsWith("huella.", StringComparison.Ordinal)) && targetUserId is { } targetId)
-        {
-            var targetIsOwner = await db.UserRoles.AnyAsync(
-                x => x.UserId == targetId && x.Role.NormalizedName == AppRole.OwnerName.ToUpperInvariant(),
-                cancellationToken);
-            if (!targetIsOwner)
-            {
-                return await DenyAsync(
-                    IdentityErrors.PrivilegeOwnerPermissionRequired, action, targetUserId, null,
-                    new { reason = "huella_profile_is_owner_only" }, cancellationToken);
-            }
         }
 
         if (ActorIsPrivileged || permissionCodes.Count == 0)
