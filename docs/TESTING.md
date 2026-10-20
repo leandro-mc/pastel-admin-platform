@@ -10,7 +10,7 @@ Ejecute desde la raiz del repositorio con PowerShell y Docker Desktop iniciado:
 - **.\scripts\test-database.ps1** — inicia solo PostgreSQL y ejecuta las pruebas HTTP que necesitan una base real.
 - **.\scripts\test-all.ps1** — ejecuta los tres bloques y presenta un resumen único aunque una de las partes falle.
 
-En la línea base comprobada antes de agregar estos scripts, npm run format:check informó 112 archivos sin formato. Ejecute primero **.\scripts\format-frontend.ps1** para aplicar el formato y después **.\scripts\test-frontend.ps1** para verificarlo. La comprobación no se salta ni acepta esa deuda.
+En una comprobación local preliminar se informaron 112 archivos sin formato. Sin embargo, en la ejecución de CI del commit `d465a347` Prettier pasó y reportó que todos los archivos coinciden con el formato. Si tu copia local aún falla, sincroniza primero la rama; solo si sigue fallando, ejecuta **.\scripts\format-frontend.ps1**, revisa `git diff` y luego vuelve a correr **.\scripts\test-frontend.ps1**. El script de formato modifica el working tree y no crea commits.
 
 Los comandos de validación de .NET y Node se ejecutan en contenedores (mcr.microsoft.com/dotnet/sdk:10.0 y node:24-alpine). En los scripts de prueba, el repositorio se monta en solo lectura y cada contenedor usa una copia temporal, limpia de .env, .git, node_modules, bin y obj. La excepción explícita es format-frontend.ps1: monta el repositorio con escritura para copiar de vuelta únicamente las rutas administradas por Prettier; no copia node_modules ni modifica rutas fuera de ese conjunto. Los resultados TRX se guardan en la carpeta temporal del sistema, fuera del repositorio.
 
@@ -18,7 +18,7 @@ Los comandos de validación de .NET y Node se ejecutan en contenedores (mcr.micr
 
 La base reservada es **pastel_integration_tests**. Antes de recrearla, el script verifica la configuración resuelta de Compose y aborta si la base normal (**POSTGRES_DB**) tiene ese nombre. La prueba recrea únicamente **pastel_integration_tests**; no elimina ni recrea la base normal, no levanta la API ni el frontend, y no ejecuta **docker compose down -v**. El volumen de PostgreSQL se conserva. La base de pruebas queda disponible para inspección y se vuelve a recrear en la siguiente ejecución.
 
-**PASTEL_TEST_CONNECTION_STRING** solo se entrega al contenedor ejecutor. **IdentityApiFactory** vuelve a verificar que el nombre de base sea exactamente **pastel_integration_tests**. No se imprime la cadena de conexión.
+**PASTEL_TEST_CONNECTION_STRING** y **ConnectionStrings__Default** solo se entregan al contenedor ejecutor, antes de iniciar el proceso .NET. La segunda variable hace que la cadena exista desde el arranque de `WebApplication.CreateBuilder`, antes del registro inmediato de módulos. **IdentityApiFactory** vuelve a verificar que el nombre de base sea exactamente **pastel_integration_tests**. No se imprime la cadena. Si ejecutas las pruebas manualmente, configura ambas variables con la misma cadena aislada.
 
 ## Qué cubre actualmente
 
@@ -35,3 +35,14 @@ Aún no hay pruebas de componentes React ni de recorridos E2E en navegador. Las 
 ## Flujo de CI
 
 GitHub Actions ejecuta las verificaciones especializadas en pushes a **main**, **dev** y **refactor/modular-foundation**, y en solicitudes de integración dirigidas a **main**, **dev** o **refactor/modular-foundation**. Las pruebas locales de la rama de trabajo se pueden lanzar con **test-all.ps1** sin integrar ni fusionar ramas.
+
+## Estado de validación actual (CI, 2026-10-20)
+
+Última ejecución verificada: [CI del commit d465a347](https://github.com/leandro-mc/pastel-admin-platform/actions/runs/39346150864).
+
+- **Backend: aprobado.** Restauración, `dotnet format --verify-no-changes`, build Release y 34/34 pruebas unitarias aprobadas; 0 fallidas y 0 omitidas.
+- **Frontend: aprobado.** Prettier, ESLint, TypeScript/Vite, ocho pruebas Node de la guarda de diseño, `check-design` y `tailwind-audit --check` pasaron.
+- **Integración PostgreSQL: bloqueada por el modelo actual.** Los cinco tests arrancan el host, pero EF Core lanza `PendingModelChangesWarning`: `IdentityDbContext` contiene `ExternalLogin`, pero el snapshot y la migración inicial no tienen todavía esa entidad. Hace falta la migración incremental de Identity que figura pendiente en WP5. No se suprime esta advertencia porque encubre una discrepancia real del esquema.
+- **Arranque de la pila: bloqueado por la misma causa.** La construcción de imágenes de API/web pasó; el smoke test de arranque falló cuando el API intentó aplicar migraciones de Identity. Al corregir WP5 podrían aparecer más bloqueos de migraciones de módulos señalados en WP6.
+
+La suite de pruebas está funcionando: el estado global queda **fallido mientras no se corrija la deuda de migraciones**. No interpretes ese fallo de aplicación como una aprobación de PostgreSQL.
