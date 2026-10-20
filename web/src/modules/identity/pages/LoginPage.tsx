@@ -30,9 +30,13 @@ export function Component() {
   const options = useAuthOptions();
   const { theme, toggleTheme } = usePreferences();
   const requestedReturnUrl = params.get("returnUrl");
-  const returnUrl = isSafeReturnUrl(requestedReturnUrl)
+  const explicitReturnUrl = isSafeReturnUrl(requestedReturnUrl)
     ? safeReturnUrl(requestedReturnUrl)
-    : getRememberedAppPath() ?? routes.home;
+    : null;
+  const returnUrl = explicitReturnUrl
+    ?? (auth.status === "authenticated" && auth.user?.id
+      ? getRememberedAppPath(auth.user.id) ?? routes.home
+      : routes.home);
   const googleError = googleErrorMessage(params.get("error"));
   const registering = params.get("modo") === "registro";
   const [showPassword, setShowPassword] = useState(false);
@@ -41,7 +45,11 @@ export function Component() {
     return <Navigate to={returnUrl} replace />;
   }
 
-  const done = () => void navigate(returnUrl, { replace: true });
+  const done = () => {
+    // Con returnUrl explícito podemos navegar inmediatamente. Sin él, dejar que la
+    // sesión autenticada resuelva la app recordada por usuario en el siguiente render.
+    if (explicitReturnUrl) void navigate(explicitReturnUrl, { replace: true });
+  };
   const setMode = (mode: "ingreso" | "registro") => {
     const next = new URLSearchParams(params);
     next.delete("error");
