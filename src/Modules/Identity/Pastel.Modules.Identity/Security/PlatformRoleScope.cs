@@ -17,6 +17,10 @@ internal static class PlatformRoleScope
                     link.Permission.Code != IdentityPermissions.DashboardView
                     && !link.Permission.Code.StartsWith("settings."))));
 
+    public static bool IsPlatformPermissionCode(string code) =>
+        code == IdentityPermissions.DashboardView
+        || code.StartsWith("settings.", StringComparison.Ordinal);
+
     /// <summary>La entidad debe incluir RolePermissions y Permission antes de usar esta evaluación en memoria.</summary>
     public static bool IsPlatformRole(AppRole role)
     {
@@ -24,8 +28,6 @@ internal static class PlatformRoleScope
 
         var codes = role.RolePermissions.Select(link => link.Permission.Code).ToArray();
         return codes.Any(code => code.StartsWith("settings.", StringComparison.Ordinal))
-            && codes.All(code =>
-                code == IdentityPermissions.DashboardView
-                || code.StartsWith("settings.", StringComparison.Ordinal));
+            && codes.All(IsPlatformPermissionCode);
     }
 }
