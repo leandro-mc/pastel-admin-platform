@@ -99,7 +99,13 @@ export function Component() {
                       {t.permissions(role.permissionIds.length)}
                     </span>
                   </div>
-                  {hasPermission(identityPermissions.rolesUpdate) ? (
+                  {role.isSystemRole ? (
+                    <p className="rounded-xl border border-line bg-surface-raised px-3 py-2 text-xs leading-relaxed text-muted">
+                      {role.name === "Owner/Superuser"
+                        ? "Rol reservado al propietario y al bootstrap."
+                        : "Rol protegido; no se puede modificar."}
+                    </p>
+                  ) : hasPermission(identityPermissions.rolesUpdate) ? (
                     <Link
                       to={settingsPaths.roleAccess(role.id)}
                       aria-label={t.managePermissions(role.name)}
