@@ -1,31 +1,23 @@
-/* Archivo de entrada de Tailwind CSS v4 (CSS-first, sin tailwind.config.js). Lo importa `main.tsx`. */
+/* Archivo de entrada de Tailwind CSS v4 (CSS-first, sin tailwind.config.js). */
 @import "tailwindcss";
 @import "./tokens.css";
 @import "./module-themes.css";
 @import "./components/auth.css";
 @import "./components/auth-responsive.css";
+@import "./components/auth-reference.css";
 @import "./components/workspace.css";
+@import "./components/app-shell.css";
 @import "./components/agora.css";
 @import "./base.css";
 
-/* El modo oscuro lo decide `data-theme` (preferencias del usuario), no el sistema operativo. */
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme {
-  --font-sans:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
-    "Segoe UI", sans-serif;
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --animate-toast-in: toast-in 0.2s ease both;
-
   @keyframes toast-in {
-    from {
-      opacity: 0;
-      transform: translateY(7px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    from { opacity: 0; transform: translateY(7px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 }

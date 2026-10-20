@@ -373,3 +373,12 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - Causa identificada en el log: `ModuleLoader.Validate` exige que cada permiso empiece con el código de su grupo. `platform.workspace.access` y `platform.owner` estaban declarados erróneamente dentro del grupo `settings`, por lo que el API fallaba antes de registrar rutas.
 - Corrección publicada en este checkpoint: los permisos `platform.*` pasan al grupo explícito `platform`, sin debilitar la validación; se actualiza la regla correspondiente en `docs/ARCHITECTURE.md`.
 - El cambio aún requiere que el propietario reconstruya/reinicie la API y confirme que `/api/auth/options` responde. No se ejecutó Compose ni CI desde este entorno.
+
+
+## Recuperación visual con referencia al mockup — 2026-10-20
+
+- Se contrastó el frontend modular con `web/src/App.tsx` y `web/src/styles.css` de `dev`, además del mockup HTML aportado por el propietario.
+- Se reorganizó el shell: el encabezado superior ya no repite el nombre de la app activa; el selector basado en icono RefreshCw está en la barra lateral y la app activa se muestra debajo. Se incorporó navegación común por manifiesto, barra lateral plegable persistida localmente, navegación compacta en móvil, estado activo con contraste, zona de seguridad/ayuda y pie de página.
+- Se refinó el login respecto al mockup: se retiró el panel envolvente del lado editorial, se redujo el efecto de “tarjetas dentro de tarjeta” para los beneficios y se dio más ancho al formulario.
+- La estructura se publicó en el commit `7d5f8c6`; este checkpoint añade dos ajustes de revisión: restaurar el import de `base.css` y mantener selector + app activa accesibles en el dock móvil. Ambos lotes siguen **sin build y sin validación visual del navegador por parte del agente**.
+- CI no se despachó; el workflow sigue manual. No se integró en `dev` ni `main`. La revisión de permisos, los flujos de autenticación y las pantallas de Workspace continúan requiriendo la validación del propietario/Build-QA.
