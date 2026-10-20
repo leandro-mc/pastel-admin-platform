@@ -24,7 +24,9 @@ internal static class GetUserPermissionsEndpoint
         }
 
         IReadOnlyList<UserPermissionAssignment> items = await db.UserPermissionOverrides.AsNoTracking()
-            .Where(x => x.UserId == userId)
+            .Where(x => x.UserId == userId
+                && (x.Permission.Code == IdentityPermissions.DashboardView
+                    || x.Permission.Code.StartsWith("settings.")))
             .OrderBy(x => x.Permission.Code)
             .Select(x => new UserPermissionAssignment(x.PermissionId, x.Permission.Code, x.Permission.Name, x.Effect))
             .ToListAsync(cancellationToken);
