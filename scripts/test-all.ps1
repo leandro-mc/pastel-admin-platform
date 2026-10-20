@@ -11,7 +11,7 @@ $checks = @(
 )
 $failures = [System.Collections.Generic.List[string]]::new()
 
-Write-Host "PASTEL ADMIN PLATFORM — VALIDACION COMPLETA" -ForegroundColor Cyan
+Write-Host "PASTEL ADMIN PLATFORM - VALIDACION COMPLETA" -ForegroundColor Cyan
 Write-Host "Los tres bloques se ejecutan aunque uno falle, para obtener un diagnostico completo."
 
 foreach ($check in $checks) {
@@ -24,7 +24,7 @@ foreach ($check in $checks) {
     catch {
         $message = $_.Exception.Message
         $failures.Add(("{0}: {1}" -f $check.Name, $message)) | Out-Null
-        Write-Host ("{0}: FALLO — {1}" -f $check.Name, $message) -ForegroundColor Red
+        Write-Host ("{0}: FALLO - {1}" -f $check.Name, $message) -ForegroundColor Red
     }
 }
 
