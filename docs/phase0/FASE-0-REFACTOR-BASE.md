@@ -225,10 +225,10 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 
 ## 13. WP10 — Testabilidad, documentación y datos para pruebas
 
-1. **Sembrador `Testing`:** usuarios de prueba por rol con inicio local, solo en `Development`/`Testing`; **se niega a ejecutarse en `Production`** (Build escribe la prueba).
+1. **Sembrador `Testing`:** implementado como `TestingSeedUsersTask` de Identity, orden 30, habilitado con `TestingSeed:Enabled`; acepta solo `Development`/`Testing` y falla en `Production`. Build debe escribir y ejecutar pruebas de idempotencia, roles exactos, ausencia de secretos en logs y denegación de Production.
 2. **Datos para pruebas:** en `docs/phase0/PROGRESS.md`, sección «Datos para pruebas»: cuentas de prueba (nombres y claves **de prueba**), comandos de arranque y qué implementaste, para que QA amplíe `docs/testing/plans/FASE-0-TEST-PLAN.md`. No edites ni debilites los casos obligatorios.
-3. **Documentos:** `README.md` (arranque, estructura, comandos, cómo probar Google), `docs/SECURITY.md` (OAuth, vinculación, jerarquía de privilegios, *break-glass*, límites), `docs/AI_WORKFLOW.md` (protocolo en paralelo, Dev/Build/QA, CCR, `PROGRESS.md`), `docs/SPLIT_GUIDE.md` (desplegar un solo módulo), ADR 0001–0009 (`docs/adr/`: monolito modular, stack/router, Google OAuth, esquemas y migraciones, paleta, compilación por subconjunto, Tailwind, errores y logs).
-4. `MODULE.md` backend y frontend de cada módulo (≤ 120 líneas, estado "marcador").
+3. **Documentos:** README, SECURITY, AI_WORKFLOW, SPLIT_GUIDE, ADR 0001–0009 y fichas Identity (`src/Modules/Identity/MODULE.md`, `web/src/modules/identity/MODULE.md`, `docs/modules/IDENTITY.md`) creados/actualizados; Build/QA debe cotejarlos con el código. Las dependencias frontend de accesibilidad/Vitest/Playwright siguen bloqueadas por el lockfile en CCR-006.
+4. `MODULE.md` backend y frontend de cada módulo (≤ 120 líneas, estado "marcador"); Identity tiene ahora sus fichas de implementación, no de marcador, con funcionalidad y pendientes reales.
 5. Elimina referencias obsoletas (`Pastel.Api`, `Pastel.Application`, paleta Brisa, `screen`, `npm install`).
 
 ## 14. Definición de terminado de Dev (puerta hacia Build)

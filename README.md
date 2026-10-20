@@ -74,6 +74,18 @@ Configure `POSTGRES_HOST`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USER` y `PO
 
 La primera ejecución crea o restaura la cuenta definida por `BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD`. El primer inicio de sesión exige cambiar la contraseña. Para producción, suministre secretos por el gestor de secretos de su entorno y use un correo controlado por el responsable de Pastel.
 
+### Cuentas QA locales (solo Development/Testing)
+
+Con Compose local, `TESTING_SEED_ENABLED=true` activa tres cuentas de prueba reproducibles. Se crean en el primer arranque y se restauran si cambian las credenciales o el rol; sus sesiones anteriores se revocan al restaurarlas.
+
+| Cuenta | Rol asignado | Contraseña local |
+|---|---|---|
+| `test.owner@pastel.local` | Owner/Superuser | `Local-Only-Test-Owner-2026!` |
+| `test.admin@pastel.local` | Administrator (sin Owner) | `Local-Only-Test-Admin-2026!` |
+| `test.member@pastel.local` | Member | `Local-Only-Test-Member-2026!` |
+
+Son credenciales públicas y fijas únicamente para datos sintéticos locales. **No sirven para producción ni entornos compartidos.** El arranque se niega a continuar en Production si `TESTING_SEED_ENABLED=true`; configure explícitamente `TESTING_SEED_ENABLED=false` en cualquier despliegue. Para desactivar las fixtures locales basta con ajustar esa variable en `.env` y recrear el contenedor API.
+
 ### pgAdmin 4
 
 En desarrollo, registre un servidor en pgAdmin con host `localhost`, puerto `POSTGRES_PORT` (5432 por defecto), base `POSTGRES_DB`, usuario `POSTGRES_USER` y contraseña `POSTGRES_PASSWORD` del archivo `.env`. La publicación de PostgreSQL está limitada a loopback. Si cambia el puerto, recree el servicio `db` y ajuste pgAdmin.
