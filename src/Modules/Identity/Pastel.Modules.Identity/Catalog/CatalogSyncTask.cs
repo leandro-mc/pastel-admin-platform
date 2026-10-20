@@ -140,8 +140,28 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             db.RolePermissions.Add(new RolePermission { RoleId = owner.Id, PermissionId = permission.Id });
         }
 
-        // No conservar excepciones individuales para privilegios exclusivos: se emiten solo por los roles de sistema
-        // y por roles de Cosecha que Owner asigne explícitamente. Huella no puede compartirse como permiso.
+        // Retirar el rol sugerido de Huella del diseño anterior. Sus permisos eran de todas formas
+        // revocados por la regla owner-only; eliminar el rol evita que aparezca como opción vacía a futuro.
+        var legacyHuellaRole = await db.Roles
+            .Where(r => r.NormalizedName == "HUELLA — PROPIETARIO")
+            .Select(r => r.Id)
+            .SingleOrDefaultAsync(cancellationToken);
+        if (legacyHuellaRole != Guid.Empty)
+        {
+            var oldHuellaMemberships = await db.UserRoles
+                .Where(x => x.RoleId == legacyHuellaRole)
+                .ToListAsync(cancellationToken);
+            var oldHuellaPermissions = await db.RolePermissions
+                .Where(x => x.RoleId == legacyHuellaRole)
+                .ToListAsync(cancellationToken);
+            db.UserRoles.RemoveRange(oldHuellaMemberships);
+            db.RolePermissions.RemoveRange(oldHuellaPermissions);
+            var role = await db.Roles.SingleAsync(x => x.Id == legacyHuellaRole, cancellationToken);
+            db.Roles.Remove(role);
+        }
+
+        // No conservar excepciones individuales para privilegios exclusivos: las apps privadas se conceden
+        // por roles, y el rol Owner/Superuser conserva Huella/Cosecha de forma explícita.
         var restrictedOverrides = await db.UserPermissionOverrides.Include(x => x.Permission)
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
