@@ -13,6 +13,19 @@
 - **Tipo de agente por tarea:** el orquestador lo indica en cada asignación; no se infiere del progreso anterior. Para el siguiente agente de la cadena de desarrollo, el propietario asignó **Tipo 1**: checkpoint con commit + push coherente al menos cada 3 minutos e incluir `PROGRESS.md` según `AGENTS.md`. Sigue aplicando la prohibición de force push, reescritura de historia compartida y publicación de secretos.
 - Dev implementa código de producto; no escribe pruebas ni planes de pruebas. No inventes resultados ni afirmes que algo compila si no se verificó. Sigue las instrucciones de `FASE-0-REFACTOR-BASE.md` y declara de forma explícita lo que quedó sin compilar/validar. Build/QA se encarga de pruebas, compilación completa y migraciones EF Core.
 
+## Prioridad crítica activa — recuperación de UX y modelo multiapp (CCR-003)
+
+El propietario reportó una degradación grave de interfaz tras migrar a Tailwind. Se revisó visualmente el PDF «Degradación de la interfaz.pdf» (Antes/Ahora, seis pares de pantallas) y se comparó el código modular con los componentes originales aún disponibles en `dev`. La pérdida proviene de una sustitución amplia de composición/pantallas y de una política de estilos excesivamente rígida; **no hay evidencia de que Tailwind CSS sea incapaz de conseguir la interfaz original**.
+
+- **Visión de producto multiapp:** documentada en [`docs/product/PASTEL-PRODUCT-AND-UX.md`](../product/PASTEL-PRODUCT-AND-UX.md).
+- **CCR-003 aprobada:** [`docs/requests/CCR-003-ux-recovery-and-app-model.md`](../requests/CCR-003-ux-recovery-and-app-model.md).
+- **Sistema de diseño:** [`docs/DESIGN_SYSTEM.md`](../DESIGN_SYSTEM.md) y WP8 de [`FASE-0-REFACTOR-BASE.md`](./FASE-0-REFACTOR-BASE.md) ahora especifican Tailwind 4 + utilidades + tokens + CSS de componentes acotado, y prohíben simplificar la experiencia como “efecto secundario” de una migración.
+- **Implementado en este checkpoint:** composición editorial de login/registro con preferencia de tema, ilustración de marca y footer; ocultar el TopBar genérico durante login; footer compartido para las demás páginas; marca de shell que muestra el contexto de la app y selector limitado a subapps de producto; `/` lleva a Ágora (sin hub de tarjetas); el editor de Huella requiere permiso, a diferencia de su futura página pública independiente por enlace. El auditor Tailwind ahora admite clases semánticas solo dentro de `core/design/components/`, si están en uso.
+- **Todavía pendiente:** restaurar el aspecto de configuración, directorio de usuarios, roles, permisos, formularios y cuenta; concretar el control de activación y configuración individual por app; Workspace como opción visible solo para el privilegio global acordado; página pública de Huella mediante enlace; recorrido visual y accesibilidad en navegador.
+- **Validación:** las pruebas previas y CI verde pertenecen a un SHA anterior. Los cambios visuales listados aquí **no se han compilado ni probado todavía en navegador**. No declarar paridad visual ni completar WP7/WP8 por la mera existencia de estos commits.
+
+Commits iniciales del tramo visual: login y estilos (`27456b0`, `905ea90`), raíz/shell/footer (`3678120`, `d75c8bd`, `623f30e`, `3cba0b7`), selector/visibilidad de Huella (`5bad27c`, `953d2bf`) y auditoría Tailwind (`ac1da44`, `19f7e53`).
+
 ## Estado actual por WP
 
 | WP | Estado actual | Qué falta |
@@ -23,8 +36,8 @@
 | WP4 — Endurecimiento de seguridad | **Implementación de producto registrada; cobertura integrada completa pendiente** | Build/QA: completar la matriz S1–S4 y registrar sus resultados. El runner señala brechas de cobertura de QA; no es una instrucción para el agente Dev ni impide que continúe el siguiente WP de desarrollo. |
 | WP5 — Google OAuth/OIDC | **Migración incremental de `identity.external_logins` aplicada correctamente en integración local**, incluido el chequeo de que no quedan migraciones pendientes. Ver «WP5 — Bitácora» y «WP5 — Verificación y limitaciones». | Ejecutar las pruebas de §8.5 con proveedor remoto falso. **Diferido a WP7:** pantalla `/ingresar` (§8.4). Prueba real con Google: manual del propietario. |
 | WP6 — Esqueletos/plantilla de módulos | **Código y migraciones iniciales de los cinco esquemas compilados y aplicados durante las pruebas locales de integración.** Ver «WP6 — Bitácora». | Ejecutar las pruebas de arquitectura y validar los subconjuntos con `-p:PastelModules=Identity` según el plan. Las migraciones de los contextos esqueleto solo crean sus esquemas e historiales; todavía no crean tablas de dominio. |
-| WP7 — Cimientos de frontend/sesión/errores/shell | **Casi completo; sin probar en navegador** (Dev, Tipo 1). Cliente API, `core/log`, proveedores, router, shell, Identity modular y `main.tsx` montados (ver «WP7.6h») | Revisar WP7.7 (textos sin voseo en todo `strings.ts`) y WP7.8 (`no-console` ya activo). Build/QA: pruebas de `core/api`, guardas y pantallas; verificación en navegador. |
-| WP8 — Tailwind CSS/sistema de diseño | Pendiente | Migración y métricas de auditoría conforme a §11. |
+| WP7 — Cimientos de frontend/sesión/errores/shell | **Base modular implementada; la experiencia visual original NO está aceptada aún.** Inicio de recuperación UX activo por CCR-003. | Completar recuperación visual de Workspace/admin, perfil, usuarios, roles y permisos; verificar rutas/selector y el estado dinámico de app; Build/QA y recorrido en navegador. |
+| WP8 — Recuperación visual + sistema de diseño Tailwind | **En curso, prioridad máxima por CCR-003.** Se documentó enfoque híbrido y se implementó el primer tramo de acceso/shell/raíz y la política CSS gobernada. Sin build ni revisión visual de esta nueva serie. | Restaurar pantallas de administración/roles/permisos/cuenta; refinar componentes de UI; ajustar auditoría; capturas antes/después, claro/oscuro, escritorio/móvil; Build/QA y validación del propietario. |
 | WP9 — Infraestructura/CI/repositorio | Pendiente | Ajustes restantes de §12, sin salirse del alcance de Fase 0. |
 | WP10 — Testabilidad/documentación/datos | Pendiente | Hooks para Build, documentación, ADR y datos de prueba conforme a §13. |
 
