@@ -28,7 +28,9 @@ internal static class GoogleStartEndpoint
         }
 
         var properties = new AuthenticationProperties { RedirectUri = ExternalSchemes.CompletePath };
-        properties.Items[ExternalSchemes.ReturnUrlItem] = ReturnUrl.Sanitize(returnUrl);
+        properties.Items[ExternalSchemes.ReturnUrlItem] = ReturnUrl.IsSafe(returnUrl)
+            ? ReturnUrl.Sanitize(returnUrl)
+            : ReturnUrl.RememberLastApp;
         return Results.Challenge(properties, [ExternalSchemes.Google]);
     }
 }
