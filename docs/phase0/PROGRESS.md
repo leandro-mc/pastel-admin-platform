@@ -445,3 +445,5 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Política operativa:** no se añadió trigger automático y no se despachó CI ni CodeQL. Que el workflow esté definido no indica resultado de compilación ni análisis.
 - [ ] **Pendiente de Build:** verificar sintaxis YAML/Compose, construir todas las filas de la matriz, ejecutar CodeQL manualmente solo después de la autorización del propietario y completar `Pastel.ArchitectureTests`/los controles de arquitectura que le corresponden a Build.
 - **Validación de esta tanda:** revisión estática. **Sin ejecutar** Docker, CodeQL, frontend, .NET o CI sobre este SHA.
+
+- **Ajuste estático CodeQL:** el workflow separa los pasos de inicialización: C# usa `build-mode: manual` y ejecuta `dotnet build`; JavaScript/TypeScript usa la inicialización estándar sin pasarle una opción de modo de compilación propia de lenguajes compilados. El workflow sigue **sin ejecutar**.

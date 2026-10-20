@@ -26,18 +26,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - language: csharp
-            build-mode: manual
-          - language: javascript-typescript
-            build-mode: none
+        language: [csharp, javascript-typescript]
     steps:
       - uses: actions/checkout@v6
-      - name: Initialize CodeQL
+      - name: Initialize CodeQL for .NET
+        if: matrix.language == 'csharp'
         uses: github/codeql-action/init@v4
         with:
-          languages: ${{ matrix.language }}
-          build-mode: ${{ matrix.build-mode }}
+          languages: csharp
+          build-mode: manual
+      - name: Initialize CodeQL for the web client
+        if: matrix.language == 'javascript-typescript'
+        uses: github/codeql-action/init@v4
+        with:
+          languages: javascript-typescript
       - name: Build .NET for analysis
         if: matrix.language == 'csharp'
         run: dotnet build Pastel.slnx --configuration Release
