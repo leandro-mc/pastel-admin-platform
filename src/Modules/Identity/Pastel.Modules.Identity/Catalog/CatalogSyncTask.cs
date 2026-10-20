@@ -104,12 +104,12 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
 
         // Administrator recibe las funciones generales existentes, pero nunca obtiene platform.owner,
         // ni acceso de Huella/Cosecha por el mero hecho de ser administrador.
-        var adminDesired = allPermissions.Where(p => !IsOwnerOnlyPermission(p.Code)).Select(p => p.Id).ToHashSet();
+        var adminDesired = allPermissions.Where(p => IsGeneralAdministratorPermission(p.Code)).Select(p => p.Id).ToHashSet();
         var adminLinks = await db.RolePermissions.Include(x => x.Permission)
             .Where(x => x.RoleId == admin.Id).ToListAsync(cancellationToken);
-        var removedAdminPermissions = adminLinks.Where(x => IsOwnerOnlyPermission(x.Permission.Code)).ToArray();
+        var removedAdminPermissions = adminLinks.Where(x => !IsGeneralAdministratorPermission(x.Permission.Code)).ToArray();
         db.RolePermissions.RemoveRange(removedAdminPermissions);
-        var adminCurrent = adminLinks.Where(x => !IsOwnerOnlyPermission(x.Permission.Code)).Select(x => x.PermissionId).ToHashSet();
+        var adminCurrent = adminLinks.Where(x => IsGeneralAdministratorPermission(x.Permission.Code)).Select(x => x.PermissionId).ToHashSet();
         foreach (var permission in allPermissions.Where(p => adminDesired.Contains(p.Id) && !adminCurrent.Contains(p.Id)))
         {
             db.RolePermissions.Add(new RolePermission { RoleId = admin.Id, PermissionId = permission.Id });
@@ -128,10 +128,9 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
 
         // Owner es un rol de sistema reservado al bootstrap. Tiene Workspace, configuración global y acceso a
         // Cosecha/Huella; no adquiere automáticamente permisos de Brisa/Balance.
-        var ownerDesired = allPermissions
-            .Where(p => IsOwnerPermission(p.Code))
-            .Select(p => p.Id)
-            .ToHashSet();
+        // Owner/Superuser obtiene la plataforma completa y los permisos de todas las apps.
+        // Administrator general solo recibe dashboard + settings + entrada a Workspace.
+        var ownerDesired = allPermissions.Select(p => p.Id).ToHashSet();
         var ownerLinks = await db.RolePermissions.Include(x => x.Permission)
             .Where(x => x.RoleId == owner.Id).ToListAsync(cancellationToken);
         db.RolePermissions.RemoveRange(ownerLinks.Where(x => !ownerDesired.Contains(x.PermissionId)).ToArray());
@@ -179,16 +178,8 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             modules.Count, allPermissions.Count, changes);
     }
 
-    private static bool IsOwnerOnlyPermission(string code) =>
-        code == IdentityPermissions.OwnerPrivilege
-        || code.StartsWith("cosecha.", StringComparison.Ordinal)
-        || code.StartsWith("huella.", StringComparison.Ordinal);
-
-    private static bool IsOwnerPermission(string code) =>
-        code == IdentityPermissions.OwnerPrivilege
-        || code == IdentityPermissions.WorkspaceAccess
+    private static bool IsGeneralAdministratorPermission(string code) =>
+        code == IdentityPermissions.WorkspaceAccess
         || code == IdentityPermissions.DashboardView
-        || code.StartsWith("settings.", StringComparison.Ordinal)
-        || code.StartsWith("cosecha.", StringComparison.Ordinal)
-        || code.StartsWith("huella.", StringComparison.Ordinal);
+        || code.StartsWith("settings.", StringComparison.Ordinal);
 }
