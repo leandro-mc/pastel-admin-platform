@@ -36,7 +36,6 @@ function toInstant(day: string, endOfDay: boolean): string {
 
 /** `/configuracion/auditoria`: eventos paginados; todos los filtros se aplican en el servidor y viven en la URL. */
 export function Component() {
-  const { hasPermission } = useAuth();
   const { values, page, update, reset } = useUrlFilters(defaults);
   const [action, setAction] = useState(values.action);
   const [actor, setActor] = useState(values.actor);
