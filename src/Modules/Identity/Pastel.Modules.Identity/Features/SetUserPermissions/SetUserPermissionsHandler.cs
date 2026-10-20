@@ -78,7 +78,13 @@ internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrai
             return grantDenied;
         }
 
-        var existing = await db.UserPermissionOverrides.Include(x => x.Permission).Where(x => x.UserId == userId).ToListAsync(cancellationToken);
+        // Solo cargar/mutuar excepciones de plataforma. Las excepciones futuras de una app no se leen,
+        // registran ni eliminan al guardar desde Workspace.
+        var existing = await db.UserPermissionOverrides.Include(x => x.Permission)
+            .Where(x => x.UserId == userId
+                && (x.Permission.Code == IdentityPermissions.DashboardView
+                    || x.Permission.Code.StartsWith("settings.")))
+            .ToListAsync(cancellationToken);
         var before = existing.OrderBy(x => x.Permission.Code, StringComparer.Ordinal)
             .Select(x => new { permission = x.Permission.Code, effect = x.Effect.ToString() }).ToArray();
 
