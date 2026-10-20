@@ -33,7 +33,8 @@ export const identityStrings = {
     retry: "Reintentar",
     noMethods:
       "Por ahora no hay un método de ingreso disponible. Comuníquese con administración.",
-    toRegister: "¿No tiene cuenta? Crear una cuenta",
+    toRegisterPrompt: "¿Es su primera vez aquí?",
+    toRegister: "Crear una cuenta",
     optionsError: "No se pudieron cargar las opciones de ingreso.",
     unexpected:
       "No se pudo iniciar sesión. Intente de nuevo; si continúa, comparta el código de soporte.",
@@ -45,7 +46,8 @@ export const identityStrings = {
     namePlaceholder: "Su nombre",
     submit: "Crear cuenta",
     submitting: "Creando cuenta…",
-    toLogin: "¿Ya tiene cuenta? Iniciar sesión",
+    toLoginPrompt: "¿Ya tiene cuenta?",
+    toLogin: "Iniciar sesión",
     unexpected:
       "No se pudo crear la cuenta. Intente de nuevo; si continúa, comparta el código de soporte.",
   },

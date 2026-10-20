@@ -10,10 +10,11 @@ import {
 import { log } from "@/core/log";
 
 export type Theme = "light" | "dark";
-export type TextSize = "normal" | "large" | "xlarge";
+export type TextSize = "small" | "normal" | "large" | "xlarge";
 
-/** Porcentaje del tamaño de letra base (`DESIGN_SYSTEM.md` §4: Normal 100 %, Grande 115 %, Muy grande 130 %). */
+/** Escala global del texto y de las medidas expresadas en rem; Normal sigue siendo el valor recomendado. */
 export const TEXT_SIZE_PERCENT: Record<TextSize, number> = {
+  small: 90,
   normal: 100,
   large: 115,
   xlarge: 130,
@@ -60,7 +61,7 @@ function initialTheme(): Theme {
 
 function initialTextSize(): TextSize {
   const stored = read(TEXT_SIZE_KEY);
-  return stored === "large" || stored === "xlarge" ? stored : "normal";
+  return stored === "small" || stored === "large" || stored === "xlarge" ? stored : "normal";
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {

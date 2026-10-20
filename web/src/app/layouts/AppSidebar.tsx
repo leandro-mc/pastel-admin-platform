@@ -3,6 +3,7 @@ import { Flower2, LockKeyhole, UserRound } from "lucide-react";
 import { useAuth } from "@/core/auth";
 import type { ModuleManifest, ModuleNavItem } from "@/core/modules/types";
 import { routes } from "../routes";
+import { shellStrings } from "../strings";
 import HelpButton from "../shell/HelpButton";
 import ModuleSwitcher from "../shell/ModuleSwitcher";
 
@@ -17,19 +18,28 @@ function isItemActive(item: ModuleNavItem, module: ModuleManifest, pathname: str
 }
 
 export default function AppSidebar({ currentModule, collapsed }: Props) {
-  const { hasPermission } = useAuth();
+  const { hasPermission, status } = useAuth();
   const { pathname } = useLocation();
-  const moduleNav = currentModule?.nav.filter((item) => !item.requiredPermission || hasPermission(item.requiredPermission)) ?? [];
-  const navItems: ModuleNavItem[] = currentModule && currentModule.nav.length === 0
-    ? [{ label: "Inicio", to: "", icon: currentModule.icon }]
-    : moduleNav;
+  const moduleNav = currentModule?.nav.filter(
+    (item) => !item.requiredPermission || hasPermission(item.requiredPermission),
+  ) ?? [];
+  const navItems: ModuleNavItem[] =
+    currentModule && currentModule.nav.length === 0
+      ? [{ label: "Inicio", to: "", icon: currentModule.icon }]
+      : moduleNav;
   const currentName = currentModule?.code === "identity" ? "Pastel Workspace" : currentModule?.name ?? "Mi cuenta";
-  const currentDescription = currentModule?.code === "identity" ? "Administración de la plataforma" : currentModule?.tagline ?? "Perfil y seguridad";
+  const currentDescription = currentModule?.code === "identity"
+    ? "Administración de la plataforma"
+    : currentModule?.tagline ?? shellStrings.account.profileDescription;
   const CurrentIcon = currentModule?.icon ?? UserRound;
 
   return (
     <aside className="workspace-sidebar" aria-label="Navegación de Pastel">
-      <Link to={routes.home} className="workspace-brand" aria-label="Pastel Workspace, ir al inicio">
+      <Link
+        to={currentModule?.basePath ?? routes.home}
+        className="workspace-brand"
+        aria-label={`Pastel, ir al inicio de ${currentName}`}
+      >
         <span className="workspace-brand-mark"><Flower2 aria-hidden="true" size={30} strokeWidth={1.8} /></span>
         <span className="workspace-brand-copy"><strong>pastel</strong><small>WORKSPACE</small></span>
       </Link>
@@ -37,7 +47,7 @@ export default function AppSidebar({ currentModule, collapsed }: Props) {
         <ModuleSwitcher collapsed={collapsed} />
         <div className="workspace-current-app" data-module={currentModule?.code} title={collapsed ? currentName : undefined}>
           <span className="workspace-current-app-icon"><CurrentIcon aria-hidden="true" /></span>
-          {!collapsed ? <span className="workspace-current-app-copy"><strong>{currentName}</strong><small>{currentDescription}</small></span> : null}
+          <span className="workspace-current-app-copy"><strong>{currentName}</strong><small>{currentDescription}</small></span>
         </div>
       </div>
       {navItems.length > 0 ? <p className="workspace-sidebar-label">{collapsed ? "MENÚ" : "MENÚ PRINCIPAL"}</p> : null}
@@ -46,8 +56,8 @@ export default function AppSidebar({ currentModule, collapsed }: Props) {
           const target = item.to ? `${currentModule?.basePath}/${item.to}` : currentModule?.basePath ?? routes.home;
           const active = currentModule ? isItemActive(item, currentModule, pathname) : false;
           return (
-            <NavLink key={item.to || "root"} to={target} end={item.to === ""} title={collapsed ? item.label : undefined}
-              aria-current={active ? "page" : undefined}
+            <NavLink key={item.to || "root"} to={target} end={item.to === ""}
+              title={collapsed ? item.label : undefined} aria-current={active ? "page" : undefined}
               className={({ isActive: routerActive }) => ["workspace-nav-item", active || routerActive ? "active" : ""].filter(Boolean).join(" ")}>
               <item.icon aria-hidden="true" className="workspace-nav-icon" />
               {!collapsed ? <span className="workspace-nav-copy">
@@ -58,6 +68,12 @@ export default function AppSidebar({ currentModule, collapsed }: Props) {
             </NavLink>
           );
         })}
+        {status === "authenticated" ? (
+          <NavLink to={routes.account} title={collapsed ? shellStrings.account.mine : undefined} className="workspace-nav-item" aria-label={shellStrings.account.mine}>
+            <UserRound aria-hidden="true" className="workspace-nav-icon" />
+            {!collapsed ? <span className="workspace-nav-copy"><strong>{shellStrings.account.mine}</strong><small>{shellStrings.account.profileDescription}</small></span> : null}
+          </NavLink>
+        ) : null}
       </nav>
       <div className="workspace-sidebar-spacer" />
       <section className="workspace-security-note" aria-label="Seguridad de la plataforma">

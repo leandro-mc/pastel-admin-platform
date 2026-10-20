@@ -5,7 +5,7 @@ import { useAuth } from "@/core/auth";
 import type { ModuleManifest, ModuleNavItem } from "@/core/modules/types";
 import { strings } from "../strings";
 import { routes } from "../routes";
-import { rememberCurrentApp, useAccessibleModules } from "../modules";
+import { getRememberedAppPath, rememberCurrentApp, useAccessibleModules } from "../modules";
 import AppFooter from "./AppFooter";
 import AppSidebar from "./AppSidebar";
 import TopBar from "../shell/TopBar";
@@ -72,12 +72,21 @@ export default function RootLayout() {
     }
   });
   const isStandaloneAuth = pathname === routes.login;
-  const currentModule = availableModules.find((module) => matchesPath(pathname, module.basePath)) ?? null;
-  const accessibleProductKey = availableModules
+  const accessibleProductPaths = availableModules
     .filter((module) => module.code !== "identity")
-    .map((module) => module.basePath)
-    .join("|");
-  const contextLabel = currentModule?.code === "identity" ? "Workspace" : "Pastel";
+    .map((module) => module.basePath);
+  const accessibleProductKey = accessibleProductPaths.join("|");
+  const rememberedAppPath = user?.id ? getRememberedAppPath(user.id, accessibleProductPaths) : null;
+  const directModule = availableModules.find((module) => matchesPath(pathname, module.basePath)) ?? null;
+  const isGlobalAccountRoute = pathname === routes.account || pathname === routes.password;
+  const currentModule = directModule ?? (isGlobalAccountRoute
+    ? availableModules.find((module) => module.basePath === rememberedAppPath)
+      ?? availableModules.find((module) => module.code === "agora")
+      ?? null
+    : null);
+  const contextLabel = currentModule?.code === "identity"
+    ? "Workspace"
+    : currentModule?.name ?? "Pastel";
   const currentPage = pageTitle(pathname, currentModule, matches);
 
   useEffect(() => {
