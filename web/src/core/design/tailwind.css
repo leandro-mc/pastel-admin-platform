@@ -8,6 +8,7 @@
 @import "./components/workspace.css";
 @import "./components/app-shell.css";
 @import "./components/agora.css";
+@import "./base.css";
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
