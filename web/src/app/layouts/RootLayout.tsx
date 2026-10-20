@@ -4,7 +4,7 @@ import { RouterProvider } from "react-aria-components";
 import { useAuth } from "@/core/auth";
 import { strings } from "../strings";
 import { routes } from "../routes";
-import { rememberCurrentApp } from "../modules";
+import { rememberCurrentApp, useAccessibleModules } from "../modules";
 import AppFooter from "./AppFooter";
 import TopBar from "../shell/TopBar";
 
@@ -31,11 +31,18 @@ export default function RootLayout() {
   useFocusHeadingOnNavigation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { status } = useAuth();
+  const { status, user } = useAuth();
+  const availableModules = useAccessibleModules();
   const isStandaloneAuth = pathname === routes.login;
+  const accessibleProductKey = availableModules
+    .filter((module) => module.code !== "identity")
+    .map((module) => module.basePath)
+    .join("|");
   useEffect(() => {
-    if (status === "authenticated") rememberCurrentApp(pathname);
-  }, [pathname, status]);
+    if (status === "authenticated" && user?.id) {
+      rememberCurrentApp(pathname, user.id, accessibleProductKey.split("|").filter(Boolean));
+    }
+  }, [pathname, status, user?.id, accessibleProductKey]);
   return (
     <RouterProvider navigate={(to, options) => void navigate(to, options)}>
       <div className="flex min-h-screen flex-col">

@@ -165,7 +165,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
                 || !(x.Permission.Code == IdentityPermissions.DashboardView
-                    || x.Permission.Code.StartsWith("settings.", StringComparison.Ordinal)))
+                    || x.Permission.Code.StartsWith("settings.")))
             .ToListAsync(cancellationToken);
         db.UserPermissionOverrides.RemoveRange(restrictedOverrides);
 
