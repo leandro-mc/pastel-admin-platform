@@ -33,9 +33,11 @@ export function Component() {
   const explicitReturnUrl = isSafeReturnUrl(requestedReturnUrl)
     ? safeReturnUrl(requestedReturnUrl)
     : null;
+  const authenticatedUserId =
+    auth.status === "authenticated" ? auth.user?.id : undefined;
   const returnUrl = explicitReturnUrl
-    ?? (auth.status === "authenticated" && auth.user?.id
-      ? getRememberedAppPath(auth.user.id) ?? routes.home
+    ?? (authenticatedUserId
+      ? getRememberedAppPath(authenticatedUserId) ?? routes.home
       : routes.home);
   const googleError = googleErrorMessage(params.get("error"));
   const registering = params.get("modo") === "registro";
