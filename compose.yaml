@@ -68,7 +68,7 @@ services:
     restart: unless-stopped
     environment:
       NGINX_ENVSUBST_FILTER: "^NGINX_TRUSTED_PROXY_CIDR$"
-      NGINX_TRUSTED_PROXY_CIDR: ${NGINX_TRUSTED_PROXY_CIDR:-172.30.0.0/24}
+      NGINX_TRUSTED_PROXY_CIDR: ${NGINX_TRUSTED_PROXY_CIDR:-192.0.2.0/24}
     depends_on:
       api:
         condition: service_healthy

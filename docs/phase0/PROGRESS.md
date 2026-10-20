@@ -455,3 +455,5 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - No se modificaron pruebas ni se ejecutó CI.
 
 - **Corrección estática de endurecimiento Compose:** se quitó `cap_drop: [ALL]` únicamente del servicio PostgreSQL de desarrollo. El entrypoint oficial puede requerir capacidades de ownership/cambio de usuario al inicializar el volumen; API y web mantienen el drop completo. La base local sigue con `no-new-privileges`, límites, rotación de logs y publicación del puerto solo en `127.0.0.1`. Falta verificar el primer arranque y un volumen existente con Docker.
+
+- **Corrección de confianza de IP en Nginx:** el default de `NGINX_TRUSTED_PROXY_CIDR` y `.env.example` cambia a `192.0.2.0/24` (rango reservado) para que el proxy no acepte por defecto direcciones reenviadas por clientes desde el host/bridge. README y CCR-004 explican cómo configurar la IP/CIDR real del proxy frontal. Esta corrección es estática, sin validar en Nginx/Docker.
