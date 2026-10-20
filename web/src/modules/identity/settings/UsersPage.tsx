@@ -110,11 +110,22 @@ export function Component() {
     : null;
 
   return (
-    <section aria-labelledby="users-title" className={panel}>
-      <div className="flex flex-wrap items-end justify-between gap-3 p-4">
-        <h1 id="users-title" className="text-lg font-semibold text-fg">
-          {t.title}
-        </h1>
+    <section
+      aria-labelledby="users-title"
+      className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6"
+    >
+      <header className="flex flex-wrap items-end justify-between gap-4">
+        <div className="min-w-0">
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">
+            Centro de control / Accesos
+          </p>
+          <h1 id="users-title" className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+            {t.title}
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
+            Administre las cuentas, revise su estado y gestione los accesos de cada persona.
+          </p>
+        </div>
         {hasPermission(identityPermissions.usersCreate) ? (
           <button
             type="button"
@@ -124,83 +135,96 @@ export function Component() {
             {t.create}
           </button>
         ) : null}
-      </div>
+      </header>
 
-      <form
-        role="search"
-        onSubmit={(event) => event.preventDefault()}
-        className="flex flex-wrap items-end gap-3 px-4 pb-4"
-      >
-        <label className="flex min-w-56 flex-1 flex-col gap-1.5 text-sm font-medium text-fg">
-          {t.searchLabel}
-          <input
-            type="search"
-            className={inputClass}
-            placeholder={t.search}
-            value={text}
-            onChange={(event) => setText(event.target.value)}
-          />
-        </label>
-        {roles.data ? (
-          <label className="flex flex-col gap-1.5 text-sm font-medium text-fg">
-            {t.role}
+      <section className={`${panel} overflow-hidden shadow-sm`} aria-label="Directorio de cuentas">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
+          <div>
+            <h2 className="font-semibold text-fg">Cuentas registradas</h2>
+            <p className="mt-0.5 text-sm text-muted">
+              {users.data
+                ? settingsStrings.common.total(users.data.totalCount)
+                : "Busque por nombre, correo, rol o estado."}
+            </p>
+          </div>
+        </header>
+
+        <form
+          role="search"
+          onSubmit={(event) => event.preventDefault()}
+          className="grid gap-3 border-b border-line px-4 py-4 sm:grid-cols-2 lg:grid-cols-[minmax(18rem,1fr)_minmax(10rem,12rem)_minmax(9rem,10rem)_auto]"
+        >
+          <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-fg">
+            {t.searchLabel}
+            <input
+              type="search"
+              className={inputClass}
+              placeholder={t.search}
+              value={text}
+              onChange={(event) => setText(event.target.value)}
+            />
+          </label>
+          {roles.data ? (
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-fg">
+              {t.role}
+              <select
+                className={selectClass}
+                value={values.role}
+                onChange={(event) => update({ role: event.target.value })}
+              >
+                <option value="">{t.allRoles}</option>
+                {roles.data.map((role) => (
+                  <option key={role.id} value={role.name}>
+                    {role.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium text-fg">
+            {t.status}
             <select
               className={selectClass}
-              value={values.role}
-              onChange={(event) => update({ role: event.target.value })}
+              value={values.status}
+              onChange={(event) => update({ status: event.target.value })}
             >
-              <option value="">{t.allRoles}</option>
-              {roles.data.map((role) => (
-                <option key={role.id} value={role.name}>
-                  {role.name}
-                </option>
-              ))}
+              <option value="">{t.allStatuses}</option>
+              <option value="active">{t.active}</option>
+              <option value="blocked">{t.blocked}</option>
             </select>
           </label>
-        ) : null}
-        <label className="flex flex-col gap-1.5 text-sm font-medium text-fg">
-          {t.status}
-          <select
-            className={selectClass}
-            value={values.status}
-            onChange={(event) => update({ status: event.target.value })}
-          >
-            <option value="">{t.allStatuses}</option>
-            <option value="active">{t.active}</option>
-            <option value="blocked">{t.blocked}</option>
-          </select>
-        </label>
-        {filtered ? (
-          <button type="button" className={secondaryButton} onClick={reset}>
-            {settingsStrings.common.clear}
-          </button>
-        ) : null}
-      </form>
+          {filtered ? (
+            <button type="button" className={secondaryButton} onClick={reset}>
+              {settingsStrings.common.clear}
+            </button>
+          ) : null}
+        </form>
 
-      <QueryState
-        isPending={users.isPending}
-        error={users.error}
-        onRetry={() => void users.refetch()}
-      >
-        {users.data && users.data.items.length === 0 ? (
-          <p role="status" className="p-6 text-sm text-muted">
-            {t.empty}
-          </p>
-        ) : users.data ? (
-          <>
-            <UsersTable
-              users={users.data.items}
-              can={hasPermission}
-              onAction={(action, user) => setPending({ action, user })}
-            />
-            <Pager
-              page={users.data.page}
-              pageSize={users.data.pageSize}
-              totalCount={users.data.totalCount}
-            />
-          </>
-        ) : null}
-      </QueryState>
+        <QueryState
+          isPending={users.isPending}
+          error={users.error}
+          onRetry={() => void users.refetch()}
+        >
+          {users.data && users.data.items.length === 0 ? (
+            <p role="status" className="p-6 text-sm text-muted">
+              {t.empty}
+            </p>
+          ) : users.data ? (
+            <>
+              <UsersTable
+                users={users.data.items}
+                can={hasPermission}
+                onAction={(action, user) => setPending({ action, user })}
+              />
+              <Pager
+                page={users.data.page}
+                pageSize={users.data.pageSize}
+                totalCount={users.data.totalCount}
+              />
+            </>
+          ) : null}
+        </QueryState>
+      </section>
 
       {creating ? (
         <CreateUserDialog onClose={() => setCreating(false)} />
