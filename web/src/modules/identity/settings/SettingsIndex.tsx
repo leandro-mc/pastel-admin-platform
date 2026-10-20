@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router";
 import { useAuth } from "@/core/auth";
+import { routes } from "@/core/routes";
 import { identityPermissions, settingsPaths } from "../paths";
 
 const settingsSections = [
