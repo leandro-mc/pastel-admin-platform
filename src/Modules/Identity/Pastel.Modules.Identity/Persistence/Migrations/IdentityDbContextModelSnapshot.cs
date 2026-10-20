@@ -178,6 +178,58 @@ namespace Pastel.Modules.Identity.Persistence.Migrations
                     b.ToTable("audit_logs", "identity");
                 });
 
+            modelBuilder.Entity("Pastel.Modules.Identity.Domain.ExternalLogin", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("EmailAtLink")
+                        .IsRequired()
+                        .HasMaxLength(320)
+                        .HasColumnType("character varying(320)")
+                        .HasColumnName("email_at_link");
+
+                    b.Property<bool>("EmailVerified")
+                        .HasColumnType("boolean")
+                        .HasColumnName("email_verified");
+
+                    b.Property<DateTimeOffset?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_login_at");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)")
+                        .HasColumnName("provider");
+
+                    b.Property<string>("ProviderSubject")
+                        .IsRequired()
+                        .HasMaxLength(255)
+                        .HasColumnType("character varying(255)")
+                        .HasColumnName("provider_subject");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Provider", "ProviderSubject")
+                        .IsUnique();
+
+                    b.HasIndex("UserId", "Provider")
+                        .IsUnique();
+
+                    b.ToTable("external_logins", "identity");
+                });
+
             modelBuilder.Entity("Pastel.Modules.Identity.Domain.ModuleDefinition", b =>
                 {
                     b.Property<Guid>("Id")
@@ -362,6 +414,17 @@ namespace Pastel.Modules.Identity.Persistence.Migrations
                     b.ToTable("user_roles", "identity");
                 });
 
+            modelBuilder.Entity("Pastel.Modules.Identity.Domain.ExternalLogin", b =>
+                {
+                    b.HasOne("Pastel.Modules.Identity.Domain.AppUser", "User")
+                        .WithMany("ExternalLogins")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Pastel.Modules.Identity.Domain.PermissionDefinition", b =>
                 {
                     b.HasOne("Pastel.Modules.Identity.Domain.ModuleDefinition", "Module")
@@ -450,6 +513,8 @@ namespace Pastel.Modules.Identity.Persistence.Migrations
 
             modelBuilder.Entity("Pastel.Modules.Identity.Domain.AppUser", b =>
                 {
+                    b.Navigation("ExternalLogins");
+
                     b.Navigation("PermissionOverrides");
 
                     b.Navigation("RefreshTokens");
