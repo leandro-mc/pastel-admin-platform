@@ -5,7 +5,8 @@
 - **Tipo de trabajo:** Tipo 1; checkpoints coherentes con actualización de progreso.
 - **Áreas protegidas:** `web/src/app/**`, `web/src/core/**`, `docs/DESIGN_SYSTEM.md`, controles de auditoría de diseño, rutas de autenticación y shell compartido.
 - **Evidencia visual:** PDF adjunto «Degradación de la interfaz.pdf» (comparación Antes/Ahora, una página y seis parejas de pantallas).
-- **No autorizado por esta CCR:** modificar la autorización del backend o el modelo de base de datos sin una decisión específica; integrar cambios en `dev` o `main`; abrir o fusionar un PR.
+- **Extensión aprobada por el propietario (2026-10-19):** la conversación de decisiones de producto amplía el alcance para separar Owner/Superuser y Administrator general, restringir privilegios de Workspace/apps, definir Huella como perfil único del propietario, y fijar el contrato seguro del enlace/retorno tras login. Se autoriza aplicar estos contratos únicamente en `refactor/modular-foundation`.
+- **Continúa prohibido:** integrar en `dev` o `main`, abrir o fusionar un PR, o afirmar validación sin ejecutar las pruebas sobre el SHA actual.
 
 ## Hallazgos de la comparación
 
@@ -36,6 +37,11 @@ La comparación del código entre `dev` y `refactor/modular-foundation` confirma
 - **R3 — Sistema visual:** componentes compartidos con variantes, tokens, auditoría ajustada para el enfoque híbrido y estados responsive/accesibles.
 - **R4 — Validación:** Build/QA debe ejecutar compilación, pruebas y recorridos de navegador; el propietario compara capturas con el PDF. No promover a `dev` o `main` sin autorización explícita.
 
-## Decisiones de producto que continúan abiertas
+## Decisiones de producto confirmadas por el propietario (2026-10-19)
 
-Los valores provisionales están en `docs/product/PASTEL-PRODUCT-AND-UX.md`. Ninguno autoriza a inventar permisos en backend: si el comportamiento necesita una nueva política, se registra y se confirma antes de implementarla.
+1. **Owner/Superuser y Administrator general son roles distintos.** El bootstrap establece ambos roles en la cuenta propietaria; solo el bootstrap restaura la membresía Owner. Ambos pueden abrir Workspace mediante `platform.workspace.access`; Owner posee todos los permisos y Administrator se limita a permisos de plataforma (`dashboard.view`, `settings.*` y Workspace), sin acceso de negocio a las apps por defecto.
+2. **Los permisos son por ámbito.** Los roles de una app no se convierten en permisos de plataforma. Los roles y excepciones funcionales se administran dentro de la configuración de su app. Owner puede conceder Cosecha; Administrator general no puede conceder privilegios de Owner, Workspace o Cosecha. Las APIs deben rechazar cualquier intento de eludir el límite, aunque se construya una solicitud manual.
+3. **Huella pertenece únicamente a Owner/Superuser.** No se autoactiva, no aparece en directorios/búsquedas y no se asignan permisos `huella.*` a otras cuentas. El enlace público usará token opaco aleatorio de alta entropía, almacenando solo su hash. Regenerar rota el token e invalida inmediatamente el anterior. La página pública solo sirve el snapshot publicado y debe enviar meta robots y `X-Robots-Tag: noindex,nofollow,noarchive`. Cualquier visitante con el enlace vigente puede leerla sin iniciar sesión.
+4. **Destino tras login.** Un `returnUrl` interno seguro tiene prioridad; en ausencia de uno válido, la primera entrada abre Ágora y los siguientes logins vuelven a la última app de producto usada. La implementación actual guarda la preferencia en el navegador; no se sincroniza entre dispositivos.
+5. **Estado real frente al requisito.** Se han iniciado los límites de roles/permisos en código y se ha actualizado la documentación. El módulo Huella sigue siendo un esqueleto sin entidades/API/ruta pública; token, publicación, revocación/regeneración y noindex son requisitos aprobados, no funcionalidades implementadas todavía.
+6. **Validación pendiente.** Los cambios de esta extensión de CCR aún no están compilados ni probados. Requieren Build/QA, pruebas de autorización y verificación del flujo de login. No integrar en `dev` ni `main` sin nueva autorización expresa.
