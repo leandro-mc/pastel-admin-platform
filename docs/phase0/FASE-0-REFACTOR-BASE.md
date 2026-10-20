@@ -170,35 +170,42 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 
 ## 10. WP7 — Frontend: cimientos, sesión, errores y shell
 
+> **Prioridad UX actualizada por CCR-003 (2026-10-19):** el shell y el acceso deben recuperar el lenguaje visual original y el modelo de subapps. La migración de estilos no autoriza a simplificar la interfaz ni a reemplazar la página inicial por un hub de tarjetas. Fuente funcional y visual: `docs/product/PASTEL-PRODUCT-AND-UX.md` y `docs/DESIGN_SYSTEM.md`.
+
 1. Alias `@/`; instalar las bibliotecas aprobadas (verificar versiones con `npm view`); plugin de Vite `virtual:pastel-modules` filtrado por `PASTEL_MODULES`.
 2. **Router** (`createBrowserRouter`): rutas de plataforma (`/`, `/ingresar`, `/cuenta`, `/configuracion/*`) y las de cada manifiesto bajo su `basePath`, con `lazy`. `errorElement` global y por ruta; páginas 403, 404 y de error con código de soporte. Guardas `RequireAuth` y `RequirePermission`. **Cero navegación por estado `screen`** (F3). Filtros y pestañas de Configuración en la URL.
 3. **Cliente API** (`core/api`): `ApiError` con `status, code, detail, errors, traceId`; **refresco single-flight ante 401**; reintento solo de lecturas idempotentes; **validación con `zod`** de las respuestas (se acabó `as T`); mensajes de red amigables; conserva CSRF/cookies.
 4. **Proveedores:** `AuthProvider`, `QueryClientProvider` (con manejo global de errores inesperados), tema, tamaño de texto, notificaciones.
-5. **Shell:** barra superior (marca `Flower2`, selector de módulos, ayuda, cuenta con tema y tamaño de texto), hub, navegación del módulo (inferior en móvil, lateral en escritorio), migas, "Saltar al contenido", foco al `h1` al cambiar de ruta. Con un solo módulo habilitado, `/` redirige a él.
-6. **Migrar Identity** a `web/src/modules/identity/`: `ProfilePage` → `/cuenta`; `Settings*` → `/configuracion/*` (`usuarios`, `roles`, `modulos`, `auditoria`, `accesos/:tipo/:id`); `ChangePasswordScreen` como ruta obligatoria; `Dashboard` pasa a ser el hub (sin cifras falsas). Sustituir `useSettingsAdmin` (466 líneas, 23 `useState`) por consultas y mutaciones de TanStack Query con invalidación. Conservar el comportamiento del editor de accesos.
+5. **Shell (actualizado por CCR-003):** marca floral y control desplegable de la app actual, nombre/tema dinámicos, ayuda, cuenta, preferencias, footer; navegación lateral en escritorio y navegación táctil en móvil; migas, "Saltar al contenido" y foco al `h1`. `/` conduce a Ágora, no a un hub de tarjetas. Workspace solo aparece para el privilegio global confirmado; las apps disponibles siguen las reglas del catálogo.
+6. **Migrar Identity** a `web/src/modules/identity/`: `ProfilePage` → `/cuenta`; `Settings*` → `/configuracion/*` (`usuarios`, `roles`, `modulos`, `auditoria`, `accesos/:tipo/:id`); `ChangePasswordScreen` como ruta obligatoria; conservar la jerarquía visual original del dashboard, perfil, usuarios y permisos. El catálogo de apps no sustituye el inicio de Ágora. Sustituir `useSettingsAdmin` (466 líneas, 23 `useState`) por consultas y mutaciones de TanStack Query con invalidación. Conservar el comportamiento del editor de accesos.
 7. **Textos:** normalizar al tono predeterminado de `DESIGN_SYSTEM.md` §8 (sin voseo, salvo que la ficha o instrucciones específicas del módulo autoricen una voz más personal), cadenas en `strings.ts`; corregir también los mensajes del backend y probar la regla predeterminada y sus excepciones documentadas.
 8. `core/log` (envoltorio) que reporta errores a `/api/client-errors`; ESLint `no-console`.
 
-## 11. WP8 — Migración correcta a Tailwind CSS y sistema de diseño (prioridad 2)
+## 11. WP8 — Recuperación visual + sistema de diseño Tailwind CSS 4 (prioridad máxima, CCR-003)
 
-**Regla:** utilidades de Tailwind en JSX. Los patrones compartidos son **componentes React** con variantes (`class-variance-authority`, `clsx`, `tailwind-merge` mediante un `cn()`), no clases `@apply`. `@apply` queda **solo** para reseteos de elementos, contenido Markdown (`prose`) y selectores complejos inevitables, en `core/design/base.css`.
+**Objetivo:** recuperar la calidad visual anterior antes de construir más componentes o continuar la fase. No se acepta una migración de estilos que reduzca la jerarquía, los controles o la identidad del producto.
 
-1. **Medir antes:** crea `scripts/tailwind-audit.mjs` (extrae los literales de `className` y calcula: atributos `className`, utilidades en JSX, clases semánticas definidas y cuántas se usan una sola vez, líneas de CSS y de `@apply`, clases sin uso) y guarda el resultado "antes" y "después" en `PROGRESS.md`. Referencia del análisis: 346 `className`, 0 utilidades, 217 clases semánticas (146 de un solo uso), 2 209 líneas, 592 con `@apply`.
-2. **Tokens con Tailwind v4:** `core/design/tokens.css` define los neutros, estados y módulos como variables; `@theme inline` los expone como utilidades (`bg-surface`, `text-fg`, `border-line`, `bg-accent`, `text-accent-strong`, `bg-accent-soft`, …). El color de cada módulo cambia con `data-module` (valores exactos de `DESIGN_SYSTEM.md`, claro y oscuro), así `bg-accent` ya es el color del módulo. Modo oscuro por variables (con `@custom-variant dark` ligado a `data-theme`); `dark:` solo donde sea imprescindible. Verifica la sintaxis contra la documentación vigente de Tailwind v4.
-3. **Migración por funcionalidad** (un commit por funcionalidad, no un PR gigante): Auth → Cuenta → Shell/Hub → Configuración (usuarios, roles, módulos, auditoría, editor de accesos). En cada una: las 146 clases de un solo uso pasan a utilidades en el JSX; las ~67 compartidas pasan a componentes de `core/ui`. Capturas antes/después (claro/oscuro, móvil/escritorio) con un script de Playwright (`scripts/screenshots`) para verificar paridad visual.
-4. **Kit de UI v0** (`core/ui`, sobre `react-aria-components`): `Button`, `TextField`, `NumberField`, `Select`, `Checkbox`, `RadioGroup`, `DatePicker`, `Dialog`/`ConfirmDialog`, `Toast`, `PageHeader`, `EmptyState`, `Skeleton`, `DataList` (tabla en escritorio, tarjetas en móvil), `Tabs`, `Badge` (icono + texto), `FormField` con react-hook-form. Cada componente con prueba y `vitest-axe`.
-5. **Diálogos (F1):** todos los modales pasan al kit (o a `<dialog>` nativo): `Escape` cierra, foco atrapado, foco devuelto al origen, título accesible. Pruebas de teclado.
-6. **Accesibilidad (F4):** contraste (incluido `--muted`), foco visible ≥ 3 px, 320 px, zoom 200 %, `prefers-reduced-motion`, objetivos táctiles ≥ 44 px. Inter autoalojada.
-7. **Herramientas:** `prettier-plugin-tailwindcss` (orden de clases). Se elimina `web/src/styles.css`.
+**Diagnóstico de partida:** el PDF «Degradación de la interfaz.pdf» ofrece seis comparativas Antes/Ahora; el código de la interfaz anterior sigue disponible en `dev` (`web/src/styles.css`, `components/AuthScreen.tsx`, `Dashboard.tsx`, `WorkspaceLayout.tsx`, `ProfilePage.tsx` y páginas de configuración). La reimplementación de `refactor/modular-foundation` eliminó la composición anterior; no es una limitación demostrada de Tailwind.
 
-**Metas medibles (las verifica QA con `tailwind-audit`):**
-- `styles.css` eliminado; CSS solo en `core/design/{tokens,base,module-themes}.css` + el archivo de entrada de Tailwind; ningún CSS > 400 líneas.
-- `@apply` ≤ 60 líneas en total y solo en `base.css`.
-- 0 clases semánticas de componente definidas en CSS (lista de excepciones documentada).
-- Todos los componentes de `core/ui` y de Identity usan utilidades; `className` con utilidades en ≥ 95 % de los atributos.
-- Sin valores de color sueltos fuera de los tokens; `check-design.mjs` limpio.
+1. **Fuente de verdad y decisiones:** seguir `docs/product/PASTEL-PRODUCT-AND-UX.md`, `docs/DESIGN_SYSTEM.md` y CCR-003. La selección de apps, privilegio global, catálogo y reglas de Huella/Cosecha no se implementan como autorización nueva sin confirmar las preguntas abiertas del propietario.
+2. **Acceso/registro:** recuperar composición editorial de dos columnas, mensaje de marca, beneficios, ilustración floral sutil, tarjeta de formulario, mostrar/ocultar contraseña, selector de tema y footer. Mantener las rutas, `returnUrl`, errores y proveedores disponibles desde `/api/auth/options`.
+3. **Shell/app:** marca floral; selector de app, nombre dinámico, navegación lateral y móvil, ayuda, cuenta, tema, tamaño de texto y footer. `/` conduce a Ágora, nunca a una cuadrícula central de tarjetas. El nombre y el tema corresponden a la app actual; pulsar su marca devuelve al inicio de esa app.
+4. **Pantallas:** recuperar bienvenida/inicio, cuenta/seguridad, directorio de usuarios, roles, permisos, formularios y diálogos a partir de la referencia anterior, preservando APIs y datos actuales. Mejorar la organización de permisos para distinguir agrupaciones, herencia y efectos. No crear datos ficticios ni simular persistencia aún no implementada.
+5. **Tailwind 4 + CSS gobernado:** utilidades en JSX para layout, spacing, responsive y estados comunes; componentes compartidos en `core/ui`; tokens obligatorios para colores/temas; se permite CSS pequeño en `core/design/components/*.css` para composiciones complejas de marca. CSS de componentes usa tokens, no colores sueltos; sin CSS global disperso. `@apply` sigue limitado a `core/design/base.css`.
+6. **Auditoría:** adaptar `scripts/tailwind-audit.mjs` para permitir clases semánticas exclusivamente en `core/design/components/`, exigir que se usen y mantener límite de 400 líneas por archivo CSS; utilidades en ≥ 95 % de los atributos `className`; `@apply` ≤ 60 líneas en `base.css` y cero fuera. `check-design.mjs` sigue bloqueando morados, símbolos de IA y valores de color fuera de tokens.
+7. **Kit UI:** extraer patrones compartidos en `core/ui` después de restaurar las composiciones representativas. Como mínimo: botones, campos, selectores, checkbox, diálogo, toast/alerta, encabezados, paneles, tabs, badges y estados de carga/vacío/error. Los componentes incluyen sus estados accesibles; no empezar por un kit genérico que borre la identidad de cada pantalla.
+8. **Accesibilidad:** contraste, foco visible ≥ 3 px, teclado, objetivos táctiles ≥ 44 px, 320 px, zoom 200 %, `prefers-reduced-motion`, etiquetas y errores asociados, componentes react-aria donde corresponda. Inter autoalojada.
+9. **Evidencia visual:** comparar con el PDF y el código antiguo disponible en `dev`. Guardar capturas en claro/oscuro, escritorio/móvil de login/registro, inicio, usuarios, permisos/roles y cuenta. Build/QA debe recorrer los flujos en navegador; el propietario valida el resultado. CI verde por sí solo no implica aceptación visual.
+10. **Framework:** mantener Tailwind por ahora. Solo considerar otra tecnología tras una comparación documentada de una pantalla representativa (fidelidad, accesibilidad, mantenibilidad, legibilidad de JSX, tamaño CSS y experiencia de agentes).
 
-**Aceptación (la verifica Build):** lint, build, test y `format:check` verdes; paridad visual documentada. **C3.**
+**Criterios medibles (los verifica Build/QA):**
+- La página raíz no es el hub de tarjetas; Ágora es la entrada por defecto y no removible.
+- Se restauran composición y controles originales en acceso, shell, cuenta y administración.
+- (\geq)95 % de atributos `className` con utilidades; las clases semánticas aparecen solo en `core/design/components/` y todas se usan.
+- No hay CSS > 400 líneas; `@apply` ≤ 60 líneas y solo en `base.css`; sin colores sueltos ni morados/símbolos de IA.
+- Capturas claras y legibles en temas claro/oscuro, escritorio y móvil, más recorrido de teclado/zoom.
+
+**Aceptación (Build/QA y propietario):** build, lint, tests, auditorías y validación visual documentada; no declarar paridad visual sin comparativas. **C3 actualizado por CCR-003.**
 
 ## 12. WP9 — Infraestructura, CI y repositorio (D1, D2, G1–G3)
 
