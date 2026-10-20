@@ -9,7 +9,8 @@ export default {
   icon: Footprints,
   order: 50,
   basePath: "/huella",
-  access: "public",
+  // La app de edición es privada; la vista compartida por enlace será una ruta pública independiente.
+  access: "permission",
   requiredPermission: "huella.access",
   nav: [],
   routes: [{ index: true, lazy: () => import("./pages/HomePage") }],
