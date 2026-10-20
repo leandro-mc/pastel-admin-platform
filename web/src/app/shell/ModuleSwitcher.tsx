@@ -18,7 +18,7 @@ import { barButton, menuItem, popover } from "./styles";
 export default function ModuleSwitcher() {
   const available = useAccessibleModules();
   const { pathname } = useLocation();
-  if (available.length === 0) return null;
+  if (available.length < 2) return null;
 
   const current = available.find(
     (module) =>
