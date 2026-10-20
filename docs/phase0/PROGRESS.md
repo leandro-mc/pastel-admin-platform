@@ -44,7 +44,7 @@ Archivos clave del checkpoint: `web/src/modules/identity/pages/LoginPage.tsx`, `
 | WP7 — Cimientos de frontend/sesión/errores/shell | **Recuperación visual amplia y contratos de destino tras login actualizados; sin validar el HEAD actual.** Workspace y roles usan permiso global explícito. | Build/QA en navegador y pruebas; resolver regresiones de shell/rutas/retorno, asegurar que el selector refleje acceso real y no un catálogo simulado. |
 | WP8 — Recuperación visual + sistema de diseño Tailwind | **Implementación visual amplia publicada, enfoque Tailwind híbrido; sin compilar desde estos cambios.** | Build/QA sobre el HEAD actual; Prettier, ESLint, TypeScript/Vite, pruebas, `check-design`, `tailwind-audit`; capturas antes/después en ambas apariencias, escritorio/móvil; corregir regresiones y solicitar aprobación visual del propietario. |
 | WP9 — Infraestructura/CI/repositorio | **Implementación amplia; dependencias y Build pendientes** | Infraestructura/CI/manual, matriz por subapp y CodeQL están definidos. Falta validar jobs, proyecto de pruebas de arquitectura, y aprobar/instalar herramientas de accesibilidad en [CCR-006](../requests/CCR-006-frontend-accessibility-and-test-tooling.md). |
-| WP10 — Testabilidad/documentación/datos | **Parcial — documentación en esta tanda** | Guía de subset builds, ADR 0001–0009 y datos para Build; faltan sembrador de Testing ([CCR-005](../requests/CCR-005-testing-only-seeder.md)), herramientas/pruebas frontend ([CCR-006](../requests/CCR-006-frontend-accessibility-and-test-tooling.md)) y validación Build/QA. |
+| WP10 — Testabilidad/documentación/datos | **Parcial — documentación en esta tanda** | Guía de subset builds, ADR 0001–0009 y datos para Build; faltan sembrador de Testing ([CCR-005](../requests/CCR-005-testing-only-seeder.md)), herramientas/pruebas frontend ([CCR-006](../requests/CCR-006-frontend-accessibility-and-test-tooling.md)), fichas Identity ([CCR-007](../requests/CCR-007-identity-module-documentation.md)) y validación Build/QA. |
 
 ## WP2 — Resultado conocido y limitaciones
 
@@ -465,3 +465,19 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 
 - **Auditoría de fronteras:** se añadió `scripts/check-module-boundaries.mjs`, sin dependencias, para detectar imports alias/relativos entre subapps, imports directos de subapps desde `core`/shell, referencias de implementación .NET entre módulos y ausencia del contrato de descubrimiento `IPastelModule`/`PastelModuleAttribute`. `scripts/test-frontend.ps1` ejecuta la auditoría sobre la copia temporal de CI.
 - **Estado de validación:** el script es código nuevo y **no se ha ejecutado**. Build debe probarlo sobre el HEAD; si revela violaciones reales, corregirlas por lote antes de despachar CI.
+
+- **Corrección del smoke de CI:** se eliminó la excepción que configuraba `NGINX_TRUSTED_PROXY_CIDR=172.30.0.0/24` solo para el job de contenedor. El smoke usa ahora el default seguro `192.0.2.0/24`, igual que el entorno local, para no confiar en un `X-Forwarded-For` falsificado desde la conexión cliente. La política sigue sin despacho automático y no se ejecutó.
+
+## WP10 — Inventario de documentación Identity pendiente (2026-10-20)
+
+- En el árbol publicado se comprobó que faltan `src/Modules/Identity/MODULE.md`, `web/src/modules/identity/MODULE.md` y `docs/modules/IDENTITY.md`. No se crearon porque Identity y sus documentos de contrato están dentro de áreas protegidas por `AGENTS.md`.
+- La [CCR-007](../requests/CCR-007-identity-module-documentation.md) detalla el contenido solicitado para cada ficha. Queda pendiente de autorización específica del propietario antes de escribir en esas rutas.
+- El documento de pruebas `docs/testing/plans/FASE-0-TEST-PLAN.md`, caso F0-I07, todavía describe triggers push/PR que no coinciden con CI manual. No lo edité porque corresponde a QA; el propietario del plan debe actualizar la descripción operativa sin quitar los controles exigidos.
+
+## Datos para pruebas
+
+- **Arranque local:** copie `.env.example` a `.env`, cambie los secretos de desarrollo por valores nuevos generados en su equipo y ejecute `docker compose up -d --build`. Compruebe `docker compose ps` y `docker compose logs --tail 150 api web db`.
+- **Cuenta bootstrap:** correo predeterminado local `admin@pastel.local`; la contraseña viene exclusivamente de `BOOTSTRAP_ADMIN_PASSWORD` en el archivo `.env` local. No se copia una contraseña real a esta bitácora. La cadena ilustrativa que pueda aparecer en `.env.example` solo sirve en una máquina de desarrollo; no debe usarse en ambientes compartidos, y se debe reemplazar antes de arrancar. El primer inicio exige cambiar la contraseña.
+- **Límite de cobertura:** no hay una cuenta Member/QA sembrada confirmada en el árbol actual. El bootstrap es privilegiado y no comprueba el aislamiento de permisos de usuario estándar. El sembrador exclusivo para Development/Testing está pendiente en [CCR-005](../requests/CCR-005-testing-only-seeder.md); no asuma que la cuenta existe hasta que se autorice, implemente y valide.
+- **Base de integración:** `scripts/test-database.ps1` usa la base reservada `pastel_integration_tests`. El script verifica que no se confunda con la base normal. No ejecute las pruebas apuntando a la base de desarrollo; no utilice `docker compose down -v` como primer paso de diagnóstico porque borra los datos del volumen local.
+- **Validación de este checkpoint:** estos comandos y las referencias se documentan para Build/QA; no se ejecutaron en este entorno.
