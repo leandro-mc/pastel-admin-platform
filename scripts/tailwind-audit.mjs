@@ -88,8 +88,13 @@ for (const file of cssFiles) {
     .replace(/"[^"]*"/g, '""');
   applyLines += text.split("\n").filter((l) => l.includes("@apply")).length;
   if (lines > 400) longCss.push(`${relative(root, file)} (${lines})`);
-  const selectors = text.matchAll(/\.([A-Za-z_][\w-]*)(?=[\s,.:{[>+~)]|$)/g);
-  for (const s of selectors) defined.add(s[1]);
+  const isComponentCss = file.startsWith(componentCssRoot + sep);
+  const selectors = text.matchAll(/\\.([A-Za-z_][\\w-]*)(?=[\\s,.:{[>+~)]|$)/g);
+  for (const s of selectors) {
+    defined.add(s[1]);
+    if (isComponentCss) componentDefined.add(s[1]);
+    else definedOutsideComponents.add(s[1]);
+  }
 }
 
 let classNameAttrs = 0;
