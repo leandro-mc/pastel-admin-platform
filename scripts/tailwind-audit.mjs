@@ -4,9 +4,10 @@
 // líneas de CSS y de @apply, clases definidas sin uso y archivos CSS de más de 400 líneas.
 // Es una heurística estática: no ejecuta la app ni interpreta clases construidas dinámicamente.
 import { readdirSync, readFileSync, statSync } from "node:fs";
-import { join, relative } from "node:path";
+import { join, relative, sep } from "node:path";
 
 const root = join(import.meta.dirname, "..", "web", "src");
+const componentCssRoot = join(root, "core", "design", "components");
 
 function walk(dir, exts, out = []) {
   for (const name of readdirSync(dir)) {
@@ -74,6 +75,8 @@ let cssLines = 0;
 let applyLines = 0;
 const longCss = [];
 const defined = new Set();
+const componentDefined = new Set();
+const definedOutsideComponents = new Set();
 for (const file of cssFiles) {
   const raw = readFileSync(file, "utf8");
   const lines = raw.split("\n").length;
@@ -119,6 +122,10 @@ const result = {
   semanticClassesDefined: defined.size,
   semanticClassesUsedOnce: semanticUsedOnce,
   semanticClassesUnused: unused.length,
+  semanticClassesOutsideComponents: definedOutsideComponents.size,
+  componentClassesDefined: componentDefined.size,
+  unusedComponentClasses: [...componentDefined].filter((c) => !usage.has(c)).length,
+  componentCssFiles: cssFiles.filter((file) => file.startsWith(componentCssRoot + sep)).length,
   cssFiles: cssFiles.length,
   cssLines,
   applyLines,
@@ -130,7 +137,8 @@ const violations = [];
 
 if (checkMode) {
   if (result.utilityPercent < 95) violations.push(`utilityPercent es ${result.utilityPercent}; el minimo es 95.`);
-  if (result.semanticClassesDefined !== 0) violations.push(`semanticClassesDefined es ${result.semanticClassesDefined}; se esperaba 0.`);
+  if (result.semanticClassesOutsideComponents !== 0) violations.push(`Hay ${result.semanticClassesOutsideComponents} clases semanticas fuera de core/design/components/.`);
+  if (result.unusedComponentClasses !== 0) violations.push(`Hay ${result.unusedComponentClasses} clases de componente definidas pero sin uso.`);
   if (result.applyLines > 60) violations.push(`applyLines es ${result.applyLines}; el maximo es 60.`);
   if (result.cssFilesOver400Lines.length > 0) violations.push(`Hay archivos CSS con mas de 400 lineas: ${result.cssFilesOver400Lines.join(", ")}.`);
 }
