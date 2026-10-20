@@ -3,7 +3,6 @@
 // Uso: node scripts/check-module-boundaries.mjs
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
-import { pathToFileURL } from "node:url";
 
 const repoRoot = resolve(import.meta.dirname, "..");
 const webModulesRoot = join(repoRoot, "web", "src", "modules");
@@ -125,6 +124,3 @@ if (findings.length) {
   console.log("check-module-boundaries: sin hallazgos de imports entre subapps ni referencias de proyecto cruzadas.");
 }
 
-if (import.meta.url !== pathToFileURL(process.argv[1] ?? "").href) {
-  // El módulo también puede importarse en futuras herramientas sin ejecutar el auditor.
-}

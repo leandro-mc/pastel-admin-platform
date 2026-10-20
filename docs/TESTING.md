@@ -5,7 +5,7 @@
 Ejecute desde la raíz con PowerShell y Docker Desktop iniciado:
 
 - `.\scripts\test-backend.ps1`: restaura, busca paquetes NuGet vulnerables, verifica formato .NET, compila Release y ejecuta pruebas unitarias. Falla si NuGet informa paquetes vulnerables.
-- `.\scripts\test-frontend.ps1`: instala con `npm ci`, ejecuta `npm audit --audit-level=high`, verifica Prettier y ESLint, compila TypeScript/Vite y ejecuta pruebas Node de diseño y auditorías Tailwind.
+- `.\scripts\test-frontend.ps1`: instala con `npm ci`, ejecuta `npm audit --audit-level=high`, verifica Prettier y ESLint, compila TypeScript/Vite, ejecuta `scripts/check-module-boundaries.mjs` para fronteras frontend/backend, y corre las comprobaciones estáticas de diseño/Tailwind.
 - `.\scripts\test-database.ps1`: inicia solo PostgreSQL y ejecuta las pruebas HTTP que requieren una base real.
 - `.\scripts\test-all.ps1`: ejecuta los tres bloques y presenta el resumen conjunto.
 - `.\scripts\format-frontend.ps1`: aplica Prettier dentro de Docker y copia de vuelta solo los archivos administrados por el formateador. Modifica el working tree; revise el diff después.
