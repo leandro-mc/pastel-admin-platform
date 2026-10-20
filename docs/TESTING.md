@@ -4,10 +4,13 @@
 
 Ejecute desde la raiz del repositorio con PowerShell y Docker Desktop iniciado:
 
+- **.\scripts\format-frontend.ps1** — aplica Prettier dentro de Docker y copia de vuelta solo los archivos que administra. Modifica el working tree; revise git diff antes de crear un commit.
 - **.\scripts\test-backend.ps1** — restaura, verifica formato .NET, compila en Release y ejecuta pruebas unitarias.
 - **.\scripts\test-frontend.ps1** — instala exactamente lo declarado en package-lock, verifica Prettier y ESLint, compila TypeScript/Vite y ejecuta las auditorias de diseño/Tailwind.
 - **.\scripts\test-database.ps1** — inicia solo PostgreSQL y ejecuta las pruebas HTTP que necesitan una base real.
 - **.\scripts\test-all.ps1** — ejecuta los tres bloques y presenta un resumen único aunque una de las partes falle.
+
+En la línea base comprobada antes de agregar estos scripts, npm run format:check informó 112 archivos sin formato. Ejecute primero **.\scripts\format-frontend.ps1** para aplicar el formato y después **.\scripts\test-frontend.ps1** para verificarlo. La comprobación no se salta ni acepta esa deuda.
 
 Los comandos de .NET y Node se ejecutan en contenedores (mcr.microsoft.com/dotnet/sdk:10.0 y node:24-alpine). El repositorio se monta en solo lectura y cada contenedor usa una copia temporal, limpia de .env, .git, node_modules, bin y obj. Los resultados TRX se guardan en la carpeta temporal del sistema, fuera del repositorio.
 
