@@ -1,36 +1,38 @@
 namespace Pastel.Modules.Identity.Common;
 
 /// <summary>
-/// <c>returnUrl</c> solo puede ser una ruta interna de la aplicación (empieza por «/», sin esquema, host, «//» ni «/\»,
-/// también tras decodificar) cuyo primer segmento sea una sección conocida. Todo lo demás vuelve a «/» (evita redirección abierta).
+/// Valida retornos de navegación internos cuyo primer segmento corresponda a una ruta conocida.
+/// La marca RememberLastApp viaja solo dentro del estado protegido de OAuth, no en una URL pública.
 /// </summary>
 internal static class ReturnUrl
 {
     private const int MaxLength = 512;
+    public const string RememberLastApp = "__pastel_remember_last_app__";
 
-    // Primer segmento de las rutas del shell: ver docs/ARCHITECTURE.md y los módulos de web/src/modules.
     private static readonly HashSet<string> KnownFirstSegments = new(StringComparer.Ordinal)
     {
         "inicio", "configuracion", "cuenta", "brisa", "balance", "agora", "cosecha", "huella",
     };
 
-    public static string Sanitize(string? value)
+    public static bool IsSafe(string? value)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Length > MaxLength)
         {
-            return "/";
+            return false;
         }
 
         var decoded = SafeUnescape(value);
         if (decoded is null || !IsInternalPath(value) || !IsInternalPath(decoded))
         {
-            return "/";
+            return false;
         }
 
         var path = decoded.Split('?', '#')[0];
         var first = path.Split('/', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault();
-        return first is null || KnownFirstSegments.Contains(first) ? value : "/";
+        return first is null || KnownFirstSegments.Contains(first);
     }
+
+    public static string Sanitize(string? value) => IsSafe(value) ? value! : "/";
 
     private static string? SafeUnescape(string value)
     {

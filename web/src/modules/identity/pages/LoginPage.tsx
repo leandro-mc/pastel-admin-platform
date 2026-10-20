@@ -165,7 +165,7 @@ export function Component() {
               </>
             ) : (
               <>
-                {options.data.google ? <GoogleButton returnUrl={returnUrl} /> : null}
+                {options.data.google ? <GoogleButton returnUrl={explicitReturnUrl ?? undefined} /> : null}
                 {options.data.localLogin ? (
                   options.data.google && !showPassword ? (
                     <button type="button" onClick={() => setShowPassword(true)} className={linkButton}>

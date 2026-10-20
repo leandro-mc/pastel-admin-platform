@@ -1,5 +1,16 @@
 import { routes } from "@/core/routes";
 
+const knownFirstSegments = new Set([
+  "inicio",
+  "configuracion",
+  "cuenta",
+  "brisa",
+  "balance",
+  "agora",
+  "cosecha",
+  "huella",
+]);
+
 /**
  * Valida un retorno interno. Rechaza destinos externos, rutas dobles, backslashes
  * y la propia pantalla de login para evitar bucles de navegación.
@@ -24,6 +35,8 @@ export function isSafeReturnUrl(value: string | null): value is string {
 
   const destination = (decoded.split(/[?#]/, 1)[0] || routes.home).replace(/\/+$/, "") || "/";
   if (destination.toLowerCase() === routes.login.toLowerCase()) return false;
+  const firstSegment = destination.split("/").filter(Boolean)[0];
+  if (firstSegment && !knownFirstSegments.has(firstSegment)) return false;
 
   return true;
 }
