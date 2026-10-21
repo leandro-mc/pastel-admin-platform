@@ -42,7 +42,17 @@ find /tmp/work/web/vite -type f -name '*.ts' -exec sh -c '
   done
 ' sh {} +
 
-for file in vite.config.ts eslint.config.js package.json package-lock.json .prettierrc.json; do
+
+find /tmp/work/web/tests -type f \\( -name '*.ts' -o -name '*.tsx' \\) -exec sh -c '
+  for source do
+    relative=${source#/tmp/work/web/tests/}
+    destination="/repo/web/tests/$relative"
+    mkdir -p "$(dirname "$destination")"
+    cp -p "$source" "$destination"
+  done
+' sh {} +
+
+for file in vite.config.ts vitest.config.ts playwright.config.ts eslint.config.js package.json package-lock.json .prettierrc.json; do
   if [ -f "/tmp/work/web/$file" ]; then
     cp -p "/tmp/work/web/$file" /repo/web/
   fi

@@ -50,6 +50,7 @@ public sealed class IdentityApiFactory : WebApplicationFactory<global::Program>
                 ["Jwt:SigningKeyId"] = "integration-test-key",
                 ["Auth:Local:Enabled"] = "true",
                 ["Auth:Local:SelfRegistrationEnabled"] = "false",
+                ["TestingSeed:Enabled"] = "true",
                 ["ReverseProxy:TrustedNetworks"] = "127.0.0.0/8;::1/128;172.16.0.0/12",
                 ["App:PublicBaseUrl"] = "http://localhost"
             });

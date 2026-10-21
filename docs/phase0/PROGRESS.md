@@ -147,7 +147,7 @@ Sesión iniciada sobre `origin/refactor/modular-foundation` `0959ff1`. El trabaj
 
 - [x] **Modelo de datos (§8.2):** `ExternalLogin` y `identity.external_logins` (`id`, `user_id`, `provider`, `provider_subject`, `email_at_link`, `email_verified`, `created_at`, `last_login_at`; único `(provider, provider_subject)` y único `(user_id, provider)`). **Build/QA añadió** una migración incremental y sincronizó el snapshot; validación de compilación y aplicación pendiente.
 - [x] **Autenticación (§8.1):** `GoogleSignInSetup` registra `ExternalCookie` (`__Host-pastel_ext`, `HttpOnly`, `Secure`, `Lax`, 5 min) siempre, y `Google` solo con `Authentication:Google:ClientId/ClientSecret`. PKCE explícito, `SaveTokens=false`, ámbitos `openid email profile`, callback `/api/auth/google/callback`, cookie de correlación `Lax`+`Secure`, `OnRemoteFailure` redirige a `/ingresar?error=google_denied|failed` sin registrar `code`/`state`. `Microsoft.AspNetCore` sigue en `Warning`.
-- [x] **`returnUrl` seguro:** `Common/ReturnUrl.Sanitize` (ruta interna, sin `//` ni `/\`, también decodificada, primer segmento conocido).
+- [x] **`returnUrl` seguro:** `Common/ReturnUrl.Sanitize` (ruta interna, sin `//` ni `/`, también decodificada, primer segmento conocido).
 - [x] **`/api/auth/options`:** `google` es `true` si el esquema `Google` está registrado.
 - [x] **URL pública:** `/api/auth/google` se añadió a `PublicBaseUrlOptions.PathPrefixes`; el `redirect_uri` sale de `App:PublicBaseUrl`.
 - **Gancho para Build/QA (proveedor falso):** registrar en `ConfigureTestServices` un `AuthenticationHandler` remoto con el nombre `ExternalSchemes.Google` (`"Google"`) cuyo `Challenge` firme una identidad con `ClaimTypes.NameIdentifier` (sub), `ClaimTypes.Email`, `ClaimTypes.Name` y `email_verified` en `ExternalCookie` y redirija a `/api/auth/google/complete`; sin credenciales reales, `options.google` pasa a `true`.
@@ -259,7 +259,7 @@ El trabajo local de esta sesión sobre `3a4febe` (cliente API y `core/log`) esta
 - [~] **WP7.6a — capa de datos de Identity** (`web/src/modules/identity/api/`): `schemas.ts` (zod de usuarios, roles, permisos, módulos, auditoría, página `{ items, page, pageSize, totalCount }`, excepciones con `"Grant"`/`"Deny"`, restablecimiento de contraseña), `keys.ts` (claves de TanStack Query y `toQuery`), `queries.ts` (`useUsers` y `useAudit` con filtros y paginación del servidor, `useRoles`, `usePermissionCatalog`, `useModules`, `useUserPermissions`) y `mutations.ts` (crear usuario, guardar roles y excepciones, bloquear/desbloquear, restablecer contraseña, crear rol, permisos de rol, activar módulo; cada una invalida lo que cambia). No existe «crear módulo» (retirado en WP3). Validado: `tsc -b`, `eslint`, Prettier. **Sin probar y sin usar aún**: nada importa estos hooks hasta que se escriban las pantallas.
   **Decisión:** `GET /api/admin/users` y `/audit` ya devuelven páginas, así que el cliente heredado (que esperaba listas planas y `?take=`) **ya no funciona contra el backend actual**; la búsqueda local desaparece (la hace el servidor). `status` solo admite `active` o `blocked`.
 - **Siguiente acción:** WP7.6b `/ingresar` (Google + contraseña según `/api/auth/options`, `?error=`, `returnUrl`), luego `/cuenta` y `/cuenta/contrasena`, Configuración (usuarios, roles, módulos, auditoría, `accesos/:tipo/:id`), `router.tsx` y cambio de `main.tsx`.
-- [~] **WP7.6b (en curso) — base de las pantallas de Identity:** las rutas de plataforma pasaron de `app/routes.ts` a `core/routes.ts` (`app/routes.ts` las re-exporta; un módulo solo puede importar de `@/core/*`). Nuevos en `modules/identity/`: `strings.ts` (textos con trato de usted y mapa de los códigos `?error=` de Google), `styles.ts` (clases comunes, pasan al kit de UI en WP8), `returnUrl.ts` (`safeReturnUrl`: solo rutas internas, rechaza `//`, `/\` y versiones decodificadas) y `components/TextField.tsx` (etiqueta visible, ayuda y error con `aria-describedby`, botón mostrar/ocultar para contraseñas; compatible con `register` de react-hook-form). Validado: `tsc -b`, `eslint`, Prettier. Falta: `LoginPage`.
+- [~] **WP7.6b (en curso) — base de las pantallas de Identity:** las rutas de plataforma pasaron de `app/routes.ts` a `core/routes.ts` (`app/routes.ts` las re-exporta; un módulo solo puede importar de `@/core/*`). Nuevos en `modules/identity/`: `strings.ts` (textos con trato de usted y mapa de los códigos `?error=` de Google), `styles.ts` (clases comunes, pasan al kit de UI en WP8), `returnUrl.ts` (`safeReturnUrl`: solo rutas internas, rechaza `//`, `/` y versiones decodificadas) y `components/TextField.tsx` (etiqueta visible, ayuda y error con `aria-describedby`, botón mostrar/ocultar para contraseñas; compatible con `register` de react-hook-form). Validado: `tsc -b`, `eslint`, Prettier. Falta: `LoginPage`.
 
 ## WP7.6c — Bitácora (Dev, Tipo 1, sesión sobre `f9db0ff`)
 
@@ -543,10 +543,10 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 
 ## Build/QA — corrección de codificación de migración (2026-10-20)
 
-- **Causa confirmada por inspección del blob de GitHub:** \`src/Modules/Identity/Pastel.Modules.Identity/Persistence/Migrations/20261019050514_InitialIdentity.cs\` comenzaba con BOM UTF-8 (U+FEFF), que explica el hallazgo \`CHARSET\` de \`dotnet format\` reportado por el propietario.
+- **Causa confirmada por inspección del blob de GitHub:** `src/Modules/Identity/Pastel.Modules.Identity/Persistence/Migrations/20261019050514_InitialIdentity.cs` comenzaba con BOM UTF-8 (U+FEFF), que explica el hallazgo `CHARSET` de `dotnet format` reportado por el propietario.
 - **Corrección:** se vuelve a guardar la misma migración como UTF-8 sin BOM y con finales LF; no cambia su contenido C# ni el esquema de base de datos.
-- **Pendiente:** los errores \`ENDOFLINE\` de muchos otros archivos aparecen en el working tree Windows reportado, aunque los blobs de GitHub inspeccionados usan LF. Tras actualizar la rama, comprobar que no haya cambios rastreados pendientes y normalizar la copia de trabajo de forma segura antes de repetir \`dotnet format\`; no sobrescribir cambios locales sin revisarlos.
-- **Validación:** inspección estática de codificación/newlines del contenido obtenido por GitHub; no se ejecutó \`dotnet format\` ni build.
+- **Pendiente:** los errores `ENDOFLINE` de muchos otros archivos aparecen en el working tree Windows reportado, aunque los blobs de GitHub inspeccionados usan LF. Tras actualizar la rama, comprobar que no haya cambios rastreados pendientes y normalizar la copia de trabajo de forma segura antes de repetir `dotnet format`; no sobrescribir cambios locales sin revisarlos.
+- **Validación:** inspección estática de codificación/newlines del contenido obtenido por GitHub; no se ejecutó `dotnet format` ni build.
 
   
 ## Build/QA — scaffold frontend preparado (2026-10-20)
@@ -564,3 +564,30 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] `scripts/test-frontend.ps1` ejecutará `npm run test` después del build para que las pruebas Vitest formen parte de la validación.
 - [ ] **Bloqueo de instalación:** el import `eslint-plugin-jsx-a11y` y los scripts `vitest`/`playwright` todavía requieren que el propietario regenere `web/package-lock.json` con el comando npm documentado en CCR-006. No ejecutar todavía `test-frontend.ps1` contra el lockfile anterior; fallará por dependencias ausentes.
 - **Validación:** modificación estática; no se ejecutaron npm, ESLint, Vitest, build ni Playwright.
+
+
+## Build/QA — pruebas de regresión adicionales (2026-10-20)
+
+- [x] Se agregan pruebas unitarias de política para bloquear de forma explícita el sembrador `TestingSeedUsersTask` cuando `TestingSeed:Enabled=true` en Production, y para confirmar que deshabilitado no requiere servicios de base de datos (F0-006).
+- [x] Se añade una prueba de integración PostgreSQL que verifica que un POST a `/api/auth/register` sin cookie/cabecera CSRF se rechaza con HTTP 403 y código `platform.csrf_invalid` (F0-S213, rama negativa).
+- [ ] **Validación pendiente:** no se ejecutaron las nuevas pruebas; la prueba CSRF no sustituye el caso positivo con cookie/cabecera válida. Debe comprobarse en `.\scripts\test-all.ps1` tras sincronizar la rama y corregir cualquier defecto.
+
+
+## Build/QA — regresión de login y registro (2026-10-20)
+
+- [x] Añadidas pruebas de integración con PostgreSQL para que la configuración de pruebas rechace el autorregistro aun con CSRF válido (F0-S210); login con correo inexistente y contraseña incorrecta usa el mismo HTTP 401/código (F0-S207); y el bootstrap emite cookies de sesión, pero obliga a cambiar la contraseña temporal antes de continuar (F0-S211).
+- [x] Se serializan las pruebas de integración de Identity para evitar que peticiones de login concurrentes compartan el estado del limitador de intentos.
+- [ ] **Pendiente de ejecución:** estas pruebas usan el esquema y la base reservada `pastel_integration_tests`; deben ejecutarse con `.\scripts\test-database.ps1` después del pull. No se han ejecutado en esta sesión ni se afirma que compilen.
+
+
+## Build/QA — autorización real con fixtures (2026-10-20)
+
+- [x] La factory HTTP establece `TestingSeed:Enabled=true` únicamente para el ambiente de integración `Testing`; no modifica Compose, `.env` local ni la configuración general de desarrollo/producción.
+- [x] Se agregan verificaciones contra PostgreSQL de que la fixture Member tiene exclusivamente el rol Member y de que la fixture Administrator puede listar usuarios mientras que Member recibe 403 (F0-006, autorización por rol).
+- [ ] **Pendiente de ejecución:** las nuevas pruebas de integración no se han ejecutado; requieren `.\scripts\test-database.ps1`. El sembrador queda limitado por código a `Development`/`Testing` y por prueba unitaria se rechaza en `Production`.
+
+
+## Build/QA — format frontend incluye los tests nuevos (2026-10-20)
+
+- [x] Se actualiza `scripts/format-frontend.ps1` para copiar de vuelta los archivos formateados de `web/tests/**/*.ts(x)` y los archivos `vitest.config.ts`/`playwright.config.ts`. Antes, `npm run format` los formateaba en la copia Docker temporal, pero el script no copiaba esos resultados al working tree, lo que podía dejar `format:check` fallando siempre.
+- [ ] **Validación pendiente:** no se ejecutó el script PowerShell ni se probó el transporte de los archivos en Docker. Debe revisarse con la instalación de CCR-006 completada.
