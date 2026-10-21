@@ -539,3 +539,11 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] Se implementan comprobaciones para marcadores de módulo y tipos internos; prefijos de grupos/permisos y roles sugeridos; presencia de `MODULE.md` en backend/frontend; políticas explícitas en endpoints; y referencias de proyecto entre módulos.
 - [ ] **Pendiente de Build:** no se compiló ni ejecutó en este entorno. Debe ejecutarse `dotnet test Pastel.slnx --configuration Release` y corregir cualquier falso positivo o error real antes de considerar aprobada la guarda.
 - **Limitación:** la herramienta de autoría no dispone de checkout/SDK de .NET ni conectividad directa desde contenedor; el commit conserva el estado como pendiente, no aprobado.
+
+
+## Build/QA — corrección de codificación de migración (2026-10-20)
+
+- **Causa confirmada por inspección del blob de GitHub:** \`src/Modules/Identity/Pastel.Modules.Identity/Persistence/Migrations/20261019050514_InitialIdentity.cs\` comenzaba con BOM UTF-8 (U+FEFF), que explica el hallazgo \`CHARSET\` de \`dotnet format\` reportado por el propietario.
+- **Corrección:** se vuelve a guardar la misma migración como UTF-8 sin BOM y con finales LF; no cambia su contenido C# ni el esquema de base de datos.
+- **Pendiente:** los errores \`ENDOFLINE\` de muchos otros archivos aparecen en el working tree Windows reportado, aunque los blobs de GitHub inspeccionados usan LF. Tras actualizar la rama, comprobar que no haya cambios rastreados pendientes y normalizar la copia de trabajo de forma segura antes de repetir \`dotnet format\`; no sobrescribir cambios locales sin revisarlos.
+- **Validación:** inspección estática de codificación/newlines del contenido obtenido por GitHub; no se ejecutó \`dotnet format\` ni build.
