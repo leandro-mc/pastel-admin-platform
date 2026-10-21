@@ -624,3 +624,20 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Alcance de la evidencia:** el build Release falló en `Pastel.ArchitectureTests`, por lo que se omitió ejecutar las pruebas unitarias. En el resumen, `pruebas=125` es el código usado por el script para señalar que la fase no se ejecutó; el reporte TRX registró 0 resultados (0 total). No hay resultado aprobado de pruebas unitarias en esta ejecución.
 - **Siguiente validación local:** después de sincronizar esta corrección, ejecutar `.\scripts\format-backend.ps1` para aplicar el formato y normalizar los archivos C# a LF/UTF-8 sin BOM; luego ejecutar `.\scripts\test-backend.ps1` otra vez. Si queda cualquier fallo, conservar la salida para corregirlo antes de la integración PostgreSQL.
 - **Estado de esta corrección:** revisión estática del cambio; aún no se ha compilado ni ejecutado en este entorno. Fase 0 sigue abierta.
+
+
+## Build/QA — segundo resultado de test-backend y endurecimiento del formateador (2026-10-21)
+
+- **Ejecución local aportada por el propietario:** `.\\scripts\\test-backend.ps1` sigue fallando solo en formato. La auditoría NuGet detectó 0 paquetes vulnerables; la compilación Release terminó con 0 advertencias y 0 errores; las pruebas unitarias aprobaron **42/42** (6 de arquitectura y 36 de Identity). Las pruebas de integración PostgreSQL no forman parte de esta ejecución y siguen pendientes.
+- **Resultado exacto del formato:** tras normalizar globalmente 176 archivos C# (158 cambiados, 0 CR pendientes), desaparecieron los errores `ENDOFLINE`; quedan 9 diagnósticos `WHITESPACE` en `PrivilegeGuard.cs` y 1 `FINALNEWLINE` en `TestingSeedUsersTask.cs`. Por tanto, esta ejecución no es todavía una aprobación completa del backend.
+- **Corrección de herramienta preparada en este commit:** `scripts/format-backend.ps1` ejecuta explícitamente `dotnet format whitespace` además del formateo .NET general, y después de copiar los archivos desde Docker normaliza de manera global los `.cs` de `src/` y `tests/` a UTF-8 sin BOM, LF y una nueva línea final. Verifica el resultado y falla de forma explícita si encuentra excepciones. Esto sustituye la corrección manual archivo por archivo.
+- **Validación de la nueva versión del script:** todavía no ejecutada por el propietario; después de sincronizar esta actualización, ejecutar `.\\scripts\\format-backend.ps1` y luego `.\\scripts\\test-backend.ps1`. No afirmar que formato ni backend están aprobados hasta ver el nuevo resultado.
+- **Archivos `.csn` observados localmente:** no se generan con la rutina de normalización de `.cs` de este checkpoint y no se han borrado ni incorporado al repositorio; su origen requiere una revisión separada antes de decidir qué hacer.
+
+
+## Build/QA — pasada dirigida de formato para Identity (2026-10-21)
+
+- **Ejecución local tras la última actualización del formateador:** auditoría NuGet aprobada (0 vulnerabilidades), compilación Release aprobada (0 advertencias y 0 errores) y 42/42 pruebas unitarias aprobadas. Persisten 9 diagnósticos `WHITESPACE` en `PrivilegeGuard.cs`, de modo que `test-backend.ps1` aún no queda aprobado.
+- **Corrección de herramienta:** se conserva la normalización global de LF/UTF-8 ya implementada y se añade una segunda pasada `dotnet format whitespace` sobre `Pastel.Modules.Identity.csproj`, además de la pasada a nivel de solución. Se dirige al proyecto que contiene el archivo diagnosticado. Esta pasada adicional queda pendiente de validación local.
+- **Aclaración:** la expresión regular de finales de línea ya era correcta; el recuento de un archivo normalizado en la ejecución previa es consistente con que los demás ya estaban normalizados localmente.
+- **Pendientes:** repetir `.\\scripts\\format-backend.ps1` y `.\\scripts\\test-backend.ps1`. La integración PostgreSQL, Playwright E2E y la verificación manual de Google OAuth no se ejecutaron en esta validación. Fase 0 permanece abierta.

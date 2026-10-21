@@ -12,8 +12,9 @@ if (-not (Test-Path (Join-Path $repoRoot "Pastel.slnx"))) {
     throw "No se encontro Pastel.slnx en la raiz del repositorio."
 }
 
-# Trabaja en una copia temporal para que el SDK no modifique archivos mientras restaura/formatea.
-# Al terminar, solo copia archivos .cs; el usuario debe revisar el diff antes de confirmar cambios.
+# Formatea una copia temporal; despues copia de vuelta solo archivos C#.
+# La normalizacion de fin de linea se realiza en el host para que sea consistente
+# independientemente de los finales de linea del sistema operativo anfitrion.
 $containerScript = @'
 set -e
 mkdir -p /tmp/work
@@ -29,11 +30,18 @@ echo ""
 echo "=== Aplicar formato .NET ==="
 dotnet format Pastel.slnx --no-restore
 
-# Alinea todos los archivos C# con .editorconfig (LF y UTF-8 sin BOM).
+echo ""
+echo "=== Aplicar formato de espacios explicito ==="
+dotnet format whitespace Pastel.slnx --no-restore
+
+echo ""
+echo "=== Formatear espacios del proyecto Identity directamente ==="
+dotnet format whitespace src/Modules/Identity/Pastel.Modules.Identity/Pastel.Modules.Identity.csproj --no-restore --verbosity normal
+
+echo ""
+echo "=== Copiar archivos C# formateados de vuelta ==="
 find /tmp/work/src /tmp/work/tests -type d \( -name bin -o -name obj \) -prune -o -type f -name '*.cs' -exec sh -c '
   for source do
-    sed -i "s/\r$//" "$source"
-    sed -i "1s/^\xEF\xBB\xBF//" "$source"
     relative=$(printf '%s\n' "$source" | sed 's#^/tmp/work/##')
     destination="/repo/$relative"
     mkdir -p "$(dirname "$destination")"
@@ -42,8 +50,7 @@ find /tmp/work/src /tmp/work/tests -type d \( -name bin -o -name obj \) -prune -
 ' sh {} +
 
 echo ""
-echo "Formato aplicado y archivos .cs copiados de vuelta."
-echo "Revise git status y git diff antes de crear un commit."
+echo "Formato .NET aplicado; normalizacion final de LF/UTF-8 se ejecutara en el host."
 '@
 
 $normalizedContainerScript = [regex]::Replace($containerScript, "`r`n?", "`n")
@@ -65,4 +72,63 @@ if ($LASTEXITCODE -ne 0) {
     throw "No se pudo aplicar dotnet format. No copie resultados manualmente desde la imagen."
 }
 
-Write-Host "Listo. Ejecute .\scripts\test-backend.ps1 para verificar el formato, build y pruebas." -ForegroundColor Green
+# Normaliza todos los C# de producto/pruebas en el host: UTF-8 sin BOM, LF y
+# exactamente una nueva linea final. Excluye artefactos generados bin/obj.
+$sourceRoots = @(
+    (Join-Path $repoRoot "src"),
+    (Join-Path $repoRoot "tests")
+)
+$sourceFiles = @(
+    Get-ChildItem -Path $sourceRoots -Recurse -File -Filter "*.cs" |
+        Where-Object { $_.FullName -notmatch '[\/](bin|obj)[\/]' }
+)
+$utf8NoBom = [System.Text.UTF8Encoding]::new($false)
+$normalizedCount = 0
+
+foreach ($file in $sourceFiles) {
+    $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
+    $hasBom = (
+        $bytes.Length -ge 3 -and
+        $bytes[0] -eq 0xEF -and
+        $bytes[1] -eq 0xBB -and
+        $bytes[2] -eq 0xBF
+    )
+
+    $content = [System.IO.File]::ReadAllText($file.FullName)
+    $normalized = [regex]::Replace($content, '\r\n?', "`n")
+    if (-not $normalized.EndsWith("`n", [System.StringComparison]::Ordinal)) {
+        $normalized += "`n"
+    }
+
+    if ($hasBom -or $normalized -cne $content) {
+        [System.IO.File]::WriteAllText($file.FullName, $normalized, $utf8NoBom)
+        $normalizedCount++
+    }
+}
+
+$invalidFiles = @(
+    foreach ($file in $sourceFiles) {
+        $bytes = [System.IO.File]::ReadAllBytes($file.FullName)
+        $content = [System.IO.File]::ReadAllText($file.FullName)
+        $hasBom = (
+            $bytes.Length -ge 3 -and
+            $bytes[0] -eq 0xEF -and
+            $bytes[1] -eq 0xBB -and
+            $bytes[2] -eq 0xBF
+        )
+
+        if ($hasBom -or
+            $content.Contains("`r") -or
+            -not $content.EndsWith("`n", [System.StringComparison]::Ordinal)) {
+            $file.FullName
+        }
+    }
+)
+if ($invalidFiles.Count -gt 0) {
+    $invalidFiles | ForEach-Object { Write-Host $_ -ForegroundColor Red }
+    throw "La normalizacion de finales de linea no quedo completa."
+}
+
+Write-Host ("Normalizacion de texto: {0} archivos C# revisados; {1} normalizados; 0 excepciones." -f $sourceFiles.Count, $normalizedCount) -ForegroundColor Cyan
+Write-Host "Formato aplicado. Revise git status y git diff antes de crear un commit." -ForegroundColor Green
+Write-Host "Ejecute .\scripts\test-backend.ps1 para verificar formato, build y pruebas." -ForegroundColor Green
