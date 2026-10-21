@@ -201,4 +201,59 @@ public sealed class IdentityApiSmokeTests : IClassFixture<IdentityApiFactory>
         return (response.StatusCode, errorCode);
     }
 
+
+    [Trait("RequirementId", "F0-006")]
+    [RequiresPostgresFact]
+    public async Task Testing_seed_gives_member_only_the_member_role()
+    {
+        using var client = _factory.CreateClient();
+        using var scope = _factory.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+
+        var roles = await db.UserRoles
+            .Where(link => link.User.NormalizedEmail == "TEST.MEMBER@PASTEL.LOCAL")
+            .Select(link => link.Role.Name)
+            .ToArrayAsync();
+
+        Assert.Equal(new[] { "Member" }, roles);
+    }
+
+    [RequiresPostgresFact]
+    public async Task Administrator_can_list_users_but_member_cannot()
+    {
+        using var administrator = await SignInAsync(
+            "test.admin@pastel.local",
+            "Local-Only-Test-Admin-2026!");
+        using var member = await SignInAsync(
+            "test.member@pastel.local",
+            "Local-Only-Test-Member-2026!");
+
+        using var administratorResponse = await administrator.GetAsync("/api/admin/users/");
+        using var memberResponse = await member.GetAsync("/api/admin/users/");
+
+        Assert.Equal(HttpStatusCode.OK, administratorResponse.StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, memberResponse.StatusCode);
+    }
+
+    private async Task<HttpClient> SignInAsync(string email, string password)
+    {
+        var client = CreateHttpsClient();
+        try
+        {
+            var csrfToken = await GetCsrfTokenAsync(client);
+            var result = await PostWithCsrfAsync(
+                client,
+                "/api/auth/login",
+                new { email, password },
+                csrfToken);
+            Assert.Equal(HttpStatusCode.OK, result.StatusCode);
+            return client;
+        }
+        catch
+        {
+            client.Dispose();
+            throw;
+        }
+    }
+
 }
