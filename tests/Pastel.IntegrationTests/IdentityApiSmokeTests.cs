@@ -1,6 +1,6 @@
 using System.Net;
-using System.Text.Json;
 using System.Net.Http.Json;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Identity.Persistence;
@@ -72,6 +72,7 @@ public sealed class IdentityApiSmokeTests : IClassFixture<IdentityApiFactory>
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
     [Trait("RequirementId", "F0-S213")]
     [RequiresPostgresFact]
     public async Task Api_write_without_csrf_cookie_and_header_is_rejected()
@@ -88,5 +89,4 @@ public sealed class IdentityApiSmokeTests : IClassFixture<IdentityApiFactory>
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         Assert.Equal("platform.csrf_invalid", document.RootElement.GetProperty("code").GetString());
     }
-
 }
