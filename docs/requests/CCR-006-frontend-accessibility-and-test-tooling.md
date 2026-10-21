@@ -27,3 +27,19 @@ Esta solicitud no autoriza a ejecutar CI, a introducir triggers automáticos ni 
 ## Estado tras la autorización
 
 Se intentó preparar el lote y se comprobó con `npm view eslint-plugin-jsx-a11y version --fetch-retries=0 --fetch-timeout=5000`; npm devolvió `EAI_AGAIN getaddrinfo registry.npmjs.org`. Este entorno de autoría no puede resolver el registry, por lo que no es posible consultar las versiones instalables ni generar/verificar `package-lock.json` con `npm install`. Para no dejar `npm ci` roto, no se modificaron `web/package.json`, `web/package-lock.json` ni los imports/configuración de ESLint que requieren esos paquetes. La solicitud sigue autorizada y abierta: debe completarse desde un entorno con acceso al registry y confirmar compatibilidad con React 19/Vite 8/Node 24, además de ejecutar `npm ci`, Prettier, ESLint y build. No se disparó CI.
+
+
+## Scaffold preparado — dependencia y validación pendientes (2026-10-20)
+
+Se añadieron la configuración de Vitest, pruebas iniciales del kit `core/ui` con React Testing Library/axe, configuración de Playwright y pruebas de humo/accesibilidad para `/ingresar`. Los scripts npm `test`, `test:watch` y `test:e2e` quedaron definidos y Prettier incluirá los nuevos archivos.
+
+**La CCR-006 sigue abierta.** Aún no se escribieron las dependencias en `package.json` ni se regeneró `package-lock.json`, para no dejar un lockfile inconsistente sin poder ejecutar npm desde este entorno. Versiones consultadas el 2026-10-20: Vitest 5.0.5 requiere Node `^22.12.0 || ^24.0.0 || >=26` y Vite `^6.4 || ^7 || ^8`; concuerda con Node 24 y Vite 8 del proyecto. `vitest-axe` 0.1.0 tiene varios años, por lo que se usará con jsdom (no happy-dom) y se debe reevaluar tras la prueba real. Fuentes: [requisitos de Vitest 5](https://vitest.dev/guide/migration) y [uso de vitest-axe](https://github.com/chaance/vitest-axe).
+
+**Paso requerido en un entorno con acceso al registry npm:** desde `web/`, ejecutar `npm.cmd install --save-dev eslint-plugin-jsx-a11y vitest jsdom @testing-library/react @testing-library/dom @testing-library/user-event @testing-library/jest-dom vitest-axe @playwright/test @axe-core/playwright`. Mantener juntos `package.json` y `package-lock.json`, revisar el diff y ejecutar `npm.cmd ci`, `npm.cmd run format:check`, `npm.cmd run lint`, `npm.cmd test` y `npm.cmd run build`. A continuación, instalar Chromium de Playwright y ejecutar `npm.cmd run test:e2e` con Compose local levantado. No declarar aprobada la cobertura hasta inspeccionar los resultados; se espera que axe identifique cualquier problema real de accesibilidad en la pantalla de ingreso.
+
+
+## Integración con guardas de build (2026-10-20)
+
+- Se conecta `eslint-plugin-jsx-a11y` mediante su configuración plana recomendada en `web/eslint.config.js`, conservando reglas existentes de límites modulares y `no-console`.
+- `scripts/test-frontend.ps1` incorpora la ejecución de Vitest + axe en su resumen para que las pruebas unitarias no queden como un comando opcional invisible.
+- Esta integración depende de instalar las dependencias propuestas y regenerar `web/package-lock.json`; de momento el import del plugin y los comandos de test no pueden ejecutarse con el lockfile anterior. La CCR continúa pendiente de npm install y validación local.

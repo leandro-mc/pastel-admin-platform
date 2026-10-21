@@ -50,6 +50,7 @@ if [ "$install_status" -eq 0 ]; then
   run_check "Prettier" npm run format:check
   run_check "ESLint" npm run lint
   run_check "TypeScript + Vite build" npm run build
+  run_check "Pruebas de componentes React (Vitest + axe)" npm run test
 else
   echo "FALLO: npm ci (codigo $install_status); no se ejecutan Prettier, ESLint ni build."
   failures=$((failures + 1))

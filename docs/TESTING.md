@@ -5,7 +5,9 @@
 Ejecute desde la raíz con PowerShell y Docker Desktop iniciado:
 
 - `.\scripts\test-backend.ps1`: restaura, busca paquetes NuGet vulnerables, verifica formato .NET, compila Release y ejecuta pruebas unitarias. Falla si NuGet informa paquetes vulnerables.
-- `.\scripts\test-frontend.ps1`: instala con `npm ci`, ejecuta `npm audit --audit-level=high`, verifica Prettier y ESLint, compila TypeScript/Vite, ejecuta `scripts/check-module-boundaries.mjs` para fronteras frontend/backend, y corre las comprobaciones estáticas de diseño/Tailwind.
+- `.\scripts\test-frontend.ps1`: instala con `npm ci`, ejecuta `npm audit --audit-level=high`, verifica Prettier y ESLint, compila TypeScript/Vite, ejecuta fronteras de módulos y las guardas estáticas de diseño/Tailwind.
+- `cd web; npm.cmd test`: ejecuta las pruebas de componentes React con Vitest, Testing Library y axe en jsdom. `scripts/test-frontend.ps1` también ejecuta este control después de instalar dependencias.
+- `cd web; npm.cmd run test:e2e`: ejecuta Playwright contra la app ya levantada en `http://127.0.0.1:8080`; cambie el destino con `$env:PASTEL_E2E_BASE_URL` si corresponde. Instale el navegador una vez con `npm.cmd exec playwright install chromium`.
 - `.\scripts\test-database.ps1`: inicia solo PostgreSQL y ejecuta las pruebas HTTP que requieren una base real.
 - `.\scripts\test-all.ps1`: ejecuta los tres bloques y presenta el resumen conjunto.
 - `.\scripts\format-frontend.ps1`: aplica Prettier dentro de Docker y copia de vuelta solo los archivos administrados por el formateador. Modifica el working tree; revise el diff después.
@@ -24,7 +26,7 @@ Las cadenas de conexión se pasan al contenedor ejecutor sin imprimirlas. No use
 - **PostgreSQL/integración HTTP:** host, migraciones, salud, CSRF, opciones de autenticación y autorización de endpoints, más casos nuevos de seguridad.
 - **Frontend:** auditoría de dependencias, formato, lint, TypeScript/Vite, guarda estática de diseño, auditoría visual y metas Tailwind.
 
-Aún falta ampliar la cobertura de componentes React y recorridos E2E de navegador (Playwright), así como verificar visualmente login/registro, Workspace, Ágora, administración, permisos y cuenta en tema claro/oscuro y escritorio/móvil. Las pruebas estáticas de diseño no reemplazan los recorridos interactivos ni la aprobación visual del propietario.
+Se incorporó el scaffold de pruebas React/Vitest/Testing Library/axe y un smoke E2E de Playwright con axe para `/ingresar`. Todavía está pendiente instalar las dependencias en `web/package.json` y regenerar `package-lock.json` con npm, ejecutar las pruebas y verificar visualmente login/registro, Workspace, Ágora, administración, permisos y cuenta en tema claro/oscuro y escritorio/móvil. Las pruebas estáticas de diseño no reemplazan los recorridos interactivos ni la aprobación visual del propietario.
 
 ## Docker Compose
 

@@ -1,11 +1,25 @@
 import js from "@eslint/js";
 import globals from "globals";
 import tseslint from "typescript-eslint";
+import jsxA11y from "eslint-plugin-jsx-a11y";
 
 export default tseslint.config(
   { ignores: ["dist", "node_modules"] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
+  {
+    files: ["**/*.{js,mjs,cjs,jsx,mjsx,ts,tsx,mtsx}"],
+    ...jsxA11y.flatConfigs.recommended,
+    languageOptions: {
+      ...jsxA11y.flatConfigs.recommended.languageOptions,
+      globals: { ...globals.browser, ...globals.node },
+    },
+    settings: {
+      "jsx-a11y": {
+        components: { Link: "a" },
+      },
+    },
+  },
   {
     files: ["src/modules/**/*.{ts,tsx}"],
     rules: {
