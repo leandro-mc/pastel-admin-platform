@@ -234,7 +234,7 @@ Reglas: páginas finas, estado del servidor en TanStack Query, formularios con r
 1. `tools/new-module` con el código (genera backend, pruebas, frontend, `MODULE.md`, esquema y migración vacía).
 2. Ficha de producto en `docs/modules/<MODULO>.md` (alcance, roles, reglas).
 3. Declarar permisos y roles sugeridos en `<M>Module.cs`.
-4. Color y tokens del módulo en `web/src/core/design/module-themes.css` (CCR si es nuevo).
+4. Color y tokens del módulo en `web/src/core/design/module-themes.css` (CCR si es nuevo). El módulo puede definir paleta, neutros y tono propios en su ficha: prevalecen sobre las reglas generales (`AGENTS.md`, "Jerarquía de reglas"), sin relajar lo no negociable.
 5. Implementar por slices (Dev); pruebas unitarias (Build) e integración (QA).
 6. Completar `MODULE.md` (backend y frontend).
 7. Verificar: guardas de arquitectura y diseño, compilación aislada del módulo.

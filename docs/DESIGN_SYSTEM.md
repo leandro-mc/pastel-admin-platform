@@ -2,6 +2,8 @@
 
 La experiencia de usuario es la prioridad número uno. Muchas personas distintas usarán Pastel, incluidas personas mayores y con poca práctica tecnológica. Ante una duda entre "más bonito" y "más claro", gana lo más claro.
 
+**Jerarquía de reglas:** las reglas de cada módulo (su ficha en `docs/modules/` y su `MODULE.md`) prevalecen sobre las de este documento; las de aquí aplican en lo que el módulo no regula. No se relaja lo no negociable: WCAG 2.2 AA, las prohibiciones de §2.4 y la seguridad (ver `AGENTS.md`, "Jerarquía de reglas").
+
 ## 1. Principios
 
 1. **Claridad antes que decoración.** Una acción principal por pantalla, lenguaje simple, jerarquía visible.
@@ -35,7 +37,7 @@ Un módulo activa su identidad con `data-module="<codigo>"` en su contenedor ra�
 
 | Módulo | `--accent` (decorativo/íconos) | `--accent-strong` (texto y botones) | `--accent-soft` (fondos) |
 |---|---|---|---|
-| Brisa | `#48775b` | `#416b52` | `#e3f0e7` |
+| Brisa | `#315b4a` | `#315b4a` | `#e6eee5` |
 | Balance | `#367c78` | `#2e6966` | `#e3f1ef` |
 | Ágora | `#4d7898` | `#416681` | `#e2eef7` |
 | Cosecha | `#927b3c` | `#6e5c2d` | `#f6efd8` |
@@ -53,7 +55,9 @@ Modo oscuro (mismos módulos):
 
 En modo oscuro `--accent-strong` es igual a `--accent`.
 
-**Contrastes verificados** (calculados con la fórmula WCAG): blanco sobre `--accent-strong` entre 6,1:1 y 6,5:1; `--accent-strong` sobre `--accent-soft` entre 5,1:1 y 5,7:1; en oscuro, `--accent` sobre `--surface` ≥ 6,0:1 y texto `--on-accent` sobre el acento ≥ 7,0:1.
+**Paleta propia de un módulo.** Un módulo puede definir su propia paleta (acentos, neutros y tokens específicos como los colores de tarjeta), en claro y/o en oscuro, en `web/src/core/design/module-themes.css` bajo su `data-module`, documentada en su ficha. Debe cumplir AA y las prohibiciones de §2.4. Brisa usa en **claro** su paleta propia (valores en `docs/modules/BRISA.md`, §7); en oscuro usa la de la plataforma.
+
+**Contrastes verificados** (calculados con la fórmula WCAG; Brisa en claro: blanco sobre `--accent-strong` 7,7:1 y `--accent-strong` sobre `--accent-soft` 6,5:1): blanco sobre `--accent-strong` entre 6,1:1 y 6,5:1; `--accent-strong` sobre `--accent-soft` entre 5,1:1 y 5,7:1; en oscuro, `--accent` sobre `--surface` ≥ 6,0:1 y texto `--on-accent` sobre el acento ≥ 7,0:1.
 
 **Regla de uso:** los acentos de Cosecha, Huella, Ágora y Balance sin oscurecer no alcanzan 4,5:1 sobre sus fondos suaves. Por eso `--accent` solo se usa en elementos gráficos (iconos grandes, bordes, indicadores ≥ 3:1) y **todo texto o botón con texto usa `--accent-strong`**.
 
@@ -75,7 +79,7 @@ Los estados siempre llevan icono y texto; el verde de éxito nunca sustituye al 
 - **Morado y derivados** (violeta, púrpura, índigo, lila, magenta, fucsia, degradados que los incluyan): tono HSL entre **235° y 345°** con saturación > 10 % queda prohibido en cualquier archivo de CSS, TS/TSX, SVG o imagen propia. Aplica también al modo oscuro, ilustraciones, gráficas y estados.
 - **Símbolos de IA:** iconos `Sparkles`, `Sparkle`, `Stars`, `Wand`, `Wand2`, `WandSparkles`, `Bot`, `Brain`, `BrainCircuit`, `Cpu`; emojis ✨ 🤖 🪄 🔮 🧠; estrellas decorativas; textos como "asistente mágico" o "con IA". Marca de plataforma: `Flower2`.
 - **Excepción documentada:** el logotipo oficial "G" del botón de Google es multicolor por requisito de marca de Google; se usa tal cual, solo en ese botón.
-- `scripts/check-design.mjs` falla el CI ante cualquier incumplimiento.
+- `scripts/check-design.mjs` falla el CI ante cualquier incumplimiento. Los hexadecimales se permiten solo en `core/design/tokens.css` y `core/design/module-themes.css`, que definen los tokens.
 
 ### 2.5 Identidad por módulo
 
@@ -150,7 +154,7 @@ Los estados siempre llevan icono y texto; el verde de éxito nunca sustituye al 
 
 ## 8. Contenido y tono (español de Costa Rica)
 
-- **Trato predeterminado:** formulaciones impersonales o de usted; sin voseo ni tuteo. Ejemplos: "Ingrese su correo", "Revise los datos", "No se pudo guardar. Intente de nuevo". **Excepción por módulo:** se permite el voseo u otra voz más personal cuando la ficha de producto o las instrucciones específicas del módulo lo autoricen o lo soliciten expresamente. Esa excepción aplica solo al módulo indicado; no cambia el tono global de la plataforma.
+- **Trato predeterminado:** formulaciones impersonales o de usted; sin voseo ni tuteo. Ejemplos: "Ingrese su correo", "Revise los datos", "No se pudo guardar. Intente de nuevo". **Excepción por módulo:** se permite el tuteo, el voseo u otra voz más personal cuando la ficha de producto o las instrucciones específicas del módulo lo autoricen o lo soliciten expresamente. Esa excepción aplica solo al módulo indicado; no cambia el tono global de la plataforma.
 - Títulos y botones preferiblemente nominales o infinitivos: "Nuevo pedido", "Guardar cambios".
 - Frases cortas, palabras comunes, sin tecnicismos ("no se pudo conectar", no "error de red 502").
 - Formatos: fecha `22/10/2026` (y larga "jueves 22 de octubre"), hora de 24 h o 12 h con a. m./p. m. de forma consistente, moneda `₡12 500` (`Intl.NumberFormat("es-CR", { style: "currency", currency: "CRC" })`), teléfonos `8888 1234` (+506), pesos en kg.
@@ -173,8 +177,8 @@ Los estados siempre llevan icono y texto; el verde de éxito nunca sustituye al 
 ## 11. Tailwind: cómo se aplica el diseño en el código
 
 - **Utilidades en el JSX**; lo compartido son componentes de `@/core/ui` con variantes (`cva`), no clases con `@apply`. Prohibido `@apply` fuera de `core/design/base.css` (máximo 60 líneas en total).
-- Los colores salen de **tokens** expuestos con `@theme inline` (`bg-surface`, `text-fg`, `border-line`, `bg-accent`, `text-accent-strong`, `bg-accent-soft`). Nunca hexadecimales ni valores arbitrarios de color (`bg-[#…]`).
-- El color del módulo lo da `data-module`; no se escriben variantes por módulo en los componentes.
+- Los colores salen de **tokens** expuestos con `@theme inline` (`bg-surface`, `text-fg`, `border-line`, `bg-accent`, `text-accent-strong`, `bg-accent-soft`). Nunca hexadecimales ni valores arbitrarios de color (`bg-[#…]`); los hexadecimales solo se definen en `tokens.css` y `module-themes.css`.
+- El color del módulo lo da `data-module`; no se escriben variantes por módulo en los componentes. Los tokens propios de un módulo viven en `module-themes.css`.
 - Modo oscuro por variables; `dark:` solo si un caso no se resuelve con tokens.
 - Orden de clases con `prettier-plugin-tailwindcss`. Un componente no debería superar ~200 líneas.
 - `scripts/tailwind-audit.mjs` y `scripts/check-design.mjs` vigilan estas reglas en CI.
