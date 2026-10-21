@@ -7,7 +7,7 @@ Ejecute desde la raíz con PowerShell y Docker Desktop iniciado:
 - `.\scripts\test-backend.ps1`: restaura, busca paquetes NuGet vulnerables, verifica formato .NET, compila Release y ejecuta pruebas unitarias. Falla si NuGet informa paquetes vulnerables.
 - `.\scripts\test-frontend.ps1`: instala con `npm ci`, ejecuta `npm audit --audit-level=high`, verifica Prettier y ESLint, compila TypeScript/Vite, ejecuta fronteras de módulos y las guardas estáticas de diseño/Tailwind.
 - `cd web; npm.cmd test`: ejecuta las pruebas de componentes React con Vitest, Testing Library y axe en jsdom. `scripts/test-frontend.ps1` también ejecuta este control después de instalar dependencias.
-- `cd web; npm.cmd run test:e2e`: ejecuta Playwright contra la app ya levantada en `http://127.0.0.1:8080`; cambie el destino con `$env:PASTEL_E2E_BASE_URL` si corresponde. Instale el navegador una vez con `npm.cmd exec playwright install chromium`.
+- `cd web; npm.cmd run test:e2e`: ejecuta Playwright contra la app ya levantada en `http://127.0.0.1:8080`; cambie el destino con `$env:PASTEL_E2E_BASE_URL` si corresponde. Instale el navegador una vez con `npm.cmd exec -- playwright install chromium`.
 - `.\scripts\test-database.ps1`: inicia solo PostgreSQL y ejecuta las pruebas HTTP que requieren una base real.
 - `.\scripts\test-all.ps1`: ejecuta los tres bloques y presenta el resumen conjunto.
 - `.\scripts\format-frontend.ps1`: aplica Prettier dentro de Docker y copia de vuelta solo los archivos administrados por el formateador. Modifica el working tree; revise el diff después.
