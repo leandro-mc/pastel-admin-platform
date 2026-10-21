@@ -34,7 +34,7 @@ find /tmp/work/src /tmp/work/tests -type f -name '*.cs' -exec sh -c '
   for source do
     sed -i "s/\r$//" "$source"
     sed -i "1s/^\xEF\xBB\xBF//" "$source"
-    relative=\${source#/tmp/work/}
+    relative=$(printf '%s\n' "$source" | sed 's#^/tmp/work/##')
     destination="/repo/$relative"
     mkdir -p "$(dirname "$destination")"
     cp -p "$source" "$destination"
