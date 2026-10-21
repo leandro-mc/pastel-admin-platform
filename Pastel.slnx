@@ -31,6 +31,7 @@
     <Project Path="src/Modules/Huella/Pastel.Modules.Huella.Tests/Pastel.Modules.Huella.Tests.csproj" />
   </Folder>
   <Folder Name="/Tests/">
+    <Project Path="tests/Pastel.ArchitectureTests/Pastel.ArchitectureTests.csproj" />
     <Project Path="tests/Pastel.IntegrationTests/Pastel.IntegrationTests.csproj" />
   </Folder>
 </Solution>

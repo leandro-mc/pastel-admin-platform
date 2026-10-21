@@ -531,3 +531,11 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Correcciones documentales/de token de esta tanda:** F0-I07 se alinea con la política actual de CI manual (`workflow_dispatch`, `confirm_validation=true`, sin triggers automáticos); las instrucciones de pruebas ya no proponen `docker compose down -v` contra el volumen de desarrollo. La sombra móvil usa `--shadow-bottom-nav` definido en los tokens de tema claro/oscuro.
 - **Validación de esta tanda:** revisión estática sobre los archivos obtenidos de GitHub. No hay un checkout del repositorio ni un entorno Docker/.NET/Node con registry disponible en esta sesión; por tanto no se ejecutaron Prettier, `dotnet format`, build, pruebas, Compose ni CI. No se declara cerrado Build/QA.
 - **Siguiente paso concreto:** el propietario ejecutará `.\scripts\format-frontend.ps1` para aplicar Prettier a los 127 archivos, revisará el diff y compartirá `git status --short`; luego habrá que abordar la normalización de EOL/UTF-8 de la copia Windows, completar CCR-006 con `npm install` en un entorno conectado, implementar pruebas de arquitectura y smoke E2E, y ejecutar de nuevo la suite. CI seguirá sin despacharse hasta autorizar el despacho manual de forma expresa.
+
+
+## Build/QA — pruebas de arquitectura (inicio, 2026-10-20)
+
+- [x] Se incorpora el proyecto \`tests/Pastel.ArchitectureTests\` a \`Pastel.slnx\`, reutilizando el SDK y las versiones de xUnit ya centralizadas, sin añadir dependencias NuGet.
+- [x] Se implementan comprobaciones para marcadores de módulo y tipos internos; prefijos de grupos/permisos y roles sugeridos; presencia de \`MODULE.md\` en backend/frontend; políticas explícitas en endpoints; y referencias de proyecto entre módulos.
+- [ ] **Pendiente de Build:** no se compiló ni ejecutó en este entorno. Debe ejecutarse \`dotnet test Pastel.slnx --configuration Release\` y corregir cualquier falso positivo o error real antes de considerar aprobada la guarda.
+- **Limitación:** la herramienta de autoría no dispone de checkout/SDK de .NET ni conectividad directa desde contenedor; el commit conserva el estado como pendiente, no aprobado.
