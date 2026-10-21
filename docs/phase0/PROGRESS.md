@@ -571,3 +571,10 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] Se agregan pruebas unitarias de política para bloquear de forma explícita el sembrador `TestingSeedUsersTask` cuando `TestingSeed:Enabled=true` en Production, y para confirmar que deshabilitado no requiere servicios de base de datos (F0-006).
 - [x] Se añade una prueba de integración PostgreSQL que verifica que un POST a `/api/auth/register` sin cookie/cabecera CSRF se rechaza con HTTP 403 y código `platform.csrf_invalid` (F0-S213, rama negativa).
 - [ ] **Validación pendiente:** no se ejecutaron las nuevas pruebas; la prueba CSRF no sustituye el caso positivo con cookie/cabecera válida. Debe comprobarse en `.scripts	est-all.ps1` tras sincronizar la rama y corregir cualquier defecto.
+
+
+## Build/QA — regresión de login y registro (2026-10-20)
+
+- [x] Añadidas pruebas de integración con PostgreSQL para que la configuración de pruebas rechace el autorregistro aun con CSRF válido (F0-S210); login con correo inexistente y contraseña incorrecta usa el mismo HTTP 401/código (F0-S207); y el bootstrap emite cookies de sesión, pero obliga a cambiar la contraseña temporal antes de continuar (F0-S211).
+- [x] Se serializan las pruebas de integración de Identity para evitar que peticiones de login concurrentes compartan el estado del limitador de intentos.
+- [ ] **Pendiente de ejecución:** estas pruebas usan el esquema y la base reservada \`pastel_integration_tests\`; deben ejecutarse con \`.\scripts\test-database.ps1\` después del pull. No se han ejecutado en esta sesión ni se afirma que compilen.
