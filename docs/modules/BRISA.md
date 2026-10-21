@@ -30,8 +30,8 @@ Inicial: `brisa.access` (usar el módulo) y `brisa.items.manage` (sobre **sus pr
 ## 5. Fuera de este alcance
 Conexión de la app Android, sincronización sin conexión, notificaciones push, recordatorios por WhatsApp o correo, compartir pendientes entre personas (salvo que ya exista), «Deshacer» y recordatorios (aplazados).
 
-## 7. Reglas propias de Brisa (prevalecen sobre las generales)
-Brisa es una app personal con identidad propia. Por `AGENTS.md` («Jerarquía de reglas»), lo siguiente prevalece sobre las reglas generales de Pastel. Siguen aplicando seguridad, fronteras entre módulos, errores y logs, WCAG 2.2 AA y las prohibiciones de morado y símbolos de IA.
+## 7. Reglas propias de diseño del frontend de Brisa (prevalecen sobre las generales)
+Brisa es una app personal con identidad propia. Por `AGENTS.md` («Jerarquía de reglas»), lo siguiente prevalece sobre las reglas generales de **diseño del frontend** de Pastel (solo eso: arquitectura, backend, seguridad, errores y logs, flujo y pruebas siguen las reglas generales). Siguen aplicando también WCAG 2.2 AA y las prohibiciones de morado y símbolos de IA.
 
 1. **Tono y textos:** tuteo, cálido, calmado y sin culpa, igual que la app original («Tus días, con calma.», «Dale un lugar en tu día.», «Vas al día»). Se conservan los textos originales (lista exacta en el inventario §13.8) y los textos nuevos usan el mismo tono. Sin voseo. Autorizado según `docs/DESIGN_SYSTEM.md` §8.
 2. **Tema claro propio**, idéntico al de la app Android salvo dos valores ajustados a AA. Se registra como tokens bajo `data-module="brisa"` en `web/src/core/design/module-themes.css` (nombres a criterio de Dev):
@@ -42,7 +42,7 @@ Brisa es una app personal con identidad propia. Por `AGENTS.md` («Jerarquía de
    - Prioridad, fondo del chip: alta `#f6ddce`, media `#f5e9b9`, baja `#e5edc8`; punto: alta `#c8755a`, media `#b79a40`, baja `#7d9a6d` (siempre acompañado de texto).
    - Paleta de 10 colores de tarjeta y resto de roles: inventario §13.7.
 3. **Tema oscuro:** el de la plataforma (neutros de `DESIGN_SYSTEM.md` §2.1 y acento Brisa oscuro de §2.2), **sin** el fondo verdoso de Android. Las tarjetas de tarea mezclan su color pastel al 36 % con `--surface`; los chips de prioridad siguen la regla de Android.
-4. **Comportamiento propio:** «Deshacer» aplazado (no se incluye ahora; prevalece sobre el principio 5 de `DESIGN_SYSTEM.md` §1, aunque sí se confirma lo destructivo); alta rápida con valores por defecto (prioridad Media, color aleatorio, día actual); reprogramación diaria de tareas con fecha límite; validación `día ≤ fecha límite`. Detalle y criterios en el inventario §13.
+4. **Patrón de interfaz propio:** «Deshacer» aplazado (no se incluye ahora; prevalece sobre el principio 5 de `DESIGN_SYSTEM.md` §1, aunque sí se confirma lo destructivo). El comportamiento funcional (alta rápida, reprogramación diaria, validación `día ≤ fecha límite`) está en el inventario §13.
 
 ## 6. Criterios de aceptación
 - Todas las funciones del inventario marcadas "se conserva" funcionan en la web.

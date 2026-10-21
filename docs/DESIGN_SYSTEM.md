@@ -2,7 +2,7 @@
 
 La experiencia de usuario es la prioridad número uno. Muchas personas distintas usarán Pastel, incluidas personas mayores y con poca práctica tecnológica. Ante una duda entre "más bonito" y "más claro", gana lo más claro.
 
-**Jerarquía de reglas:** las reglas de cada módulo (su ficha en `docs/modules/` y su `MODULE.md`) prevalecen sobre las de este documento; las de aquí aplican en lo que el módulo no regula. No se relaja lo no negociable: WCAG 2.2 AA, las prohibiciones de §2.4 y la seguridad (ver `AGENTS.md`, "Jerarquía de reglas").
+**Jerarquía de reglas:** las reglas de **diseño del frontend** de cada módulo (su ficha en `docs/modules/` y su `MODULE.md`) prevalecen sobre las de este documento; las de aquí aplican en lo que el módulo no regula. Solo el diseño del frontend: lo demás se rige por las reglas generales. No se relaja WCAG 2.2 AA ni las prohibiciones de §2.4 (ver `AGENTS.md`, "Jerarquía de reglas").
 
 ## 1. Principios
 
