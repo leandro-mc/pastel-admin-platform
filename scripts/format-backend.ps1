@@ -35,6 +35,10 @@ echo "=== Aplicar formato de espacios explicito ==="
 dotnet format whitespace Pastel.slnx --no-restore
 
 echo ""
+echo "=== Formatear espacios del proyecto Identity directamente ==="
+dotnet format whitespace src/Modules/Identity/Pastel.Modules.Identity/Pastel.Modules.Identity.csproj --no-restore --verbosity normal
+
+echo ""
 echo "=== Copiar archivos C# formateados de vuelta ==="
 find /tmp/work/src /tmp/work/tests -type d \( -name bin -o -name obj \) -prune -o -type f -name '*.cs' -exec sh -c '
   for source do
