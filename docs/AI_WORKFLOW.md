@@ -141,6 +141,12 @@ docker compose build
 
 Para cambios en el arranque o la base, compila y además levanta el stack limpio de CI o prueba la migración y el seeding en PostgreSQL. Que una imagen compile no demuestra que las tablas se creen o que los servicios arranquen.
 
+### Cadencia de pruebas para el trabajo diario
+
+Siga la política de `docs/TESTING_STRATEGY.md`: ejecute primero la comprobación más pequeña y relevante durante la depuración; al terminar una unidad lógica, valide todo lo afectado; reserve `test-all.ps1`, recorridos E2E amplios y revisión visual completa para un hito de integración/cierre o para cambios compartidos de alto impacto. Esto no reduce los casos obligatorios de una fase ni permite dejar fallar las pruebas relevantes.
+
+Cada cambio de comportamiento debe traer pruebas enfocadas cuando sea viable, especialmente en permisos, datos y seguridad. Las métricas de mantenimiento (tamaño de archivo, porcentaje agregado de utilidades o clases usadas una sola vez) se reportan como señales, no como bloqueos por sí solas. Las reglas explícitas de seguridad, diseño y arquitectura sí se hacen cumplir. No reorganice código solo para alcanzar una cifra; registre las razones y los resultados reales.
+
 ## 6. Documentación y contexto duradero
 
 Actualiza la documentación dentro de la misma rama si cambian el flujo de trabajo, los comandos, variables de entorno, tecnologías, arquitectura, contratos, endpoints o la manera de agregar módulos. Las decisiones técnicas persistentes no deben quedar sólo en la conversación.
