@@ -74,12 +74,15 @@ export function Component() {
                     <span className={module.isEnabled ? chip : chipDanger}>
                       {module.isEnabled ? t.enabled : t.disabled}
                     </span>
-                    {module.code === "dashboard" || module.code === "settings" ? (
+                    {module.code === "dashboard" ||
+                    module.code === "settings" ? (
                       <span className={chip}>
                         {t.permissions(module.permissions.length)}
                       </span>
                     ) : (
-                      <span className={chip}>Permisos administrados dentro de la app</span>
+                      <span className={chip}>
+                        Permisos administrados dentro de la app
+                      </span>
                     )}
                   </p>
                 </div>

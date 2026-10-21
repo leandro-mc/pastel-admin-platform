@@ -24,15 +24,13 @@ export default tseslint.config(
           patterns: [
             {
               group: ["@/app", "@/app/*", "@/app/*/**"],
-              message: "Los módulos de negocio solo pueden depender de @/core/*, nunca del shell.",
+              message:
+                "Los módulos de negocio solo pueden depender de @/core/*, nunca del shell.",
             },
             {
-              group: [
-                "@/modules",
-                "@/modules/*",
-                "@/modules/*/**",
-              ],
-              message: "Una subapp no debe importar otra subapp; extraiga contratos compartidos a @/core/*.",
+              group: ["@/modules", "@/modules/*", "@/modules/*/**"],
+              message:
+                "Una subapp no debe importar otra subapp; extraiga contratos compartidos a @/core/*.",
             },
           ],
         },
@@ -48,7 +46,8 @@ export default tseslint.config(
           patterns: [
             {
               group: ["@/modules", "@/modules/*", "@/modules/*/**"],
-              message: "El shell y core deben descubrir las subapps mediante los manifiestos, no importarlas directamente.",
+              message:
+                "El shell y core deben descubrir las subapps mediante los manifiestos, no importarlas directamente.",
             },
           ],
         },

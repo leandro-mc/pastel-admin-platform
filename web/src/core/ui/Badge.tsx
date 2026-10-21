@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
-export type BadgeVariant = "neutral" | "accent" | "success" | "warning" | "danger";
+export type BadgeVariant =
+  "neutral" | "accent" | "success" | "warning" | "danger";
 type BadgeProps = {
   children: ReactNode;
   variant?: BadgeVariant;
@@ -17,10 +18,22 @@ const variants: Record<BadgeVariant, string> = {
 };
 
 /** Etiqueta de estado con texto legible; el significado no depende solo del color. */
-export function Badge({ children, variant = "neutral", showDot = false, className = "" }: BadgeProps) {
+export function Badge({
+  children,
+  variant = "neutral",
+  showDot = false,
+  className = "",
+}: BadgeProps) {
   return (
-    <span className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${variants[variant]} ${className}`.trim()}>
-      {showDot ? <span aria-hidden="true" className="size-1.5 shrink-0 rounded-full bg-current" /> : null}
+    <span
+      className={`inline-flex min-h-7 items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium ${variants[variant]} ${className}`.trim()}
+    >
+      {showDot ? (
+        <span
+          aria-hidden="true"
+          className="size-1.5 shrink-0 rounded-full bg-current"
+        />
+      ) : null}
       {children}
     </span>
   );

@@ -8,11 +8,7 @@ import {
 } from "./styles";
 
 export type ButtonVariant =
-  | "primary"
-  | "secondary"
-  | "danger"
-  | "ghost"
-  | "link";
+  "primary" | "secondary" | "danger" | "ghost" | "link";
 
 export type ButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -51,7 +47,7 @@ export function Button({
       disabled={disabled || loading}
       aria-busy={loading || undefined}
     >
-      {loading ? loadingLabel ?? children : children}
+      {loading ? (loadingLabel ?? children) : children}
     </button>
   );
 }

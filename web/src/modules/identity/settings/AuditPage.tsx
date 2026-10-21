@@ -6,14 +6,7 @@ import { QueryState } from "./QueryState";
 import { auditLabel } from "./auditLabels";
 import { formatDateTime } from "./format";
 import { settingsStrings } from "./strings";
-import {
-  mutedCell,
-  panel,
-  table,
-  tableScroll,
-  td,
-  th,
-} from "./styles";
+import { mutedCell, panel, table, tableScroll, td, th } from "./styles";
 import { DEFAULT_PAGE_SIZE, useUrlFilters } from "./urlFilters";
 
 const t = settingsStrings.audit;
@@ -72,7 +65,9 @@ export function Component() {
           {t.title}
         </h1>
         <p className="text-sm text-muted">{t.subtitle}</p>
-        <p className="mt-2 inline-flex items-center rounded-full border border-line bg-surface-raised px-3 py-1 text-xs font-semibold text-muted">Ámbito: identidad y administración de plataforma</p>
+        <p className="mt-2 inline-flex items-center rounded-full border border-line bg-surface-raised px-3 py-1 text-xs font-semibold text-muted">
+          Ámbito: identidad y administración de plataforma
+        </p>
       </div>
 
       <form

@@ -5,7 +5,11 @@ import { useAuth } from "@/core/auth";
 import type { ModuleManifest, ModuleNavItem } from "@/core/modules/types";
 import { strings } from "../strings";
 import { routes } from "../routes";
-import { getRememberedAppPath, rememberCurrentApp, useAccessibleModules } from "../modules";
+import {
+  getRememberedAppPath,
+  rememberCurrentApp,
+  useAccessibleModules,
+} from "../modules";
 import AppFooter from "./AppFooter";
 import AppSidebar from "./AppSidebar";
 import TopBar from "../shell/TopBar";
@@ -16,23 +20,36 @@ function matchesPath(pathname: string, basePath: string): boolean {
   return pathname === basePath || pathname.startsWith(`${basePath}/`);
 }
 
-function activeNavigationItem(module: ModuleManifest, pathname: string): ModuleNavItem | undefined {
+function activeNavigationItem(
+  module: ModuleManifest,
+  pathname: string,
+): ModuleNavItem | undefined {
   return module.nav.find((item) => {
     const target = item.to ? `${module.basePath}/${item.to}` : module.basePath;
     if (pathname === target || pathname.startsWith(`${target}/`)) return true;
-    if (item.to === "usuarios" && pathname.includes("/accesos/usuario/")) return true;
+    if (item.to === "usuarios" && pathname.includes("/accesos/usuario/"))
+      return true;
     if (item.to === "roles" && pathname.includes("/accesos/rol/")) return true;
-    return module.code === "identity" && item.to === "usuarios" && pathname === module.basePath;
+    return (
+      module.code === "identity" &&
+      item.to === "usuarios" &&
+      pathname === module.basePath
+    );
   });
 }
 
-function pageTitle(pathname: string, currentModule: ModuleManifest | null, matches: ReturnType<typeof useMatches>): string {
+function pageTitle(
+  pathname: string,
+  currentModule: ModuleManifest | null,
+  matches: ReturnType<typeof useMatches>,
+): string {
   if (pathname === routes.account) return "Mi cuenta";
   if (pathname === routes.password) return "Seguridad";
   if (!currentModule) return "Tu espacio";
   const item = activeNavigationItem(currentModule, pathname);
   if (item) return item.label;
-  const crumb = [...matches].reverse()
+  const crumb = [...matches]
+    .reverse()
     .map((match) => (match.handle as CrumbHandle | undefined)?.crumb)
     .find((value) => value && value !== currentModule.name);
   if (crumb) return crumb;
@@ -76,27 +93,44 @@ export default function RootLayout() {
     .filter((module) => module.code !== "identity")
     .map((module) => module.basePath);
   const accessibleProductKey = accessibleProductPaths.join("|");
-  const rememberedAppPath = user?.id ? getRememberedAppPath(user.id, accessibleProductPaths) : null;
-  const directModule = availableModules.find((module) => matchesPath(pathname, module.basePath)) ?? null;
-  const isGlobalAccountRoute = pathname === routes.account || pathname === routes.password;
-  const currentModule = directModule ?? (isGlobalAccountRoute
-    ? availableModules.find((module) => module.basePath === rememberedAppPath)
-      ?? availableModules.find((module) => module.code === "agora")
-      ?? null
-    : null);
+  const rememberedAppPath = user?.id
+    ? getRememberedAppPath(user.id, accessibleProductPaths)
+    : null;
+  const directModule =
+    availableModules.find((module) => matchesPath(pathname, module.basePath)) ??
+    null;
+  const isGlobalAccountRoute =
+    pathname === routes.account || pathname === routes.password;
+  const currentModule =
+    directModule ??
+    (isGlobalAccountRoute
+      ? (availableModules.find(
+          (module) => module.basePath === rememberedAppPath,
+        ) ??
+        availableModules.find((module) => module.code === "agora") ??
+        null)
+      : null);
   // The selected app is identified in the sidebar card; do not repeat its name in the top bar.
-  const contextLabel = currentModule?.code === "identity" ? "Workspace" : "Pastel";
+  const contextLabel =
+    currentModule?.code === "identity" ? "Workspace" : "Pastel";
   const currentPage = pageTitle(pathname, currentModule, matches);
 
   useEffect(() => {
     if (status === "authenticated" && user?.id) {
-      rememberCurrentApp(pathname, user.id, accessibleProductKey.split("|").filter(Boolean));
+      rememberCurrentApp(
+        pathname,
+        user.id,
+        accessibleProductKey.split("|").filter(Boolean),
+      );
     }
   }, [pathname, status, user?.id, accessibleProductKey]);
 
   useEffect(() => {
     try {
-      window.localStorage.setItem("pastel-sidebar-collapsed", String(sidebarCollapsed));
+      window.localStorage.setItem(
+        "pastel-sidebar-collapsed",
+        String(sidebarCollapsed),
+      );
     } catch {
       // El shell sigue siendo funcional aunque el navegador no permita almacenar preferencias.
     }
@@ -106,10 +140,15 @@ export default function RootLayout() {
     return (
       <RouterProvider navigate={(to, options) => void navigate(to, options)}>
         <div className="min-h-screen">
-          <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-surface-raised focus:px-4 focus:py-2 focus:text-fg focus:ring-2 focus:ring-accent-strong">
+          <a
+            href="#contenido"
+            className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-surface-raised focus:px-4 focus:py-2 focus:text-fg focus:ring-2 focus:ring-accent-strong"
+          >
             {strings.skipToContent}
           </a>
-          <div id="contenido" className="min-h-screen"><Outlet /></div>
+          <div id="contenido" className="min-h-screen">
+            <Outlet />
+          </div>
         </div>
       </RouterProvider>
     );
@@ -117,14 +156,35 @@ export default function RootLayout() {
 
   return (
     <RouterProvider navigate={(to, options) => void navigate(to, options)}>
-      <div className={["app-workspace-shell", sidebarCollapsed ? "sidebar-collapsed" : ""].filter(Boolean).join(" ")} data-module={currentModule?.code}>
-        <a href="#contenido" className="sr-only focus:not-sr-only focus:fixed focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-surface-raised focus:px-4 focus:py-2 focus:text-fg focus:ring-2 focus:ring-accent-strong">
+      <div
+        className={[
+          "app-workspace-shell",
+          sidebarCollapsed ? "sidebar-collapsed" : "",
+        ]
+          .filter(Boolean)
+          .join(" ")}
+        data-module={currentModule?.code}
+      >
+        <a
+          href="#contenido"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-50 focus:rounded-lg focus:bg-surface-raised focus:px-4 focus:py-2 focus:text-fg focus:ring-2 focus:ring-accent-strong"
+        >
           {strings.skipToContent}
         </a>
-        <AppSidebar currentModule={currentModule} collapsed={sidebarCollapsed} />
+        <AppSidebar
+          currentModule={currentModule}
+          collapsed={sidebarCollapsed}
+        />
         <div className="workspace-main">
-          <TopBar pageTitle={currentPage} contextLabel={contextLabel} sidebarCollapsed={sidebarCollapsed} onToggleSidebar={() => setSidebarCollapsed((current) => !current)} />
-          <main id="contenido" className="workspace-content bg-app text-fg"><Outlet /></main>
+          <TopBar
+            pageTitle={currentPage}
+            contextLabel={contextLabel}
+            sidebarCollapsed={sidebarCollapsed}
+            onToggleSidebar={() => setSidebarCollapsed((current) => !current)}
+          />
+          <main id="contenido" className="workspace-content bg-app text-fg">
+            <Outlet />
+          </main>
           <AppFooter />
         </div>
       </div>

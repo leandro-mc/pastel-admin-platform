@@ -22,7 +22,11 @@ export function ConfirmDialog({
   return (
     <Dialog title={title} description={message} onClose={onClose}>
       <div className="flex flex-wrap justify-end gap-3">
-        <Button variant="secondary" className={secondaryButton} onClick={onClose}>
+        <Button
+          variant="secondary"
+          className={secondaryButton}
+          onClick={onClose}
+        >
           {settingsStrings.common.cancel}
         </Button>
         <Button

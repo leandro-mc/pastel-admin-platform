@@ -58,7 +58,9 @@ export function Component() {
   };
 
   const platformCatalog = (catalog.data ?? []).filter(isPlatformPermission);
-  const platformPermissionIds = new Set(platformCatalog.map((permission) => permission.id));
+  const platformPermissionIds = new Set(
+    platformCatalog.map((permission) => permission.id),
+  );
   const initialOverrides: Record<string, OverrideValue> = {};
   for (const item of overrides.data ?? []) {
     if (platformPermissionIds.has(item.permissionId)) {
@@ -104,7 +106,13 @@ type FormProps = {
   actorIsOwner: boolean;
 };
 
-function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }: FormProps) {
+function UserAccessForm({
+  user,
+  roles,
+  catalog,
+  initialOverrides,
+  actorIsOwner,
+}: FormProps) {
   const navigate = useNavigate();
   const notify = useNotify();
   const save = useSaveUserAccess();
@@ -161,19 +169,28 @@ function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }
     <div className="flex flex-col gap-4">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">
+          <p className="mb-2 text-xs font-bold tracking-[0.16em] text-accent-strong uppercase">
             Centro de control / Usuarios
           </p>
-          <h1 className="break-words text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+          <h1 className="text-2xl font-bold tracking-tight break-words text-fg sm:text-3xl">
             {t.userTitle(user.displayName)}
           </h1>
-          <p className="mt-1 break-all text-sm text-muted">{user.email}</p>
+          <p className="mt-1 text-sm break-all text-muted">{user.email}</p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <span className={user.isActive ? "rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-strong" : "rounded-full bg-danger-soft px-3 py-1 text-xs font-semibold text-danger"}>
+            <span
+              className={
+                user.isActive
+                  ? "rounded-full bg-accent-soft px-3 py-1 text-xs font-semibold text-accent-strong"
+                  : "rounded-full bg-danger-soft px-3 py-1 text-xs font-semibold text-danger"
+              }
+            >
               {user.isActive ? t.accountActive : t.accountBlocked}
             </span>
             {user.roles.map((role) => (
-              <span key={role} className="rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted">
+              <span
+                key={role}
+                className="rounded-full border border-line bg-surface px-3 py-1 text-xs font-medium text-muted"
+              >
                 {role}
               </span>
             ))}
@@ -181,36 +198,60 @@ function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }
         </div>
         <div className="grid min-w-40 grid-cols-2 gap-2">
           <div className="rounded-2xl border border-line bg-surface p-3 shadow-sm">
-            <span className="block text-xs font-semibold text-muted">Roles</span>
-            <strong className="mt-1 block text-2xl font-bold text-fg">{roleIds.length}</strong>
+            <span className="block text-xs font-semibold text-muted">
+              Roles
+            </span>
+            <strong className="mt-1 block text-2xl font-bold text-fg">
+              {roleIds.length}
+            </strong>
           </div>
           <div className="rounded-2xl border border-line bg-surface p-3 shadow-sm">
-            <span className="block text-xs font-semibold text-muted">Excepciones</span>
-            <strong className="mt-1 block text-2xl font-bold text-fg">{administrator ? 0 : changes.length}</strong>
+            <span className="block text-xs font-semibold text-muted">
+              Excepciones
+            </span>
+            <strong className="mt-1 block text-2xl font-bold text-fg">
+              {administrator ? 0 : changes.length}
+            </strong>
           </div>
         </div>
       </header>
       {ownerEditBlocked ? (
-        <p role="status" className="rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm leading-relaxed text-muted">
-          Esta es la cuenta del propietario. Sus accesos solo pueden revisarse o administrarse desde la propia identidad Owner/Superuser.
+        <p
+          role="status"
+          className="rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm leading-relaxed text-muted"
+        >
+          Esta es la cuenta del propietario. Sus accesos solo pueden revisarse o
+          administrarse desde la propia identidad Owner/Superuser.
         </p>
       ) : null}
 
-      <section aria-labelledby="roles-heading" className={`${panel} overflow-hidden shadow-sm`}>
+      <section
+        aria-labelledby="roles-heading"
+        className={`${panel} overflow-hidden shadow-sm`}
+      >
         <header className="border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
           <h2 id="roles-heading" className="font-semibold text-fg">
             {t.rolesSection}
           </h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
-            {t.rolesHint} Los roles de cada aplicación se administran allí y se conservan al guardar desde Workspace.
+            {t.rolesHint} Los roles de cada aplicación se administran allí y se
+            conservan al guardar desde Workspace.
           </p>
         </header>
         <ul className="grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-3">
           {roles.map((role) => {
             const isOwnerRole = role.name === OWNER;
-            const hasHuellaPrivilege = role.permissions.some((code) => code.startsWith("huella."));
-            const hasCosechaPrivilege = role.permissions.some((code) => code.startsWith("cosecha."));
-            const roleLocked = isOwnerRole || (isOwnerTarget && role.name === ADMINISTRATOR) || hasHuellaPrivilege || (hasCosechaPrivilege && !actorIsOwner);
+            const hasHuellaPrivilege = role.permissions.some((code) =>
+              code.startsWith("huella."),
+            );
+            const hasCosechaPrivilege = role.permissions.some((code) =>
+              code.startsWith("cosecha."),
+            );
+            const roleLocked =
+              isOwnerRole ||
+              (isOwnerTarget && role.name === ADMINISTRATOR) ||
+              hasHuellaPrivilege ||
+              (hasCosechaPrivilege && !actorIsOwner);
             const explanation = isOwnerRole
               ? "Reservado; solo lo establece el bootstrap."
               : hasHuellaPrivilege
@@ -219,77 +260,99 @@ function UserAccessForm({ user, roles, catalog, initialOverrides, actorIsOwner }
                   ? "Solo Owner/Superuser puede conceder acceso a Cosecha."
                   : null;
             return (
-            <li key={role.id}>
-              <label className="flex h-full min-h-20 cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface p-4 text-sm text-fg transition-colors hover:border-accent/50 hover:bg-surface-raised has-[:checked]:border-accent-strong has-[:checked]:bg-accent-soft/60">
-                <input
-                  type="checkbox"
-                  className="mt-0.5 size-5 shrink-0 accent-accent-strong"
-                  checked={roleIds.includes(role.id)}
-                  disabled={save.isPending || ownerEditBlocked || roleLocked}
-                  onChange={() => toggleRole(role.id)}
-                />
-                <span className="min-w-0 flex-1">
-                  <span className="block font-semibold text-fg">{role.name}</span>
-                  {role.description ? (
-                    <span className="mt-1 block leading-relaxed text-muted">{role.description}</span>
-                  ) : null}
-                  {role.isSystemRole ? <span className="mt-2 inline-flex rounded-full border border-line px-2 py-0.5 text-xs font-medium text-muted">Rol de sistema</span> : null}
-                  {explanation ? <span className="mt-2 block text-xs leading-relaxed text-muted">{explanation}</span> : null}
-                </span>
-              </label>
-            </li>
-          );
+              <li key={role.id}>
+                <label className="flex h-full min-h-20 cursor-pointer items-start gap-3 rounded-xl border border-line bg-surface p-4 text-sm text-fg transition-colors hover:border-accent/50 hover:bg-surface-raised has-[:checked]:border-accent-strong has-[:checked]:bg-accent-soft/60">
+                  <input
+                    type="checkbox"
+                    className="mt-0.5 size-5 shrink-0 accent-accent-strong"
+                    checked={roleIds.includes(role.id)}
+                    disabled={save.isPending || ownerEditBlocked || roleLocked}
+                    onChange={() => toggleRole(role.id)}
+                  />
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-semibold text-fg">
+                      {role.name}
+                    </span>
+                    {role.description ? (
+                      <span className="mt-1 block leading-relaxed text-muted">
+                        {role.description}
+                      </span>
+                    ) : null}
+                    {role.isSystemRole ? (
+                      <span className="mt-2 inline-flex rounded-full border border-line px-2 py-0.5 text-xs font-medium text-muted">
+                        Rol de sistema
+                      </span>
+                    ) : null}
+                    {explanation ? (
+                      <span className="mt-2 block text-xs leading-relaxed text-muted">
+                        {explanation}
+                      </span>
+                    ) : null}
+                  </span>
+                </label>
+              </li>
+            );
           })}
         </ul>
       </section>
 
-      <section aria-labelledby="overrides-heading" className={`${panel} overflow-hidden shadow-sm`}>
+      <section
+        aria-labelledby="overrides-heading"
+        className={`${panel} overflow-hidden shadow-sm`}
+      >
         <header className="border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
           <h2 id="overrides-heading" className="font-semibold text-fg">
             {t.overridesSection}
           </h2>
-          <p className="mt-1 text-sm leading-relaxed text-muted">Ajustes que afectan únicamente a esta cuenta, sin modificar los permisos de sus roles.</p>
+          <p className="mt-1 text-sm leading-relaxed text-muted">
+            Ajustes que afectan únicamente a esta cuenta, sin modificar los
+            permisos de sus roles.
+          </p>
         </header>
         <div className="flex flex-col gap-4 p-4 sm:p-5">
-        {administrator ? (
-          <p role="status" className="text-sm text-muted">
-            {t.overridesAdmin}
-          </p>
-        ) : (
-          <>
-            <p className="pb-2 text-sm text-muted">{t.overridesHint}</p>
-            <OverridePicker
-              catalog={catalog}
-              overrides={overrides}
-              grantedByRole={grantedByRole}
-              disabled={save.isPending || ownerEditBlocked}
-              onChange={(permissionId, value) =>
-                setOverrides((current) => ({
-                  ...current,
-                  [permissionId]: value,
-                }))
-              }
-            />
-          </>
-        )}
+          {administrator ? (
+            <p role="status" className="text-sm text-muted">
+              {t.overridesAdmin}
+            </p>
+          ) : (
+            <>
+              <p className="pb-2 text-sm text-muted">{t.overridesHint}</p>
+              <OverridePicker
+                catalog={catalog}
+                overrides={overrides}
+                grantedByRole={grantedByRole}
+                disabled={save.isPending || ownerEditBlocked}
+                onChange={(permissionId, value) =>
+                  setOverrides((current) => ({
+                    ...current,
+                    [permissionId]: value,
+                  }))
+                }
+              />
+            </>
+          )}
         </div>
       </section>
 
       <FormAlert error={error} />
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-4">
-        <p className="text-sm text-muted">{ownerEditBlocked ? "Edición no disponible para esta cuenta." : "Los cambios se aplican cuando guarda los accesos."}</p>
+        <p className="text-sm text-muted">
+          {ownerEditBlocked
+            ? "Edición no disponible para esta cuenta."
+            : "Los cambios se aplican cuando guarda los accesos."}
+        </p>
         <div className="flex flex-wrap gap-3">
-        <button
-          type="button"
-          className={primaryButton}
-          disabled={save.isPending || ownerEditBlocked}
-          onClick={() => void onSave()}
-        >
-          {save.isPending ? t.saving : t.save}
-        </button>
-        <Link to={settingsPaths.users} className={secondaryButton}>
-          {t.cancel}
-        </Link>
+          <button
+            type="button"
+            className={primaryButton}
+            disabled={save.isPending || ownerEditBlocked}
+            onClick={() => void onSave()}
+          >
+            {save.isPending ? t.saving : t.save}
+          </button>
+          <Link to={settingsPaths.users} className={secondaryButton}>
+            {t.cancel}
+          </Link>
         </div>
       </footer>
     </div>

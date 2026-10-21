@@ -33,7 +33,8 @@ export function isSafeReturnUrl(value: string | null): value is string {
 
   if (!internal(value) || !internal(decoded)) return false;
 
-  const destination = (decoded.split(/[?#]/, 1)[0] || routes.home).replace(/\/+$/, "") || "/";
+  const destination =
+    (decoded.split(/[?#]/, 1)[0] || routes.home).replace(/\/+$/, "") || "/";
   if (destination.toLowerCase() === routes.login.toLowerCase()) return false;
   const firstSegment = destination.split("/").filter(Boolean)[0];
   if (firstSegment && !knownFirstSegments.has(firstSegment)) return false;

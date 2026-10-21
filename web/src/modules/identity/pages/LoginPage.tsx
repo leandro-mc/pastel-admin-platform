@@ -1,10 +1,20 @@
 import { useState } from "react";
-import { Flower2, KeyRound, LayoutGrid, Moon, ShieldCheck, Sun } from "lucide-react";
+import {
+  Flower2,
+  KeyRound,
+  LayoutGrid,
+  Moon,
+  ShieldCheck,
+  Sun,
+} from "lucide-react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { useAuth, useAuthOptions } from "@/core/auth";
 import { usePreferences } from "@/core/preferences";
 import { routes } from "@/core/routes";
-import { getRememberedAppPath, useAccessibleModules } from "@/core/modules/catalog";
+import {
+  getRememberedAppPath,
+  useAccessibleModules,
+} from "@/core/modules/catalog";
 import { FormAlert } from "../components/FormAlert";
 import { GoogleButton } from "../components/GoogleButton";
 import { PasswordLoginForm } from "../components/PasswordLoginForm";
@@ -17,9 +27,21 @@ import { card, errorAlert, linkButton, secondaryButton } from "../styles";
 const t = identityStrings;
 
 const benefits = [
-  { icon: ShieldCheck, title: "Seguridad por diseño", text: "Accesos claros y controlados desde el inicio." },
-  { icon: Flower2, title: "Simple y ordenado", text: "Una experiencia tranquila que no se interpone." },
-  { icon: LayoutGrid, title: "Preparado para crecer", text: "Aplicaciones distintas, un acceso compartido." },
+  {
+    icon: ShieldCheck,
+    title: "Seguridad por diseño",
+    text: "Accesos claros y controlados desde el inicio.",
+  },
+  {
+    icon: Flower2,
+    title: "Simple y ordenado",
+    text: "Una experiencia tranquila que no se interpone.",
+  },
+  {
+    icon: LayoutGrid,
+    title: "Preparado para crecer",
+    text: "Aplicaciones distintas, un acceso compartido.",
+  },
 ];
 
 /** `/ingresar`: Google como método principal; contraseña y registro solo si el servidor los habilita. */
@@ -39,9 +61,11 @@ export function Component() {
     : null;
   const authenticatedUserId =
     auth.status === "authenticated" ? auth.user?.id : undefined;
-  const returnUrl = explicitReturnUrl
-    ?? (authenticatedUserId
-      ? getRememberedAppPath(authenticatedUserId, accessibleProductPaths) ?? routes.home
+  const returnUrl =
+    explicitReturnUrl ??
+    (authenticatedUserId
+      ? (getRememberedAppPath(authenticatedUserId, accessibleProductPaths) ??
+        routes.home)
       : routes.home);
   const googleError = googleErrorMessage(params.get("error"));
   const registering = params.get("modo") === "registro";
@@ -67,7 +91,11 @@ export function Component() {
   return (
     <div className="auth-page flex min-h-screen flex-col">
       <header className="auth-topbar flex items-center justify-between gap-4">
-        <Link to={routes.home} className="auth-brand inline-flex items-center gap-3" aria-label="Pastel, ir al inicio">
+        <Link
+          to={routes.home}
+          className="auth-brand inline-flex items-center gap-3"
+          aria-label="Pastel, ir al inicio"
+        >
           <span className="auth-brand-mark grid place-items-center">
             <Flower2 aria-hidden="true" size={29} strokeWidth={1.7} />
           </span>
@@ -79,8 +107,12 @@ export function Component() {
         <button
           type="button"
           className="auth-theme-button grid size-11 place-items-center"
-          aria-label={theme === "light" ? "Activar modo oscuro" : "Activar modo claro"}
-          title={theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro"}
+          aria-label={
+            theme === "light" ? "Activar modo oscuro" : "Activar modo claro"
+          }
+          title={
+            theme === "light" ? "Cambiar a modo oscuro" : "Cambiar a modo claro"
+          }
           onClick={toggleTheme}
         >
           {theme === "light" ? (
@@ -92,21 +124,32 @@ export function Component() {
       </header>
 
       <main className="auth-main mx-auto grid w-full gap-8">
-        <section className="auth-story relative overflow-hidden rounded-3xl border" aria-labelledby="auth-story-title">
+        <section
+          className="auth-story relative overflow-hidden rounded-3xl border"
+          aria-labelledby="auth-story-title"
+        >
           <div className="auth-story-content relative z-10 max-w-2xl">
-            <span className="auth-eyebrow inline-flex items-center gap-2">Un espacio para crecer</span>
-            <h2 id="auth-story-title" className="auth-hero-title font-semibold leading-tight tracking-tight">
+            <span className="auth-eyebrow inline-flex items-center gap-2">
+              Un espacio para crecer
+            </span>
+            <h2
+              id="auth-story-title"
+              className="auth-hero-title leading-tight font-semibold tracking-tight"
+            >
               Todo en su lugar.
               <br />
               <span>Todo fluye mejor.</span>
             </h2>
             <p className="auth-hero-copy leading-relaxed">
-              Una forma más tranquila de gestionar su equipo, organizar accesos y
-              construir algo grande.
+              Una forma más tranquila de gestionar su equipo, organizar accesos
+              y construir algo grande.
             </p>
             <div className="auth-feature-list grid gap-3">
               {benefits.map(({ icon: Icon, title, text }) => (
-                <div className="auth-feature grid items-center gap-3" key={title}>
+                <div
+                  className="auth-feature grid items-center gap-3"
+                  key={title}
+                >
                   <span className="auth-feature-icon grid size-11 place-items-center">
                     <Icon aria-hidden="true" size={20} strokeWidth={1.8} />
                   </span>
@@ -118,7 +161,10 @@ export function Component() {
               ))}
             </div>
           </div>
-          <div className="auth-orbit-art absolute grid aspect-square place-items-center" aria-hidden="true">
+          <div
+            className="auth-orbit-art absolute grid aspect-square place-items-center"
+            aria-hidden="true"
+          >
             <div className="auth-orbit-ring absolute aspect-square rounded-full" />
             <div className="auth-orbit-core relative grid size-24 place-items-center">
               <Flower2 size={54} strokeWidth={1.25} />
@@ -129,14 +175,23 @@ export function Component() {
           </div>
         </section>
 
-        <section className="auth-card-column flex w-full items-center justify-center" aria-label={registering ? "Registro de cuenta" : "Ingreso a Pastel"}>
-          <div className={[card, "auth-form-card", "flex flex-col gap-5"].join(" ")}>
+        <section
+          className="auth-card-column flex w-full items-center justify-center"
+          aria-label={registering ? "Registro de cuenta" : "Ingreso a Pastel"}
+        >
+          <div
+            className={[card, "auth-form-card", "flex flex-col gap-5"].join(
+              " ",
+            )}
+          >
             <header className="flex flex-col gap-1">
               <span className="auth-card-kicker inline-flex size-11 items-center justify-center">
                 <KeyRound aria-hidden="true" size={21} />
               </span>
               <span className="auth-eyebrow auth-card-eyebrow inline-flex items-center gap-2">
-                {registering ? "Crear su espacio" : "Qué bueno tenerle de vuelta"}
+                {registering
+                  ? "Crear su espacio"
+                  : "Qué bueno tenerle de vuelta"}
               </span>
               <h1 className="auth-form-heading text-2xl font-semibold tracking-tight">
                 {registering ? t.register.title : t.login.title}
@@ -147,50 +202,86 @@ export function Component() {
             </header>
 
             {auth.sessionExpired ? (
-              <p role="status" className="rounded-xl bg-accent-soft px-4 py-3 text-sm text-fg">
+              <p
+                role="status"
+                className="rounded-xl bg-accent-soft px-4 py-3 text-sm text-fg"
+              >
                 {t.login.expired}
               </p>
             ) : null}
-            {googleError ? <p role="alert" className={errorAlert}>{googleError}</p> : null}
+            {googleError ? (
+              <p role="alert" className={errorAlert}>
+                {googleError}
+              </p>
+            ) : null}
 
             {options.isPending ? (
-              <p role="status" className="text-sm text-muted">{t.login.loadingOptions}</p>
+              <p role="status" className="text-sm text-muted">
+                {t.login.loadingOptions}
+              </p>
             ) : options.isError ? (
               <div className="flex flex-col gap-3">
-                <FormAlert error={describeError(options.error, t.login.optionsError)} />
-                <button type="button" onClick={() => void options.refetch()} className={secondaryButton}>
+                <FormAlert
+                  error={describeError(options.error, t.login.optionsError)}
+                />
+                <button
+                  type="button"
+                  onClick={() => void options.refetch()}
+                  className={secondaryButton}
+                >
                   {t.login.retry}
                 </button>
               </div>
             ) : registering && options.data.localRegistration ? (
               <>
-                <RegisterForm policy={options.data.passwordPolicy} onSuccess={done} />
+                <RegisterForm
+                  policy={options.data.passwordPolicy}
+                  onSuccess={done}
+                />
                 <div className="auth-registration-line">
                   <span>{t.register.toLoginPrompt}</span>
-                  <button type="button" onClick={() => setMode("ingreso")} className="auth-registration-link">
+                  <button
+                    type="button"
+                    onClick={() => setMode("ingreso")}
+                    className="auth-registration-link"
+                  >
                     {t.register.toLogin}
                   </button>
                 </div>
               </>
             ) : (
               <>
-                {options.data.google ? <GoogleButton returnUrl={explicitReturnUrl ?? undefined} /> : null}
+                {options.data.google ? (
+                  <GoogleButton returnUrl={explicitReturnUrl ?? undefined} />
+                ) : null}
                 {options.data.localLogin ? (
                   options.data.google && !showPassword ? (
-                    <button type="button" onClick={() => setShowPassword(true)} className={linkButton}>
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(true)}
+                      className={linkButton}
+                    >
                       {t.login.withPassword}
                     </button>
                   ) : (
                     <PasswordLoginForm onSuccess={done} />
                   )
                 ) : null}
-                {!options.data.google && !options.data.localLogin && !options.data.localRegistration ? (
-                  <p role="alert" className={errorAlert}>{t.login.noMethods}</p>
+                {!options.data.google &&
+                !options.data.localLogin &&
+                !options.data.localRegistration ? (
+                  <p role="alert" className={errorAlert}>
+                    {t.login.noMethods}
+                  </p>
                 ) : null}
                 {options.data.localRegistration ? (
                   <div className="auth-registration-line">
                     <span>{t.login.toRegisterPrompt}</span>
-                    <button type="button" onClick={() => setMode("registro")} className="auth-registration-link">
+                    <button
+                      type="button"
+                      onClick={() => setMode("registro")}
+                      className="auth-registration-link"
+                    >
                       {t.login.toRegister}
                     </button>
                   </div>
@@ -198,11 +289,14 @@ export function Component() {
               </>
             )}
             <div className="auth-card-foot">
-              Al continuar, acepta usar este espacio de forma responsable y segura.
+              Al continuar, acepta usar este espacio de forma responsable y
+              segura.
             </div>
           </div>
           <div className="auth-privacy-note">
-            <span><ShieldCheck aria-hidden="true" size={17} /> Sesión protegida</span>
+            <span>
+              <ShieldCheck aria-hidden="true" size={17} /> Sesión protegida
+            </span>
             <b aria-hidden="true">·</b>
             <span>Privacidad primero</span>
           </div>

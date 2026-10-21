@@ -89,7 +89,10 @@ export function Component() {
       data-module="identity"
       className="mx-auto flex w-full max-w-7xl flex-col gap-7 px-4 py-7 sm:px-6 sm:py-9"
     >
-      <section className="workspace-welcome" aria-labelledby="workspace-welcome-title">
+      <section
+        className="workspace-welcome"
+        aria-labelledby="workspace-welcome-title"
+      >
         <div className="workspace-welcome-copy">
           <span className="workspace-eyebrow">Su espacio, a su ritmo</span>
           <h1 id="workspace-welcome-title" className="workspace-welcome-title">
@@ -136,10 +139,16 @@ export function Component() {
         </div>
       </section>
 
-      <section aria-labelledby="workspace-summary-title" className="flex flex-col gap-4">
+      <section
+        aria-labelledby="workspace-summary-title"
+        className="flex flex-col gap-4"
+      >
         <header className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 id="workspace-summary-title" className="text-lg font-bold tracking-tight text-fg">
+            <h2
+              id="workspace-summary-title"
+              className="text-lg font-bold tracking-tight text-fg"
+            >
               Su resumen
             </h2>
             <p className="mt-1 text-sm text-muted">
@@ -169,11 +178,17 @@ export function Component() {
       </section>
 
       <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(18rem,0.7fr)]">
-        <section className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm" aria-labelledby="workspace-actions-title">
+        <section
+          className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+          aria-labelledby="workspace-actions-title"
+        >
           <header className="flex items-center justify-between gap-3 border-b border-line px-5 py-4">
             <div>
               <span className="workspace-eyebrow">Para empezar</span>
-              <h2 id="workspace-actions-title" className="mt-1 text-lg font-bold tracking-tight text-fg">
+              <h2
+                id="workspace-actions-title"
+                className="mt-1 text-lg font-bold tracking-tight text-fg"
+              >
                 Su espacio, a su manera
               </h2>
               <p className="mt-1 text-sm text-muted">
@@ -190,7 +205,10 @@ export function Component() {
                 const Icon = section.icon;
                 return (
                   <li key={section.permission}>
-                    <Link to={section.to} className="workspace-action-card group h-full">
+                    <Link
+                      to={section.to}
+                      className="workspace-action-card group h-full"
+                    >
                       <span className="flex size-10 shrink-0 items-center justify-center rounded-xl border border-line bg-accent-soft text-accent-strong">
                         <Icon aria-hidden="true" size={19} />
                       </span>
@@ -203,7 +221,11 @@ export function Component() {
                         </span>
                         <span className="mt-3 inline-flex items-center gap-1 text-xs font-bold text-accent-strong">
                           Abrir sección
-                          <ArrowRight aria-hidden="true" size={14} className="transition-transform group-hover:translate-x-0.5" />
+                          <ArrowRight
+                            aria-hidden="true"
+                            size={14}
+                            className="transition-transform group-hover:translate-x-0.5"
+                          />
                         </span>
                       </span>
                     </Link>
@@ -218,11 +240,17 @@ export function Component() {
           )}
         </section>
 
-        <section className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm" aria-labelledby="workspace-security-title">
+        <section
+          className="overflow-hidden rounded-2xl border border-line bg-surface shadow-sm"
+          aria-labelledby="workspace-security-title"
+        >
           <header className="flex items-start justify-between gap-3 border-b border-line px-5 py-4">
             <div>
               <span className="workspace-eyebrow">Seguridad de la cuenta</span>
-              <h2 id="workspace-security-title" className="mt-1 text-lg font-bold tracking-tight text-fg">
+              <h2
+                id="workspace-security-title"
+                className="mt-1 text-lg font-bold tracking-tight text-fg"
+              >
                 {user.isActive ? "Todo en orden" : "Revisa tu acceso"}
               </h2>
               <p className="mt-1 text-sm text-muted">
@@ -237,23 +265,36 @@ export function Component() {
             <div className="flex items-center justify-between gap-3 border-b border-line py-3">
               <dt className="text-sm text-muted">Estado de la cuenta</dt>
               <dd className="inline-flex items-center gap-2 text-sm font-semibold text-fg">
-                <span className={user.isActive ? "inline-block size-2 rounded-full bg-accent" : "inline-block size-2 rounded-full bg-danger"} />
+                <span
+                  className={
+                    user.isActive
+                      ? "inline-block size-2 rounded-full bg-accent"
+                      : "inline-block size-2 rounded-full bg-danger"
+                  }
+                />
                 {user.isActive ? "Activa" : "Bloqueada"}
               </dd>
             </div>
             <div className="flex items-center justify-between gap-3 border-b border-line py-3">
               <dt className="text-sm text-muted">Roles asignados</dt>
-              <dd className="text-sm font-semibold text-fg">{user.roles.length || "Ninguno"}</dd>
+              <dd className="text-sm font-semibold text-fg">
+                {user.roles.length || "Ninguno"}
+              </dd>
             </div>
             <div className="flex items-center justify-between gap-3 py-3">
               <dt className="text-sm text-muted">Permisos de administración</dt>
-              <dd className="text-sm font-semibold text-fg">{adminPermissions}</dd>
+              <dd className="text-sm font-semibold text-fg">
+                {adminPermissions}
+              </dd>
             </div>
           </dl>
           <div className="mx-5 mb-5 rounded-xl border border-line bg-app px-4 py-3">
-            <p className="text-sm font-semibold text-fg">Un espacio que crece con orden</p>
+            <p className="text-sm font-semibold text-fg">
+              Un espacio que crece con orden
+            </p>
             <p className="mt-1 text-sm leading-relaxed text-muted">
-              Cada aplicación mantiene su propia experiencia y sus accesos, con una identidad común de Pastel.
+              Cada aplicación mantiene su propia experiencia y sus accesos, con
+              una identidad común de Pastel.
             </p>
           </div>
         </section>
@@ -264,9 +305,12 @@ export function Component() {
           <Flower2 aria-hidden="true" size={20} />
         </span>
         <div className="min-w-0 flex-1">
-          <strong className="text-sm font-bold text-fg">Todo en su lugar. Todo fluye mejor.</strong>
+          <strong className="text-sm font-bold text-fg">
+            Todo en su lugar. Todo fluye mejor.
+          </strong>
           <p className="mt-0.5 text-sm leading-relaxed text-muted">
-            La plataforma comparte la seguridad; cada app conserva su propósito, herramientas y configuración.
+            La plataforma comparte la seguridad; cada app conserva su propósito,
+            herramientas y configuración.
           </p>
         </div>
       </aside>

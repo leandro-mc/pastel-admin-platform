@@ -54,7 +54,9 @@ function UserActions({ user, can, onAction }: UserActionsProps) {
           type="button"
           className={iconButton}
           title={user.isActive ? t.block(user.email) : t.unblock(user.email)}
-          aria-label={user.isActive ? t.block(user.email) : t.unblock(user.email)}
+          aria-label={
+            user.isActive ? t.block(user.email) : t.unblock(user.email)
+          }
           onClick={() => onAction(user.isActive ? "block" : "unblock", user)}
         >
           {user.isActive ? (
@@ -98,11 +100,21 @@ export function UsersTable({
           <caption className="sr-only">{t.title}</caption>
           <thead>
             <tr>
-              <th scope="col" className={th}>{t.columns.user}</th>
-              <th scope="col" className={th}>{t.columns.status}</th>
-              <th scope="col" className={th}>{t.columns.roles}</th>
-              <th scope="col" className={th}>{t.columns.createdAt}</th>
-              <th scope="col" className={`${th} text-right`}>{t.columns.actions}</th>
+              <th scope="col" className={th}>
+                {t.columns.user}
+              </th>
+              <th scope="col" className={th}>
+                {t.columns.status}
+              </th>
+              <th scope="col" className={th}>
+                {t.columns.roles}
+              </th>
+              <th scope="col" className={th}>
+                {t.columns.createdAt}
+              </th>
+              <th scope="col" className={`${th} text-right`}>
+                {t.columns.actions}
+              </th>
             </tr>
           </thead>
           <tbody>
@@ -110,27 +122,40 @@ export function UsersTable({
               <tr key={user.id}>
                 <td className={td}>
                   <div className="flex items-center gap-3">
-                    <span aria-hidden="true" className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-sm font-semibold text-accent-strong">
+                    <span
+                      aria-hidden="true"
+                      className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-sm font-semibold text-accent-strong"
+                    >
                       {initials(user.displayName)}
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate font-semibold text-fg">{user.displayName}</p>
+                      <p className="truncate font-semibold text-fg">
+                        {user.displayName}
+                      </p>
                       <p className="truncate text-muted">{user.email}</p>
                     </div>
                   </div>
                 </td>
-                <td className={td}><UserStatus user={user} /></td>
+                <td className={td}>
+                  <UserStatus user={user} />
+                </td>
                 <td className={td}>
                   {user.roles.length === 0 ? (
                     <span className="text-muted">{t.noRoles}</span>
                   ) : (
                     <ul className="flex flex-wrap gap-1.5">
-                      {user.roles.map((role) => <li key={role} className={chip}>{role}</li>)}
+                      {user.roles.map((role) => (
+                        <li key={role} className={chip}>
+                          {role}
+                        </li>
+                      ))}
                     </ul>
                   )}
                 </td>
                 <td className={mutedCell}>{formatDateTime(user.createdAt)}</td>
-                <td className={td}><UserActions user={user} can={can} onAction={onAction} /></td>
+                <td className={td}>
+                  <UserActions user={user} can={can} onAction={onAction} />
+                </td>
               </tr>
             ))}
           </tbody>
@@ -139,29 +164,47 @@ export function UsersTable({
 
       <ul className="grid gap-3 p-3 md:hidden" aria-label={t.title}>
         {users.map((user) => (
-          <li key={user.id} className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm">
+          <li
+            key={user.id}
+            className="flex flex-col gap-3 rounded-2xl border border-line bg-surface p-4 shadow-sm"
+          >
             <div className="flex items-start gap-3">
-              <span aria-hidden="true" className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-sm font-semibold text-accent-strong">
+              <span
+                aria-hidden="true"
+                className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-sm font-semibold text-accent-strong"
+              >
                 {initials(user.displayName)}
               </span>
               <div className="min-w-0 flex-1">
-                <p className="break-words font-semibold text-fg">{user.displayName}</p>
-                <p className="break-all text-sm text-muted">{user.email}</p>
-                <div className="mt-2"><UserStatus user={user} /></div>
+                <p className="font-semibold break-words text-fg">
+                  {user.displayName}
+                </p>
+                <p className="text-sm break-all text-muted">{user.email}</p>
+                <div className="mt-2">
+                  <UserStatus user={user} />
+                </div>
               </div>
             </div>
             <div className="flex flex-col gap-1.5 border-t border-line pt-3">
-              <span className="text-xs font-semibold uppercase tracking-wide text-muted">{t.columns.roles}</span>
+              <span className="text-xs font-semibold tracking-wide text-muted uppercase">
+                {t.columns.roles}
+              </span>
               {user.roles.length === 0 ? (
                 <span className="text-sm text-muted">{t.noRoles}</span>
               ) : (
                 <ul className="flex flex-wrap gap-1.5">
-                  {user.roles.map((role) => <li key={role} className={chip}>{role}</li>)}
+                  {user.roles.map((role) => (
+                    <li key={role} className={chip}>
+                      {role}
+                    </li>
+                  ))}
                 </ul>
               )}
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2 border-t border-line pt-3">
-              <span className="text-xs text-muted">{t.columns.createdAt}: {formatDateTime(user.createdAt)}</span>
+              <span className="text-xs text-muted">
+                {t.columns.createdAt}: {formatDateTime(user.createdAt)}
+              </span>
               <UserActions user={user} can={can} onAction={onAction} />
             </div>
           </li>

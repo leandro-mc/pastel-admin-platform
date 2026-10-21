@@ -61,7 +61,9 @@ function initialTheme(): Theme {
 
 function initialTextSize(): TextSize {
   const stored = read(TEXT_SIZE_KEY);
-  return stored === "small" || stored === "large" || stored === "xlarge" ? stored : "normal";
+  return stored === "small" || stored === "large" || stored === "xlarge"
+    ? stored
+    : "normal";
 }
 
 export function PreferencesProvider({ children }: { children: ReactNode }) {

@@ -70,11 +70,23 @@ export function Component() {
     <section className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-8 sm:px-6">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">Mi espacio / Perfil y seguridad</p>
-          <h1 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">{t.title}</h1>
-          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">{t.subtitle}</p>
+          <p className="mb-2 text-xs font-bold tracking-[0.16em] text-accent-strong uppercase">
+            Mi espacio / Perfil y seguridad
+          </p>
+          <h1 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+            {t.title}
+          </h1>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
+            {t.subtitle}
+          </p>
         </div>
-        <span className={user.isActive ? "inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-strong" : "inline-flex items-center gap-2 rounded-full bg-danger-soft px-3 py-1.5 text-xs font-semibold text-danger"}>
+        <span
+          className={
+            user.isActive
+              ? "inline-flex items-center gap-2 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-semibold text-accent-strong"
+              : "inline-flex items-center gap-2 rounded-full bg-danger-soft px-3 py-1.5 text-xs font-semibold text-danger"
+          }
+        >
           <ShieldCheck aria-hidden="true" size={15} />
           {user.isActive ? "Cuenta activa" : "Cuenta bloqueada"}
         </span>
@@ -84,9 +96,16 @@ export function Component() {
         <section aria-labelledby="profile-title" className={maxCard}>
           <div className="mb-5 flex items-start justify-between gap-3 border-b border-line pb-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-strong">Información personal</p>
-              <h2 id="profile-title" className="mt-1 text-lg font-bold tracking-tight text-fg">{user.displayName}</h2>
-              <p className="break-all text-sm text-muted">{user.email}</p>
+              <p className="text-xs font-bold tracking-[0.14em] text-accent-strong uppercase">
+                Información personal
+              </p>
+              <h2
+                id="profile-title"
+                className="mt-1 text-lg font-bold tracking-tight text-fg"
+              >
+                {user.displayName}
+              </h2>
+              <p className="text-sm break-all text-muted">{user.email}</p>
             </div>
             <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-accent-soft text-lg font-bold text-accent-strong">
               {initials(user.displayName)}
@@ -98,10 +117,17 @@ export function Component() {
               {user.roles.length > 0 ? (
                 <span className="flex flex-wrap gap-1.5 pt-1">
                   {user.roles.map((role) => (
-                    <span key={role} className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong">{role}</span>
+                    <span
+                      key={role}
+                      className="rounded-full bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent-strong"
+                    >
+                      {role}
+                    </span>
                   ))}
                 </span>
-              ) : t.noRoles}
+              ) : (
+                t.noRoles
+              )}
             </Detail>
           </dl>
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-line pt-4">
@@ -122,9 +148,18 @@ export function Component() {
         <section aria-labelledby="security-title" className={maxCard}>
           <div className="mb-3 flex items-start justify-between gap-3 border-b border-line pb-4">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent-strong">Protección de la cuenta</p>
-              <h2 id="security-title" className="mt-1 text-lg font-bold tracking-tight text-fg">{t.securityTitle}</h2>
-              <p className="mt-1 text-sm leading-relaxed text-muted">{t.securityHint}</p>
+              <p className="text-xs font-bold tracking-[0.14em] text-accent-strong uppercase">
+                Protección de la cuenta
+              </p>
+              <h2
+                id="security-title"
+                className="mt-1 text-lg font-bold tracking-tight text-fg"
+              >
+                {t.securityTitle}
+              </h2>
+              <p className="mt-1 text-sm leading-relaxed text-muted">
+                {t.securityHint}
+              </p>
             </div>
             <span className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-accent-soft text-accent-strong">
               <ShieldCheck aria-hidden="true" size={21} />

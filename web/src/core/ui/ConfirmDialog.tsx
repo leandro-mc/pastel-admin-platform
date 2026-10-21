@@ -30,8 +30,16 @@ export function ConfirmDialog({
     <Dialog title={title} description={message} onClose={onClose}>
       {children}
       <div className="flex flex-wrap justify-end gap-3">
-        <Button variant="secondary" onClick={onClose}>{cancelLabel}</Button>
-        <Button variant="primary" onClick={onConfirm} disabled={pending} loading={pending} loadingLabel={pendingLabel}>
+        <Button variant="secondary" onClick={onClose}>
+          {cancelLabel}
+        </Button>
+        <Button
+          variant="primary"
+          onClick={onConfirm}
+          disabled={pending}
+          loading={pending}
+          loadingLabel={pendingLabel}
+        >
           {confirmLabel}
         </Button>
       </div>
