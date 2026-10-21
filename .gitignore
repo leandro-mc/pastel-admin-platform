@@ -13,3 +13,6 @@ TestResults/
 .vscode/
 .idea/
 .DS_Store
+
+# Archivos .csn: origen sin determinar, nunca se versionan (ver docs/testing/FORMAT-AUTOMATION.md)
+*.csn

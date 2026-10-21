@@ -2,7 +2,7 @@
 
 > **Fuente de verdad para el relevo.** Este archivo resume el estado actual y los siguientes pasos; no agregues resúmenes iniciales repetidos. El detalle de sesiones anteriores se conserva en [`PROGRESS-HISTORY.md`](./PROGRESS-HISTORY.md), solo como historial. Si existe una discrepancia, inspecciona el código y actualiza este documento.
 
-Última reconciliación documental: 2026-10-20 (hora local de Costa Rica; los logs de prueba están en UTC).
+Última reconciliación documental: 2026-10-21 (hora local de Costa Rica; los logs de prueba están en UTC).
 
 ## Repositorio y reglas vigentes
 
@@ -66,7 +66,7 @@ La bitácora hasta S4-07 registra:
 
 ### Legado de las capas antiguas (resuelto)
 
-`PrivilegeGuard.cs` (antiguo `AdministrationService`), `SessionService.cs` (antiguo `AuthService`) y `DatabaseSeeder.cs` se **eliminaron** tras comprobar que no tenían consumidores y que su lógica vive en los slices de `Features/*`, `CatalogSyncTask` y `BootstrapAdminTask` (único método sin reemplazo: `CreateModule`, retirado a propósito). Sin compilar; solo búsqueda de referencias.
+Las capas antiguas (`AdministrationService`, `AuthService`, `SessionService`, `DatabaseSeeder`) ya no existen en el árbol vigente. Su lógica vive en los slices de `Features/*`, `CatalogSyncTask`, `BootstrapAdminTask` y `PrivilegeGuard.cs`, que es la implementación vigente de `IPrivilegeGuard` (único método sin reemplazo: `CreateModule`, retirado a propósito). Verificado por búsqueda de referencias; sin compilar. Las menciones previas a esos archivos están solo en `PROGRESS-HISTORY.md` y no representan trabajo pendiente.
 
 Se corrigió `Pastel.Modules.Identity.Tests.csproj` para referenciar `Pastel.Modules.Identity`, restaurar el namespace modular y usar versiones centrales de paquetes (commit `373d6dd`). `SecurityPolicyTests.cs` cubre la política de contraseñas, decisiones de permisos, protección AES-GCM de refresh y límite por cuenta (commits `baa593d`, `ce4d9e3`). El usuario confirmó la compilación local de toda la solución y **16/16 pruebas unitarias aprobadas**, además de **4/4 smoke tests de integración aprobados** en la base dedicada. Se agregó ahora una quinta prueba de integración que verifica la migración inicial y la ausencia de migraciones pendientes; **esta prueba nueva aún no se ha ejecutado localmente**. Falta ampliar la validación de concurrencia, autorización y escenarios de seguridad; no marcar WP3/WP4 como completos por estas pruebas básicas.
 
@@ -632,7 +632,7 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Resultado exacto del formato:** tras normalizar globalmente 176 archivos C# (158 cambiados, 0 CR pendientes), desaparecieron los errores `ENDOFLINE`; quedan 9 diagnósticos `WHITESPACE` en `PrivilegeGuard.cs` y 1 `FINALNEWLINE` en `TestingSeedUsersTask.cs`. Por tanto, esta ejecución no es todavía una aprobación completa del backend.
 - **Corrección de herramienta preparada en este commit:** `scripts/format-backend.ps1` ejecuta explícitamente `dotnet format whitespace` además del formateo .NET general, y después de copiar los archivos desde Docker normaliza de manera global los `.cs` de `src/` y `tests/` a UTF-8 sin BOM, LF y una nueva línea final. Verifica el resultado y falla de forma explícita si encuentra excepciones. Esto sustituye la corrección manual archivo por archivo.
 - **Validación de la nueva versión del script:** todavía no ejecutada por el propietario; después de sincronizar esta actualización, ejecutar `.\\scripts\\format-backend.ps1` y luego `.\\scripts\\test-backend.ps1`. No afirmar que formato ni backend están aprobados hasta ver el nuevo resultado.
-- **Archivos `.csn` observados localmente:** no se generan con la rutina de normalización de `.cs` de este checkpoint y no se han borrado ni incorporado al repositorio; su origen requiere una revisión separada antes de decidir qué hacer.
+- **Archivos `.csn`:** no existen en el repositorio ni en su historial y ningún script los genera. El propietario ya los retiró tras respaldarlos; el respaldo no se borra. Quedan excluidos por `.gitignore` y bloqueados por el hook de pre-commit. Origen sin determinar (requiere revisar el respaldo local).
 
 
 ## Build/QA — pasada dirigida de formato para Identity (2026-10-21)
@@ -641,3 +641,27 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Corrección de herramienta:** se conserva la normalización global de LF/UTF-8 ya implementada y se añade una segunda pasada `dotnet format whitespace` sobre `Pastel.Modules.Identity.csproj`, además de la pasada a nivel de solución. Se dirige al proyecto que contiene el archivo diagnosticado. Esta pasada adicional queda pendiente de validación local.
 - **Aclaración:** la expresión regular de finales de línea ya era correcta; el recuento de un archivo normalizado en la ejecución previa es consistente con que los demás ya estaban normalizados localmente.
 - **Pendientes:** repetir `.\\scripts\\format-backend.ps1` y `.\\scripts\\test-backend.ps1`. La integración PostgreSQL, Playwright E2E y la verificación manual de Google OAuth no se ejecutaron en esta validación. Fase 0 permanece abierta.
+
+
+## Build/QA — automatización de formato y ciclo de verificación (2026-10-21)
+
+**Estado: POR VERIFICAR.** Publicado por un agente Build/QA sin .NET, Docker, PostgreSQL ni PowerShell (autorizado por el propietario; ver `AGENTS.md`). Lo marcado «verificado aquí» se ejecutó en Linux con Node; todo lo demás no se ha ejecutado.
+
+- **Decisiones del propietario (2026-10-21):** Build/QA pueden publicar código sin verificar marcándolo POR VERIFICAR; las menciones a archivos retirados que nunca existieron en el árbol vigente se eliminan de este documento; Huella, catálogo persistente, gestión de membresías de Cosecha y feed de Ágora se consideran **fuera del alcance de Fase 0** y no bloquean su cierre (su redacción detallada se deja como está).
+- **Causa raíz del formato masivo:** `format-backend.ps1` y `format-frontend.ps1` copiaban de vuelta todos los archivos con `cp -p`. Ahora copian solo los que difieren byte a byte e informan el recuento. *Verificado aquí:* sintaxis `sh -n` de ambos scripts embebidos y la función de copia (2 archivos distintos copiados, 0 en la segunda ejecución, cambio solo de fecha ignorado). *Por verificar:* ejecución real en Docker/PowerShell.
+- **Diagnósticos de formato:** `format-backend.ps1` ahora muestra los diagnósticos restantes de `dotnet format` y falla si quedan. Los 9 `WHITESPACE` de `PrivilegeGuard.cs` siguen **sin diagnosticar**: hace falta la salida real (comando abajo).
+- **Hook de pre-commit** (`.githooks/pre-commit`, `scripts/hooks/*`, `scripts/install-hooks.{mjs,ps1}`): corrige BOM/CRLF/nueva línea final en C# y aplica Prettier cuando es seguro; bloquea espacios finales, `.csn`, `.env`, claves y secretos. Documentado en `docs/testing/FORMAT-AUTOMATION.md`. *Verificado aquí:* 12 pruebas nuevas (unitarias y extremo a extremo en repositorios temporales) más las 8 existentes de `check-design`, 20/20; autoformateo real con Prettier y bloqueo con cambios sin preparar. *Por verificar:* instalación y comportamiento en Windows con Git for Windows.
+- **Sin cambios en esta tanda:** ningún código de producto, migración ni prueba .NET. Fase 0 sigue abierta; ningún requisito obligatorio nuevo pasa a aprobado.
+
+### Comandos que debe ejecutar el propietario (PowerShell) y devolver la salida
+
+```powershell
+git pull
+.\scripts\install-hooks.ps1
+.\scripts\format-backend.ps1
+.\scripts\format-backend.ps1        # segunda vez: debe decir 0 archivos actualizados
+git status --short                     # debe estar vacío o solo con cambios reales
+.\scripts\test-backend.ps1
+.\scripts\test-database.ps1
+.\scripts\test-frontend.ps1
+```
