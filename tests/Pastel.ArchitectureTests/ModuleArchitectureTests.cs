@@ -142,9 +142,8 @@ public sealed class ModuleArchitectureTests
                 }
 
                 var targetModule = targetRelative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)[0];
-                Assert.Equal(
-                    sourceModule,
-                    targetModule,
+                Assert.True(
+                    string.Equals(sourceModule, targetModule, StringComparison.Ordinal),
                     $"{sourceRelative} references a project in another module: {targetRelative}");
             }
         }
