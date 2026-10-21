@@ -30,7 +30,7 @@ echo "=== Aplicar formato .NET ==="
 dotnet format Pastel.slnx --no-restore
 
 # Alinea todos los archivos C# con .editorconfig (LF y UTF-8 sin BOM).
-find /tmp/work/src /tmp/work/tests -type f -name '*.cs' -exec sh -c '
+find /tmp/work/src /tmp/work/tests -type d \\( -name bin -o -name obj \\) -prune -o -type f -name '*.cs' -exec sh -c '
   for source do
     sed -i "s/\r$//" "$source"
     sed -i "1s/^\xEF\xBB\xBF//" "$source"
