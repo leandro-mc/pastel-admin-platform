@@ -160,9 +160,9 @@ public sealed class IdentityApiSmokeTests : IClassFixture<IdentityApiFactory>
         Assert.Contains(cookies, value => value.StartsWith("__Host-pastel_access=", StringComparison.Ordinal));
         Assert.Contains(cookies, value => value.StartsWith("__Host-pastel_refresh=", StringComparison.Ordinal));
 
-        using var currentUserResponse = await client.GetAsync("/api/auth/me");
-        Assert.Equal(HttpStatusCode.Forbidden, currentUserResponse.StatusCode);
-        using var document = JsonDocument.Parse(await currentUserResponse.Content.ReadAsStringAsync());
+        using var blockedResponse = await client.GetAsync("/api/admin/users/");
+        Assert.Equal(HttpStatusCode.Forbidden, blockedResponse.StatusCode);
+        using var document = JsonDocument.Parse(await blockedResponse.Content.ReadAsStringAsync());
         Assert.Equal("platform.password_change_required", document.RootElement.GetProperty("code").GetString());
     }
 
