@@ -113,9 +113,9 @@ export function PermissionPicker({
                     checked={selected.has(item.id)}
                     onChange={() => toggle(item.id)}
                   />
-                  <span className="min-w-0">
-                    <span className="font-semibold">{item.name}</span>
-                    <span className="mt-0.5 block break-words text-sm leading-relaxed text-muted">
+                  <span className="min-w-0 font-semibold">
+                    {item.name}
+                    <span className="mt-0.5 block break-words text-sm font-normal leading-relaxed text-muted">
                       {item.description ?? item.code}
                     </span>
                   </span>
