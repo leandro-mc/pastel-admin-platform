@@ -2,6 +2,8 @@
 
 Fuente funcional de la migración descrita en `docs/modules/BRISA.md`. Elaborado por un agente de investigación; **no se modificó el código original ni se escribió código de migración**.
 
+> **Prototipo visual interactivo:** [brisa-prototipo-carrusel.html](./brisa-prototipo-carrusel.html). Es una referencia navegable con datos de demostración; no está conectada al backend.
+
 | Dato | Valor |
 |---|---|
 | Repositorio analizado | `leandro-mc/brisa-android` (rama `main`, 3 commits, 2026-10-15). **Confirmado por el propietario** como el proyecto «Brisa», sin otra versión en otra rama o repositorio (Q1). El nombre del repositorio difiere, pero `rootProject.name = "Brisa"` y `applicationId = com.brisa.todo`. |
