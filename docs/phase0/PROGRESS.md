@@ -556,3 +556,11 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] Playwright: smoke de `/ingresar` y análisis axe de etiquetas WCAG A/AA, dirigido por `PASTEL_E2E_BASE_URL` (por defecto `http://127.0.0.1:8080`). No requiere credenciales de Google; OAuth real queda para la verificación manual cuando se levante el stack con `.env` local configurado.
 - [ ] **CCR-006 pendiente:** no se modificó `package.json` con dependencias ni `package-lock.json` porque esta sesión no puede ejecutar npm contra el registry; es necesario correr npm install en el entorno local para cerrar el lockfile con una sola operación.
 - [ ] **Sin validar:** tests, Prettier, ESLint, TypeScript/Vite y Playwright no se ejecutaron en esta sesión. Las pruebas pueden revelar fallos de accesibilidad que deben corregirse antes del cierre.
+
+
+## Build/QA — conexión de guardas frontend (2026-10-20)
+
+- [x] Se conecta el preset plano recomendado de `eslint-plugin-jsx-a11y` para JS/TS/JSX y se conservan las reglas existentes de fronteras y `no-console`.
+- [x] `scripts/test-frontend.ps1` ejecutará `npm run test` después del build para que las pruebas Vitest formen parte de la validación.
+- [ ] **Bloqueo de instalación:** el import `eslint-plugin-jsx-a11y` y los scripts `vitest`/`playwright` todavía requieren que el propietario regenere `web/package-lock.json` con el comando npm documentado en CCR-006. No ejecutar todavía `test-frontend.ps1` contra el lockfile anterior; fallará por dependencias ausentes.
+- **Validación:** modificación estática; no se ejecutaron npm, ESLint, Vitest, build ni Playwright.
