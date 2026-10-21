@@ -45,3 +45,8 @@ La comparación del código entre `dev` y `refactor/modular-foundation` confirma
 4. **Destino tras login.** Un `returnUrl` interno seguro tiene prioridad; en ausencia de uno válido, la primera entrada abre Ágora y los siguientes logins vuelven a la última app de producto usada. La implementación actual guarda la preferencia en el navegador; no se sincroniza entre dispositivos.
 5. **Estado real frente al requisito.** Se han iniciado los límites de roles/permisos en código y se ha actualizado la documentación. El módulo Huella sigue siendo un esqueleto sin entidades/API/ruta pública; token, publicación, revocación/regeneración y noindex son requisitos aprobados, no funcionalidades implementadas todavía.
 6. **Validación pendiente.** Los cambios de esta extensión de CCR aún no están compilados ni probados. Requieren Build/QA, pruebas de autorización y verificación del flujo de login. No integrar en `dev` ni `main` sin nueva autorización expresa.
+
+
+## Hallazgo de Build — token para sombra de navegación móvil (2026-10-20)
+
+La ejecución local de `scripts/test-all.ps1` detectó `web/src/core/design/components/app-shell.css` con una sombra literal en la barra de navegación móvil, fuera del archivo autorizado para definir colores. Dentro del alcance aprobado de recuperación visual, se reemplaza por `var(--shadow-bottom-nav)`, con valores claro/oscuro definidos en `web/src/core/design/tokens.css`. Se conserva la geometría de sombra y se mantiene la fuente única de tokens. Esta corrección requiere volver a ejecutar `check-design`, Prettier y la revisión visual en ambos temas.

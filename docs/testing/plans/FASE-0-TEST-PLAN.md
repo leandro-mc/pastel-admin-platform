@@ -5,7 +5,7 @@ Autor inicial: orquestador (independiente de Dev). **El agente de QA lo amplía*
 Prioridad: **O** obligatorio · **I** importante · **D** deseable. Tipos como en `TEST_PLAN_TEMPLATE.md`.
 
 ## 1. Cómo ejecutar
-`docker compose down -v && docker compose up --build` con `ASPNETCORE_ENVIRONMENT=Testing`, `Auth:Local:Enabled=true`. Cuentas: administrador de arranque + usuarios de prueba creados por el sembrador `Testing` (el Agente 0 los deja en `docs/phase0/PROGRESS.md`; QA los incorpora aquí). Pruebas automatizadas: `dotnet test`, `npm test`, `npm run test:e2e`.
+Para probar desde una base vacía, use un proyecto Compose aislado con puertos temporales y no elimine el volumen del proyecto de desarrollo. Ejemplo en PowerShell: `$env:ASPNETCORE_ENVIRONMENT="Testing"; $env:WEB_PORT="18080"; $env:POSTGRES_PORT="15435"; $env:APP_PUBLIC_BASE_URL="http://localhost:18080"; docker compose -p pastel-fase0-qa up -d --build`. Al terminar, `docker compose -p pastel-fase0-qa down` (sin `-v`). Cuentas: administrador de arranque + usuarios de prueba creados por el sembrador `Testing` (el Agente 0 los deja en `docs/phase0/PROGRESS.md`; QA los incorpora aquí). Pruebas automatizadas: `dotnet test`, `npm test`, `npm run test:e2e`.
 
 ## 2. Estructura y arranque
 | ID | Tipo | P | Caso | Esperado |
@@ -114,7 +114,7 @@ Actores: **Admin**, **Gestor-usuarios** (rol no administrador con `settings.user
 | F0-I04 | F | O | `AllowedHosts` y red de proxy confiable | Configurables por variable; sin depender de IP fijas del compose |
 | F0-I05 | F | I | IP real del cliente detrás de un proxy | La limitación de tasa y la auditoría usan la IP real (probado con cabecera simulada) |
 | F0-I06 | F | O | nginx | Compresión y caché de activos con hash; cabeceras sin duplicados |
-| F0-I07 | F | O | CI | Un solo disparo por PR (push solo en `dev`/`main` + `pull_request`), `concurrency` con cancelación, `timeout-minutes`, `dotnet format --verify-no-changes`, auditoría de paquetes .NET y `npm audit` |
+| F0-I07 | F | O | CI | `workflow_dispatch` manual que exige `confirm_validation=true`, sin triggers de `push` ni `pull_request`; `concurrency` con cancelación, `timeout-minutes`, `dotnet format --verify-no-changes`, auditoría de paquetes .NET y `npm audit` |
 | F0-I08 | F | I | `.editorconfig`, `.gitattributes`, `Directory.Packages.props` | Presentes y aplicados |
 | F0-I09 | F | O | Secretos | Ningún secreto ni `.env` en el diff; `.env.example` con valores de ejemplo no válidos en producción |
 
