@@ -1,0 +1,14 @@
+#!/bin/sh
+# Hook de pre-commit de Pastel. Delega en Node (requerido por el proyecto) para ser
+# identico en Windows (Git for Windows), Linux y macOS. Instalacion: node scripts/install-hooks.mjs
+if [ "${PASTEL_SKIP_HOOKS:-}" = "1" ]; then
+  echo "[pastel] pre-commit omitido (PASTEL_SKIP_HOOKS=1)."
+  exit 0
+fi
+if ! command -v node >/dev/null 2>&1; then
+  echo "[pastel] Node.js no esta en PATH: no se pueden ejecutar los chequeos de pre-commit." >&2
+  echo "[pastel] Instale Node 22+ o, en una emergencia, use PASTEL_SKIP_HOOKS=1 git commit ..." >&2
+  exit 1
+fi
+root=$(git rev-parse --show-toplevel) || exit 1
+exec node "$root/scripts/hooks/pre-commit.mjs"

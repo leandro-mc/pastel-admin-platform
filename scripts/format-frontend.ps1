@@ -23,47 +23,36 @@ cd /tmp/work/web
 npm ci --no-audit --no-fund
 npm run format
 
-# Copy back only extensions and paths included by the repository's Prettier script.
-find /tmp/work/web/src -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.css' \) -exec sh -c '
-  for source do
-    relative=${source#/tmp/work/web/src/}
-    destination="/repo/web/src/$relative"
-    mkdir -p "$(dirname "$destination")"
-    cp -p "$source" "$destination"
-  done
-' sh {} +
+# Copia de vuelta solo los archivos administrados por Prettier cuyo contenido realmente cambio.
+copied=0
+copy_if_changed() {
+  source_file="$1"
+  destination_file="$2"
+  if [ -f "$destination_file" ] && cmp -s "$source_file" "$destination_file"; then
+    return 0
+  fi
+  mkdir -p "$(dirname "$destination_file")"
+  cat "$source_file" > "$destination_file"
+  copied=$((copied + 1))
+  echo "  actualizado: ${destination_file#/repo/}"
+}
 
-find /tmp/work/web/vite -type f -name '*.ts' -exec sh -c '
-  for source do
-    relative=${source#/tmp/work/web/vite/}
-    destination="/repo/web/vite/$relative"
-    mkdir -p "$(dirname "$destination")"
-    cp -p "$source" "$destination"
-  done
-' sh {} +
-
-
-find /tmp/work/web/tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sh -c '
-  for source do
-    relative=${source#/tmp/work/web/tests/}
-    destination="/repo/web/tests/$relative"
-    mkdir -p "$(dirname "$destination")"
-    cp -p "$source" "$destination"
-  done
-' sh {} +
-
-for file in vite.config.ts vitest.config.ts playwright.config.ts eslint.config.js package.json package-lock.json .prettierrc.json; do
+: > /tmp/web-files.txt
+find /tmp/work/web/src -type f \( -name '*.ts' -o -name '*.tsx' -o -name '*.css' \) >> /tmp/web-files.txt
+find /tmp/work/web/vite -type f -name '*.ts' >> /tmp/web-files.txt
+find /tmp/work/web/tests -type f \( -name '*.ts' -o -name '*.tsx' \) >> /tmp/web-files.txt
+for file in vite.config.ts vitest.config.ts playwright.config.ts eslint.config.js package.json package-lock.json .prettierrc.json tsconfig*.json; do
   if [ -f "/tmp/work/web/$file" ]; then
-    cp -p "/tmp/work/web/$file" /repo/web/
-  fi
-done
-for source in /tmp/work/web/tsconfig*.json; do
-  if [ -f "$source" ]; then
-    cp -p "$source" /repo/web/
+    echo "/tmp/work/web/$file" >> /tmp/web-files.txt
   fi
 done
 
-echo "Formato aplicado a los archivos administrados por Prettier."
+while IFS= read -r source_path; do
+  copy_if_changed "$source_path" "/repo/${source_path#/tmp/work/}"
+done < /tmp/web-files.txt
+
+echo ""
+echo "Archivos actualizados en el repositorio: $copied (los demas ya estaban formateados)."
 echo "Revise git diff antes de crear un commit."
 '@
 
