@@ -591,3 +591,13 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 
 - [x] Se actualiza `scripts/format-frontend.ps1` para copiar de vuelta los archivos formateados de `web/tests/**/*.ts(x)` y los archivos `vitest.config.ts`/`playwright.config.ts`. Antes, `npm run format` los formateaba en la copia Docker temporal, pero el script no copiaba esos resultados al working tree, lo que podía dejar `format:check` fallando siempre.
 - [ ] **Validación pendiente:** no se ejecutó el script PowerShell ni se probó el transporte de los archivos en Docker. Debe revisarse con la instalación de CCR-006 completada.
+
+
+## Build/QA — herramienta reproducible para formato .NET (2026-10-20)
+
+- **Clasificación de esta unidad:** Tipo 2; Build/QA combinado como mejor esfuerzo. La sesión de autoría no tiene checkout, SDK de .NET ni Docker ejecutables, por lo que la revisión aquí es estática y no sustituye validación local.
+- Se añade `scripts/format-backend.ps1`: restaura y ejecuta `dotnet format Pastel.slnx --no-restore` en una copia temporal con la imagen .NET SDK 10, normaliza los archivos C# a LF y UTF-8 sin BOM y copia de vuelta únicamente los archivos `.cs`. No elimina archivos ni volúmenes y no crea commits locales.
+- **Revisiones estáticas post-publicación:** se corrigió el cálculo de la ruta relativa de copia con `printf`/`sed` y se excluyen explícitamente los directorios generados `bin`/`obj` para copiar solo fuentes C# reales. Estos hallazgos confirman que el script debe validarse localmente antes de considerarlo listo.
+- **Sin validar:** el script aún no pudo ejecutarse en esta sesión. No se afirma que el formateo sea exitoso hasta ejecutar el script y luego `scripts/test-backend.ps1`.
+- **Pendiente del entorno local:** tras actualizar la rama, revisar `git status --short --branch`, ejecutar primero `scripts/format-backend.ps1` y `scripts/format-frontend.ps1`, inspeccionar el diff resultante y completar la instalación de dependencias de CCR-006 en `web/` para sincronizar `package.json`/ `package-lock.json`. Después ejecutar `scripts/test-all.ps1`, pruebas Playwright sobre la aplicación local y registrar los resultados reales. No despachar CI ni integrar a `dev`/`main` en esta etapa.
+- **OAuth:** el propietario informa que las credenciales ya están configuradas; no se solicitaron ni copiaron a Git. La prueba real de Google queda como verificación manual posterior con secretos mantenidos en el `.env` local.
