@@ -40,7 +40,9 @@ export function SelectField({
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor={selectId} className={labelClass}>{label}</label>
+      <label htmlFor={selectId} className={labelClass}>
+        {label}
+      </label>
       <select
         {...select}
         id={selectId}
@@ -49,15 +51,31 @@ export function SelectField({
         aria-describedby={describedBy}
         className={selectClass}
       >
-        {placeholder ? <option value="" disabled={required}>{placeholder}</option> : null}
+        {placeholder ? (
+          <option value="" disabled={required}>
+            {placeholder}
+          </option>
+        ) : null}
         {options.map((option) => (
-          <option key={option.value} value={option.value} disabled={option.disabled}>
+          <option
+            key={option.value}
+            value={option.value}
+            disabled={option.disabled}
+          >
             {option.label}
           </option>
         ))}
       </select>
-      {hint ? <p id={hintId} className="text-sm text-muted">{hint}</p> : null}
-      {error ? <p id={errorId} className="text-sm text-danger">{error}</p> : null}
+      {hint ? (
+        <p id={hintId} className="text-sm text-muted">
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <p id={errorId} className="text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

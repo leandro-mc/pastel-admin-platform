@@ -116,14 +116,18 @@ export function Component() {
     >
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">
+          <p className="mb-2 text-xs font-bold tracking-[0.16em] text-accent-strong uppercase">
             Centro de control / Accesos
           </p>
-          <h1 id="users-title" className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+          <h1
+            id="users-title"
+            className="text-2xl font-bold tracking-tight text-fg sm:text-3xl"
+          >
             {t.title}
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
-            Administre las cuentas, revise su estado y gestione los accesos de cada persona.
+            Administre las cuentas, revise su estado y gestione los accesos de
+            cada persona.
           </p>
         </div>
         {hasPermission(identityPermissions.usersCreate) ? (
@@ -137,7 +141,10 @@ export function Component() {
         ) : null}
       </header>
 
-      <section className={`${panel} overflow-hidden shadow-sm`} aria-label="Directorio de cuentas">
+      <section
+        className={`${panel} overflow-hidden shadow-sm`}
+        aria-label="Directorio de cuentas"
+      >
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
           <div>
             <h2 className="font-semibold text-fg">Cuentas registradas</h2>

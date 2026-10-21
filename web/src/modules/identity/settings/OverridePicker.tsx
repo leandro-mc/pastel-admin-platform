@@ -63,7 +63,10 @@ export function OverridePicker({
         />
       </label>
       {groups.length === 0 ? (
-        <p role="status" className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted">
+        <p
+          role="status"
+          className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted"
+        >
           No hay permisos que coincidan con la búsqueda.
         </p>
       ) : null}
@@ -102,7 +105,10 @@ export function OverridePicker({
                   >
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p id={labelId} className="text-sm font-semibold text-fg">
+                        <p
+                          id={labelId}
+                          className="text-sm font-semibold text-fg"
+                        >
                           {permission.name}
                         </p>
                         <span
@@ -114,11 +120,16 @@ export function OverridePicker({
                                 : "rounded-full bg-surface-raised px-2 py-0.5 text-xs font-medium text-muted"
                           }
                         >
-                          {current === "Grant" ? t.grant : current === "Deny" ? t.deny : t.inherit}
+                          {current === "Grant"
+                            ? t.grant
+                            : current === "Deny"
+                              ? t.deny
+                              : t.inherit}
                         </span>
                       </div>
                       <p className="mt-1 text-sm leading-relaxed text-muted">
-                        {permission.description ?? permission.code} {explanation}
+                        {permission.description ?? permission.code}{" "}
+                        {explanation}
                       </p>
                     </div>
                     <div
@@ -150,7 +161,9 @@ export function OverridePicker({
                               value={option.value}
                               disabled={disabled}
                               checked={active}
-                              onChange={() => onChange(permission.id, option.value)}
+                              onChange={() =>
+                                onChange(permission.id, option.value)
+                              }
                             />
                             {option.label}
                           </label>

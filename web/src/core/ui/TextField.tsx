@@ -3,10 +3,7 @@ import { useId, useState, type ComponentProps } from "react";
 import { uiStrings } from "./strings";
 import { inputClass, labelClass } from "./styles";
 
-export type TextFieldProps = Omit<
-  ComponentProps<"input">,
-  "className"
-> & {
+export type TextFieldProps = Omit<ComponentProps<"input">, "className"> & {
   label: string;
   error?: string;
   hint?: string;
@@ -68,8 +65,16 @@ export function TextField({
           </button>
         ) : null}
       </div>
-      {hint ? <p id={hintId} className="text-sm text-muted">{hint}</p> : null}
-      {error ? <p id={errorId} className="text-sm text-danger">{error}</p> : null}
+      {hint ? (
+        <p id={hintId} className="text-sm text-muted">
+          {hint}
+        </p>
+      ) : null}
+      {error ? (
+        <p id={errorId} className="text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

@@ -70,7 +70,10 @@ export function PermissionPicker({
         {t.selectedCount(selected.size)}
       </p>
       {groups.length === 0 ? (
-        <p role="status" className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted">
+        <p
+          role="status"
+          className="rounded-2xl border border-dashed border-line p-6 text-center text-sm text-muted"
+        >
           No hay permisos que coincidan con la búsqueda.
         </p>
       ) : null}
@@ -85,7 +88,9 @@ export function PermissionPicker({
             <legend className="w-full pb-3">
               <span className="flex w-full items-center justify-between gap-3">
                 <span className="flex min-w-0 flex-col gap-0.5">
-                  <span className="text-sm font-bold text-fg">{moduleName}</span>
+                  <span className="text-sm font-bold text-fg">
+                    {moduleName}
+                  </span>
                   <span className="text-xs text-muted">
                     {count} de {items.length} permisos seleccionados
                   </span>
@@ -115,7 +120,7 @@ export function PermissionPicker({
                   />
                   <span className="min-w-0 font-semibold">
                     {item.name}
-                    <span className="mt-0.5 block break-words text-sm font-normal leading-relaxed text-muted">
+                    <span className="mt-0.5 block text-sm leading-relaxed font-normal break-words text-muted">
                       {item.description ?? item.code}
                     </span>
                   </span>

@@ -1,6 +1,11 @@
 import { X } from "lucide-react";
 import type { ReactNode } from "react";
-import { Dialog as AriaDialog, Heading, Modal, ModalOverlay } from "react-aria-components";
+import {
+  Dialog as AriaDialog,
+  Heading,
+  Modal,
+  ModalOverlay,
+} from "react-aria-components";
 import { uiStrings } from "./strings";
 import { iconButton } from "./styles";
 
@@ -29,18 +34,33 @@ export function Dialog({
   return (
     <ModalOverlay
       isOpen
-      onOpenChange={(open) => { if (!open) onClose(); }}
+      onOpenChange={(open) => {
+        if (!open) onClose();
+      }}
       isDismissable
       className="fixed inset-0 z-50 flex items-center justify-center bg-fg/40 p-4"
     >
-      <Modal className={`max-h-full w-full ${maxWidthClassName} overflow-y-auto rounded-2xl border border-line bg-surface-raised shadow-lg outline-none`.trim()}>
-        <AriaDialog className={`flex flex-col gap-4 p-6 outline-none ${className}`.trim()}>
+      <Modal
+        className={`max-h-full w-full ${maxWidthClassName} overflow-y-auto rounded-2xl border border-line bg-surface-raised shadow-lg outline-none`.trim()}
+      >
+        <AriaDialog
+          className={`flex flex-col gap-4 p-6 outline-none ${className}`.trim()}
+        >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <Heading slot="title" className="text-lg font-semibold text-fg">{title}</Heading>
-              {description ? <p className="mt-1 text-sm text-muted">{description}</p> : null}
+              <Heading slot="title" className="text-lg font-semibold text-fg">
+                {title}
+              </Heading>
+              {description ? (
+                <p className="mt-1 text-sm text-muted">{description}</p>
+              ) : null}
             </div>
-            <button type="button" onClick={onClose} aria-label={closeLabel} className={closeButtonClassName}>
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label={closeLabel}
+              className={closeButtonClassName}
+            >
               <X aria-hidden="true" size={18} />
             </button>
           </div>

@@ -78,7 +78,12 @@ export default function AccountMenu() {
             selectedKeys={[textSize]}
             onSelectionChange={(keys) => {
               const next = [...keys][0];
-              if (next === "small" || next === "normal" || next === "large" || next === "xlarge")
+              if (
+                next === "small" ||
+                next === "normal" ||
+                next === "large" ||
+                next === "xlarge"
+              )
                 setTextSize(next);
             }}
           >

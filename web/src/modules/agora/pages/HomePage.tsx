@@ -20,13 +20,15 @@ export function Component() {
     >
       <section className="agora-hero" aria-labelledby="agora-title">
         <div className="agora-hero-copy">
-          <span className="agora-eyebrow">Divulgación · Humanidades · Actualidad</span>
+          <span className="agora-eyebrow">
+            Divulgación · Humanidades · Actualidad
+          </span>
           <h1 id="agora-title" className="agora-hero-title">
             Ideas para comprender el mundo.
           </h1>
           <p className="agora-hero-description">
-            {strings.tagline}. Un espacio para encontrarse con nuevas perspectivas,
-            explorar ideas y mirar la actualidad con curiosidad.
+            {strings.tagline}. Un espacio para encontrarse con nuevas
+            perspectivas, explorar ideas y mirar la actualidad con curiosidad.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <Link
@@ -61,13 +63,19 @@ export function Component() {
         </div>
       </section>
 
-      <section className="flex flex-col gap-4" aria-labelledby="agora-feed-title">
+      <section
+        className="flex flex-col gap-4"
+        aria-labelledby="agora-feed-title"
+      >
         <header className="agora-feed-heading">
           <div>
-            <p className="mb-1 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">
+            <p className="mb-1 text-xs font-bold tracking-[0.16em] text-accent-strong uppercase">
               El espacio público
             </p>
-            <h2 id="agora-feed-title" className="text-xl font-bold tracking-tight text-fg sm:text-2xl">
+            <h2
+              id="agora-feed-title"
+              className="text-xl font-bold tracking-tight text-fg sm:text-2xl"
+            >
               Publicaciones recientes
             </h2>
             <p className="mt-1 text-sm leading-relaxed text-muted">
@@ -90,8 +98,8 @@ export function Component() {
             </h3>
             <p className="max-w-lg text-sm leading-relaxed text-muted">
               La portada pública y su identidad visual están preparadas, pero
-              todavía no hay publicaciones conectadas a esta versión. No mostramos
-              contenido de ejemplo como si fuera real.
+              todavía no hay publicaciones conectadas a esta versión. No
+              mostramos contenido de ejemplo como si fuera real.
             </p>
           </div>
         </div>

@@ -40,9 +40,14 @@ export function CreateRoleDialog({ onClose }: { onClose: () => void }) {
   const create = useCreateRole();
   const [permissionIds, setPermissionIds] = useState<string[]>([]);
   const [failure, setFailure] = useState<ShownError | null>(null);
-  const availablePermissions = (catalog.data ?? []).filter(isPlatformPermission);
+  const availablePermissions = (catalog.data ?? []).filter(
+    isPlatformPermission,
+  );
   const hasSettingsPermission = permissionIds.some((id) =>
-    availablePermissions.some((permission) => permission.id === id && permission.code.startsWith("settings.")),
+    availablePermissions.some(
+      (permission) =>
+        permission.id === id && permission.code.startsWith("settings."),
+    ),
   );
   const {
     register,
@@ -99,11 +104,14 @@ export function CreateRoleDialog({ onClose }: { onClose: () => void }) {
             ) : null}
           </QueryState>
           <p className="text-xs leading-relaxed text-muted">
-            Workspace permite configurar la plataforma. Los permisos funcionales de Brisa, Balance, Ágora, Cosecha y Huella se administran dentro de cada aplicación.
+            Workspace permite configurar la plataforma. Los permisos funcionales
+            de Brisa, Balance, Ágora, Cosecha y Huella se administran dentro de
+            cada aplicación.
           </p>
           {!hasSettingsPermission ? (
             <p role="status" className="text-xs font-medium text-muted">
-              Seleccione al menos un permiso de configuración de plataforma para crear este rol.
+              Seleccione al menos un permiso de configuración de plataforma para
+              crear este rol.
             </p>
           ) : null}
         </div>

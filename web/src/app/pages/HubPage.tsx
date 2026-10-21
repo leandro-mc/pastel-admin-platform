@@ -14,9 +14,13 @@ export default function HubPage() {
         Ágora no está disponible en esta compilación
       </h1>
       <p className="text-fg-secondary">
-        Esta instancia no incluye la aplicación predeterminada. Vuelva a intentarlo más tarde o ingrese a su cuenta.
+        Esta instancia no incluye la aplicación predeterminada. Vuelva a
+        intentarlo más tarde o ingrese a su cuenta.
       </p>
-      <Link to={routes.login} className="self-start rounded-xl px-3 py-2 font-medium text-accent-strong underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent-strong">
+      <Link
+        to={routes.login}
+        className="self-start rounded-xl px-3 py-2 font-medium text-accent-strong underline-offset-4 hover:underline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-accent-strong"
+      >
         Ingresar
       </Link>
     </section>

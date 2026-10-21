@@ -37,12 +37,12 @@ describe("core/ui", () => {
     const input = screen.getByLabelText("Correo electrónico");
     expect(input).toHaveAttribute("aria-invalid", "true");
 
-    const describedIds = input.getAttribute("aria-describedby")?.split(" ") ?? [];
+    const describedIds =
+      input.getAttribute("aria-describedby")?.split(" ") ?? [];
     expect(describedIds).toHaveLength(2);
-    expect(describedIds.map((id) => document.getElementById(id)?.textContent)).toEqual([
-      "Use el correo de su cuenta.",
-      "El correo no es válido.",
-    ]);
+    expect(
+      describedIds.map((id) => document.getElementById(id)?.textContent),
+    ).toEqual(["Use el correo de su cuenta.", "El correo no es válido."]);
   });
 
   it("reveals and conceals a password through an explicitly named control", async () => {
@@ -55,17 +55,24 @@ describe("core/ui", () => {
     const reveal = screen.getByRole("button", { name: "Mostrar contraseña" });
     await user.click(reveal);
     expect(input).toHaveAttribute("type", "text");
-    expect(screen.getByRole("button", { name: "Ocultar contraseña" })).toHaveAttribute(
-      "aria-pressed",
-      "true",
-    );
+    expect(
+      screen.getByRole("button", { name: "Ocultar contraseña" }),
+    ).toHaveAttribute("aria-pressed", "true");
 
-    await user.click(screen.getByRole("button", { name: "Ocultar contraseña" }));
+    await user.click(
+      screen.getByRole("button", { name: "Ocultar contraseña" }),
+    );
     expect(input).toHaveAttribute("type", "password");
   });
 
   it("announces errors as alerts and keeps support codes readable", () => {
-    render(<Alert variant="error" message="No se pudo guardar." supportCode="ABC123" />);
+    render(
+      <Alert
+        variant="error"
+        message="No se pudo guardar."
+        supportCode="ABC123"
+      />,
+    );
 
     expect(screen.getByRole("alert")).toHaveTextContent("No se pudo guardar.");
     expect(screen.getByText(/ABC123/)).toBeInTheDocument();
@@ -82,9 +89,12 @@ describe("core/ui", () => {
 
     const checkbox = screen.getByRole("checkbox");
     expect(checkbox).toHaveAttribute("aria-invalid", "true");
-    const describedIds = checkbox.getAttribute("aria-describedby")?.split(" ") ?? [];
+    const describedIds =
+      checkbox.getAttribute("aria-describedby")?.split(" ") ?? [];
     expect(describedIds).toHaveLength(2);
-    expect(describedIds.map((id) => document.getElementById(id)?.textContent)).toEqual([
+    expect(
+      describedIds.map((id) => document.getElementById(id)?.textContent),
+    ).toEqual([
       "No use esta opción en equipos compartidos.",
       "Confirme su preferencia.",
     ]);
@@ -112,7 +122,11 @@ describe("core/ui", () => {
     const { container } = render(
       <main>
         <h1>Ingreso de prueba</h1>
-        <TextField label="Correo electrónico" type="email" autoComplete="email" />
+        <TextField
+          label="Correo electrónico"
+          type="email"
+          autoComplete="email"
+        />
         <Button>Continuar</Button>
       </main>,
     );
@@ -121,7 +135,9 @@ describe("core/ui", () => {
   });
 
   it("clears a validation error after input is updated by the user", () => {
-    render(<TextField label="Código" error="Código requerido" defaultValue="" />);
+    render(
+      <TextField label="Código" error="Código requerido" defaultValue="" />,
+    );
     const input = screen.getByLabelText("Código");
     expect(input).toHaveAttribute("aria-invalid", "true");
     fireEvent.change(input, { target: { value: "PASTEL-1" } });

@@ -20,7 +20,14 @@ const icons: Record<StateViewStatus, LucideIcon> = {
 };
 
 /** Estado de carga, vacío, error o éxito con semántica y jerarquía uniformes. */
-export function StateView({ status, title, description, action, className = "", icon }: StateViewProps) {
+export function StateView({
+  status,
+  title,
+  description,
+  action,
+  className = "",
+  icon,
+}: StateViewProps) {
   const Icon = icon ?? icons[status];
   const isError = status === "error";
   return (
@@ -29,12 +36,21 @@ export function StateView({ status, title, description, action, className = "", 
       aria-live={isError ? "assertive" : "polite"}
       className={`flex min-h-40 flex-col items-center justify-center gap-3 rounded-2xl border border-line bg-surface p-6 text-center ${className}`.trim()}
     >
-      <Icon aria-hidden="true" className={`size-7 shrink-0 ${isError ? "text-danger" : "text-accent-strong"} ${status === "loading" ? "animate-spin motion-reduce:animate-none" : ""}`.trim()} />
+      <Icon
+        aria-hidden="true"
+        className={`size-7 shrink-0 ${isError ? "text-danger" : "text-accent-strong"} ${status === "loading" ? "animate-spin motion-reduce:animate-none" : ""}`.trim()}
+      />
       <div className="max-w-xl">
         <h2 className="text-base font-semibold text-fg">{title}</h2>
-        {description ? <p className="mt-1 text-sm leading-relaxed text-muted">{description}</p> : null}
+        {description ? (
+          <p className="mt-1 text-sm leading-relaxed text-muted">
+            {description}
+          </p>
+        ) : null}
       </div>
-      {action ? <div className="flex flex-wrap justify-center gap-2">{action}</div> : null}
+      {action ? (
+        <div className="flex flex-wrap justify-center gap-2">{action}</div>
+      ) : null}
     </section>
   );
 }

@@ -23,13 +23,20 @@ export function CheckboxField({
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
   const describedBy =
-    [input["aria-describedby"], description ? descriptionId : null, error ? errorId : null]
+    [
+      input["aria-describedby"],
+      description ? descriptionId : null,
+      error ? errorId : null,
+    ]
       .filter(Boolean)
       .join(" ") || undefined;
 
   return (
     <div className="flex flex-col gap-1">
-      <label htmlFor={inputId} className="flex min-h-11 items-start gap-3 text-sm text-fg">
+      <label
+        htmlFor={inputId}
+        className="flex min-h-11 items-start gap-3 text-sm text-fg"
+      >
         <input
           {...input}
           id={inputId}
@@ -40,10 +47,18 @@ export function CheckboxField({
         />
         <span className="flex flex-col gap-1">
           <span className={labelClass}>{label}</span>
-          {description ? <span id={descriptionId} className="text-sm text-muted">{description}</span> : null}
+          {description ? (
+            <span id={descriptionId} className="text-sm text-muted">
+              {description}
+            </span>
+          ) : null}
         </span>
       </label>
-      {error ? <p id={errorId} className="text-sm text-danger">{error}</p> : null}
+      {error ? (
+        <p id={errorId} className="text-sm text-danger">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }

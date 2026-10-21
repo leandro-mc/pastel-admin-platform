@@ -54,8 +54,12 @@ export function Component() {
               catalog={catalog.data.filter(isPlatformPermission)}
             />
           ) : (
-            <p role="status" className="rounded-xl border border-line bg-surface p-5 text-sm leading-relaxed text-muted">
-              Este rol pertenece a una aplicación. Sus permisos se administran dentro de la configuración de esa app, no desde Pastel Workspace.
+            <p
+              role="status"
+              className="rounded-xl border border-line bg-surface p-5 text-sm leading-relaxed text-muted"
+            >
+              Este rol pertenece a una aplicación. Sus permisos se administran
+              dentro de la configuración de esa app, no desde Pastel Workspace.
             </p>
           )
         ) : (
@@ -100,39 +104,54 @@ function RoleAccessForm({
     <div className="flex flex-col gap-5">
       <header className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">
+          <p className="mb-2 text-xs font-bold tracking-[0.16em] text-accent-strong uppercase">
             Centro de control / Roles y permisos
           </p>
           <h1 className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">
             {t.roleTitle(role.name)}
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
-            {role.description || "Defina con claridad qué acciones permite este rol."}
+            {role.description ||
+              "Defina con claridad qué acciones permite este rol."}
           </p>
         </div>
         <div className="min-w-36 rounded-2xl border border-line bg-surface p-4 shadow-sm">
-          <span className="block text-xs font-semibold uppercase tracking-wide text-muted">
+          <span className="block text-xs font-semibold tracking-wide text-muted uppercase">
             Permisos
           </span>
           <strong className="mt-1 block text-2xl font-bold tracking-tight text-fg">
             {permissionIds.length}
-            <span className="text-sm font-medium text-muted"> / {catalog.length}</span>
+            <span className="text-sm font-medium text-muted">
+              {" "}
+              / {catalog.length}
+            </span>
           </strong>
           <span className="text-xs text-muted">seleccionados</span>
         </div>
       </header>
 
-      <section aria-label={t.roleTitle(role.name)} className={`${panel} overflow-hidden shadow-sm`}>
+      <section
+        aria-label={t.roleTitle(role.name)}
+        className={`${panel} overflow-hidden shadow-sm`}
+      >
         <header className="border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
-          <h2 className="font-semibold text-fg">Permisos por aplicación y función</h2>
+          <h2 className="font-semibold text-fg">
+            Permisos por aplicación y función
+          </h2>
           <p className="mt-1 text-sm leading-relaxed text-muted">
-            Seleccione permisos por grupo. Los cambios afectan a todas las personas que tengan este rol.
+            Seleccione permisos por grupo. Los cambios afectan a todas las
+            personas que tengan este rol.
           </p>
         </header>
         <div className="flex flex-col gap-4 p-4 sm:p-5">
           {locked ? (
-            <p role="status" className="rounded-xl border border-line bg-accent-soft px-4 py-3 text-sm leading-relaxed text-fg">
-              {role.name === "Owner/Superuser" ? "Owner/Superuser es un rol reservado: sus privilegios se sincronizan desde código y no se pueden modificar." : t.roleSystemHint}
+            <p
+              role="status"
+              className="rounded-xl border border-line bg-accent-soft px-4 py-3 text-sm leading-relaxed text-fg"
+            >
+              {role.name === "Owner/Superuser"
+                ? "Owner/Superuser es un rol reservado: sus privilegios se sincronizan desde código y no se pueden modificar."
+                : t.roleSystemHint}
             </p>
           ) : null}
           <PermissionPicker
@@ -147,7 +166,9 @@ function RoleAccessForm({
       <FormAlert error={error} />
       <footer className="flex flex-wrap items-center justify-between gap-3 border-t border-line py-4">
         <p className="text-sm text-muted">
-          {locked ? "Los roles de sistema no se pueden modificar." : "Revise los permisos antes de guardar."}
+          {locked
+            ? "Los roles de sistema no se pueden modificar."
+            : "Revise los permisos antes de guardar."}
         </p>
         <div className="flex flex-wrap gap-3">
           {locked ? null : (

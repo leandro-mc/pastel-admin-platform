@@ -21,22 +21,30 @@ type AlertPresentation = {
 };
 
 const presentation: Record<AlertVariant, AlertPresentation> = {
-  error: { Icon: CircleAlert, className: errorAlert, iconClass: "text-danger", role: "alert" },
+  error: {
+    Icon: CircleAlert,
+    className: errorAlert,
+    iconClass: "text-danger",
+    role: "alert",
+  },
   warning: {
     Icon: TriangleAlert,
-    className: "rounded-xl border border-line-strong bg-surface-raised px-4 py-3 text-sm text-fg",
+    className:
+      "rounded-xl border border-line-strong bg-surface-raised px-4 py-3 text-sm text-fg",
     iconClass: "text-fg-secondary",
     role: "status",
   },
   success: {
     Icon: CircleCheck,
-    className: "rounded-xl border border-line bg-accent-soft px-4 py-3 text-sm text-fg",
+    className:
+      "rounded-xl border border-line bg-accent-soft px-4 py-3 text-sm text-fg",
     iconClass: "text-accent-strong",
     role: "status",
   },
   info: {
     Icon: Info,
-    className: "rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm text-fg",
+    className:
+      "rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm text-fg",
     iconClass: "text-accent-strong",
     role: "status",
   },
@@ -58,11 +66,16 @@ export function Alert({
       aria-live={config.role === "alert" ? "assertive" : "polite"}
       className={`${config.className} flex items-start gap-3 ${className}`.trim()}
     >
-      <Icon aria-hidden="true" className={`mt-0.5 size-5 shrink-0 ${config.iconClass}`} />
+      <Icon
+        aria-hidden="true"
+        className={`mt-0.5 size-5 shrink-0 ${config.iconClass}`}
+      />
       <div className="min-w-0">
         <p>{message}</p>
         {supportCode ? (
-          <p className="mt-1 text-xs text-muted">{supportCodeLabel}: <code>{supportCode}</code></p>
+          <p className="mt-1 text-xs text-muted">
+            {supportCodeLabel}: <code>{supportCode}</code>
+          </p>
         ) : null}
       </div>
     </div>

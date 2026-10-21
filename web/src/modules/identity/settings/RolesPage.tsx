@@ -27,14 +27,18 @@ export function Component() {
     >
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div className="min-w-0">
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.16em] text-accent-strong">
+          <p className="mb-2 text-xs font-bold tracking-[0.16em] text-accent-strong uppercase">
             Centro de control / Accesos
           </p>
-          <h1 id="roles-title" className="text-2xl font-bold tracking-tight text-fg sm:text-3xl">
+          <h1
+            id="roles-title"
+            className="text-2xl font-bold tracking-tight text-fg sm:text-3xl"
+          >
             {t.title} y permisos
           </h1>
           <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
-            {t.subtitle} Revise el alcance de cada rol de plataforma. Los roles de negocio se administran dentro de cada aplicación.
+            {t.subtitle} Revise el alcance de cada rol de plataforma. Los roles
+            de negocio se administran dentro de cada aplicación.
           </p>
         </div>
         {hasPermission(identityPermissions.rolesCreate) ? (
@@ -48,7 +52,10 @@ export function Component() {
         ) : null}
       </header>
 
-      <section className={`${panel} overflow-hidden shadow-sm`} aria-label="Roles registrados">
+      <section
+        className={`${panel} overflow-hidden shadow-sm`}
+        aria-label="Roles registrados"
+      >
         <header className="flex flex-wrap items-center justify-between gap-2 border-b border-line bg-surface-raised px-4 py-4 sm:px-5">
           <div>
             <h2 className="font-semibold text-fg">Roles de plataforma</h2>
@@ -88,11 +95,12 @@ export function Component() {
                     ) : null}
                   </div>
                   <div className="min-w-0">
-                    <h3 className="break-words text-lg font-bold tracking-tight text-fg">
+                    <h3 className="text-lg font-bold tracking-tight break-words text-fg">
                       {role.name}
                     </h3>
                     <p className="mt-1 min-h-10 text-sm leading-relaxed text-muted">
-                      {role.description || "Este rol no tiene una descripción adicional."}
+                      {role.description ||
+                        "Este rol no tiene una descripción adicional."}
                     </p>
                   </div>
                   <div className="mt-auto flex flex-wrap gap-2 border-t border-line pt-4">
@@ -123,7 +131,9 @@ export function Component() {
           )}
         </QueryState>
       </section>
-      {creating ? <CreateRoleDialog onClose={() => setCreating(false)} /> : null}
+      {creating ? (
+        <CreateRoleDialog onClose={() => setCreating(false)} />
+      ) : null}
     </section>
   );
 }

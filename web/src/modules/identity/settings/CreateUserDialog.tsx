@@ -137,7 +137,9 @@ export function CreateUserDialog({ onClose }: { onClose: () => void }) {
             </ul>
           </QueryState>
           <p className="text-xs leading-relaxed text-muted">
-            Aquí se asignan los roles generales de plataforma. Los roles y miembros de cada app se gestionan desde la configuración de esa aplicación; Owner/Superuser es exclusivo del bootstrap.
+            Aquí se asignan los roles generales de plataforma. Los roles y
+            miembros de cada app se gestionan desde la configuración de esa
+            aplicación; Owner/Superuser es exclusivo del bootstrap.
           </p>
         </fieldset>
         <div className="flex flex-wrap justify-end gap-3">

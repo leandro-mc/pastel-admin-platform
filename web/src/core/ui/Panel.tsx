@@ -30,8 +30,16 @@ export function Panel({
       {hasHeader ? (
         <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
-            {title != null ? <Heading id={titleId} className="text-lg font-semibold text-fg">{title}</Heading> : null}
-            {description != null ? <p className="mt-1 text-sm leading-relaxed text-muted">{description}</p> : null}
+            {title != null ? (
+              <Heading id={titleId} className="text-lg font-semibold text-fg">
+                {title}
+              </Heading>
+            ) : null}
+            {description != null ? (
+              <p className="mt-1 text-sm leading-relaxed text-muted">
+                {description}
+              </p>
+            ) : null}
           </div>
           {actions}
         </header>
