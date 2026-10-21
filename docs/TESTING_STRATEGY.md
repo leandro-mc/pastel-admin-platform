@@ -3,6 +3,24 @@
 ## 1. Regla de oro
 La validación debe ser real, trazable y proporcional al riesgo. Hay tres responsabilidades: Dev (implementación), Build (compilación y pruebas unitarias) y QA (pruebas funcionales, integración y E2E). **En esta etapa se permite combinar Build y QA en la misma sesión/agente** para ahorrar sesiones; cuando se combinen, debe completar ambas responsabilidades, registrar los comandos/resultados y repetir las validaciones afectadas después de corregir código. La revisión independiente sigue siendo preferible para cambios críticos, seguridad o cuando haya capacidad, pero no es obligatoria para cada módulo. La integración a `dev` requiere autorización explícita del propietario.
 
+## 1.1 Cadencia y controles proporcionales al riesgo
+
+La suite debe reducir riesgos de comportamiento, seguridad e integración, no convertir cada edición en una auditoría completa. Conserva los controles, pero ejecuta cada nivel en el momento adecuado:
+
+1. **Bucle de desarrollo:** pruebas unitarias/componentes y lint del área modificada; compilación del proyecto afectado cuando sea viable. Úsalo al depurar, antes de ejecutar validaciones más caras.
+2. **Cierre de una unidad lógica:** formato, lint, build y pruebas enfocadas; agrega integración con base real cuando el cambio toca persistencia, autorización, migraciones, contratos HTTP o concurrencia. Revisa el diff completo y repite las pruebas afectadas tras corregir.
+3. **Hito de integración o cierre de fase:** suite completa del repositorio, integración desde una base vacía, E2E de los recorridos críticos, revisión visual de las áreas afectadas y reporte con el SHA exacto. La Fase 0 conserva todos sus casos obligatorios **O**; esta cadencia no los elimina.
+
+### Qué bloquea y qué es una métrica
+
+- **Bloquea:** compilación fallida; prueba relevante fallida; defectos críticos/altos; fallos de autorización, aislamiento, integridad de datos, seguridad, migraciones o contratos; una frontera modular infringida; exposición de secretos; incumplir una prohibición explícita de diseño; o falta de evidencia de un caso obligatorio al cerrar la Fase 0.
+- **Se revisa cuando aplica:** accesibilidad/axe, responsive, capturas claro/oscuro y flujos de navegador para cambios de UI. Una modificación exclusiva de backend no necesita repetir una inspección visual de todas las pantallas.
+- **Se informa como métrica, no como bloqueo aislado:** líneas por archivo CSS, porcentaje global de utilidades Tailwind, clases semánticas usadas una sola vez, número total de líneas de `@apply` dentro de `base.css`, avisos de tamaño de bundle sin un presupuesto acordado y porcentaje general de cobertura. Ninguna de estas cifras demuestra por sí misma funcionalidad, seguridad o calidad visual. Las prohibiciones reales —por ejemplo `@apply` fuera de `base.css`, colores sueltos, morado o iconografía vetada— sí siguen siendo bloqueos.
+
+### Las pruebas acompañan al comportamiento
+
+En el desarrollo normal de cada subapp, incluye o actualiza pruebas enfocadas en la misma unidad de trabajo: camino válido, denegación/entrada inválida y los casos límite con riesgo real. No escribas pruebas que solo repitan detalles internos ni fuerces una prueba por cada regla CSS. Para defectos críticos/altos, añade una prueba de regresión automatizada cuando sea posible. Si la responsabilidad o una zona protegida impide al agente actual escribir la prueba, deja explícito quién la debe completar y no presentes el caso como validado. No hay un porcentaje universal de cobertura; la ficha del módulo define los comportamientos de negocio que deben protegerse.
+
 ## 2. Tipos de agente
 
 | Tipo | Hace | No hace | Zona de escritura |

@@ -93,7 +93,7 @@ Actores: **Admin**, **Gestor-usuarios** (rol no administrador con `settings.user
 |---|---|---|---|---|
 | F0-W01 | F | O | Navegación | URLs reales por pantalla; recargar y enlaces directos funcionan; atrás/adelante coherentes; cero navegación por estado |
 | F0-W02 | F | O | Filtros de Configuración | Persisten en la URL |
-| F0-W03 | F | O | **Auditoría Tailwind** (`scripts/tailwind-audit.mjs`, antes y después) | Cumple las metas de la sección 11 (WP8) de `FASE-0-REFACTOR-BASE.md` (sin `styles.css`; `@apply` ≤ 60 líneas y solo en `base.css`; utilidades en JSX; sin clases semánticas de un solo uso) |
+| F0-W03 | F | O | **Auditoría Tailwind** (`scripts/tailwind-audit.mjs`, antes y después) | Sin CSS global heredado de conveniencia; clases semánticas solo en `core/design/components/`; `@apply` únicamente en `base.css`; sin morado, símbolos de IA ni colores sueltos. La proporción de utilidades, clases usadas una vez, volumen de `@apply` y líneas por CSS se reportan como métricas informativas, no como bloqueos aislados. |
 | F0-W04 | F | O | Paridad visual | Capturas antes/después de las pantallas de Identity: sin regresiones visuales no intencionadas, claro y oscuro |
 | F0-W05 | X | O | Diálogos | `Escape` cierra; el foco queda atrapado dentro; vuelve al elemento que abrió; título accesible |
 | F0-W06 | X | O | Teclado completo, foco visible ≥ 3 px, enlace "Saltar al contenido", foco al `h1` al cambiar de ruta | Cumple |
