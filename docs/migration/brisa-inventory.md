@@ -8,7 +8,7 @@ Fuente funcional de la migración descrita en `docs/modules/BRISA.md`. Elaborado
 | Commit analizado | `c090107` («fix: polish dark theme surfaces and contrast») |
 | Alcance leído | Todo el código fuente (≈1 900 líneas: 15 archivos Kotlin, manifiesto, recursos, Gradle, README y la única clase de pruebas). La app no se compiló ni se ejecutó: todo lo descrito sale de leer el código. |
 | Convención de citas | `ruta › símbolo`. Las rutas son relativas a `app/src/main/java/com/brisa/todo/` salvo que empiecen por `app/` u otra raíz. «L123» = línea en el commit analizado. **Suposición** = no confirmado en el código. |
-| Revisión | **Revisión 3 (2026-10-18):** respuestas y correcciones del propietario incorporadas. Los cambios y decisiones están en **§13**, que prevalece donde difiera de los apartados 1–11 (descripción de la app actual). |
+| Revisión | **Revisión 4 (2026-10-18):** segunda ronda de decisiones del propietario incorporada (colores AA, validación de fechas, reglas por módulo). Los cambios y decisiones están en **§13**, que prevalece donde difiera de los apartados 1–11 (descripción de la app actual). |
 | Fecha de referencia en los casos | «hoy» = **domingo 2026-10-18** (zona `America/Costa_Rica`, UTC-6, sin horario de verano). |
 
 Hallazgo que condiciona la migración: **Brisa trabaja solo con fechas (día), nunca con hora del día; no tiene repetición de tareas, recordatorios ni notificaciones.** Los apartados 5, 6 y 11 lo detallan. Las decisiones posteriores del propietario (§13) prevalecen sobre este inventario donde difieran de la app actual.
@@ -303,7 +303,7 @@ El importador debe aceptar **dos entradas equivalentes**: el arreglo JSON crudo 
 | `scheduledDate` | `ScheduledDate` (`date`) | ISO `yyyy-MM-dd` estricta. Sin conversión de zona. |
 | `priority` | `Priority` (smallint) | `LOW→0`, `MEDIUM→1`, `HIGH→2`. Ausente → `MEDIUM`; valor distinto de los tres → `MEDIUM` **con advertencia en el informe, sin abortar el lote** (como la app; Q9, §13.9). |
 | `colorHex` | `ColorHex` (`#RRGGBB`) | Formato obligatorio. Fuera de la paleta de 10: se acepta como dato (§13.9). Ausente → `#DDE8D5`. |
-| `dueDate` | `DueDate` (`date` nula) | `""` o ausente → `NULL`; si no, ISO estricta. |
+| `dueDate` | `DueDate` (`date` nula; si existe, ≥ `ScheduledDate`) | `""` o ausente → `NULL`; si no, ISO estricta. |
 | `completed` | `IsCompleted` | Booleano. Ausente → `false`. |
 | `createdAt` (ms UTC) | `CreatedAt` (`timestamptz`) | `epoch ms → UTC`. Ausente → instante de importación (con aviso). |
 | — | `CompletedAt` | `NULL` (no se conoce; no inventarlo). Campo aprobado (Q12, §13.5). |
@@ -318,6 +318,7 @@ El importador debe aceptar **dos entradas equivalentes**: el arreglo JSON crudo 
 4. **Respaldo previo** de las tareas actuales de la persona y **reversión** del lote (borrado lógico de lo creado con `ImportBatchId`).
 5. **Integridad:** comparar totales origen/destino (cantidad, abiertas/hechas, con/sin fecha límite) y los 9 campos por registro.
 6. **No** ejecutar la reprogramación 5.5 durante la importación: los datos entran tal cual; la regla actúa después como en la app.
+7. **Invariante:** en cada registro, `dueDate` vacía o ≥ `scheduledDate`; si no, error de ese registro (§13.2).
 
 ### 9.5 Archivo de ejemplo (sintético, sin datos personales)
 Con «hoy» = 2026-10-18:
@@ -327,15 +328,16 @@ Con «hoy» = 2026-10-18:
  {"id":"a3c8e2b9-51d7-4f06-9b3e-6e1a7c2d8f02","title":"Enviar informe mensual","details":"","scheduledDate":"2026-10-15","priority":"MEDIUM","colorHex":"#DCEAF4","dueDate":"2026-10-20","completed":false,"createdAt":1792022400000},
  {"id":"5e9b0c47-2a8d-4d13-a6f5-3c7b1e0a9d03","title":"Ordenar el escritorio","details":"","scheduledDate":"2026-10-16","priority":"LOW","colorHex":"#E5EDC8","dueDate":"","completed":false,"createdAt":1792108800000},
  {"id":"c2406d8e-7b1f-4a95-8e2c-9d5f3a1b6e04","title":"Pagar el recibo de agua","details":"","scheduledDate":"2026-10-14","priority":"HIGH","colorHex":"#F5E9B9","dueDate":"2026-10-16","completed":true,"createdAt":1791936000000},
- {"id":"e81a5f30-6c9d-4b27-b4a8-1f2e7d0c5a05","title":"Revisar presupuesto","details":"Incluye ajustes de septiembre","scheduledDate":"2026-10-20","priority":"MEDIUM","colorHex":"#D4E9E1","dueDate":"2026-10-17","completed":false,"createdAt":1792300000000}
+ {"id":"e81a5f30-6c9d-4b27-b4a8-1f2e7d0c5a05","title":"Revisar presupuesto","details":"Incluye ajustes de septiembre","scheduledDate":"2026-10-14","priority":"MEDIUM","colorHex":"#D4E9E1","dueDate":"2026-10-17","completed":false,"createdAt":1792300000000}
 ]
 ```
 **Totales esperados tras importar:** 5 registros; 4 abiertas y 1 hecha; 3 con fecha límite (una hecha); 9 campos íntegros por registro.
 **Resultado esperado en pantalla (regla de la app):**
-- Vencidas: «Ordenar el escritorio» (16 oct, sin límite) y luego «Revisar presupuesto» (límite 17 oct, aunque su día asignado es el 20). «Enviar informe mensual» **no** (límite vigente).
+- Vencidas: «Ordenar el escritorio» (16 oct, sin límite) y luego «Revisar presupuesto» (límite 17 oct; su día efectivo es el 17). «Enviar informe mensual» **no** (límite vigente).
 - Fechas límite: «Revisar presupuesto» (VENCIDA, 17 oct) y «Enviar informe mensual» (20 oct). «Pagar el recibo de agua» no aparece (hecha con límite pasado).
-- Tras la primera reconciliación: «Enviar informe mensual» pasa a 2026-10-18.
+- Día efectivo (§13.1): «Enviar informe mensual» se muestra el 2026-10-18 sin reescribir su `scheduledDate` (2026-10-15).
 - Archivo corrupto de prueba: la misma lista con la coma entre dos registros eliminada → error claro y **cero** registros importados.
+- Archivo inválido de prueba: la misma lista con `scheduledDate` 2026-10-20 en «Revisar presupuesto» (queda posterior a su `dueDate`) → se rechaza ese registro y el lote (§13.2).
 
 ---
 
@@ -373,7 +375,7 @@ Con «hoy» = 2026-10-18:
 Decisiones del propietario sobre U1–U13: §13.2 (U7 y U9: la regla es la original; se agrega una validación), §13.6 (U1–U6, U10, U13) y §13.8 (U11, textos).
 
 ### 10.3 Textos y tono
-Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y sin culpa** y con **tuteo** («Tus días, con calma.», «Dale un lugar en tu día.», «Ajusta los detalles a tu ritmo.», «Puedes mover cualquier tarea…», «Vas al día»). **Decisión del propietario (Q14, revisión 3):** Brisa es una app personal con sus propias reglas de tuteo; **se conservan todos los textos originales tal cual**, sin reescribirlos a usted ni a forma impersonal. Es una excepción a la regla general de Pastel (`AGENTS.md`, `DESIGN_SYSTEM.md` §8) que debe quedar registrada (§12, P2). La lista completa y exacta de textos, con sus pocas excepciones, está en **§13.8**.
+Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y sin culpa** y con **tuteo** («Tus días, con calma.», «Dale un lugar en tu día.», «Ajusta los detalles a tu ritmo.», «Puedes mover cualquier tarea…», «Vas al día»). **Decisión del propietario (Q14, revisión 3):** Brisa es una app personal con sus propias reglas de tuteo; **se conservan todos los textos originales tal cual**, sin reescribirlos a usted ni a forma impersonal. Es una excepción a la regla general de Pastel (`AGENTS.md`, `DESIGN_SYSTEM.md` §8) que debe quedar registrada (CCR-1). La lista completa y exacta de textos, con sus pocas excepciones, está en **§13.8**.
 
 ---
 
@@ -387,7 +389,7 @@ Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y s
 | C02 | Día 10-18 con abierta A y hechas X Media (5.º), Y Alta (6.º), Z Alta (7.º) | Abiertas: A. Sección «HECHAS»: Z, Y, X (prioridad ↓, creación ↓). | P |
 | C03 | Abierta, `P=10-17`, `L=null` | Aparece en Vencidas («PROGRAMADA PARA Sábado 17 de octubre»); sigue en la columna del 17; no se reprograma | P |
 | C04 | Abierta, `P=10-18`, `L=null` | No está en Vencidas; aparece en el día «HOY» | P |
-| C05 | Abierta, `P=10-20`, `L=10-17` | Vencidas (muestra «Martes 20 de octubre» y «Límite 17 oct»); Fechas límite como «VENCIDA» («Sábado 17 de octubre») | P (solo por importación) |
+| C05 | Abierta, `P=10-20`, `L=10-17` | Vencidas (muestra «Martes 20 de octubre» y «Límite 17 oct»); Fechas límite como «VENCIDA» («Sábado 17 de octubre») | A (§13.2) |
 | C06 | Abierta, `P=10-15`, `L=10-20`; se abre la app | `P` pasa a 10-18; no está en Vencidas; aparece en HOY y en Fechas límite (20 oct) | A (§13.1) |
 | C07 | Abierta, `P=10-16`, `L=10-18`. Luego pasa un día (hoy = 10-19) sin completarla | Hoy 10-18: `P` pasa a 10-18, sin vencida. Hoy 10-19: `P` queda en 10-18 (`L < hoy`), aparece en Vencidas y como «VENCIDA» en Fechas límite | A (§13.1) |
 | C08 | Hecha, `P=10-15`, `L=10-20` | No se reprograma (queda en HECHAS del 15); no está en Vencidas; en Fechas límite al final con «Hecha» | P |
@@ -434,8 +436,8 @@ Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y s
 | R9 | README desactualizado, wrapper no estándar y cobertura de pruebas mínima: la paridad depende de este inventario. | §1 |
 | R10 | Receptor `exported="true"` y `allowBackup="true"` sin reglas (**Suposición**). | No aplica a la web. |
 | R11 | **Riesgo principal del módulo:** si la reprogramación diaria falla en algún caso, una tarea queda «atrás y perdida» y se pierde el propósito de la app. | Se controla con los criterios AC1–AC7 y los vectores de §13.1; cualquier mecanismo que incumpla uno se rechaza. |
-| R12 | El gris de texto secundario y el rojo de error del tema claro original **no cumplen contraste AA** (3,1–3,9:1 y 3,7–4,7:1), y Pastel exige AA con verificación automática. | §13.7 y pendiente P1 |
-| R13 | El módulo necesita valores de color y excepciones de texto propios que Pastel no tiene (tema claro original, tuteo): los controles automáticos (`check-design.mjs`, hexadecimales fuera de tokens) y `AGENTS.md` pueden objetarlos. | §13.7, §13.8, pendiente P2 |
+| R12 | El gris de texto secundario y el rojo de error del tema claro original no cumplían contraste AA. | **Resuelto (P1):** se usan `#57605A` y `#904B3C` (§13.7). |
+| R13 | Valores de color propios del módulo y tuteo podían chocar con reglas generales de Pastel y con sus controles automáticos. | **Resuelto:** el propietario estableció que las reglas de cada módulo prevalecen sobre las generales; se aplicó en `CCR-1` (rama `docs/module-rules-precedence`). |
 | R14 | La zona por persona exige un lugar donde guardarla; si es el perfil de Identity (zona protegida) hace falta un CCR. | §13.3 |
 | R15 | Alcance ampliado (un toque, búsqueda, `CompletedAt`, validaciones): probar aparte de la paridad. | §13.11 |
 
@@ -460,14 +462,15 @@ Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y s
 | Q16 | Cierre del editor (U3) | Pide confirmación **solo si hay texto escrito**. | §13.6 |
 | Q17 | Editor (U4) | Al abrir, el cursor queda en el título y «Enter» guarda. | §13.6 |
 | Q18 | Estado de pantalla (U5) | La vista y el día enfocado sobreviven a una recarga. | §13.6 |
+| Q19 | Contraste del tema claro (P1) | Elige los valores que respetan AA y se ven casi igual. | `#57605A` (texto secundario) y `#904B3C` (error); el resto del tema claro es exacto (§13.7). |
+| Q20 | Excepciones de Pastel (P2) | Autoriza los cambios para que no se bloqueen; **cada módulo tiene sus propias reglas y están por encima de las generales**, que solo aplican si el módulo no define las suyas. | `CCR-1` aplicado en la rama `docs/module-rules-precedence` (reglas, ficha de Brisa). |
+| Q21 | Validación día ≤ fecha límite (P3) | Sí: al crear se eligen dos fechas (desde cuándo aparece la tarjeta y la fecha límite opcional) y **siempre** se cumple día ≤ fecha límite, también al modificar. | §13.2 (rige al crear, modificar e importar). |
+| Q22 | Subtítulo de Vencidas (P4) | Exacto: se conserva. | Sin cambios (§13.8). |
+| Q23 | Singular (P5) | Perfecto. | «1 pendiente», «1 hecha». |
+| Q24 | Tarjetas y prioridad en oscuro | Sí: conservan la regla de Android. | §13.7 |
 
-### Pendientes de confirmar (con valor por defecto; el propietario puede objetar)
-- **P1 (contraste).** El tema claro original queda **exacto**, pero su gris de texto secundario `#77837B` da 3,1–3,9:1 sobre fondos y tarjetas y su rojo `#AE5B49` baja de 4,5:1 sobre algunas tarjetas; `vitest-axe` de Pastel lo marcará. Valor por defecto: se aplican los valores exactos y se registra la excepción para que Arquitectura/propietario la autoricen; alternativa que cumple AA con casi el mismo aspecto: `#57605A` (4,7:1) y `#904B3C` (4,65:1). Hay que elegir.
-- **P2 (excepciones de Pastel).** Tuteo (§13.8) y colores propios del tema claro (§13.7) contradicen reglas de `AGENTS.md`/`DESIGN_SYSTEM.md`; deben registrarse como excepción del propietario en `docs/modules/BRISA.md` y, si los controles automáticos las bloquean, mediante CCR.
-- **P3 (validación día ≤ fecha límite).** Se entendió «cambiar la fecha para más adelante pero menos que la fecha límite» como regla que se **valida** al guardar (§13.2). Si solo era una indicación de uso, se quita el bloqueo.
-- **P4 (subtítulo de Vencidas).** Se conserva el original («Puedes mover cualquier tarea a otro día sin perder sus detalles.»), aunque para una tarea con fecha límite vencida lo que la rescata es cambiar la fecha límite.
-- **P5 (singular).** Se corrige «1 pendientes» → «1 pendiente» y «1 hechas» → «1 hecha» (error gramatical, no cambia el tono).
-- **P6 (importador).** Sin datos reales, `BRISA.md` §4.4 y su criterio de aceptación 6 siguen exigiendo importación probada con datos de ejemplo; se mantiene un importador mínimo. Omitirlo exige cambiar la ficha.
+### Pendientes
+- **P6 (importador).** Sin datos reales, `BRISA.md` §4.4 y su criterio de aceptación 6 siguen exigiendo importación probada con datos de ejemplo; se mantiene un importador mínimo. Omitirlo exige cambiar la ficha. Sin respuesta aún.
 - **P7 (deshacer).** Fuera de alcance hasta que el propietario lo pida (§13.6).
 
 ---
@@ -480,7 +483,7 @@ Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y s
 **Se conserva sin cambios (por decisión del propietario):** la reprogramación diaria (§13.1), los dos criterios de «Vencida» (§13.2), todos los textos y el tono (§13.8), el tema claro (§13.7), la paleta de 10 colores y el color aleatorio, los valores por defecto de alta rápida.
 
 **Cambia o se agrega:**
-1. Validación: el día asignado no puede ser posterior a la fecha límite — §13.2.
+1. Validación: el día asignado nunca puede ser posterior a la fecha límite, al crear, modificar o importar — §13.2.
 2. Zona horaria por persona — §13.3.
 3. Límites de 150 (título) y 2000 (notas) caracteres — §13.4.
 4. `CompletedAt` — §13.5.
@@ -527,7 +530,7 @@ en otro caso (fecha límite ya pasó)          → max(ScheduledDate, DueDate)
 | V3 | abierta, `P=10-15`, `L=10-18` | 10-18 | No |
 | V4 | abierta, `P=10-15`, `L=10-17` | 10-17 | Sí |
 | V5 | abierta, `P=10-20`, `L=10-25` | 10-20 | No |
-| V6 | abierta, `P=10-20`, `L=10-17` (solo por importación) | 10-20 | Sí (por `L`) |
+| V6 | abierta, `P=10-20`, `L=10-17` (dato inconsistente: no puede crearse, modificarse ni importarse; la función debe devolverlo sin error) | 10-20 | Sí (por `L`) |
 | V7 | hecha, `P=10-15`, `L=10-20`, `CompletedAt` local = 10-18 | 10-18 | No |
 | V8 | hecha, `P=10-15`, `L=10-20`, `CompletedAt` local = 10-16 | 10-16 | No |
 | V9 | hecha, `P=10-15`, `L=10-20`, `CompletedAt` nulo | 10-15 | No |
@@ -545,10 +548,10 @@ en otro caso (fecha límite ya pasó)          → max(ScheduledDate, DueDate)
 2. Con fecha límite vencida (criterio b): **cambiar la fecha límite** a hoy o posterior. Desde ahí vuelve a moverse cada medianoche (§13.1) hasta marcarla hecha o hasta la nueva fecha límite. **Cambiar solo el día no la saca de Vencidas.**
 3. Si no se quiere ver una tarea con fecha límite vigente hoy sino más adelante: cambiar su día a un día posterior a hoy y **no posterior a la fecha límite**.
 
-**Validación nueva (bloqueante):** el día asignado no puede ser posterior a la fecha límite. Mensaje (en el tono de Brisa, texto propuesto): «El día de la tarea no puede ser después de su fecha límite. Cambia la fecha límite si necesitas más tiempo.» Solo se evalúa si la persona cambió el día o la fecha límite en esa edición, para no bloquear la edición de otros campos en datos importados que ya la incumplan. Un día pasado con fecha límite vigente se permite (la tarea igual se muestra hoy, §13.1).
+**Validación nueva (bloqueante, siempre):** al crear una tarea se eligen dos fechas: el **día** desde el que aparece su tarjeta y la **fecha límite** opcional. **Siempre** debe cumplirse `día ≤ fecha límite`: al crear, al modificar (cualquiera de las dos fechas) y al importar. Mensaje (tono de Brisa, texto propuesto): «El día de la tarea no puede ser después de su fecha límite. Cambia la fecha límite si necesitas más tiempo.» Se compara el día que la persona elija en esa edición o, si no lo toca, el `ScheduledDate` guardado (no el día efectivo que muestra el editor). Ejemplo: guardada `P=10-15`, `L=10-25`, hoy 10-18 (el editor muestra el 18); cambiar `L` a 10-17 es válido (15 ≤ 17) y la tarea pasa a vencida en el 17; cambiar el día a 10-26 se rechaza. Los selectores no deben ofrecer fechas que rompan la regla; la validación de servidor es la garantía. Un día pasado con fecha límite vigente se permite (la tarea igual se muestra hoy, §13.1).
 
 **Fechas límite:** sin cambios (§5.3); «VENCIDA» mientras esté abierta y su fecha límite haya pasado.
-El subtítulo de Vencidas se conserva (pendiente P4).
+El subtítulo de Vencidas se conserva tal cual (confirmado por el propietario).
 
 ### 13.3 Zona horaria por persona (Q4, Q5)
 - Ajuste `TimeZoneId` (identificador IANA), valor inicial `America/Costa_Rica`. Se valida contra la base IANA (inválido → error con `code`).
@@ -571,6 +574,7 @@ Título: **máximo 150 caracteres**. Notas: **máximo 2000**. Se cuentan tras `t
 | **Búsqueda** (Q6) | Discreta (un icono en la cabecera). Busca en título y notas, sin distinguir mayúsculas ni tildes, entre las tareas **propias** abiertas y hechas, sin las eliminadas. El resultado muestra día y estado; tocarlo abre el editor. |
 | **Cierre del editor** (Q16, U3) | Al cerrar (fuera del diálogo, «Cancelar» o la esquina) pide confirmación **solo si hay texto escrito**: en tarea nueva, título o notas no vacíos; en una existente, título o notas distintos de lo guardado. Cambios solo de día, prioridad, color o fecha límite no la piden. |
 | **Foco y «Enter»** (Q17, U4) | Al abrir el editor el cursor queda en el título; «Enter» en el título guarda y cierra (si el título no está en blanco). En notas, «Enter» es salto de línea. |
+| **Fechas del editor** (Q21) | Dos fechas: el **día** de la tarea (desde cuándo aparece la tarjeta; por defecto hoy) y la **fecha límite** opcional. Siempre `día ≤ fecha límite` (§13.2), también al modificar. |
 | **Estado de pantalla** (Q18, U5) | La pestaña/vista y el día enfocado sobreviven a una recarga (mecanismo a elección de Dev; sin datos personales en la URL). |
 | **Tema** (U6) | Claro y oscuro; la elección persiste; primera visita según `prefers-color-scheme` (`DESIGN_SYSTEM.md`). |
 | **Accesibilidad** (U10) | Tamaños y objetivos táctiles según `DESIGN_SYSTEM.md`; nombres accesibles legibles (p. ej. «Crear tarea para el domingo 18 de octubre» en lugar de la fecha ISO); el icono de cierre del editor deja de ser un calendario. |
@@ -583,27 +587,27 @@ Título: **máximo 150 caracteres**. Notas: **máximo 2000**. Se cuentan tras `t
 | Rol Android | Valor | Rol Android | Valor |
 |---|---|---|---|
 | `background` | `#F7F6F0` | `outline` (borde) | `#E2E6DE` |
-| `surface` | `#FFFEFA` | `error` | `#AE5B49` |
+| `surface` | `#FFFEFA` | `error` (texto y alertas) | `#904B3C` (AA; el original era `#AE5B49`) |
 | `primary` (acento, botones) | `#315B4A` | `secondary` | `#789987` |
 | `onPrimary` | `#FFFFFF` | `tertiary` | `#E0BE73` |
 | `onBackground` / `onSurface` (texto) | `#26342E` | `primaryContainer` / `surfaceVariant` | `#E6EEE5` |
-| `onSurfaceVariant` (texto secundario) | `#77837B` | `onPrimaryContainer` | `#243D34` |
+| `onSurfaceVariant` (texto secundario) | `#57605A` (AA; el original era `#77837B`) | `onPrimaryContainer` | `#243D34` |
 | `secondaryContainer` | `#E9F0EC` | `onSecondaryContainer` | `#243D34` |
 | Mantequilla (`Butter`) | `#F2E5B5` | Coral (`Coral`) | `#E7A58D` |
 | Prioridad alta / media / baja (fondo del chip) | `#F6DDCE` / `#F5E9B9` / `#E5EDC8` | Punto de prioridad alta / media / baja | `#C8755A` / `#B79A40` / `#7D9A6D` |
 
 Paleta de tarjetas (10, sin cambios): Salvia `#DDE8D5`, Cielo `#DCEAF4`, Mantequilla `#F5E9B9`, Durazno `#F6DDCE`, Menta `#D4E9E1`, Arena `#E9E2D2`, Agua `#D1E7E5`, Coral suave `#F3D5C8`, Pistacho `#E5EDC8`, Azul bruma `#D7E4F0`. En claro la tarjeta usa el color tal cual.
 
-**Tema oscuro: el de Pastel, no el de Android** (se descarta el fondo verdoso `#121815`/`#1B231F`). Fondo, superficies, texto y bordes salen de los tokens neutros de `DESIGN_SYSTEM.md` §2.1 (`--app-bg #191b20`, `--surface #22262d`, `--surface-raised #2b313a`, `--text #e9eae7`, `--text-secondary #c0c6cc`, `--muted #a2a9b1`, `--border #3b424e`) y el acento del módulo Brisa en oscuro (§2.2: `--accent #8daa98`, `--accent-soft #2a3636`, `--on-accent #14181c`). Lo que Pastel no define se conserva como en Android y se reserva para el diseño detallado: tarjetas de tarea (mezcla del color pastel al 36 % sobre `--surface`, regla `BrisaColors.TaskCard`) y chips/puntos de prioridad. **Interpretación por confirmar:** que esas tarjetas y chips conserven la regla de Android sobre la superficie neutra de Pastel.
+**Tema oscuro: el de Pastel, no el de Android** (se descarta el fondo verdoso `#121815`/`#1B231F`). Fondo, superficies, texto y bordes salen de los tokens neutros de `DESIGN_SYSTEM.md` §2.1 (`--app-bg #191b20`, `--surface #22262d`, `--surface-raised #2b313a`, `--text #e9eae7`, `--text-secondary #c0c6cc`, `--muted #a2a9b1`, `--border #3b424e`) y el acento del módulo Brisa en oscuro (§2.2: `--accent #8daa98`, `--accent-soft #2a3636`, `--on-accent #14181c`). Lo que Pastel no define se conserva como en Android y se reserva para el diseño detallado: tarjetas de tarea (mezcla del color pastel al 36 % sobre `--surface`, regla `BrisaColors.TaskCard`) y chips/puntos de prioridad. **Confirmado por el propietario (Q24):** tarjetas y chips conservan la regla de Android sobre la superficie neutra de Pastel.
 
-**Restricciones de Pastel:** los colores salen de tokens (nunca hexadecimales en componentes; `scripts/check-design.mjs` lo verifica), así que los valores exactos del tema claro hay que registrarlos como tokens del módulo (dónde: Arquitectura; si es zona protegida, CCR; pendiente P2). Todos los colores citados quedan fuera del rango prohibido de morado (235°–345°). **Contraste:** pendiente P1 (el gris `#77837B` y el rojo `#AE5B49` originales no llegan a AA en algunos fondos).
+**Contraste (Q19):** el tema claro es exacto salvo dos valores que se oscurecieron lo mínimo para cumplir WCAG 2.2 AA (4,5:1) sobre fondos, superficies y las 10 tarjetas: texto secundario `#57605A` (4,7:1 en el peor caso) y rojo de error `#904B3C` (4,65:1). La prioridad nunca depende solo del color (punto + texto). **Reglas de Pastel (Q20):** los colores salen de tokens; los valores de este apartado se registran como tokens de `data-module="brisa"` (`module-themes.css`) y quedan documentados en `docs/modules/BRISA.md`. Las reglas del módulo prevalecen sobre las generales (`CCR-1`). Todos los colores citados quedan fuera del rango prohibido de morado (235°–345°).
 
 **Colores de tarjeta en datos:** se guarda el `#RRGGBB` elegido; un valor con formato inválido se rechaza. Los de la paleta actual son los únicos que ofrece el editor.
 
 ### 13.8 Textos y tono (Q14)
-**Decisión:** Brisa es una app personal y **conserva todos sus textos originales, con tuteo y tono cálido y sin culpa**, tal como están en Android; no se reescriben a usted ni a forma impersonal. Esto es una **excepción del propietario** a la regla general de Pastel (P2). El voseo sigue sin usarse (la app original no lo usa). Todos van en `strings.ts`.
+**Decisión:** Brisa es una app personal y **conserva todos sus textos originales, con tuteo y tono cálido y sin culpa**, tal como están en Android; no se reescriben a usted ni a forma impersonal. Esto es una **excepción del propietario** a la regla general de Pastel, válida porque las reglas de cada módulo prevalecen sobre las generales (CCR-1). El voseo sigue sin usarse (la app original no lo usa). Todos van en `strings.ts`.
 
-Excepciones a «copiar tal cual»: (1) el singular («1 pendiente», «1 hecha»; P5); (2) los nombres accesibles técnicos (fecha ISO, icono de calendario como «Cerrar») de §13.6; (3) los textos nuevos de la web (búsqueda, validaciones, errores, confirmación al cerrar) se escriben **en el mismo tono** (tuteo cálido).
+Excepciones a «copiar tal cual»: (1) el singular («1 pendiente», «1 hecha»; Q23); (2) los nombres accesibles técnicos (fecha ISO, icono de calendario como «Cerrar») de §13.6; (3) los textos nuevos de la web (búsqueda, validaciones, errores, confirmación al cerrar) se escriben **en el mismo tono** (tuteo cálido).
 
 **Textos originales (normativos; fuente `ui/BrisaApp.kt`, `ui/components/TaskEditorDialog.kt`, `domain/TaskItem.kt`):**
 | Zona | Texto exacto |
@@ -628,12 +632,12 @@ Nota: «Al día, sin prisa» **no** es un texto de la app Android; era una propu
 - **Q9:** prioridad ausente o desconocida → `MEDIUM` con **advertencia** en el informe (no aborta el lote). Todo lo demás sigue la validación estricta de §9.4.
 - **Colores:** `#RRGGBB` válido obligatorio; los de fuera de la paleta de 10 se aceptan como dato (el editor ofrece solo la paleta). Un formato inválido rechaza el lote.
 - **Q11:** `Id` existente con contenido igual → «ya existente»; distinto → se **omite** y se informa «ya existía con diferencias»; nunca se sobrescribe.
-- La validación «día ≤ fecha límite» de §13.2 **no** se aplica a la importación (los datos entran tal cual; V6).
+- **Invariante `día ≤ fecha límite` (§13.2):** un registro con `dueDate` anterior a `scheduledDate` se rechaza (error de ese registro y del lote).
 
 ### 13.10 Resultado esperado en la web de los casos de §11 que cambian
 | Caso | Resultado en la web |
 |---|---|
-| C05 `P=10-20`, `L=10-17` | Igual que la app: Vencidas (criterio b). Solo puede existir por importación (la validación de §13.2 impide crearlo). |
+| C05 `P=10-20`, `L=10-17` | **No puede existir** en la web: se rechaza al crear, modificar o importar (§13.2). |
 | C06 `P=10-15`, `L=10-20` | Aparece en HOY (efectiva 10-18); `ScheduledDate` sigue en 10-15 en la base; sin escrituras. |
 | C07 `P=10-16`, `L=10-18` | Hoy 10-18: en HOY. Hoy 10-19: día efectivo 10-18 → Vencidas («PROGRAMADA PARA Domingo 18 de octubre») y «VENCIDA» en Fechas límite. |
 | C08 hecha `P=10-15`, `L=10-20`, `CompletedAt` nulo | Se queda en el 15 (V9). |
@@ -677,6 +681,10 @@ Nota: «Al día, sin prisa» **no** es un texto de la app Android; era una propu
 | N23 | Reimportar el mismo archivo; luego con un título cambiado en un registro | 0 nuevos y 5 «ya existentes»; el cambiado se omite y se informa; la tarea guardada no cambia |
 | N24 | 1 pendiente y 1 hecha | «1 pendiente» y «1 hecha» |
 | N25 | Tema oscuro | Fondo `#191b20` y superficies de Pastel (sin verde); acento Brisa oscuro |
+| N26 | Crear con día 10-18 y fecha límite 10-17 | Se rechaza con el mensaje de §13.2; no se guarda |
+| N27 | Guardada `P=10-15`, `L=10-25` (el editor muestra 18); cambiar `L` a 10-17 / cambiar el día a 10-26 | 10-17: se guarda (15 ≤ 17) y pasa a vencida en el 17. 10-26: se rechaza |
+| N28 | Tarea sin fecha límite; agregar fecha límite 10-16 con día 10-18 | Se rechaza (día > fecha límite) |
+| N29 | Importar un registro con `scheduledDate` 10-20 y `dueDate` 10-17 | Error de ese registro; el lote no importa nada |
 
 ### 13.12 Texto de reemplazo para la prueba 5 de `BRISA.md`
 > **Fechas:** con «hoy» calculado en la zona configurada de la persona (por defecto `America/Costa_Rica`, UTC-6, sin horario de verano), una tarea asignada al día 18 sigue en «Hoy» a las 23:30 hora local aunque en UTC ya sea el 19, y deja de serlo solo a las 00:00 local, cuando las tareas con fecha límite sin terminar avanzan al día siguiente. Brisa no maneja hora del día. El vencimiento y el día efectivo respetan esa zona (inventario §13.1–§13.3).
