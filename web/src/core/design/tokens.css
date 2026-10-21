@@ -32,6 +32,7 @@
   --danger-soft: #f6ddce;
   --shadow: 0 16px 42px rgba(38, 52, 46, 0.075);
   --shadow-soft: 0 4px 18px rgba(38, 52, 46, 0.045);
+  --shadow-bottom-nav: 0 -6px 22px rgba(38, 52, 46, 0.06);
   --input: #fffefa;
   --focus: rgba(49, 91, 74, 0.28);
   --on-accent: #ffffff;
@@ -62,6 +63,7 @@
   --danger-soft: #472f32;
   --shadow: 0 18px 44px rgba(0, 0, 0, 0.3);
   --shadow-soft: 0 4px 18px rgba(0, 0, 0, 0.19);
+  --shadow-bottom-nav: 0 -6px 22px rgba(0, 0, 0, 0.3);
   --input: #1d2128;
   --focus: rgba(166, 197, 178, 0.48);
   --on-accent: #19221d;
