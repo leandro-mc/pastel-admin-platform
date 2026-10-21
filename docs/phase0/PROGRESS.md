@@ -535,7 +535,7 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 
 ## Build/QA — pruebas de arquitectura (inicio, 2026-10-20)
 
-- [x] Se incorpora el proyecto \`tests/Pastel.ArchitectureTests\` a \`Pastel.slnx\`, reutilizando el SDK y las versiones de xUnit ya centralizadas, sin añadir dependencias NuGet.
-- [x] Se implementan comprobaciones para marcadores de módulo y tipos internos; prefijos de grupos/permisos y roles sugeridos; presencia de \`MODULE.md\` en backend/frontend; políticas explícitas en endpoints; y referencias de proyecto entre módulos.
-- [ ] **Pendiente de Build:** no se compiló ni ejecutó en este entorno. Debe ejecutarse \`dotnet test Pastel.slnx --configuration Release\` y corregir cualquier falso positivo o error real antes de considerar aprobada la guarda.
+- [x] Se incorpora el proyecto `tests/Pastel.ArchitectureTests` a `Pastel.slnx`, reutilizando el SDK y las versiones de xUnit ya centralizadas, sin añadir dependencias NuGet.
+- [x] Se implementan comprobaciones para marcadores de módulo y tipos internos; prefijos de grupos/permisos y roles sugeridos; presencia de `MODULE.md` en backend/frontend; políticas explícitas en endpoints; y referencias de proyecto entre módulos.
+- [ ] **Pendiente de Build:** no se compiló ni ejecutó en este entorno. Debe ejecutarse `dotnet test Pastel.slnx --configuration Release` y corregir cualquier falso positivo o error real antes de considerar aprobada la guarda.
 - **Limitación:** la herramienta de autoría no dispone de checkout/SDK de .NET ni conectividad directa desde contenedor; el commit conserva el estado como pendiente, no aprobado.
