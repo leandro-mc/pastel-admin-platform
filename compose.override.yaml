@@ -34,6 +34,8 @@ services:
   api:
     environment:
       ConnectionStrings__Default: Host=db;Port=5432;Database=${POSTGRES_DB:-pastel};Username=${POSTGRES_USER:-pastel};Password=${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD};GSS Encryption Mode=Disable
+      # Solo para desarrollo local. La variable explícita del .env puede desactivar el registro.
+      Auth__Local__SelfRegistrationEnabled: ${AUTH_LOCAL_SELF_REGISTRATION_ENABLED:-true}
     depends_on:
       db:
         condition: service_healthy
