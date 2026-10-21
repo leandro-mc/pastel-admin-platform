@@ -14,11 +14,6 @@ export default tseslint.config(
       ...jsxA11y.flatConfigs.recommended.languageOptions,
       globals: { ...globals.browser, ...globals.node },
     },
-    settings: {
-      "jsx-a11y": {
-        components: { Link: "a" },
-      },
-    },
   },
   {
     files: ["src/modules/**/*.{ts,tsx}"],

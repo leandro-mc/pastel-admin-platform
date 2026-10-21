@@ -43,7 +43,7 @@ find /tmp/work/web/vite -type f -name '*.ts' -exec sh -c '
 ' sh {} +
 
 
-find /tmp/work/web/tests -type f \\( -name '*.ts' -o -name '*.tsx' \\) -exec sh -c '
+find /tmp/work/web/tests -type f \( -name '*.ts' -o -name '*.tsx' \) -exec sh -c '
   for source do
     relative=${source#/tmp/work/web/tests/}
     destination="/repo/web/tests/$relative"
