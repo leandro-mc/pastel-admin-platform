@@ -547,3 +547,12 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - **Corrección:** se vuelve a guardar la misma migración como UTF-8 sin BOM y con finales LF; no cambia su contenido C# ni el esquema de base de datos.
 - **Pendiente:** los errores \`ENDOFLINE\` de muchos otros archivos aparecen en el working tree Windows reportado, aunque los blobs de GitHub inspeccionados usan LF. Tras actualizar la rama, comprobar que no haya cambios rastreados pendientes y normalizar la copia de trabajo de forma segura antes de repetir \`dotnet format\`; no sobrescribir cambios locales sin revisarlos.
 - **Validación:** inspección estática de codificación/newlines del contenido obtenido por GitHub; no se ejecutó \`dotnet format\` ni build.
+
+  
+## Build/QA — scaffold frontend preparado (2026-10-20)
+
+- [x] Scripts `test`, `test:watch`, `test:e2e` y globs de Prettier para los nuevos tests/configs.
+- [x] Vitest/jsdom/React Testing Library: pruebas del botón en carga, TextField y sus relaciones ARIA, mostrar/ocultar contraseña, alertas y código de soporte, CheckboxField, SelectField y una comprobación axe de formulario accesible.
+- [x] Playwright: smoke de `/ingresar` y análisis axe de etiquetas WCAG A/AA, dirigido por `PASTEL_E2E_BASE_URL` (por defecto `http://127.0.0.1:8080`). No requiere credenciales de Google; OAuth real queda para la verificación manual cuando se levante el stack con `.env` local configurado.
+- [ ] **CCR-006 pendiente:** no se modificó `package.json` con dependencias ni `package-lock.json` porque esta sesión no puede ejecutar npm contra el registry; es necesario correr npm install en el entorno local para cerrar el lockfile con una sola operación.
+- [ ] **Sin validar:** tests, Prettier, ESLint, TypeScript/Vite y Playwright no se ejecutaron en esta sesión. Las pruebas pueden revelar fallos de accesibilidad que deben corregirse antes del cierre.
