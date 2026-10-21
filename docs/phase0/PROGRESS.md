@@ -585,3 +585,9 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] La factory HTTP establece `TestingSeed:Enabled=true` únicamente para el ambiente de integración `Testing`; no modifica Compose, `.env` local ni la configuración general de desarrollo/producción.
 - [x] Se agregan verificaciones contra PostgreSQL de que la fixture Member tiene exclusivamente el rol Member y de que la fixture Administrator puede listar usuarios mientras que Member recibe 403 (F0-006, autorización por rol).
 - [ ] **Pendiente de ejecución:** las nuevas pruebas de integración no se han ejecutado; requieren `.\scripts\test-database.ps1`. El sembrador queda limitado por código a `Development`/`Testing` y por prueba unitaria se rechaza en `Production`.
+
+
+## Build/QA — format frontend incluye los tests nuevos (2026-10-20)
+
+- [x] Se actualiza `scripts/format-frontend.ps1` para copiar de vuelta los archivos formateados de `web/tests/**/*.ts(x)` y los archivos `vitest.config.ts`/`playwright.config.ts`. Antes, `npm run format` los formateaba en la copia Docker temporal, pero el script no copiaba esos resultados al working tree, lo que podía dejar `format:check` fallando siempre.
+- [ ] **Validación pendiente:** no se ejecutó el script PowerShell ni se probó el transporte de los archivos en Docker. Debe revisarse con la instalación de CCR-006 completada.
