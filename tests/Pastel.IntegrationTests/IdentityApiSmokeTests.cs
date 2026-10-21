@@ -1,5 +1,6 @@
 using System.Net;
 using System.Text.Json;
+using System.Net.Http.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Identity.Persistence;
@@ -71,4 +72,21 @@ public sealed class IdentityApiSmokeTests : IClassFixture<IdentityApiFactory>
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+    [Trait("RequirementId", "F0-S213")]
+    [RequiresPostgresFact]
+    public async Task Api_write_without_csrf_cookie_and_header_is_rejected()
+    {
+        using var client = _factory.CreateClient();
+        using var response = await client.PostAsJsonAsync("/api/auth/register", new
+        {
+            email = "csrf-test@pastel.test",
+            displayName = "CSRF test",
+            password = "Local integration test passphrase 2026"
+        });
+
+        Assert.Equal(HttpStatusCode.Forbidden, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        Assert.Equal("platform.csrf_invalid", document.RootElement.GetProperty("code").GetString());
+    }
+
 }

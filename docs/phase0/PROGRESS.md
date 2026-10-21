@@ -564,3 +564,10 @@ Sincronizado con `origin/refactor/modular-foundation`; no había trabajo local s
 - [x] `scripts/test-frontend.ps1` ejecutará `npm run test` después del build para que las pruebas Vitest formen parte de la validación.
 - [ ] **Bloqueo de instalación:** el import `eslint-plugin-jsx-a11y` y los scripts `vitest`/`playwright` todavía requieren que el propietario regenere `web/package-lock.json` con el comando npm documentado en CCR-006. No ejecutar todavía `test-frontend.ps1` contra el lockfile anterior; fallará por dependencias ausentes.
 - **Validación:** modificación estática; no se ejecutaron npm, ESLint, Vitest, build ni Playwright.
+
+
+## Build/QA — pruebas de regresión adicionales (2026-10-20)
+
+- [x] Se agregan pruebas unitarias de política para bloquear de forma explícita el sembrador `TestingSeedUsersTask` cuando `TestingSeed:Enabled=true` en Production, y para confirmar que deshabilitado no requiere servicios de base de datos (F0-006).
+- [x] Se añade una prueba de integración PostgreSQL que verifica que un POST a `/api/auth/register` sin cookie/cabecera CSRF se rechaza con HTTP 403 y código `platform.csrf_invalid` (F0-S213, rama negativa).
+- [ ] **Validación pendiente:** no se ejecutaron las nuevas pruebas; la prueba CSRF no sustituye el caso positivo con cookie/cabecera válida. Debe comprobarse en `.scripts	est-all.ps1` tras sincronizar la rama y corregir cualquier defecto.
