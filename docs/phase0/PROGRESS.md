@@ -665,3 +665,16 @@ git status --short                     # debe estar vacío o solo con cambios re
 .\scripts\test-database.ps1
 .\scripts\test-frontend.ps1
 ```
+
+
+## Build/QA — evidencia del propietario y estado de requisitos (2026-10-21, tanda 2)
+
+**Estado: POR VERIFICAR (parcial).** Detalle por requisito en `docs/testing/reports/FASE-0-ESTADO-REQUISITOS-2026-10-21.md`.
+
+- **Verificado con salida real del propietario (HEAD `ef01c30` más el árbol de trabajo confirmado):** `install-hooks.ps1` instaló el hook en Windows; `format-backend.ps1` actualizó 2 archivos la primera vez y 0 la segunda (idempotente); `test-backend.ps1` correcto (NuGet sin vulnerabilidades, build Release 0 advertencias y 0 errores, verificación de formato correcta —las 9 infracciones de `PrivilegeGuard.cs` quedaron resueltas—, 42/42 unitarias y de arquitectura); `test-database.ps1` correcto (11/11 sobre base `pastel_integration_tests` recreada); `test-frontend.ps1` correcto (Prettier, ESLint, `tsc`+Vite, Vitest+axe 8/8, fronteras modulares, check-design, auditoría Tailwind). Los 13 archivos de migraciones modificados solo perdieron el BOM.
+- **Escrito sin poder ejecutar (POR VERIFICAR):** `tests/Pastel.IntegrationTests/QA/PrivilegeHierarchyTests.cs` (F0-S101 a S114 y S116, contra la API real y PostgreSQL) y `ProductionSecurityValidationTaskTests.cs` (F0-S209). Pueden requerir ajustes de compilación o de formato (`dotnet format` es estricto).
+- **Resumen de los 80 requisitos obligatorios del plan:** aprobados 11, aprobados parciales 9, por verificar 16, pendientes 42, bloqueados 2 (F0-G01 y G02: verificación manual con cuenta real de Google). Criterio de salida §11: no cumplido.
+- **Inspección estática (sin ejecutar):** F0-I01 a I04, I07 y I08 cumplen según Compose, Dockerfile, nginx y `ci.yml`.
+- **Observaciones:** el plan usa `settings.users.block` y el código `settings.users.lock`; la superficie de endpoints coincide con `dev` salvo lo permitido y dos adiciones (`GET /api/admin/users/{id}`, `GET /ping` por módulo) que requieren aceptación del propietario; falta una prueba automatizada de voseo (F0-W09).
+- **Siguiente:** el propietario ejecuta `test-backend.ps1` y `test-database.ps1` y devuelve la salida; después, stack aislado y aislamiento por módulo (comandos en el informe). Build/QA continúa con proveedor falso de Google, refresco/sesiones, errores/logs y voseo.
+
