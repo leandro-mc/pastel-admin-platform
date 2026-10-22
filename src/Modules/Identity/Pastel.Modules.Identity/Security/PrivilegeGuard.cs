@@ -191,10 +191,13 @@ internal sealed class PrivilegeGuard(
         {
             return await DenyAsync(
                 IdentityErrors.PrivilegeOwnerRoleProtected, action, targetUserId, null,
-                new { permissions = permissionCodes.Where(code =>
+                new
+                {
+                    permissions = permissionCodes.Where(code =>
                     code == IdentityPermissions.OwnerPrivilege
                     || code == IdentityPermissions.WorkspaceAccess
-                    || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray() }, cancellationToken);
+                    || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray()
+                }, cancellationToken);
         }
 
         // Workspace cannot issue one-off grants for app permissions, even for Owner.
@@ -206,9 +209,12 @@ internal sealed class PrivilegeGuard(
         {
             return await DenyAsync(
                 IdentityErrors.PrivilegeAppScopeRequired, action, targetUserId, null,
-                new { permissions = permissionCodes.Where(code =>
+                new
+                {
+                    permissions = permissionCodes.Where(code =>
                     code != IdentityPermissions.DashboardView
-                    && !code.StartsWith("settings.", StringComparison.Ordinal)).ToArray() }, cancellationToken);
+                    && !code.StartsWith("settings.", StringComparison.Ordinal)).ToArray()
+                }, cancellationToken);
         }
 
         if (!ActorIsOwner && permissionCodes.Any(code =>
@@ -216,10 +222,13 @@ internal sealed class PrivilegeGuard(
         {
             return await DenyAsync(
                 IdentityErrors.PrivilegeOwnerPermissionRequired, action, targetUserId, null,
-                new { permissions = permissionCodes.Where(code =>
+                new
+                {
+                    permissions = permissionCodes.Where(code =>
                     code == IdentityPermissions.WorkspaceAccess
                     || code.StartsWith("cosecha.", StringComparison.Ordinal)
-                    || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray() }, cancellationToken);
+                    || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray()
+                }, cancellationToken);
         }
 
         if (ActorIsOwner || permissionCodes.Count == 0)
