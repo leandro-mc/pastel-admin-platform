@@ -6,8 +6,8 @@ Rama `refactor/modular-foundation`. Cada fila se clasifica con evidencia real; *
 
 ## Resumen
 
-- Obligatorios (80): APROBADO: 11, APROBADO PARCIAL: 9, POR VERIFICAR: 16, PENDIENTE: 42, BLOQUEADO: 2.
-- Todos (87): APROBADO: 12, APROBADO PARCIAL: 10, POR VERIFICAR: 16, PENDIENTE: 47, BLOQUEADO: 2.
+- Obligatorios (80): APROBADO: 15, APROBADO PARCIAL: 7, POR VERIFICAR: 16, PENDIENTE: 40, BLOQUEADO: 2.
+- Todos (87): APROBADO: 16, APROBADO PARCIAL: 8, POR VERIFICAR: 16, PENDIENTE: 45, BLOQUEADO: 2.
 - Criterio de salida (§11 del plan): **no cumplido** (faltan casos obligatorios en verde, E2E, contenedores y verificación manual de Google).
 
 Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configuración) · **APROBADO PARCIAL** · **POR VERIFICAR** (código o prueba escritos por Build/QA sin entorno; el propietario debe ejecutarlos) · **PENDIENTE** (sin prueba o sin ejecución) · **BLOQUEADO** (depende de una acción real del propietario).
@@ -39,7 +39,7 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 | F0-S115 | I | PENDIENTE | Sin prueba. |
 | F0-S116 | O | POR VERIFICAR | `S116…` (15 endpoints × anónimo/Member/permiso parcial); no ejecutada. |
 | F0-S201 | O | PENDIENTE | Requiere E2E con tiempo (>10 min) o reloj controlable. |
-| F0-S202 | O | PENDIENTE | Requiere prueba del cliente (Vitest) o E2E; sin prueba. |
+| F0-S202 | O | APROBADO | `api-client.test.ts`: 5 peticiones simultáneas con 401 → exactamente 1 refresco y 5 reintentos exitosos; verificada por mutación (sin deduplicación falla con «esperaba 1, recibió 5»). Ejecutada por Build/QA en Linux; la repetirá `test-frontend.ps1`. |
 | F0-S203 | O | PENDIENTE | Sin prueba (solo existe la unitaria de `RefreshGraceProtector`). |
 | F0-S204 | O | PENDIENTE | Sin prueba. |
 | F0-S205 | O | PENDIENTE | Sin prueba. |
@@ -48,7 +48,7 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 | F0-S208 | O | APROBADO PARCIAL | Limitador por cuenta sin afectar a otras (unitaria). Falta: Google no afectado y espera creciente. |
 | F0-S209 | O | POR VERIFICAR | `ProductionSecurityValidationTaskTests` (9 casos) escritas; no ejecutadas. El código ya existe. |
 | F0-S210 | O | APROBADO | Integración: registro rechazado con CSRF válido y `/auth/options` coherente. |
-| F0-S211 | O | APROBADO PARCIAL | Servidor: unitaria de política + política expuesta en `/auth/options`. Falta: el cliente usa la misma política. |
+| F0-S211 | O | APROBADO | Servidor: unitaria de política + política en `/auth/options`. Cliente: `login-options.test.tsx` (rechaza 11 de 12, sin reglas de composición, sigue la política recibida). Ejecutada por Build/QA en Linux. |
 | F0-S212 | I | PENDIENTE | Sin prueba. |
 | F0-S213 | O | APROBADO | Integración: sin cabecera 403 `platform.csrf_invalid`; con cabecera válida el login responde 200. |
 | F0-S214 | O | PENDIENTE | Requiere stack con nginx + API. |
@@ -62,7 +62,7 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 | F0-G08 | O | PENDIENTE | Pendiente (proveedor falso). |
 | F0-G09 | O | PENDIENTE | Sin prueba. |
 | F0-G10 | O | PENDIENTE | Sin prueba de logs. |
-| F0-G11 | O | APROBADO PARCIAL | Backend: esquema Google desactivado sin credenciales y `options.google=false` (unitaria + integración). Falta: el botón no aparece (frontend). |
+| F0-G11 | O | APROBADO | Backend: esquema Google desactivado sin credenciales y `options.google=false` (propietario). Frontend: `login-options.test.tsx` (sin botón con `google=false`, con enlace a `/api/auth/google/start` si es `true`). Ejecutada por Build/QA en Linux. |
 | F0-G12 | O | PENDIENTE | Manual/E2E. |
 | F0-E01 | O | PENDIENTE | Sin prueba automatizada. |
 | F0-E02 | O | PENDIENTE | Sin prueba automatizada. |
@@ -80,11 +80,11 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 | F0-W02 | O | PENDIENTE | Requiere E2E. |
 | F0-W03 | O | APROBADO | `tailwind-audit`: restricciones estructurales cumplidas (métricas informativas; `app-shell.css` 684 líneas). |
 | F0-W04 | O | PENDIENTE | Manual: capturas antes/después en claro y oscuro. |
-| F0-W05 | O | APROBADO PARCIAL | 8/8 pruebas de componentes con axe. Falta verificar Escape, foco atrapado y retorno de foco. |
+| F0-W05 | O | APROBADO PARCIAL | `dialog.test.tsx` (4/4 en jsdom): nombre accesible, axe, foco atrapado, Escape y retorno de foco al elemento que lo abrió. Falta confirmarlo en navegador real (E2E/manual). |
 | F0-W06 | O | PENDIENTE | Manual/E2E. |
 | F0-W07 | O | PENDIENTE | Manual/E2E. |
 | F0-W08 | O | PENDIENTE | Sin prueba de contraste. |
-| F0-W09 | O | PENDIENTE | No existe prueba automatizada de voseo (solo comentarios en `strings.ts`): requiere corrección. |
+| F0-W09 | O | APROBADO | `scripts/check-voseo.mjs` + 6 pruebas (detecta voseo; no marca «leído», «entréguela», SOS); el escaneo de `web/src` y `src` da 0 hallazgos. Integrada en `test-frontend.ps1`. Ejecutada por Build/QA en Linux; falta la revisión humana que pide el plan. |
 | F0-W10 | O | APROBADO | `check-design` sin hallazgos y 8/8 pruebas de las guardas. |
 | F0-W11 | I | PENDIENTE | Sin prueba. |
 | F0-W12 | O | PENDIENTE | Sin prueba. |
@@ -109,13 +109,15 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 - El plan habla de `settings.users.block`; el código usa `settings.users.lock`. Las pruebas usan el código vigente.
 - El código incorpora el rol `Owner/Superuser` y reglas por ámbito (los roles de Workspace solo admiten permisos `settings.*`) que el plan no describe. Las pruebas S101 a S116 las respetan; conviene ampliar el plan.
 - Huella, catálogo persistente, membresías de Cosecha y feed de Ágora quedan fuera de Fase 0 por decisión del propietario (2026-10-21).
+- Las pruebas de frontend nuevas (`api-client`, `dialog`, `login-options`) y la guarda de voseo se ejecutaron en Linux por Build/QA; `test-frontend.ps1` las repetirá en Docker.
 - Las pruebas `PrivilegeHierarchyTests` mantienen ≈8 inicios de sesión: el limitador de autenticación admite 12 por minuto y por IP y TestServer comparte IP. No añada pruebas con inicios de sesión nuevos sin reutilizar actores.
 
 ## Próximo lote de Build/QA (sin ejecutar aún)
 
 1. Proveedor falso de Google en `ConfigureTestServices` para F0-G02, G05 a G08.
-2. Pruebas de refresco y sesiones (S203, S204, S205) con cookies reales.
-3. Pruebas de errores y logs (E01 a E10) y de voseo automatizada (W09).
+2. Pruebas de refresco y sesiones en el servidor (S203, S204, S205) con cookies reales.
+3. Pruebas de errores y logs (E01 a E10).
+4. Corrección de lo que revelen `test-backend` y `test-database` (pendiente de su salida).
 
 ## Comandos que debe ejecutar el propietario
 

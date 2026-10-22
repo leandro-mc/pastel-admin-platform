@@ -60,6 +60,8 @@ cd /tmp/work || exit 93
 run_check "Fronteras modulares (frontend/backend)" node scripts/check-module-boundaries.mjs
 run_check "Pruebas unitarias de las guardas de diseño" node --test scripts/tests/check-design.test.mjs
 run_check "check-design" node scripts/check-design.mjs
+run_check "Pruebas unitarias de la guarda de voseo (F0-W09)" node --test scripts/tests/check-voseo.test.mjs
+run_check "check-voseo (F0-W09)" node scripts/check-voseo.mjs
 run_check "Auditoria Tailwind (metas de migracion)" node scripts/tailwind-audit.mjs --check
 
 printf '\nResumen frontend: %s comprobacion(es) fallida(s).\n' "$failures"
