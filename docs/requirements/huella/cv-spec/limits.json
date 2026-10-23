@@ -1,0 +1,330 @@
+{
+  "_meta": {
+    "avg_char_em": 0.52,
+    "line_height": 1.22,
+    "safety": 0.91,
+    "margins_in": [
+      0.7,
+      0.6
+    ],
+    "fixed": {
+      "name_max": 40,
+      "headline_max": 70,
+      "role_company_max": 68,
+      "location_max": 30,
+      "date_range_max": 24,
+      "link_label_max": 40,
+      "group_label_max": 24,
+      "skill_item_max": 28,
+      "contact_items_max": 5,
+      "contact_chars_max": 180
+    },
+    "note": "Worst case = every section at its hard maximum at the same time."
+  },
+  "letter": {
+    "junior": {
+      "label": "Junior (0-3 años)",
+      "pages": 1,
+      "font": 10.5,
+      "summary_chars": 180,
+      "skills_groups": 4,
+      "skills_group_chars": 90,
+      "skills_total": 22,
+      "entries": 3,
+      "entry_bullet_lines": [
+        5,
+        3,
+        0
+      ],
+      "bullet_max": 170,
+      "bullet_ideal": [
+        90,
+        150
+      ],
+      "bullet_min": 55,
+      "projects": 2,
+      "project_bullet_lines": [
+        2,
+        2
+      ],
+      "project_title_chars": 86,
+      "education": 2,
+      "education_detail_lines": [
+        1,
+        0
+      ],
+      "education_detail_chars": 90,
+      "extras_lines": 2,
+      "certs": 2,
+      "cpl_full": 93,
+      "cpl_bullet": 91,
+      "capacity_lu": 50,
+      "sections_lu": {
+        "header": 5.5,
+        "summary": 4.0,
+        "skills": 6.0,
+        "experience": 14.5,
+        "projects": 9.0,
+        "education": 6.0,
+        "extras": 4.0
+      },
+      "worst_case_lu": 49.0,
+      "slack_lu": 1.0
+    },
+    "mid": {
+      "label": "Mid-level (3-8 años)",
+      "pages": 2,
+      "font": 10.5,
+      "summary_chars": 270,
+      "skills_groups": 5,
+      "skills_group_chars": 180,
+      "skills_total": 30,
+      "entries": 5,
+      "entry_bullet_lines": [
+        9,
+        8,
+        6,
+        4,
+        2
+      ],
+      "bullet_max": 175,
+      "bullet_ideal": [
+        95,
+        160
+      ],
+      "bullet_min": 60,
+      "projects": 2,
+      "project_bullet_lines": [
+        3,
+        3
+      ],
+      "project_title_chars": 86,
+      "education": 2,
+      "education_detail_lines": [
+        1,
+        0
+      ],
+      "education_detail_chars": 90,
+      "extras_lines": 5,
+      "certs": 4,
+      "cpl_full": 93,
+      "cpl_bullet": 91,
+      "capacity_lu": 97,
+      "sections_lu": {
+        "header": 5.5,
+        "summary": 5.0,
+        "skills": 12.0,
+        "experience": 38.5,
+        "projects": 11.0,
+        "education": 6.0,
+        "extras": 7.0
+      },
+      "worst_case_lu": 85.0,
+      "slack_lu": 12.0
+    },
+    "senior": {
+      "label": "Senior (8+ años)",
+      "pages": 2,
+      "font": 10.0,
+      "summary_chars": 380,
+      "skills_groups": 6,
+      "skills_group_chars": 180,
+      "skills_total": 38,
+      "entries": 6,
+      "entry_bullet_lines": [
+        11,
+        9,
+        7,
+        5,
+        3,
+        0
+      ],
+      "bullet_max": 180,
+      "bullet_ideal": [
+        100,
+        165
+      ],
+      "bullet_min": 65,
+      "projects": 1,
+      "project_bullet_lines": [
+        3
+      ],
+      "project_title_chars": 86,
+      "education": 2,
+      "education_detail_lines": [
+        0,
+        0
+      ],
+      "education_detail_chars": 90,
+      "extras_lines": 6,
+      "certs": 5,
+      "cpl_full": 98,
+      "cpl_bullet": 95,
+      "capacity_lu": 101,
+      "sections_lu": {
+        "header": 5.5,
+        "summary": 6.0,
+        "skills": 14.0,
+        "experience": 46.0,
+        "projects": 6.5,
+        "education": 5.0,
+        "extras": 8.0
+      },
+      "worst_case_lu": 91.0,
+      "slack_lu": 10.0
+    }
+  },
+  "a4": {
+    "junior": {
+      "label": "Junior (0-3 años)",
+      "pages": 1,
+      "font": 10.5,
+      "summary_chars": 180,
+      "skills_groups": 4,
+      "skills_group_chars": 90,
+      "skills_total": 22,
+      "entries": 3,
+      "entry_bullet_lines": [
+        5,
+        3,
+        0
+      ],
+      "bullet_max": 170,
+      "bullet_ideal": [
+        90,
+        150
+      ],
+      "bullet_min": 55,
+      "projects": 2,
+      "project_bullet_lines": [
+        2,
+        2
+      ],
+      "project_title_chars": 86,
+      "education": 2,
+      "education_detail_lines": [
+        1,
+        0
+      ],
+      "education_detail_chars": 90,
+      "extras_lines": 2,
+      "certs": 2,
+      "cpl_full": 90,
+      "cpl_bullet": 88,
+      "capacity_lu": 53,
+      "sections_lu": {
+        "header": 5.5,
+        "summary": 4.0,
+        "skills": 6.0,
+        "experience": 14.5,
+        "projects": 9.0,
+        "education": 6.0,
+        "extras": 4.0
+      },
+      "worst_case_lu": 49.0,
+      "slack_lu": 4.0
+    },
+    "mid": {
+      "label": "Mid-level (3-8 años)",
+      "pages": 2,
+      "font": 10.5,
+      "summary_chars": 270,
+      "skills_groups": 5,
+      "skills_group_chars": 180,
+      "skills_total": 30,
+      "entries": 5,
+      "entry_bullet_lines": [
+        9,
+        8,
+        6,
+        4,
+        2
+      ],
+      "bullet_max": 175,
+      "bullet_ideal": [
+        95,
+        160
+      ],
+      "bullet_min": 60,
+      "projects": 2,
+      "project_bullet_lines": [
+        3,
+        3
+      ],
+      "project_title_chars": 86,
+      "education": 2,
+      "education_detail_lines": [
+        1,
+        0
+      ],
+      "education_detail_chars": 90,
+      "extras_lines": 5,
+      "certs": 4,
+      "cpl_full": 90,
+      "cpl_bullet": 88,
+      "capacity_lu": 103,
+      "sections_lu": {
+        "header": 5.5,
+        "summary": 5.0,
+        "skills": 12.0,
+        "experience": 38.5,
+        "projects": 11.0,
+        "education": 6.0,
+        "extras": 7.0
+      },
+      "worst_case_lu": 85.0,
+      "slack_lu": 18.0
+    },
+    "senior": {
+      "label": "Senior (8+ años)",
+      "pages": 2,
+      "font": 10.0,
+      "summary_chars": 380,
+      "skills_groups": 6,
+      "skills_group_chars": 180,
+      "skills_total": 38,
+      "entries": 6,
+      "entry_bullet_lines": [
+        11,
+        9,
+        7,
+        5,
+        3,
+        0
+      ],
+      "bullet_max": 180,
+      "bullet_ideal": [
+        100,
+        165
+      ],
+      "bullet_min": 65,
+      "projects": 1,
+      "project_bullet_lines": [
+        3
+      ],
+      "project_title_chars": 86,
+      "education": 2,
+      "education_detail_lines": [
+        0,
+        0
+      ],
+      "education_detail_chars": 90,
+      "extras_lines": 6,
+      "certs": 5,
+      "cpl_full": 95,
+      "cpl_bullet": 92,
+      "capacity_lu": 109,
+      "sections_lu": {
+        "header": 5.5,
+        "summary": 6.0,
+        "skills": 14.0,
+        "experience": 46.0,
+        "projects": 6.5,
+        "education": 5.0,
+        "extras": 8.0
+      },
+      "worst_case_lu": 91.0,
+      "slack_lu": 18.0
+    }
+  }
+}

@@ -1,0 +1,35 @@
+{
+  "lang": "es",
+  "layout": { "fontSize": 10.5, "paper": "us-letter" },
+  "name": "Marta Solís Araya",
+  "headline": "QA Engineer / Desarrolladora Fullstack",
+  "contact": ["marta.ejemplo@correo.test", "+506 8888-0000", "Heredia, Costa Rica", "linkedin.com/in/marta-ejemplo", "github.com/marta-ejemplo"],
+  "labels": { "summary": "Perfil profesional", "skills": "Habilidades técnicas", "experience": "Experiencia laboral", "projects": "Proyectos", "education": "Educación", "extras": "Certificaciones e idiomas" },
+  "summary": "QA y desarrolladora con 5 años automatizando pruebas de APIs y web. Reduzco regresiones con pruebas en CI y trabajo cerca del equipo de producto para detectar fallos antes de producción.",
+  "skills": [
+    { "group": "Pruebas", "items": ["Playwright", "Cypress", "Postman", "k6", "Pruebas de regresión", "Casos de prueba"] },
+    { "group": "Lenguajes", "items": ["TypeScript", "JavaScript", "C#", "SQL", "Python"] },
+    { "group": "Herramientas", "items": ["Git", "GitHub Actions", "Docker", "Jira", "PostgreSQL"] }
+  ],
+  "experience": [
+    { "role": "QA Automation Engineer", "company": "Empresa Ejemplo S.A.", "location": "San José, CR", "dates": "Mar 2022 - Presente",
+      "bullets": [
+        "Automaticé 140 pruebas end-to-end con Playwright y reduje la regresión manual de 2 días a 3 horas.",
+        "Integré las pruebas a GitHub Actions; los fallos por despliegue bajaron 35 % en seis meses.",
+        "Diseñé pruebas de carga con k6 sobre 12 endpoints críticos antes del lanzamiento de la versión 3."
+      ] },
+    { "role": "Desarrolladora Fullstack", "company": "Estudio Demo", "location": "Heredia, CR", "dates": "Jun 2020 - Feb 2022",
+      "bullets": [
+        "Construí un módulo de reservas en C# y React usado por 8 clientes.",
+        "Escribí pruebas unitarias y de integración que elevaron la cobertura del 38 % al 71 %."
+      ] }
+  ],
+  "projects": [
+    { "name": "Bitácora de calidad", "stack": "TypeScript, Playwright, GitHub Actions", "link": "github.com/marta-ejemplo/bitacora",
+      "bullets": ["Panel open source que agrupa fallos de pruebas por causa raíz; 120 estrellas en GitHub."] }
+  ],
+  "education": [
+    { "degree": "Bachillerato en Ingeniería Informática", "school": "Universidad Ejemplo", "dates": "2016 - 2020", "detail": "Énfasis en ingeniería de software." }
+  ],
+  "extras": ["ISTQB Foundation Level (2023)", "Español: nativo | Inglés: B2 (lectura técnica avanzada)"]
+}
