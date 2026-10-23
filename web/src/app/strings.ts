@@ -1,4 +1,4 @@
-/** Textos de la plataforma (español de Costa Rica, trato de usted, sin voseo). Los módulos usan su propio `strings.ts`. */
+/** Textos de la plataforma (español de Costa Rica, trato de usted por defecto). Los módulos usan su propio `strings.ts`. */
 export const strings = {
   skipToContent: "Saltar al contenido",
   loading: "Cargando…",

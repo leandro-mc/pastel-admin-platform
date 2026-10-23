@@ -54,7 +54,7 @@ Errores esperables como `Result` → `problem+json` con `code` y `traceId`; sin 
 ## Interfaz (reglas duras)
 - **Prohibido el morado** (tono HSL 235°–345°) y los **símbolos de IA** (`Sparkles`, `Stars`, `Wand*`, `Bot`, `Brain*`, `Cpu`, ✨🤖🪄🔮). Marca: `Flower2`.
 - **Tailwind:** utilidades en JSX; los patrones compartidos son componentes de `core/ui`; **prohibido `@apply`** fuera de `core/design/base.css`. Color solo por tokens (`bg-accent`…); `data-module` da el color de cada módulo; sin hexadecimales sueltos.
-- UX primero: `DESIGN_SYSTEM.md` (heurísticas, WCAG 2.2 AA, móvil primero). Español de Costa Rica, trato de usted o impersonal como regla general, **sin voseo salvo que la ficha o las instrucciones específicas del módulo lo permitan o lo soliciten expresamente**. Textos en `strings.ts`.
+- UX primero: `DESIGN_SYSTEM.md` (heurísticas, WCAG 2.2 AA, móvil primero). Español de Costa Rica; por defecto, trato de usted o impersonal. **El voseo (u otra voz más personal) se permite cuando el propietario lo solicite**, para toda la plataforma o para un módulo; es una preferencia de estilo, no un criterio de bloqueo, y no requiere pruebas ni revisión obligatoria. Textos en `strings.ts`.
 
 ## Seguridad (no negociable)
 Tokens solo en cookies `HttpOnly`, nunca en el navegador. Autorización siempre en el backend. No versionar secretos ni `.env`. No `EnsureCreated`. No registrar datos sensibles. Quien administra no puede escalar privilegios (concede solo lo que tiene).

@@ -680,12 +680,23 @@ git status --short                     # debe estar vacío o solo con cambios re
 
 ### Build/QA — frontend verificado por Build/QA (2026-10-21, tanda 3)
 
-**Ejecutado por Build/QA en Linux** (Node 22, `npm ci`): Prettier, ESLint, `tsc` + build de Vite, Vitest 21/21, fronteras modulares, check-design, auditoría Tailwind, `check-voseo` y las pruebas del hook (12/12). `test-frontend.ps1` volverá a ejecutarlas en Docker.
+**Ejecutado por Build/QA en Linux** (Node 22, `npm ci`): Prettier, ESLint, `tsc` + build de Vite, Vitest 21/21, fronteras modulares, check-design, auditoría Tailwind y las pruebas del hook (12/12). `test-frontend.ps1` volverá a ejecutarlas en Docker.
 
 - **F0-S202** (`api-client.test.ts`): 5 peticiones simultáneas con 401 producen exactamente 1 refresco y 5 reintentos; comprobado por mutación.
 - **F0-W05** (`dialog.test.tsx`, jsdom): nombre accesible, axe, foco atrapado, Escape y retorno de foco. Falta confirmación en navegador real.
 - **F0-G11 y F0-S211** (`login-options.test.tsx`): sin botón de Google con `google=false`; el cliente aplica la política que publica el servidor, sin reglas de composición.
-- **F0-W09**: nueva guarda `scripts/check-voseo.mjs` (con 6 pruebas) integrada en `test-frontend.ps1`; 0 hallazgos en `web/src` y `src`.
+- **F0-W09**: la guarda de voseo de esta tanda se retiró en la tanda 4 por decisión del propietario.
 - **Cambio de configuración:** `web/vitest.config.ts` ahora resuelve el alias `@/`.
 - **Recuento de obligatorios:** ver `docs/testing/reports/FASE-0-ESTADO-REQUISITOS-2026-10-21.md`. Fase 0 sigue abierta.
+
+
+### Build/QA — resultados del propietario y decisiones (2026-10-23, tanda 4)
+
+**Estado: POR VERIFICAR solo en `scripts/qa-phase0-stack.ps1`; el resto está aprobado con salida real.**
+
+- **Evidencia del propietario (HEAD `3f45113`):** `test-backend.ps1` correcto (NuGet sin vulnerabilidades, build Release 0 advertencias y 0 errores, formato correcto, **51/51**: 45 de Identity —9 nuevas de F0-S209— y 6 de arquitectura); `test-database.ps1` correcto (**26/26** PostgreSQL, 15 nuevas: F0-S101 a S114 y S116); `test-frontend.ps1` correcto (Vitest 21/21, Prettier, ESLint, `tsc`+Vite, fronteras, check-design, auditoría Tailwind). Las pruebas escritas sin compilador pasaron a la primera.
+- **Decisión sobre voseo (2026-10-23):** se permite cuando el propietario lo solicite. Se flexibilizaron las reglas de `AGENTS.md`, `DESIGN_SYSTEM.md` §8, `FASE-0-REFACTOR-BASE.md`, `ERROR_HANDLING_AND_LOGGING.md` y el plan de pruebas; F0-W09 queda retirado (prioridad D) y se eliminaron `scripts/check-voseo.mjs`, sus pruebas y su paso en `test-frontend.ps1`.
+- **Endpoints adicionales aceptados por el propietario:** `GET /api/admin/users/{id}` y `GET /ping` por módulo (F0-R05 aprobado).
+- **Nuevo `scripts/qa-phase0-stack.ps1` (POR VERIFICAR; escrito sin PowerShell):** stack Compose aislado `pastel-fase0-qa` con subred propia (`172.31.87.0/24`, porque la pila de desarrollo ya usa `172.30.0.0/24` y el comando del plan fallaría por solapamiento), limpieza solo de su propio volumen, restauración del entorno y PASS/FAIL para F0-001, F0-002, F0-S214 y F0-I06; con `-ModuleIsolation` construye además las imágenes por módulo (F0-003). Requiere Docker Compose 2.24.4 o superior.
+- **Recuento de los 79 obligatorios vigentes:** aprobados 31, aprobados parciales 6, por verificar 0, pendientes 40, bloqueados 2. Fase 0 sigue abierta (ver informe).
 

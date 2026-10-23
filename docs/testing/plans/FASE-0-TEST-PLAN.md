@@ -75,7 +75,7 @@ Actores: **Admin**, **Gestor-usuarios** (rol no administrador con `settings.user
 ## 6. Errores y logs
 | ID | Tipo | P | Caso | Esperado |
 |---|---|---|---|---|
-| F0-E01 | E | O | Provocar cada tipo de error (validación, 401, 403, 404, 409 único, 409 concurrencia, 429, 500) | `problem+json` con `code`, `traceId`; mensajes en español sin voseo; sin detalles internos |
+| F0-E01 | E | O | Provocar cada tipo de error (validación, 401, 403, 404, 409 único, 409 concurrencia, 429, 500) | `problem+json` con `code`, `traceId`; mensajes en español con la acción posible; sin detalles internos |
 | F0-E02 | E | O | Excepción inesperada simulada | 500 genérico; el log contiene excepción y el mismo `traceId`; la respuesta **no** contiene `ex.Message` |
 | F0-E03 | E | O | Correo duplicado bajo concurrencia (dos registros simultáneos) | 409 limpio, no 500 |
 | F0-E04 | E | O | Dos administradores editan el mismo rol | El segundo recibe 409 de concurrencia |
@@ -99,7 +99,7 @@ Actores: **Admin**, **Gestor-usuarios** (rol no administrador con `settings.user
 | F0-W06 | X | O | Teclado completo, foco visible ≥ 3 px, enlace "Saltar al contenido", foco al `h1` al cambiar de ruta | Cumple |
 | F0-W07 | X | O | 320 px, zoom 200 %, texto "Muy grande", claro y oscuro | Sin pérdida de contenido ni desplazamiento horizontal |
 | F0-W08 | X | O | Contraste de tokens (texto 4,5:1; componentes 3:1), incluido `--muted` | Cumple en ambos temas y en los cinco módulos |
-| F0-W09 | U | O | Voseo | Ninguna cadena del frontend ni mensaje del backend contiene voseo (prueba automatizada + revisión) |
+| F0-W09 | U | D | Tono de los textos | **Retirado como requisito obligatorio por decisión del propietario (2026-10-21):** el voseo se permite cuando el propietario lo solicite; no hay prueba ni revisión obligatoria |
 | F0-W10 | S | O | Prohibiciones de diseño | `scripts/check-design.mjs` sin hallazgos: sin morado (235°–345°), sin iconos/emojis de IA, sin hexadecimales sueltos |
 | F0-W11 | F | I | Respuestas de la API | Validadas con `zod` en el borde; una respuesta malformada produce error controlado, no pantalla en blanco |
 | F0-W12 | U | O | Tamaño de texto y tema | Se aplican, persisten y no almacenan nada sensible |

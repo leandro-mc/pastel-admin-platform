@@ -15,7 +15,7 @@ Obligatorio para Identity, Platform y **todos** los módulos. Lo implementa la F
 ### 2.1 Modelo
 - `Result` / `Result<T>` en `Pastel.SharedKernel` con `Error { Code, Type, Message, Details }`. `Type`: `Validation`, `Unauthorized`, `Forbidden`, `NotFound`, `Conflict`, `Unexpected`.
 - **Código estable** con el formato `<modulo>.<recurso>.<motivo>` en minúsculas (`cosecha.shipment.already_closed`, `identity.user.last_admin`). Transversales: `platform.validation_failed`, `platform.concurrency_conflict`, `platform.rate_limited`, `platform.unavailable`, `platform.unexpected`. Cada módulo mantiene sus códigos en un archivo `Errors.cs` y los documenta en su `MODULE.md`.
-- `Message` en español de Costa Rica, sin tecnicismos, sin voseo, y siempre con la acción posible ("No se pudo guardar. Revise los datos e intente de nuevo.").
+- `Message` en español de Costa Rica, sin tecnicismos, con el tono predeterminado de usted o impersonal (el voseo se admite si el propietario lo solicita), y siempre con la acción posible ("No se pudo guardar. Revise los datos e intente de nuevo.").
 - Prohibido usar excepciones como control de flujo y prohibido devolver `ex.Message` al cliente.
 
 ### 2.2 Respuesta HTTP (RFC 9457, `application/problem+json`)
