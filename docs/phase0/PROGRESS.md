@@ -700,3 +700,22 @@ git status --short                     # debe estar vacío o solo con cambios re
 - **Nuevo `scripts/qa-phase0-stack.ps1` (POR VERIFICAR; escrito sin PowerShell):** stack Compose aislado `pastel-fase0-qa` con subred propia (`172.31.87.0/24`, porque la pila de desarrollo ya usa `172.30.0.0/24` y el comando del plan fallaría por solapamiento), limpieza solo de su propio volumen, restauración del entorno y PASS/FAIL para F0-001, F0-002, F0-S214 y F0-I06; con `-ModuleIsolation` construye además las imágenes por módulo (F0-003). Requiere Docker Compose 2.24.4 o superior.
 - **Recuento de los 79 obligatorios vigentes:** aprobados 31, aprobados parciales 6, por verificar 0, pendientes 40, bloqueados 2. Fase 0 sigue abierta (ver informe).
 
+### Revisión de la selección de apps en el registro (2026-10-23)
+
+- **Hallazgo (revisión de código):** `RegisterForm` solo pide nombre, correo y contraseña; `RegisterRequest` es `(Email, DisplayName, Password)` y `RegisterHandler` asigna únicamente el rol Member. **No existe selección de aplicaciones, entidades de membresía ni API** para ello.
+- **Reglas registradas por el propietario (ver `docs/product/PASTEL-PRODUCT-AND-UX.md`, «Acceso y registro»):** Ágora obligatoria (solo el Owner/Superuser puede decidir no incluirla); Brisa y Balance activables por la persona; Cosecha solo para las cuentas que el Owner/Superuser registre o autorice; Huella exclusiva del Owner/Superuser y nunca visible en el registro.
+- **Ya cumplido:** exclusividad de Huella por permisos (solo el rol Owner/Superuser recibe `huella.access`; `CatalogSyncTask` retira membresías antiguas).
+- **Alcance:** fuera de Fase 0 por decisión del propietario (depende de la persistencia de membresías); no bloquea su cierre. **Interpretación por confirmar:** «Ágora obligatoria salvo que el Owner/Superuser no quiera» se registró como decisión exclusiva del Owner/Superuser, sin precisar si es global o por cuenta.
+
+
+### Build/QA — tanda 5 (2026-10-23): pruebas de Google, sesiones, errores y logs; mejoras de velocidad
+
+**Estado: POR VERIFICAR.** Todo lo siguiente se escribió sin compilador; el propietario debe ejecutar `test-backend.ps1` y `test-database.ps1`.
+
+- **Resultado del script de stack aislado:** F0-001 (health, esquemas migrados desde base vacía: Identity con 11 tablas y los demás módulos con su historial de migraciones) y F0-006 pasaron. El script falló después por un defecto propio (`.Count` sobre `$null` bajo `StrictMode`) y su limpieza falló por el stderr de `docker`; ambos corregidos. Faltan por ejecutar F0-S214, F0-I06 y F0-002 (y F0-003 con `-ModuleIsolation`).
+- **Pruebas nuevas en `tests/Pastel.IntegrationTests/QA/`:** `GoogleSignInTests` (F0-G02 automatizada, G03, G05 a G10), `SessionRefreshTests` (F0-S203 a S205), `ErrorContractTests` (F0-E01, E03, E04), `LoggingPipelineTests` (F0-E02, E05, E06, E08) y `QaSupport`. Capturan el JSON real de Serilog y usan interceptores de EF Core para simular fallos.
+- **Defecto de producción corregido (F0-E08):** `PastelProblem.From` registraba una advertencia por cada 403 aunque el acceso denegado ya se registraba una vez por minuto; ahora `PastelAuthorizationResultHandler` marca `PastelProblem.LogSuppressedItem`.
+- **Rendimiento de los scripts de prueba:** copia con `tar --exclude` (sin leer `.git`, `node_modules`, `bin` ni `obj` por el montaje de Windows), tiempo de copia impreso y volúmenes de caché `pastel-nuget-cache` y `pastel-npm-cache`.
+- **Guía manual de Google:** `docs/testing/GOOGLE-MANUAL-TEST.md` (F0-G01, G02 y G12).
+- **Recuento de los 79 obligatorios:** aprobados 31, aprobados parciales 6, por verificar 18, pendientes 23, bloqueados 1 (F0-G01). Fase 0 sigue abierta.
+

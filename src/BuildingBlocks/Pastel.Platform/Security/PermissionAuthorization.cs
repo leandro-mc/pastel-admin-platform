@@ -111,6 +111,8 @@ internal sealed class PastelAuthorizationResultHandler(DeniedAccessThrottle thro
             await AuditDeniedAsync(context, userId, permission);
         }
 
+        // El rechazo ya se registró arriba con límite de frecuencia: evita una advertencia por cada petición repetida.
+        context.Items[PastelProblem.LogSuppressedItem] = true;
         await PastelProblem.From(PlatformErrors.Forbidden, context).ExecuteAsync(context);
     }
 

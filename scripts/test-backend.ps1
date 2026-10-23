@@ -20,11 +20,13 @@ New-Item -ItemType Directory -Path $resultsDirectory -Force | Out-Null
 $containerScript = @'
 set +e
 mkdir -p /tmp/work /test-results
-cp -a /repo/. /tmp/work/
+copy_started=$(date +%s)
+tar -C /repo --exclude=.git --exclude=node_modules --exclude=bin --exclude=obj -cf - . | tar -C /tmp/work -xf -
 if [ "$?" -ne 0 ]; then
   echo "No se pudo copiar el repositorio a la copia temporal del contenedor."
   exit 90
 fi
+echo "Copia del repositorio (sin .git, node_modules, bin ni obj): $(( $(date +%s) - copy_started )) s"
 find /tmp/work -type d \( -name .git -o -name node_modules -o -name bin -o -name obj \) -prune -exec rm -rf {} +
 rm -f /tmp/work/.env
 cd /tmp/work || exit 91
@@ -95,6 +97,7 @@ $dockerArguments = @(
     "run", "--rm",
     "--mount", ("type=bind,source={0},target=/repo,readonly" -f $script:RepoRoot),
     "--mount", ("type=bind,source={0},target=/test-results" -f $resultsDirectory),
+    "--mount", "type=volume,source=pastel-nuget-cache,target=/root/.nuget/packages",
     "--entrypoint", "sh",
     "mcr.microsoft.com/dotnet/sdk:10.0",
     "-c", $dockerCommand

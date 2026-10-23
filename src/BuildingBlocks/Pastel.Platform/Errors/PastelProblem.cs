@@ -12,6 +12,12 @@ public static class PastelProblem
 {
     public const string TraceHeader = "X-Trace-Id";
 
+    /// <summary>
+    /// Clave de <c>HttpContext.Items</c> para indicar que el llamador ya registró este rechazo (p. ej. con límite de frecuencia)
+    /// y que <see cref="From"/> no debe volver a registrarlo en cada petición.
+    /// </summary>
+    public const string LogSuppressedItem = "pastel.problem.log-suppressed";
+
     public static string TraceId(HttpContext context) => Activity.Current?.TraceId.ToString() ?? context.TraceIdentifier;
 
     public static int StatusFor(ErrorType type) => type switch
@@ -56,7 +62,11 @@ public static class PastelProblem
     /// </summary>
     public static IResult From(Error error, HttpContext context, Exception? exception = null)
     {
-        Log(error, context, exception);
+        if (!context.Items.ContainsKey(LogSuppressedItem))
+        {
+            Log(error, context, exception);
+        }
+
         var extensions = new Dictionary<string, object?>
         {
             ["code"] = error.Code,

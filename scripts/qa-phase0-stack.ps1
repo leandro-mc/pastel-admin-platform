@@ -100,8 +100,15 @@ $composeFiles = @("-f", (Join-Path $repoRoot "compose.yaml"), "-f", (Join-Path $
 function Remove-QaProject {
     # Seguro: solo opera sobre el proyecto de QA (nombre fijo); nunca sobre pastel-admin.
     if ($Project -ne "pastel-fase0-qa") { throw "Proyecto inesperado: $Project" }
-    # 2>$null (no 2>&1): en PowerShell 5.1 el stderr redirigido al flujo de exito se convierte en error terminante.
-    & docker compose -p $Project @composeFiles down -v --remove-orphans 2>$null | Out-Null
+    # docker escribe su progreso en stderr; con "Stop" PowerShell lo trataria como error terminante.
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        & docker compose -p $Project @composeFiles down -v --remove-orphans 2>&1 | Out-Null
+    }
+    finally {
+        $ErrorActionPreference = $previousPreference
+    }
 }
 
 try {
@@ -152,7 +159,7 @@ networks:
     # ---------------- F0-S214 / F0-I06: cabeceras sin duplicados ----------------
     foreach ($target in @("/", "/api/auth/options")) {
         $response = Invoke-Curl @("$BaseUrl$target")
-        $duplicates = Get-DuplicateHeaders $response.Headers
+        $duplicates = @(Get-DuplicateHeaders $response.Headers)
         $hasNoSniff = @($response.Headers | Where-Object { $_ -match '^x-content-type-options:' }).Count -ge 1
         Add-Check "F0-S214" "cabeceras de $target sin duplicados" (($duplicates.Count -eq 0) -and $hasNoSniff) ("duplicadas: " + $(if ($duplicates.Count -eq 0) { "ninguna" } else { $duplicates -join ", " }) + "; x-content-type-options: $hasNoSniff")
         Write-Host "---- cabeceras de $target ----" -ForegroundColor DarkGray
