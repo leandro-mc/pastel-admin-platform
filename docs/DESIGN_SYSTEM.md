@@ -156,7 +156,7 @@ Los estados siempre llevan icono y texto; el verde de éxito nunca sustituye al 
 
 ## 8. Contenido y tono (español de Costa Rica)
 
-- **Trato predeterminado:** formulaciones impersonales o de usted; sin voseo ni tuteo. Ejemplos: "Ingrese su correo", "Revise los datos", "No se pudo guardar. Intente de nuevo". **Excepción por módulo:** se permite el voseo u otra voz más personal cuando la ficha de producto o las instrucciones específicas del módulo lo autoricen o lo soliciten expresamente. Esa excepción aplica solo al módulo indicado; no cambia el tono global de la plataforma.
+- **Trato predeterminado:** formulaciones impersonales o de usted. Ejemplos: "Ingrese su correo", "Revise los datos", "No se pudo guardar. Intente de nuevo". **Voseo y otras voces:** se permiten cuando el propietario lo solicite, para toda la plataforma o para un módulo (ficha o instrucciones específicas). Es una preferencia de estilo, no una regla bloqueante: no hay pruebas automatizadas ni revisión obligatoria de tono. Lo importante es que cada pantalla use un tono coherente.
 - Títulos y botones preferiblemente nominales o infinitivos: "Nuevo pedido", "Guardar cambios".
 - Frases cortas, palabras comunes, sin tecnicismos ("no se pudo conectar", no "error de red 502").
 - Formatos: fecha `22/10/2026` (y larga "jueves 22 de octubre"), hora de 24 h o 12 h con a. m./p. m. de forma consistente, moneda `₡12 500` (`Intl.NumberFormat("es-CR", { style: "currency", currency: "CRC" })`), teléfonos `8888 1234` (+506), pesos en kg.

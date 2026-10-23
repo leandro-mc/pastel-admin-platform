@@ -41,7 +41,7 @@ Antes de iniciar cada tarea, el orquestador debe indicar el **tipo de agente**. 
 | **Estilos** | **Utilidades de Tailwind en JSX** (opción 1 del análisis, sección 3). Los patrones compartidos son **componentes React** (`core/ui`), no clases `@apply`. Tokens con `@theme` de Tailwind v4 |
 | **Errores y logs** | Estándar de `docs/ERROR_HANDLING_AND_LOGGING.md`: `Result` + `problem+json` con `code` y `traceId`, `IExceptionHandler` único, Serilog JSON, auditoría separada |
 | Paleta | Shell neutro; el verde actual pasa a ser el color de Brisa; la paleta "Brisa" antigua desaparece como concepto de plataforma |
-| Tono | Español de Costa Rica; sin voseo por defecto; el módulo puede autorizar una voz más personal en su ficha/instrucciones específicas; trato de usted o impersonal como regla general |
+| Tono | Español de Costa Rica; por defecto de usted o impersonal; el voseo u otra voz más personal se permite cuando el propietario lo solicite (no bloqueante, sin prueba obligatoria) |
 | Modelo de pruebas | Dev y QA separados (`docs/TESTING_STRATEGY.md`) |
 
 ## 3. Estructura objetivo
@@ -178,7 +178,7 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 4. **Proveedores:** `AuthProvider`, `QueryClientProvider` (con manejo global de errores inesperados), tema, tamaño de texto, notificaciones.
 5. **Shell (actualizado por CCR-003):** marca floral; selector desplegable con icono de actualización en la sidebar y tarjeta de la app activa debajo; la barra superior no repite el nombre de la app. Conserva ayuda, cuenta, preferencias, footer, navegación lateral en escritorio y navegación táctil en móvil; migas, "Saltar al contenido" y foco al `h1`. `/` conduce a Ágora, no a un hub de tarjetas. Workspace solo aparece para el privilegio global confirmado; las apps disponibles siguen las reglas del catálogo.
 6. **Migrar Identity** a `web/src/modules/identity/`: `ProfilePage` → `/cuenta`; `Settings*` → `/configuracion/*` (`usuarios`, `roles`, `modulos`, `auditoria`, `accesos/:tipo/:id`); `ChangePasswordScreen` como ruta obligatoria; conservar la jerarquía visual original del dashboard, perfil, usuarios y permisos. El catálogo de apps no sustituye el inicio de Ágora. Sustituir `useSettingsAdmin` (466 líneas, 23 `useState`) por consultas y mutaciones de TanStack Query con invalidación. Conservar el comportamiento del editor de accesos.
-7. **Textos:** normalizar al tono predeterminado de `DESIGN_SYSTEM.md` §8 (sin voseo, salvo que la ficha o instrucciones específicas del módulo autoricen una voz más personal), cadenas en `strings.ts`; corregir también los mensajes del backend y probar la regla predeterminada y sus excepciones documentadas.
+7. **Textos:** usar el tono predeterminado de `DESIGN_SYSTEM.md` §8 (de usted o impersonal; el voseo se admite si el propietario lo solicita), cadenas en `strings.ts`; mantener coherentes los mensajes del backend. Sin prueba automatizada de tono.
 8. `core/log` (envoltorio) que reporta errores a `/api/client-errors`; ESLint `no-console`.
 
 ## 11. WP8 — Recuperación visual + sistema de diseño Tailwind CSS 4 (prioridad máxima, CCR-003)
@@ -240,7 +240,7 @@ Con un manejador remoto falso (sin llamar a Google): vínculo existente; vincula
 - [ ] Google OAuth implementado, con un manejador remoto falso inyectable para las pruebas de Build.
 - [ ] Restricciones duras de diseño cumplidas (tokens, cero morado/símbolos vetados/colores sueltos, `@apply` solo en `base.css`, clases semánticas en la carpeta aprobada); las métricas Tailwind de mantenimiento se reportan y revisan sin tratarlas como bloqueos independientes.
 - [ ] Estándar de errores y logs implementado; sin datos sensibles en logs.
-- [ ] Sin morado ni símbolos de IA; tono predeterminado sin voseo y excepciones de voz solo cuando estén autorizadas por el módulo.
+- [ ] Sin morado ni símbolos de IA; tono coherente con `DESIGN_SYSTEM.md` §8 (el voseo se permite cuando el propietario lo solicite).
 - [ ] Código preparado para `docker compose up` desde base vacía (lo comprueba Build); sin `.env` ni secretos en el diff.
 - [ ] «Datos para pruebas» completos en `PROGRESS.md` y **sin informe de aprobación propio**.
 

@@ -2,15 +2,15 @@
 
 Rama `refactor/modular-foundation`. Cada fila se clasifica con evidencia real; **no hay informe de QA aprobado** y la Fase 0 sigue abierta.
 
-**Evidencia ejecutada por el propietario (Windows, Docker, PostgreSQL):** `format-backend` idempotente (2.ª ejecución: 0 archivos), `test-backend` (NuGet sin vulnerabilidades, build Release 0/0, verificación de formato correcta, 42/42), `test-database` (11/11 PostgreSQL sobre base recreada) y `test-frontend` (Prettier, ESLint, `tsc`+Vite, Vitest+axe 8/8, fronteras, check-design, auditoría Tailwind). **Inspección estática** (sin ejecutar): configuración de Compose, nginx y CI.
+**Evidencia ejecutada por el propietario (Windows, Docker, PostgreSQL; HEAD `3f45113`, 2026-10-23):** `test-backend` (NuGet sin vulnerabilidades, build Release 0/0, formato correcto, 51/51), `test-database` (26/26 PostgreSQL sobre base recreada) y `test-frontend` (Prettier, ESLint, `tsc`+Vite, Vitest+axe 21/21, fronteras, check-design, auditoría Tailwind). **Ejecutado por Build/QA en Linux:** pruebas de frontend (Vitest) y del hook. **Inspección estática** (sin ejecutar): configuración de Compose, nginx y CI.
 
 ## Resumen
 
-- Obligatorios (80): APROBADO: 15, APROBADO PARCIAL: 7, POR VERIFICAR: 16, PENDIENTE: 40, BLOQUEADO: 2.
-- Todos (87): APROBADO: 16, APROBADO PARCIAL: 8, POR VERIFICAR: 16, PENDIENTE: 45, BLOQUEADO: 2.
+- Obligatorios (79): APROBADO: 31, APROBADO PARCIAL: 6, POR VERIFICAR: 0, PENDIENTE: 40, BLOQUEADO: 2.
+- Todos (86, sin contar 1 descartado): APROBADO: 32, APROBADO PARCIAL: 7, POR VERIFICAR: 0, PENDIENTE: 45, BLOQUEADO: 2.
 - Criterio de salida (§11 del plan): **no cumplido** (faltan casos obligatorios en verde, E2E, contenedores y verificación manual de Google).
 
-Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configuración) · **APROBADO PARCIAL** · **POR VERIFICAR** (código o prueba escritos por Build/QA sin entorno; el propietario debe ejecutarlos) · **PENDIENTE** (sin prueba o sin ejecución) · **BLOQUEADO** (depende de una acción real del propietario).
+Leyenda: **DESCARTADO** (retirado por decisión del propietario) · **APROBADO** (evidencia ejecutada o inspección estática de configuración) · **APROBADO PARCIAL** · **POR VERIFICAR** (código o prueba escritos por Build/QA sin entorno; el propietario debe ejecutarlos) · **PENDIENTE** (sin prueba o sin ejecución) · **BLOQUEADO** (depende de una acción real del propietario).
 
 ## Matriz
 
@@ -22,22 +22,22 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 | F0-004 | O | PENDIENTE | Matriz definida en `ci.yml` (`module-isolation`); sin ejecución. Se cubre localmente con F0-003. |
 | F0-005 | O | PENDIENTE | Requiere E2E/manual con sesiones de distinto permiso. |
 | F0-006 | O | APROBADO | `Testing_seed_fails_fast_when_enabled_in_production` (unitaria, 42/42) y semilla solo-Member verificada en PostgreSQL. |
-| F0-S101 | O | POR VERIFICAR | `PrivilegeHierarchyTests.S101…` escrita; no ejecutada. |
-| F0-S102 | O | POR VERIFICAR | `S102…` escrita; no ejecutada. |
-| F0-S103 | O | POR VERIFICAR | `S103…` (incluye auditoría antes/después); no ejecutada. |
-| F0-S104 | O | POR VERIFICAR | `S104…` (sin contraseña temporal, hash intacto); no ejecutada. |
-| F0-S105 | O | POR VERIFICAR | `S105…` (incluye inicio de sesión con la temporal y rechazo de la propia); no ejecutada. |
-| F0-S106 | O | POR VERIFICAR | `S106…`; no ejecutada. |
-| F0-S107 | O | POR VERIFICAR | `S107…` (auditoría con permisos añadidos); no ejecutada. |
-| F0-S108 | O | POR VERIFICAR | `S108…`; no ejecutada. |
-| F0-S109 | O | POR VERIFICAR | `S109…`; no ejecutada. |
-| F0-S110 | O | POR VERIFICAR | `S110…`; no ejecutada. |
-| F0-S111 | O | POR VERIFICAR | `S111…`; no ejecutada. |
-| F0-S112 | O | POR VERIFICAR | `S112…` (Administrator y gestor); no ejecutada. |
-| F0-S113 | O | POR VERIFICAR | `S113…` (concurrencia real con dos clientes); no ejecutada. |
-| F0-S114 | O | POR VERIFICAR | `S114…`; no ejecutada. |
+| F0-S101 | O | APROBADO | Prueba `S101…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S102 | O | APROBADO | Prueba `S102…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S103 | O | APROBADO | Prueba `S103…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S104 | O | APROBADO | Prueba `S104…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S105 | O | APROBADO | Prueba `S105…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S106 | O | APROBADO | Prueba `S106…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S107 | O | APROBADO | Prueba `S107…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S108 | O | APROBADO | Prueba `S108…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S109 | O | APROBADO | Prueba `S109…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S110 | O | APROBADO | Prueba `S110…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S111 | O | APROBADO | Prueba `S111…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S112 | O | APROBADO | Prueba `S112…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S113 | O | APROBADO | Prueba `S113…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
+| F0-S114 | O | APROBADO | Prueba `S114…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
 | F0-S115 | I | PENDIENTE | Sin prueba. |
-| F0-S116 | O | POR VERIFICAR | `S116…` (15 endpoints × anónimo/Member/permiso parcial); no ejecutada. |
+| F0-S116 | O | APROBADO | Prueba `S116…` en verde. `PrivilegeHierarchyTests`: 26/26 PostgreSQL (15 nuevas) en `test-database.ps1`, salida del propietario 2026-10-23. |
 | F0-S201 | O | PENDIENTE | Requiere E2E con tiempo (>10 min) o reloj controlable. |
 | F0-S202 | O | APROBADO | `api-client.test.ts`: 5 peticiones simultáneas con 401 → exactamente 1 refresco y 5 reintentos exitosos; verificada por mutación (sin deduplicación falla con «esperaba 1, recibió 5»). Ejecutada por Build/QA en Linux; la repetirá `test-frontend.ps1`. |
 | F0-S203 | O | PENDIENTE | Sin prueba (solo existe la unitaria de `RefreshGraceProtector`). |
@@ -46,7 +46,7 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 | F0-S206 | O | PENDIENTE | Sin prueba. |
 | F0-S207 | O | APROBADO PARCIAL | Misma respuesta y estado para correo inexistente y clave errónea (integración 11/11). Falta demostrar que ambos recorren el cálculo del hash. |
 | F0-S208 | O | APROBADO PARCIAL | Limitador por cuenta sin afectar a otras (unitaria). Falta: Google no afectado y espera creciente. |
-| F0-S209 | O | POR VERIFICAR | `ProductionSecurityValidationTaskTests` (9 casos) escritas; no ejecutadas. El código ya existe. |
+| F0-S209 | O | APROBADO | `ProductionSecurityValidationTaskTests`: 9 casos nuevos en verde (Identity 45/45 en `test-backend.ps1`, 51/51 en total), salida del propietario 2026-10-23. |
 | F0-S210 | O | APROBADO | Integración: registro rechazado con CSRF válido y `/auth/options` coherente. |
 | F0-S211 | O | APROBADO | Servidor: unitaria de política + política en `/auth/options`. Cliente: `login-options.test.tsx` (rechaza 11 de 12, sin reglas de composición, sigue la política recibida). Ejecutada por Build/QA en Linux. |
 | F0-S212 | I | PENDIENTE | Sin prueba. |
@@ -84,7 +84,7 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 | F0-W06 | O | PENDIENTE | Manual/E2E. |
 | F0-W07 | O | PENDIENTE | Manual/E2E. |
 | F0-W08 | O | PENDIENTE | Sin prueba de contraste. |
-| F0-W09 | O | APROBADO | `scripts/check-voseo.mjs` + 6 pruebas (detecta voseo; no marca «leído», «entréguela», SOS); el escaneo de `web/src` y `src` da 0 hallazgos. Integrada en `test-frontend.ps1`. Ejecutada por Build/QA en Linux; falta la revisión humana que pide el plan. |
+| F0-W09 | D | DESCARTADO | Retirado como requisito obligatorio por decisión del propietario (2026-10-23): el voseo se permite cuando el propietario lo solicite; reglas y guarda automatizada eliminadas. No cuenta en los totales. |
 | F0-W10 | O | APROBADO | `check-design` sin hallazgos y 8/8 pruebas de las guardas. |
 | F0-W11 | I | PENDIENTE | Sin prueba. |
 | F0-W12 | O | PENDIENTE | Sin prueba. |
@@ -102,12 +102,13 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 | F0-R02 | O | PENDIENTE | Sin ejecución (regresión). |
 | F0-R03 | O | PENDIENTE | Sin ejecución (regresión). |
 | F0-R04 | O | PENDIENTE | Sin ejecución (regresión). |
-| F0-R05 | O | APROBADO PARCIAL | Superficie igual a `dev` salvo lo permitido (options, Google, client-errors; sin `CreateModule`). Dos adiciones no listadas: `GET /api/admin/users/{id}` y `GET /ping` por módulo; requieren aceptación del propietario. |
+| F0-R05 | O | APROBADO | Superficie igual a `dev` salvo lo permitido (options, Google, client-errors; sin `CreateModule`) más dos adiciones (`GET /api/admin/users/{id}` y `GET /ping` por módulo) **aceptadas por el propietario el 2026-10-23**. Comparación estática; `GET /api/admin/users/{id}` queda cubierto por la matriz S116. |
 
 ## Observaciones frente al plan
 
 - El plan habla de `settings.users.block`; el código usa `settings.users.lock`. Las pruebas usan el código vigente.
 - El código incorpora el rol `Owner/Superuser` y reglas por ámbito (los roles de Workspace solo admiten permisos `settings.*`) que el plan no describe. Las pruebas S101 a S116 las respetan; conviene ampliar el plan.
+- El voseo se permite cuando el propietario lo solicite (decisión del 2026-10-23): F0-W09 queda retirado y se flexibilizaron las reglas de `AGENTS.md`, `DESIGN_SYSTEM.md`, el documento base de Fase 0 y la guía de errores.
 - Huella, catálogo persistente, membresías de Cosecha y feed de Ágora quedan fuera de Fase 0 por decisión del propietario (2026-10-21).
 - Las pruebas de frontend nuevas (`api-client`, `dialog`, `login-options`) y la guarda de voseo se ejecutaron en Linux por Build/QA; `test-frontend.ps1` las repetirá en Docker.
 - Las pruebas `PrivilegeHierarchyTests` mantienen ≈8 inicios de sesión: el limitador de autenticación admite 12 por minuto y por IP y TestServer comparte IP. No añada pruebas con inicios de sesión nuevos sin reutilizar actores.
@@ -121,30 +122,17 @@ Leyenda: **APROBADO** (evidencia ejecutada o inspección estática de configurac
 
 ## Comandos que debe ejecutar el propietario
 
+Stack aislado (F0-001, F0-002, F0-S214, F0-I06). El script usa un proyecto Compose propio (`pastel-fase0-qa`), una subred distinta de la pila de desarrollo (que ya usa `172.30.0.0/24`), limpia solo su propio volumen y restaura las variables de entorno al terminar:
+
 ```powershell
 git pull
-.\scripts\test-backend.ps1       # incluye ProductionSecurityValidationTaskTests (S209)
-.\scripts\test-database.ps1      # incluye PrivilegeHierarchyTests (S101 a S116)
+.\scripts\qa-phase0-stack.ps1
 ```
 
-Stack aislado para F0-001, F0-002, S214 e I06 (no usa `-v`):
+Aislamiento por módulo (F0-003), más lento (10 imágenes):
 
 ```powershell
-$env:ASPNETCORE_ENVIRONMENT="Testing"; $env:WEB_PORT="18080"; $env:POSTGRES_PORT="15435"; $env:APP_PUBLIC_BASE_URL="http://localhost:18080"
-docker compose -p pastel-fase0-qa up -d --build
-curl.exe -s -o NUL -w "live=%{http_code}\n" http://localhost:18080/health/live
-curl.exe -s -o NUL -w "ready=%{http_code}\n" http://localhost:18080/health/ready
-curl.exe -sI http://localhost:18080/          # S214/I06: cada cabecera de seguridad debe aparecer una sola vez
-docker compose -p pastel-fase0-qa stop db     # F0-002
-curl.exe -s -w "\nready=%{http_code}\n" http://localhost:18080/health/ready   # debe fallar
-curl.exe -s -w "\nstatus=%{http_code}\n" http://localhost:18080/api/auth/options  # 503 problem+json con traceId
-docker compose -p pastel-fase0-qa start db
-docker compose -p pastel-fase0-qa down
+.\scripts\qa-phase0-stack.ps1 -ModuleIsolation
 ```
 
-Aislamiento por módulo (F0-003; repita con `brisa`, `balance`, `cosecha`, `huella`):
-
-```powershell
-docker build --file src/Host/Pastel.Host/Dockerfile --build-arg PASTEL_MODULES=agora --tag pastel-api:agora .
-docker build --file web/Dockerfile --build-arg PASTEL_MODULES=agora --tag pastel-web:agora .
-```
+El script (POR VERIFICAR: se escribió sin PowerShell) imprime PASS/FAIL por requisito y las cabeceras HTTP observadas.

@@ -1,4 +1,4 @@
-/** Textos de Identity (español de Costa Rica, trato de usted, sin voseo). */
+/** Textos de Identity (español de Costa Rica, trato de usted por defecto). */
 export const identityStrings = {
   module: {
     name: "Pastel Workspace",
