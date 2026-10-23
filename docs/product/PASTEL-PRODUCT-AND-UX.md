@@ -34,7 +34,7 @@ Cada subaplicación tiene objetivos, navegación, usuarios miembros, permisos, c
 
 | App | Visibilidad / disponibilidad | Inicio y comportamiento |
 |---|---|---|
-| **Ágora** | Pública y obligatoria. Toda persona la puede ver; toda cuenta la conserva activa. No se puede desactivar. | Entrada inicial al sistema; feed y funcionalidades públicas disponibles sin registrarse. Después de autenticarse, sigue siendo el destino por defecto si no existe una ruta de retorno o preferencia válida. |
+| **Ágora** | Pública y obligatoria. Toda persona la puede ver; toda cuenta la conserva activa. Ni el usuario ni Administrator pueden desactivarla; solo el Owner/Superuser puede decidir no incluirla (decisión del propietario, 2026-10-23). | Entrada inicial al sistema; feed y funcionalidades públicas disponibles sin registrarse. Después de autenticarse, sigue siendo el destino por defecto si no existe una ruta de retorno o preferencia válida. |
 | **Brisa** | App de producto seleccionable/activable por el usuario que cumpla los requisitos de acceso. | Navegación, tema, inicio, miembros, roles, permisos y configuración de Brisa. |
 | **Balance** | App de producto seleccionable/activable por el usuario que cumpla los requisitos de acceso. | Navegación, tema, inicio, miembros, roles, permisos y configuración de Balance. |
 | **Huella** | Exclusiva del Owner/Superuser y de su único perfil personal. No es una opción de autoactivación, no está en búsquedas ni en el catálogo público. | El Owner/Superuser edita el borrador, publica y administra un enlace de capacidad largo, revocable y regenerable. Cualquier persona con el enlace vigente puede ver únicamente la versión publicada, sin registro. El perfil público lleva noindex,nofollow,noarchive. |
@@ -90,7 +90,13 @@ El PDF y los componentes que siguen disponibles en `dev` son la referencia, no u
 - Recuperar el título «Todo en su lugar. Todo fluye mejor.», beneficios de la plataforma, ornamentación floral discreta y tarjeta con icono, encabezado, labels, estado de seguridad y CTA.
 - Recuperar alternancia de tema visible, marca, icono para mostrar/ocultar contraseña y pie de página.
 - Mantener validaciones, método Google/contraseña si está habilitado por `/api/auth/options`, avisos de error y rutas de retorno existentes. No quitar ni inventar un proveedor de autenticación por motivos estéticos.
-- El registro muestra el catálogo de apps disponibles según reglas del producto y mantiene Ágora seleccionada/obligatoria. Este paso de selección puede requerir trabajo posterior de backend; no simular persistencia antes de que exista API.
+- **El registro pregunta qué aplicaciones desea incluir la persona** y muestra solo el catálogo que le corresponde (decisión del propietario, 2026-10-23):
+  - **Ágora:** preseleccionada y bloqueada para el usuario; obligatoria salvo que el Owner/Superuser decida no incluirla.
+  - **Brisa y Balance:** opciones que la persona puede activar.
+  - **Cosecha:** no es autoseleccionable; la concede el Owner/Superuser a las cuentas que registre o autorice.
+  - **Huella:** nunca aparece; es exclusiva del Owner/Superuser.
+  La selección debe persistirse mediante la API de membresías; no simular persistencia antes de que exista.
+  **Estado real (2026-10-23):** el formulario actual (nombre, correo y contraseña) y `POST /api/auth/register` no contemplan selección de apps, no existen entidades ni API de membresías y el registro asigna solo el rol Member. La exclusividad de Huella ya se impone por permisos (solo el rol Owner/Superuser recibe `huella.access`). Queda como trabajo posterior a Fase 0 por decisión del propietario.
 
 ### Shell y app
 
