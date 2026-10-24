@@ -4,6 +4,7 @@ using Pastel.Modules.Identity.Domain;
 using Pastel.Modules.Identity.Persistence;
 using Pastel.Modules.Identity.Security;
 using Pastel.Platform.Auditing;
+using Pastel.Platform.Persistence;
 using Pastel.Platform.Security;
 using Pastel.SharedKernel;
 
@@ -11,7 +12,12 @@ namespace Pastel.Modules.Identity.Features.SetRolePermissions;
 
 internal sealed class SetRolePermissionsHandler(IdentityDbContext db, IAuditTrail audit, ICurrentUser currentUser, IPrivilegeGuard guard)
 {
-    public async Task<Result> HandleAsync(Guid roleId, SetRolePermissionsRequest request, CancellationToken cancellationToken)
+    // Serializable con reintento: el conjunto final se calcula sobre el estado vigente del rol, así que dos
+    // ediciones simultáneas no pueden fundirse en una mezcla de ambas (la segunda reintenta y reemplaza).
+    public Task<Result> HandleAsync(Guid roleId, SetRolePermissionsRequest request, CancellationToken cancellationToken) =>
+        TransactionRunner.RunSerializableAsync(db, token => ApplyAsync(roleId, request, token), cancellationToken);
+
+    private async Task<Result> ApplyAsync(Guid roleId, SetRolePermissionsRequest request, CancellationToken cancellationToken)
     {
         var role = await db.Roles.Include(x => x.RolePermissions).ThenInclude(x => x.Permission)
             .SingleOrDefaultAsync(x => x.Id == roleId, cancellationToken);

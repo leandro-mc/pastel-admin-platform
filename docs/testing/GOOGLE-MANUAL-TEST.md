@@ -1,4 +1,4 @@
-# Verificación manual de Google (F0-G01, F0-G02 y F0-G12)
+# Verificación manual de Google (F0-G01 y F0-G02)
 
 Estas pruebas necesitan una cuenta real de Google y un navegador, por eso las ejecuta el propietario. La lógica de vinculación, el `state`, el `redirect_uri`, los tokens y los logs ya tienen pruebas automatizadas (`GoogleSignInTests`).
 
@@ -11,46 +11,28 @@ Estas pruebas necesitan una cuenta real de Google y un navegador, por eso las ej
 2. Confirme que `.env` tiene `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (los lee Compose; no se versionan).
 3. Si la pantalla de consentimiento de Google está en modo «Prueba», agregue `Imc.edu.cr@gmail.com` como usuario de prueba.
 
-## Fase 1: cuenta nueva (F0-G01)
+## Fase 1: cuenta nueva (F0-G01): HECHA
 
-```powershell
-.\scripts\qa-phase0-stack.ps1 -KeepRunning
-```
+Verificada por el propietario el 2026-10-24: entra con Google como usuario básico. El primer intento respondió 503 porque el stack venía de reiniciar la base en la misma corrida; por eso las fases siguientes usan `-SkipFaultInjection`.
 
-Cuando termine y deje el stack en marcha, abra `http://localhost:18080/ingresar`.
+## Fase 2: vincular a la cuenta del administrador de arranque (F0-G02): PENDIENTE
 
-1. Pulse «Continuar con Google» y elija `Imc.edu.cr@gmail.com`.
-2. Esperado: vuelve a la aplicación con la sesión iniciada, sin pedir contraseña, como `Member`.
-3. Cierre sesión y repita: debe entrar de nuevo sin crear otra cuenta.
-
-Reporte: si se cumplió cada punto y, si algo falló, el mensaje que vio en pantalla y el texto de la URL final.
-
-## Fase 2: vincular a la cuenta del administrador de arranque (F0-G02)
-
-El script recrea el stack desde cero, así que `Imc.edu.cr@gmail.com` vuelve a ser una cuenta desconocida. Esta vez se usa como correo del administrador de arranque:
+En la primera ejecución el propietario entró como usuario básico y no como administrador. Esta fase confirma por qué, con datos concretos.
 
 ```powershell
 $env:BOOTSTRAP_ADMIN_EMAIL = "Imc.edu.cr@gmail.com"
-.\scripts\qa-phase0-stack.ps1 -KeepRunning
+.\scripts\qa-phase0-stack.ps1 -KeepRunning -SkipFaultInjection
 Remove-Item Env:BOOTSTRAP_ADMIN_EMAIL
+.\scripts\qa-inspect-identity.ps1
 ```
 
-1. Abra `http://localhost:18080/ingresar`, pulse «Continuar con Google» y elija esa misma cuenta.
-2. Esperado: entra directamente a la cuenta del administrador existente (no crea una nueva).
-3. Cierre sesión e intente entrar con correo y la contraseña de arranque de `.env`: debe fallar (la contraseña temporal quedó invalidada al vincular).
-4. Entre otra vez con Google y abra Ajustes, Auditoría: debe aparecer el evento de vinculación con Google.
+1. Copie la salida de `qa-inspect-identity.ps1` (aún sin haber entrado con Google). Debe mostrar `Imc.edu.cr@gmail.com` como correo de arranque y una cuenta con ese correo con roles de administrador. No imprime contraseñas.
+2. Abra `http://localhost:18080/ingresar`, pulse «Continuar con Google» y elija esa cuenta.
+3. Esperado: entra a la cuenta del administrador existente (no crea otra). Anote si el primer intento falla.
+4. Ejecute otra vez `.\scripts\qa-inspect-identity.ps1` y copie la salida: muestra si se creó una cuenta nueva (`registered`) o se vinculó la existente (`linked`).
+5. Si entró como administrador, cierre sesión e intente entrar con la contraseña de arranque de `.env`: debe fallar.
 
-Reporte: si se cumplió cada punto.
-
-## Pantalla de ingreso (F0-G12)
-
-En `http://localhost:18080/ingresar`:
-
-1. Recorra toda la pantalla solo con el teclado (Tab, Shift+Tab, Enter): el foco debe verse siempre y el botón de Google debe poder activarse.
-2. Pulse «Continuar con Google» y, en la pantalla de Google, cancele: debe volver a `/ingresar` con un mensaje comprensible (no un código técnico).
-3. Abra `http://localhost:18080/ingresar?error=failed`: debe mostrar un mensaje claro.
-
-Reporte: qué mensajes vio y si algo no se podía alcanzar con el teclado.
+Reporte: las dos salidas de `qa-inspect-identity.ps1` y qué vio en pantalla.
 
 ## Limpieza
 

@@ -121,13 +121,16 @@ public sealed class ErrorContractTests : IClassFixture<IdentityApiFactory>
     [RequiresPostgresFact]
     public async Task E03_two_simultaneous_registrations_of_the_same_email_end_in_one_success_and_one_clean_409()
     {
-        using var admin = NewClient(_factory);
-        await LoginAsync(admin, AdminEmail, AdminPassword);
+        // Dos sesiones distintas: con un solo cliente ambas peticiones renovarían a la vez la cookie CSRF compartida.
+        using var adminA = NewClient(_factory);
+        using var adminB = NewClient(_factory);
+        await LoginAsync(adminA, AdminEmail, AdminPassword);
+        await LoginAsync(adminB, AdminEmail, AdminPassword);
         var payload = ValidNewUser();
 
         var responses = await Task.WhenAll(
-            SendAsync(admin, HttpMethod.Post, "/api/admin/users/", payload),
-            SendAsync(admin, HttpMethod.Post, "/api/admin/users/", payload));
+            SendAsync(adminA, HttpMethod.Post, "/api/admin/users/", payload),
+            SendAsync(adminB, HttpMethod.Post, "/api/admin/users/", payload));
         try
         {
             var statuses = responses.Select(response => response.StatusCode).ToArray();

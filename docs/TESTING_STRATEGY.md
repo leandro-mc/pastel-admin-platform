@@ -21,6 +21,16 @@ La suite debe reducir riesgos de comportamiento, seguridad e integración, no co
 
 En el desarrollo normal de cada subapp, incluye o actualiza pruebas enfocadas en la misma unidad de trabajo: camino válido, denegación/entrada inválida y los casos límite con riesgo real. No escribas pruebas que solo repitan detalles internos ni fuerces una prueba por cada regla CSS. Para defectos críticos/altos, añade una prueba de regresión automatizada cuando sea posible. Si la responsabilidad o una zona protegida impide al agente actual escribir la prueba, deja explícito quién la debe completar y no presentes el caso como validado. No hay un porcentaje universal de cobertura; la ficha del módulo define los comportamientos de negocio que deben protegerse.
 
+### Política de pruebas esenciales (decisión del propietario, 2026-10-24)
+
+Más pruebas no significan más calidad: cada prueba cuesta tiempo de ejecución y de mantenimiento. Desde esta fecha se escriben **solo las pruebas fundamentales**.
+
+- **Es esencial** una prueba que protege un riesgo real y concreto: autorización y jerarquía de privilegios, integridad de datos y concurrencia en flujos críticos, ciclo de vida de la sesión, contrato de errores, ausencia de secretos en logs, y las comprobaciones de build, formato y auditoría de dependencias.
+- **No es esencial**, y se difiere: matrices exhaustivas de permutaciones, comprobaciones cosméticas o de contenido, una prueba por cada caso del plan, verificaciones que repiten lo que ya cubre otra prueba, y los recorridos E2E o visuales completos de pantallas que no cambiaron.
+- **Antes de escribir una prueba nueva** debe poder responderse: ¿qué defecto concreto detectaría?, ¿por qué no lo cubre ya una prueba existente? Si no hay respuesta, no se escribe.
+- **Lo diferido** no se descarta: se lista en el informe de estado (`docs/testing/reports/`) con su motivo, para que la siguiente planificación de pruebas decida cuáles se retoman.
+- Un defecto hallado por una prueba esencial se corrige en el código y la prueba se conserva; las pruebas que resulten redundantes se eliminan en lugar de acumularse.
+
 ## 2. Tipos de agente
 
 | Tipo | Hace | No hace | Zona de escritura |
