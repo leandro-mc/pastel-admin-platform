@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="es-CR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow,noarchive">
+<meta name="color-scheme" content="light dark">
+<title>Marta Solís Araya · QA Engineer y desarrolladora fullstack</title>
+<meta name="description" content="Perfil profesional de ejemplo (persona ficticia): 5 años automatizando pruebas de APIs y web.">
+<!-- Fuentes solo para ver el diseño; en producción van autoalojadas (CSP). Hay respaldo del sistema. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#ficha">Saltar al contenido</a>
+<div class="wrap">
+  <aside class="rail" aria-label="Navegación de la página">
+    <div class="fps" id="fp-small" aria-hidden="true"></div>
+    <nav>
+      <a href="#ficha">Ficha</a><a href="#resaltador">Resaltador</a><a href="#trayectoria">Trayectoria</a><a href="#evidencia">Evidencia</a><a href="#herramientas">Herramientas</a><a href="#formacion">Formación</a><a href="#contacto">Contacto</a>
+    </nav>
+    <button class="ghost" id="theme" type="button" aria-label="Cambiar tema">Tema: auto</button>
+  </aside>
+
+  <main id="main">
+    <section id="ficha" aria-labelledby="nombre">
+      <div class="top">
+        <div>
+          <p class="note">Perfil de ejemplo · persona ficticia</p>
+          <h1 class="name" id="nombre">Marta Solís Araya</h1>
+          <p class="lead">QA Engineer y desarrolladora fullstack. Automatizo pruebas para que los fallos se encuentren antes que los usuarios.</p>
+        </div>
+        <figure class="fp" aria-label="Huella generativa de este perfil"><div id="fp" aria-hidden="true"></div><figcaption id="fpcap"></figcaption></figure>
+      </div>
+      <dl class="fact">
+        <dt>Ahora</dt><dd>QA Automation Engineer · Empresa Ejemplo S.A. · desde mar 2022</dd>
+        <dt>Antes</dt><dd>Desarrolladora Fullstack · Estudio Demo · 2020–2022</dd>
+        <dt>Experiencia</dt><dd>5 años</dd>
+        <dt>Dónde</dt><dd>Heredia, Costa Rica · híbrido o remoto</dd>
+        <dt>Disponible</dt><dd>desde diciembre de 2026</dd>
+      </dl>
+      <p class="actions"><a class="btn" href="../cv-spec/samples/mid-qa-fullstack.pdf" download>Descargar CV (PDF, 1 página)</a><a class="btn alt" href="#contacto">Ver contacto</a></p>
+    </section>
+
+    <section id="resaltador" aria-labelledby="h-res">
+      <h2 id="h-res">¿Encaja con su oferta?</h2>
+      <p>Pegue las palabras clave de su oferta, separadas por coma. La página marca dónde hay evidencia y dice con honestidad lo que no la tiene. Todo se calcula en su navegador; no se envía nada.</p>
+      <label class="sr" for="kw">Palabras clave</label>
+      <input id="kw" type="text" autocomplete="off" placeholder="Playwright, CI/CD, API, k6, Kubernetes">
+      <p><button class="ghost" id="ex" type="button">Usar un ejemplo</button> <button class="ghost" id="cl" type="button">Limpiar</button></p>
+      <p id="sum" class="sum" role="status" aria-live="polite"></p>
+      <ul id="hlres" class="hlres"></ul>
+    </section>
+
+    <section id="trayectoria" aria-labelledby="h-tr">
+      <h2 id="h-tr">Trayectoria</h2>
+      <div class="tl">
+        <article class="job">
+          <h3><span class="yr">2022 – hoy</span> QA Automation Engineer, Empresa Ejemplo S.A.</h3>
+          <ul class="ledger" data-hl>
+            <li><b class="fig">140</b><span>pruebas end-to-end automatizadas con Playwright; la regresión manual bajó de 2 días a 3 horas.</span></li>
+            <li><b class="fig">−35 %</b><span>fallos por despliegue en seis meses, al integrar las pruebas a GitHub Actions.</span></li>
+            <li><b class="fig">12</b><span>endpoints críticos con pruebas de carga en k6 antes del lanzamiento de la versión 3.</span></li>
+          </ul>
+        </article>
+        <article class="job">
+          <h3><span class="yr">2020 – 2022</span> Desarrolladora Fullstack, Estudio Demo</h3>
+          <ul class="ledger" data-hl>
+            <li><b class="fig">71 %</b><span>de cobertura en pruebas unitarias y de integración (antes 38 %).</span></li>
+            <li><b class="fig">8</b><span>clientes usan el módulo de reservas que construí en C# y React.</span></li>
+          </ul>
+        </article>
+      </div>
+    </section>
+
+    <section id="evidencia" aria-labelledby="h-ev">
+      <h2 id="h-ev">Evidencia</h2>
+      <article class="proj" data-hl>
+        <h3>Bitácora de calidad</h3>
+        <p class="meta">TypeScript · Playwright · GitHub Actions · github.com/marta-ejemplo/bitacora</p>
+        <p><b class="fig">120</b> estrellas. Panel de código abierto que agrupa los fallos de pruebas por causa raíz.</p>
+      </article>
+    </section>
+
+    <section id="herramientas" aria-labelledby="h-he">
+      <h2 id="h-he">Herramientas, con dónde las usé</h2>
+      <p class="mut">Sin barras de nivel: la evidencia está arriba. Toque una para resaltarla.</p>
+      <dl class="tools" data-hl>
+        <dt>En uso actual</dt><dd><button class="chip" data-s="Playwright">Playwright</button><button class="chip" data-s="GitHub Actions">GitHub Actions</button><button class="chip" data-s="k6">k6</button><button class="chip" data-s="TypeScript">TypeScript</button><button class="chip" data-s="Postman">Postman</button></dd>
+        <dt>Últimos 3 años</dt><dd><button class="chip" data-s="C#">C#</button><button class="chip" data-s="React">React</button><button class="chip" data-s="Cypress">Cypress</button><button class="chip" data-s="PostgreSQL">PostgreSQL</button></dd>
+        <dt>Antes</dt><dd><button class="chip" data-s="Python">Python</button><button class="chip" data-s="Docker">Docker</button></dd>
+      </dl>
+    </section>
+
+    <section id="formacion" aria-labelledby="h-fo">
+      <h2 id="h-fo">Formación</h2>
+      <p data-hl><b>Bachillerato en Ingeniería Informática</b>, Universidad Ejemplo · 2016–2020<br>ISTQB Foundation Level (2023)<br>Español nativo · Inglés B2 (lectura técnica avanzada)</p>
+    </section>
+
+    <section id="contacto" aria-labelledby="h-co">
+      <h2 id="h-co">Contacto</h2>
+      <p>El propietario decide qué se muestra. Aquí está activado el correo.</p>
+      <p><button class="btn" id="reveal" type="button" aria-expanded="false">Mostrar correo</button> <span id="mail" hidden>marta.ejemplo@correo.test</span></p>
+      <p class="mut">Responde en un máximo de 2 días hábiles.</p>
+    </section>
+
+    <footer>
+      <p>Publicado el 23 de octubre de 2026 · enlace privado, no indexable · sin cookies ni rastreadores. <button class="ghost" id="prn" type="button">Imprimir</button></p>
+    </footer>
+  </main>
+</div>
+<script src="app.js"></script>
+</body>
+</html>
