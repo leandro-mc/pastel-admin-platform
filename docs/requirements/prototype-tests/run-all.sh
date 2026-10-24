@@ -12,5 +12,6 @@ run "Cosecha · mercado"       node smoke.js $R/cosecha/prototype-mercado   t-me
 run "Huella · perfil público" node smoke.js $R/huella/prototype-perfil     t-perfil.js
 run "Huella · estudio de CV"  node smoke.js $R/huella/prototype-estudio    t-estudio.js
 run "Ágora"                   node smoke.js $R/agora/prototype             t-agora.js
+run "Contraste WCAG de las paletas (66 pares)" python3 contrast.py
 echo; [ $fail -eq 0 ] && echo "TODO EN VERDE" || echo "HAY FALLOS"
 exit $fail

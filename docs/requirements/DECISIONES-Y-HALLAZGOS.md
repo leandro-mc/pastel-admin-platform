@@ -130,6 +130,8 @@
 ## 8. Limitaciones y cosas no verificadas (honestidad)
 - **Repositorio:** el nombre indicado (`pastel-workspace`) no existe con ese nombre para el token; la rama `refactor/modular-foundation` está en **`leandro-mc/pastel-admin-platform`**, y se trabajó allí.
 - **No se escribió en ninguna rama existente.** Todo está en `research/requirements-and-prototypes`.
+- **Sincronización con la rama base:** el análisis partió de `a8c1c7d`. Mientras se trabajaba, `refactor/modular-foundation` avanzó (`3d3ca6e`, otra sesión: pruebas de QA y una aclaración de producto del propietario del 2026-10-23: *Cosecha la concede el Owner/Superuser; Huella es exclusiva del Owner; Ágora es obligatoria salvo decisión del Owner*). Es **coherente con lo propuesto aquí** (roles de Cosecha concedidos solo por el Owner; Huella solo Owner), por lo que no cambia ninguna conclusión. La rama de este levantamiento solo agrega archivos nuevos bajo `docs/requirements/`, sin conflictos posibles; puede integrarse por *rebase* o *merge*.
+- **Contraste:** las paletas de los prototipos se midieron contra WCAG 2.x (66 pares, claro y oscuro, todos ≥ 4,5:1) con `prototype-tests/contrast.py`. Al ampliar la lista aparecieron y se corrigieron 3 defectos reales. El script solo conoce los pares listados: el CSS definitivo debe repetir la medición.
 - **Admisibilidad** de rambután costarricense por país y obligaciones fiscales (factura electrónica), de datos personales y editoriales **no se verificaron**; quedan como "verificar".
 - **Cifras de poscosecha** vienen de estudios de otros cultivares/regiones: calibrar con un técnico local.
 - **ATS reales** (Workday, Greenhouse, etc.) **no se probaron**; sí se verificó la capa de texto del PDF con `pdftotext` y fuentes con ToUnicode.

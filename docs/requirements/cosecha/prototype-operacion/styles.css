@@ -28,7 +28,7 @@ svg.i{width:1.05em;height:1.05em;fill:none;stroke:currentColor;stroke-width:2;st
 label.f{display:grid;gap:.2rem;font-size:.8rem;font-weight:700}input[type=number],input[type=time],input[type=text]{width:100%;border:2px solid var(--line);border-radius:var(--r);padding:.55rem .7rem;background:var(--s);min-height:48px}
 input.huge{font-size:2.2rem;font-weight:800;text-align:center;font-variant-numeric:tabular-nums}
 .sum{position:sticky;bottom:4.2rem;background:var(--ink);color:var(--bg);border-radius:var(--r);padding:.7rem 1rem;margin-top:1rem;display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-weight:700}
-.sum.bad{background:var(--bad);color:#fff}
+.sum.bad{background:var(--bad-bg);color:var(--bad);border:2px solid var(--bad)}
 .pc{display:grid;grid-template-columns:1fr auto;gap:.3rem .8rem}.pc .kg{font-size:1.7rem;font-weight:800;text-align:right;font-variant-numeric:tabular-nums}.pc.off{opacity:.55}
 .chips{display:flex;flex-wrap:wrap;gap:.4rem}.chips button{border:2px solid var(--line);background:var(--s);border-radius:99px;padding:.35rem .8rem;font-weight:600}.chips button[aria-pressed=true]{border-color:var(--go);background:var(--ok-bg);color:var(--go)}
 #sheet{position:fixed;inset:auto 0 0 0;background:var(--s);border-top:2px solid var(--ink);padding:1rem;z-index:9;max-height:80vh;overflow:auto;box-shadow:0 -8px 30px #0005}

@@ -26,6 +26,7 @@ Son HTML/CSS/JS sin compilar: doble clic en `index.html` (o `python3 -m http.ser
 | Prueba de estrés al máximo de todos los límites | idem | 6/6 caben (1 · 2 · 2 páginas) |
 | Reparto de Cosecha contra los casos 1–5 del plan de pruebas del MVP | `cosecha/prototype-operacion/allocation.test.js` | 7/7 (incluye 500 casos aleatorios) |
 | Interfaz y lógica de los 5 prototipos (jsdom) | [`prototype-tests/`](prototype-tests/README.md) | 115/115 |
+| Contraste WCAG de las paletas (claro y oscuro) | [`prototype-tests/contrast.py`](prototype-tests/contrast.py) | 66/66 pares ≥ 4,5:1 (3 defectos reales corregidos) |
 
 ## Qué NO está hecho (a propósito)
 No se tocó el código de la aplicación ni la base de datos; no hay backend, IA real, envío de correos ni WhatsApp. Esto es la **especificación y la validación visual/funcional** previas a implementar, que requerirá CCR para lo que toque zonas protegidas (Docker/CI, BuildingBlocks, CSP).
