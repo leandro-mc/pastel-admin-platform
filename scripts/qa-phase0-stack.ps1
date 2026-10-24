@@ -3,7 +3,8 @@ param(
     [int]$WebPort = 18080,
     [int]$PostgresPort = 15435,
     [switch]$ModuleIsolation,
-    [switch]$KeepRunning
+    [switch]$KeepRunning,
+    [switch]$SkipFaultInjection
 )
 
 Set-StrictMode -Version Latest
@@ -83,6 +84,36 @@ function Wait-Status {
     return $false
 }
 
+# nginx NO publica /health/live ni /health/ready (esas rutas caen en el index.html de la SPA y devuelven 200),
+# por eso la salud real del API se consulta dentro de su contenedor, igual que el healthcheck de Compose.
+function Get-ApiHealth {
+    param([string]$Path)
+    $previousPreference = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        $text = (& docker compose -p $Project @composeFiles exec -T api curl --silent --max-time 10 --output /dev/null --write-out "%{http_code}" "http://127.0.0.1:8080$Path" 2>$null) -join ""
+    }
+    finally {
+        $ErrorActionPreference = $previousPreference
+    }
+    $code = 0
+    [void][int]::TryParse("$text".Trim(), [ref]$code)
+    return $code
+}
+
+function Wait-ApiHealth {
+    param([string]$Path, [int]$Expected, [int]$TimeoutSeconds)
+    $deadline = (Get-Date).AddSeconds($TimeoutSeconds)
+    $last = 0
+    do {
+        $last = Get-ApiHealth $Path
+        if ($last -eq $Expected) { return $true }
+        Start-Sleep -Seconds 2
+    } while ((Get-Date) -lt $deadline)
+    Write-Host "Ultimo estado observado en $Path (API): $last" -ForegroundColor Yellow
+    return $false
+}
+
 function Get-DuplicateHeaders {
     param([string[]]$Lines)
     $names = @($Lines | Where-Object { $_ -match '^[A-Za-z0-9-]+:' } | ForEach-Object { ($_ -split ':', 2)[0].ToLowerInvariant() })
@@ -139,9 +170,9 @@ networks:
     if ($LASTEXITCODE -ne 0) { throw "docker compose up fallo. Revise los mensajes anteriores." }
 
     # ---------------- F0-001: arranque desde base vacia ----------------
-    $live = Invoke-Curl @("$BaseUrl/health/live")
-    $ready = Invoke-Curl @("$BaseUrl/health/ready")
-    Add-Check "F0-001" "health/live y health/ready" (($live.Status -eq 200) -and ($ready.Status -eq 200)) "live=$($live.Status) ready=$($ready.Status)"
+    $liveStatus = Get-ApiHealth "/health/live"
+    $readyStatus = Get-ApiHealth "/health/ready"
+    Add-Check "F0-001" "health/live y health/ready del API" (($liveStatus -eq 200) -and ($readyStatus -eq 200)) "live=$liveStatus ready=$readyStatus"
 
     $sql = "select table_schema || ' ' || count(*) from information_schema.tables where table_schema in ('identity','brisa','balance','agora','cosecha','huella') group by table_schema order by 1;"
     $schemaLines = @($sql | & docker compose -p $Project @composeFiles exec -T db sh -c 'psql -U $POSTGRES_USER -d $POSTGRES_DB -tA')
@@ -167,22 +198,26 @@ networks:
     }
 
     # ---------------- F0-002: detener PostgreSQL con la API arriba ----------------
-    Write-Host "== Deteniendo PostgreSQL (la API sigue arriba) ==" -ForegroundColor Cyan
-    & docker compose -p $Project @composeFiles stop db | Out-Null
-    $notReady = Wait-Status "$BaseUrl/health/ready" 503 60
-    $down = Invoke-Login "test.admin@pastel.local" "Local-Only-Test-Admin-2026!"
-    $isProblem = (($down.Headers -join "`n") -match "(?i)application/problem\+json")
-    $hasTrace = ($down.Body -match "traceId")
-    Add-Check "F0-002" "health/ready falla sin base de datos" $notReady "esperado 503"
-    Add-Check "F0-002" "peticion con la base caida devuelve 503 problem+json con traceId" (($down.Status -eq 503) -and $isProblem -and $hasTrace) "status=$($down.Status) problem+json=$isProblem traceId=$hasTrace"
-    $liveDown = Invoke-Curl @("$BaseUrl/health/live")
-    Add-Check "F0-002" "health/live sigue en 200 sin base de datos" ($liveDown.Status -eq 200) "status=$($liveDown.Status)"
+    # Se omite con -SkipFaultInjection (p. ej. para las pruebas manuales de Google: tras reiniciar la base, la primera
+    # peticion que reutiliza una conexion vieja del pool puede responder 503).
+    if (-not $SkipFaultInjection) {
+        Write-Host "== Deteniendo PostgreSQL (la API sigue arriba) ==" -ForegroundColor Cyan
+        & docker compose -p $Project @composeFiles stop db | Out-Null
+        $notReady = Wait-ApiHealth "/health/ready" 503 60
+        $down = Invoke-Login "test.admin@pastel.local" "Local-Only-Test-Admin-2026!"
+        $isProblem = (($down.Headers -join "`n") -match "(?i)application/problem\+json")
+        $hasTrace = ($down.Body -match "traceId")
+        Add-Check "F0-002" "health/ready del API falla sin base de datos" $notReady "esperado 503"
+        Add-Check "F0-002" "peticion con la base caida devuelve 503 problem+json con traceId" (($down.Status -eq 503) -and $isProblem -and $hasTrace) "status=$($down.Status) problem+json=$isProblem traceId=$hasTrace"
+        $liveDown = Get-ApiHealth "/health/live"
+        Add-Check "F0-002" "health/live del API sigue en 200 sin base de datos" ($liveDown -eq 200) "status=$liveDown"
 
-    Write-Host "== Reiniciando PostgreSQL ==" -ForegroundColor Cyan
-    & docker compose -p $Project @composeFiles start db | Out-Null
-    $recovered = Wait-Status "$BaseUrl/health/ready" 200 120
-    $after = Invoke-Login "test.admin@pastel.local" "Local-Only-Test-Admin-2026!"
-    Add-Check "F0-002" "la API se recupera al volver la base" ($recovered -and ($after.Status -eq 200)) "ready=$recovered login=$($after.Status)"
+        Write-Host "== Reiniciando PostgreSQL ==" -ForegroundColor Cyan
+        & docker compose -p $Project @composeFiles start db | Out-Null
+        $recovered = Wait-ApiHealth "/health/ready" 200 120
+        $after = Invoke-Login "test.admin@pastel.local" "Local-Only-Test-Admin-2026!"
+        Add-Check "F0-002" "la API se recupera al volver la base" ($recovered -and ($after.Status -eq 200)) "ready=$recovered login=$($after.Status)"
+    }
 
     # ---------------- F0-003: aislamiento por modulo (opcional, lento) ----------------
     if ($ModuleIsolation) {

@@ -30,6 +30,15 @@ server {
 
     include /etc/nginx/snippets/security-headers.conf;
 
+    # El API ya agrega estas cabeceras; se descartan las del upstream para que cada una salga una sola vez
+    # (la copia vigente es la de security-headers.conf). Aplica a todos los locations que usan proxy_pass.
+    proxy_hide_header X-Content-Type-Options;
+    proxy_hide_header X-Frame-Options;
+    proxy_hide_header Referrer-Policy;
+    proxy_hide_header Permissions-Policy;
+    proxy_hide_header Cross-Origin-Opener-Policy;
+    proxy_hide_header Content-Security-Policy;
+
     location = /health/web {
         access_log off;
         default_type text/plain;

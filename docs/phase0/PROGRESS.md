@@ -719,3 +719,19 @@ git status --short                     # debe estar vacío o solo con cambios re
 - **Guía manual de Google:** `docs/testing/GOOGLE-MANUAL-TEST.md` (F0-G01, G02 y G12).
 - **Recuento de los 79 obligatorios:** aprobados 31, aprobados parciales 6, por verificar 18, pendientes 23, bloqueados 1 (F0-G01). Fase 0 sigue abierta.
 
+
+### Build/QA — tanda 6 (2026-10-24): resultados del propietario, defectos corregidos y política de pruebas esenciales
+
+**Estado:** lo corregido está POR VERIFICAR hasta repetir `test-database.ps1` y `qa-phase0-stack.ps1`.
+
+- **Evidencia del propietario (HEAD `3d3ca6e`):** `test-backend` 51/51; `test-database` 44/46 (cayeron E03 y E04); `test-frontend` completo; `qa-phase0-stack.ps1` y `-ModuleIsolation` (F0-003 aprobado: las 10 imágenes por módulo se construyen); prueba manual de Google fase 1 correcta. Las pruebas de Google, sesiones, errores y logs pasaron a la primera salvo esas dos.
+- **Defectos reales corregidos:**
+  - F0-E04: dos ediciones simultáneas de los permisos de un rol se fundían en la unión de ambas. `SetRolePermissionsHandler` ahora corre en transacción serializable con reintento.
+  - F0-S214: cinco cabeceras de seguridad salían duplicadas en `/api/*` (las agregaban el API y nginx). `proxy_hide_header` en `deploy/nginx/default.conf.template`; verificado con nginx real contra un API simulado.
+- **Defectos de mis pruebas, corregidos:** E03 compartía un cliente HTTP (carrera sobre la cookie CSRF) y el script consultaba `/health/*` por nginx, que devuelve el `index.html` de la SPA (los 200 eran vacuos); ahora consulta el API dentro de su contenedor. Se añadió `-SkipFaultInjection` al script.
+- **Hallazgo abierto (F0-G02):** con la cuenta real de Google el propietario entró como usuario básico y no como administrador, aunque la variante automatizada pasa. Mi primera hipótesis (token sin roles) era errónea: el token no lleva roles. Nuevo `scripts/qa-inspect-identity.ps1` y guía actualizada para diagnosticarlo.
+- **503 inicial en Google:** ocurrió tras reiniciar la base en la misma corrida (conexiones viejas del pool). Mitigación diferida: reintento de EF Core.
+- **Política de pruebas esenciales (decisión del propietario):** solo pruebas fundamentales; lo demás se difiere y se documenta. Ver `AGENTS.md` y `docs/TESTING_STRATEGY.md`. Los casos no esenciales pasaron a **DIFERIDO** en el informe de estado.
+- **Recuento de los 79 obligatorios:** aprobados 48, parciales 7, por verificar 4, diferidos 20, pendientes 0, bloqueados 0.
+- **Velocidad:** los scripts de prueba tardan ~90 % menos (copia con exclusiones y cachés).
+
