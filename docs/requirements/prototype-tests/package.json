@@ -1,0 +1,7 @@
+{
+  "name": "pastel-prototype-tests",
+  "private": true,
+  "description": "Pruebas de humo de los prototipos de Ágora, Huella y Cosecha (DOM real con jsdom, sin navegador).",
+  "scripts": { "test": "bash run-all.sh" },
+  "devDependencies": { "jsdom": "^26.0.0" }
+}

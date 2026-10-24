@@ -325,7 +325,7 @@ El **logro** es la unidad atómica; todo lo demás se arma a partir de él.
 | `CvVersion`, `Application` | Ver §7.7–7.8 |
 | `AiConnection` | `provider`, `encryptedKey`, `tierMap`, `priority`, `piiShield` |
 
-Longitudes máximas de entrada en el banco: `rawText` ≤ 600; `shortText` ≤ 170; `longText` ≤ 320 (se ofrecen *dos variantes* por logro para que la escalera de ajuste pueda elegir sin llamar a la IA).
+Longitudes máximas en el banco: `rawText` ≤ 600 (palabras del propietario, solo para contexto de la IA); **`shortText` ≤ 110** (1 línea) y **`longText` ≤ 170** (2 líneas; coincide con el tope duro de viñeta de Junior). Las dos son líneas *listas para el CV*: la escalera de ajuste puede alternar entre ellas sin llamar a la IA (el prototipo del Estudio lo demuestra).
 
 ---
 
