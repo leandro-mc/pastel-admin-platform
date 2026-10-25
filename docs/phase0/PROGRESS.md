@@ -735,3 +735,13 @@ git status --short                     # debe estar vacío o solo con cambios re
 - **Recuento de los 79 obligatorios:** aprobados 48, parciales 7, por verificar 4, diferidos 20, pendientes 0, bloqueados 0.
 - **Velocidad:** los scripts de prueba tardan ~90 % menos (copia con exclusiones y cachés).
 
+
+### Build/QA — cierre de la etapa de verificación (2026-10-25)
+
+**Estado: etapa cerrada con diferidos.** Informe y entrega en `docs/testing/reports/FASE-0-ESTADO-REQUISITOS-2026-10-21.md` (sección «Entrega y cierre»).
+
+- **Evidencia del propietario (HEAD `e3d91fe`):** `test-database` **46/46** (E03 y E04 ya pasan), `qa-phase0-stack.ps1` **10/10** (F0-001, F0-002, F0-006 y F0-S214 sin duplicados), `-ModuleIsolation` (F0-003) y las dos pruebas manuales de Google.
+- **F0-G02 resuelto:** no era un defecto; el correo de la cuenta de prueba se había transcrito como `Imc…` (i mayúscula) y es `lmc…` (ele). Con el correo correcto la cuenta de arranque se vinculó, entró como administrador, quedó con la contraseña invalidada y auditada. Corregido en los documentos.
+- **Recuento de los 79 obligatorios:** aprobados 55, aprobados parciales 4, diferidos 20, sin pendientes ni bloqueados. Los diferidos y parciales son el backlog de la siguiente planificación de pruebas (política de pruebas esenciales).
+- **Confirmaciones:** sin `.csn`, sin secretos, `dev` y `main` intactas y sin PR.
+
