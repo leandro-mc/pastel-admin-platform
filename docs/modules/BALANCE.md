@@ -2,10 +2,10 @@
 
 > **Nombre:** el proyecto de origen se llama **SaldApp**. En Pastel se llama **Balance**: ese es el nombre en código, rutas, interfaz y documentación. "SaldApp" solo aparece en documentos de migración para referirse al sistema anterior.
 
-Color `data-module="balance"` (verde azulado) · icono `Scale` · esquema `balance` · ruta `/balance` · API `/api/balance`.
+Identidad visual por definir (investigación en curso); icono `Scale` provisional · esquema `balance` · ruta `/balance` · API `/api/balance`.
 
 ## 1. Situación
-Balance registra y liquida **gastos compartidos** entre personas o grupos. Existe como proyecto individual en **otro stack tecnológico**. Se migra a Pastel como módulo **conservando datos y reglas**. El inventario del proyecto actual (`docs/migration/balance-inventory.md`, lo produce un agente de investigación) es la fuente de verdad funcional.
+Balance registra y liquida **gastos compartidos** entre personas o grupos. Existe como proyecto individual en **otro stack tecnológico**. Se migra a Pastel como módulo **conservando datos y reglas**. El inventario del proyecto actual (`docs/migration/balance-inventory.md` (aún no existe: lo producirá la investigación en curso), lo produce un agente de investigación) es la fuente de verdad funcional.
 
 ## 2. Roles y permisos
 Inicial: `balance.access` y `balance.groups.manage` (sobre los grupos de los que la persona forma parte). Rol sugerido `Balance — Usuario`. Los roles **dentro de un grupo** (por ejemplo, administrador del grupo y miembro) son datos del dominio de Balance, no roles de plataforma; el inventario los describe. Reglas: una persona solo ve los grupos y gastos de los que es miembro (verificación en el servidor).
@@ -20,7 +20,7 @@ Inicial: `balance.access` y `balance.groups.manage` (sobre los grupos de los que
 
 ## 4. Pasos de la migración
 1. Leer el inventario (entidades, reglas de reparto, liquidación, permisos, importación/exportación, integraciones).
-2. Diseñar esquema `balance` y contrato de API; ADR sobre el modelo de participantes.
+2. Diseñar esquema `balance` y contrato de API; registrar en `docs/DECISIONS.md` el modelo de participantes.
 3. Portar el dominio con las pruebas doradas **primero** (sin interfaz).
 4. Backend por slices, luego frontend por flujos críticos.
 5. Herramienta de importación con datos reales de prueba y verificación de totales.
@@ -37,13 +37,13 @@ Pagos reales o integración bancaria, conversión de divisas en vivo, notificaci
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-QA escribe `docs/testing/plans/BALANCE-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. **Casos dorados:** el 100 % de los ≥ 25 casos de `docs/migration/balance-inventory.md` §9 producen exactamente los saldos y liquidaciones del sistema SaldApp; QA los recalcula de forma independiente.
 2. Redondeo: reparto de ₡100,00 entre 3 personas → la suma de las partes es exactamente ₡100,00 y el centavo sobrante se asigna según la regla documentada del sistema anterior.
 3. Dinero: nunca se usa coma flotante; montos con 2 decimales; negativos, cero y valores enormes validados con mensajes claros.
 4. Aislamiento: una persona solo ve los grupos de los que es miembro; IDs de otros grupos → 404; un miembro sin rol de administrador del grupo no puede cambiar la configuración del grupo.
 5. Editar o borrar un gasto recalcula saldos; dos ediciones simultáneas → 409.
-6. Importación desde SaldApp: totales por grupo y saldos por persona **antes y después** coinciden; reimportar no duplica; participantes sin cuenta quedan como invitados según el ADR.
+6. Importación desde SaldApp: totales por grupo y saldos por persona **antes y después** coinciden; reimportar no duplica; participantes sin cuenta quedan como invitados según la decisión registrada.
 7. Auditoría de gastos y liquidaciones con antes/después; errores con `code` y `traceId`.
 8. Flujos críticos (registrar gasto, ver saldos, liquidar) en 360 px, teclado y texto "Muy grande".

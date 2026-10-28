@@ -8,7 +8,7 @@ Obligatorio para Identity, Platform y **todos** los módulos. Lo implementa la F
 3. **Todo error inesperado deja rastro y un código de soporte** (`traceId`) visible para el usuario y buscable en los logs.
 4. **Los logs nunca contienen secretos ni datos personales.** Se registran identificadores, no contenido.
 5. **Registro técnico y auditoría son cosas distintas** (sección 5): no se mezclan.
-6. **Un mismo patrón en todos los módulos.** Si un módulo necesita algo distinto, se solicita un CCR; no se inventa.
+6. **Un mismo patrón en todos los módulos.** Si un módulo necesita algo distinto, se pide autorización del propietario; no se inventa.
 
 ## 2. Errores en el backend
 

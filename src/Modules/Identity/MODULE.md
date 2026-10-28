@@ -28,4 +28,4 @@ Estado: **implementación publicada; Build/QA pendientes**. No se considera vali
 
 ## Pendientes explícitos
 
-Build debe probar las sesiones/refresh concurrentes, roles y escalamiento, CSRF, OAuth con handler falso, migraciones y el sembrador de QA en una base PostgreSQL real. Google real requiere prueba manual del propietario. Confirmar que la opción de seeding no esté activa en ningún entorno compartido. Estas pruebas no se ejecutaron en este checkpoint.
+Validado en PostgreSQL real (46/46): sesiones y refresh concurrentes, jerarquía de privilegios, CSRF, Google con el handler directo, migraciones desde base vacía, errores, logs y sembrador de QA; Google real se verificó a mano. Confirmar siempre que el sembrador de QA (`TESTING_SEED_ENABLED`) no esté activo en ningún entorno compartido. El resto de pruebas diferidas está en `docs/PROGRESS.md`.

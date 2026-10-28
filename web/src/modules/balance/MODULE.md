@@ -2,7 +2,7 @@
 
 Estado: **marcador** (esqueleto generado por `tools/new-module`).
 
-- Código `balance` · ruta `/balance` · icono `Scale` (Lucide) · color por `data-module="balance"` (valores en `web/src/core/design/module-themes.css`).
+- Código `balance` · ruta `/balance` · icono `Scale` (Lucide) · identidad visual por definir (tokens provisionales en `web/src/core/design/module-themes.css`).
 - Acceso en el manifiesto: `permission`; permiso `balance.access`.
 - Backend: `src/Modules/Balance/MODULE.md`. Producto: `docs/modules/BALANCE.md`.
 

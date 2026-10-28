@@ -1,68 +1,55 @@
-# Validación automatizada
+# Pruebas y validación
 
-## Comandos locales
+## 1. Política: solo lo esencial
+Más pruebas no significan más calidad: cada una cuesta tiempo de ejecución y de mantenimiento. Se escriben **solo las fundamentales**.
+- **Es esencial** una prueba que protege un riesgo real y concreto: autorización y jerarquía de privilegios, integridad y concurrencia de datos críticos, ciclo de vida de la sesión, contrato de errores, ausencia de secretos en logs, y las comprobaciones de build, formato y auditoría de dependencias.
+- **No es esencial** (se difiere): matrices exhaustivas, permutaciones, comprobaciones cosméticas o de contenido, una prueba por cada caso de un plan, repeticiones de lo que ya cubre otra prueba, y los recorridos E2E o visuales completos de pantallas que no cambiaron.
+- **Antes de escribir una prueba** responde: ¿qué defecto concreto detectaría? y ¿por qué no lo cubre ya una existente? Sin respuesta, no se escribe. Una prueba redundante se elimina.
+- Un defecto hallado por una prueba esencial se corrige en el código y la prueba se conserva.
+- **Evidencia**: nada se declara aprobado sin ejecución real, con **cero fallos y cero omitidas**. Lo no ejecutado se marca «por verificar». Que el proceso termine no basta si las pruebas no corrieron.
+- Lo diferido no se descarta: queda en el backlog de `docs/PROGRESS.md` para la siguiente planificación de pruebas.
 
-Ejecute desde la raíz con PowerShell y Docker Desktop iniciado:
+## 2. Qué existe hoy
+- **Backend (unitarias y arquitectura):** reglas de dominio, política de contraseñas, `ReturnUrl`, validación de arranque en Producción, evaluador de permisos y reglas de arquitectura entre módulos.
+- **PostgreSQL / integración HTTP** (`tests/Pastel.IntegrationTests`): host, migraciones desde base vacía, salud, CSRF, opciones de autenticación, **jerarquía de privilegios** (escalada, protección de administradores, último administrador, concurrencia), **Google** (vinculación, correo no verificado, cuentas inactivas, registro cerrado, `state`, `redirect_uri`, tokens, logs), **refresco de sesión** (ventana de gracia, reutilización, conflictos de serialización), **contrato de errores** y **logs** (JSON real de Serilog sin secretos, una línea por petición, denegaciones limitadas).
+- **Frontend (Vitest + Testing Library + axe):** cliente de API (un solo refresco ante varios 401), diálogos accesibles, login según opciones y política de contraseña. Hay un smoke de Playwright para `/ingresar` (`npm run test:e2e`).
+- **Guardas estáticas:** fronteras entre módulos (frontend y backend), `check-design`, `tailwind-audit`.
 
-- `.\scripts\test-backend.ps1`: restaura, busca paquetes NuGet vulnerables, verifica formato .NET, compila Release y ejecuta pruebas unitarias. Falla si NuGet informa paquetes vulnerables.
-- `.\scripts\test-frontend.ps1`: instala con `npm ci`, ejecuta `npm audit --audit-level=high`, verifica Prettier y ESLint, compila TypeScript/Vite, ejecuta fronteras de módulos y las guardas estáticas de diseño/Tailwind.
-- `cd web; npm.cmd test`: ejecuta las pruebas de componentes React con Vitest, Testing Library y axe en jsdom. `scripts/test-frontend.ps1` también ejecuta este control después de instalar dependencias.
-- `cd web; npm.cmd run test:e2e`: ejecuta Playwright contra la app ya levantada en `http://127.0.0.1:8080`; cambie el destino con `$env:PASTEL_E2E_BASE_URL` si corresponde. Instale el navegador una vez con `npm.cmd exec -- playwright install chromium`.
-- `.\scripts\test-database.ps1`: inicia solo PostgreSQL y ejecuta las pruebas HTTP que requieren una base real.
-- `.\scripts\test-all.ps1`: ejecuta los tres bloques y presenta el resumen conjunto.
-- `.\scripts\format-frontend.ps1`: aplica Prettier dentro de Docker y copia de vuelta solo los archivos administrados por el formateador. Modifica el working tree; revise el diff después.
+## 3. Comandos (PowerShell, Docker Desktop iniciado)
+| Comando | Qué hace |
+|---|---|
+| `.\scripts\test-backend.ps1` | Restaura, audita NuGet, verifica formato .NET, compila Release y ejecuta pruebas unitarias y de arquitectura. |
+| `.\scripts\test-database.ps1` | Levanta solo PostgreSQL y ejecuta las pruebas HTTP con base real (`pastel_integration_tests`, recreada en cada corrida). |
+| `.\scripts\test-frontend.ps1` | `npm ci`, `npm audit`, Prettier, ESLint, TypeScript/Vite, Vitest + axe, fronteras y guardas de diseño. |
+| `.\scripts\test-all.ps1` | Los tres anteriores con resumen conjunto. |
+| `.\scripts\format-backend.ps1` / `format-frontend.ps1` | Aplican el formato en Docker y copian de vuelta **solo** lo que cambió; revise el diff después. |
+| `.\scripts\qa-phase0-stack.ps1` | Stack Compose aislado (`pastel-fase0-qa`): salud real del API, esquemas migrados, cabeceras sin duplicados, caída y recuperación de la base. `-ModuleIsolation` construye las imágenes por módulo; `-SkipFaultInjection` omite la caída de la base; `-KeepRunning` deja el stack. |
+| `.\scripts\qa-inspect-identity.ps1` | Diagnóstico de solo lectura del stack de QA (cuentas, roles, vínculos de Google y auditoría, sin hashes). |
 
-Los checks se ejecutan en contenedores con copias temporales del repositorio. Los scripts de pruebas montan la copia original en solo lectura y eliminan `.env`, `.git`, `node_modules`, `bin` y `obj` de la copia temporal. `format-frontend.ps1` es la excepción porque debe copiar de vuelta las rutas formateadas. Los resultados TRX quedan fuera del repositorio.
+Los scripts trabajan sobre una copia temporal del repositorio dentro de contenedores (copia sin `.git`, `node_modules`, `bin` ni `obj`), con cachés de NuGet y npm en volúmenes propios (`pastel-nuget-cache`, `pastel-npm-cache`). Los resultados TRX se escriben en una carpeta temporal. La base reservada de pruebas es `pastel_integration_tests`: el script comprueba que no coincide con la de desarrollo, no ejecuta `down -v` y no toca el volumen de desarrollo. Las cadenas de conexión no se imprimen.
 
-## Seguridad de las pruebas PostgreSQL
+**Límite de inicio de sesión:** el limitador de autenticación admite 12 inicios por minuto por IP y TestServer comparte IP; las pruebas de integración reutilizan sesiones por esa razón.
 
-La base reservada para las pruebas de integración es **`pastel_integration_tests`**. Antes de recrearla, el script verifica que no coincide con la base configurada como normal. No levanta la API ni el frontend, no ejecuta `docker compose down -v` y no elimina el volumen de desarrollo. La base reservada se vuelve a recrear en la siguiente ejecución.
+## 4. Formato y hook de pre-commit
+- Instalación, una vez por clon: `.\scripts\install-hooks.ps1` (o `node scripts/install-hooks.mjs`). Requiere Git y Node 20+; para Prettier, `cd web && npm ci`.
+- **En cada commit**, sobre los archivos preparados: corrige lo seguro (BOM, CRLF y nueva línea final en C#, y Prettier en `web/`) cuando el archivo no tiene cambios sin preparar, y **detiene el commit** con instrucciones para espacios finales en C#, archivos `.csn`/`.env`/claves y patrones de secretos (nunca imprime el valor). También valida el mensaje del commit (`docs/GIT_WORKFLOW.md`).
+- No ejecuta `dotnet format`, build ni pruebas (eso es de los scripts) y no hay hook de push. Emergencia: `PASTEL_SKIP_HOOKS=1 git commit …` (lo omitido se detecta después). Desinstalar: `git config --unset core.hooksPath`.
+- **Archivos `.csn`**: aparecieron una vez en un equipo local, su origen nunca se determinó, no existen en el repositorio ni en su historial y no deben versionarse (`.gitignore` los excluye y el hook los bloquea).
+- Pruebas del hook: `node --test scripts/tests/pre-commit.test.mjs scripts/tests/commit-msg.test.mjs`.
+- Los formateadores copian de vuelta solo los archivos con contenido distinto; correr dos veces seguidas debe dar «0 archivos actualizados».
 
-Las cadenas de conexión se pasan al contenedor ejecutor sin imprimirlas. No use datos ni credenciales reales para pruebas automatizadas. Las pruebas de integración deben mostrar cero fallos y cero omisiones; que el proceso de pruebas termine no basta si las pruebas no se ejecutaron.
-
-## Cobertura
-
-- **Backend:** restauración, auditoría de dependencias, formato, build completo y pruebas unitarias.
-- **PostgreSQL/integración HTTP:** host, migraciones, salud, CSRF, opciones de autenticación y autorización de endpoints, más casos nuevos de seguridad.
-- **Frontend:** auditoría de dependencias, formato, lint, TypeScript/Vite, guarda estática de diseño, auditoría visual y metas Tailwind.
-
-Se incorporó el scaffold de pruebas React/Vitest/Testing Library/axe y un smoke E2E de Playwright con axe para `/ingresar`. Todavía está pendiente instalar las dependencias en `web/package.json` y regenerar `package-lock.json` con npm, ejecutar las pruebas y verificar visualmente login/registro, Workspace, Ágora, administración, permisos y cuenta en tema claro/oscuro y escritorio/móvil. Las pruebas estáticas de diseño no reemplazan los recorridos interactivos ni la aprobación visual del propietario.
-
-## Docker Compose
-
-Para comprobar manualmente el stack de desarrollo (sin considerarlo aprobado hasta revisar el resultado):
-
-```powershell
-docker compose config --quiet
-docker compose up -d --build
-docker compose ps
-docker compose logs --tail 150 api web db
-```
-
-La configuración base usa una base PostgreSQL externa. El servicio `db` y su volumen local se definen en `compose.override.yaml`, cargado automáticamente para desarrollo. Para un entorno con PostgreSQL externo, configure `POSTGRES_HOST` y ejecute `docker compose -f compose.yaml ...` sin el override.
-
-## Flujo de CI
-
-El workflow de GitHub Actions es **manual únicamente**. `.github/workflows/ci.yml` declara `workflow_dispatch`, requiere `confirm_validation=true` y no tiene disparadores automáticos de push ni pull request. Después de completar el lote, revisar el diff y ejecutar localmente todas las comprobaciones disponibles, el propietario autoriza por separado el despacho integral desde **Actions → CI → Run workflow**. No se usa CI como bucle de depuración ni como sustituto de un entorno local que no esté disponible.
-
-## Estado de validación
-
-Las ejecuciones correctas registradas en esta bitácora pertenecen a SHA anteriores. Después se modificaron seguridad, shell, Compose, Nginx y los scripts de verificación. **El HEAD actual de `refactor/modular-foundation` debe considerarse sin validar** hasta ejecutar los comandos anteriores y registrar el SHA exacto que se comprobó. No se debe inferir un resultado verde de las ejecuciones históricas ni del hecho de que el workflow esté configurado.
-
-
-## Build aislado por subapp y CodeQL
-
-El workflow manual `.github/workflows/ci.yml` contiene un job `module-isolation` que construye backend y frontend con una sola subapp de negocio por fila; Identity permanece incluido. El workflow opcional `.github/workflows/codeql.yml` analiza C# y JavaScript/TypeScript y solo corre con `confirm_scan=true`. Ambos workflows requieren comprobación manual del propietario y no se ejecutaron con este cambio. El proyecto de pruebas de arquitectura y el resultado de cada build por subconjunto siguen pendientes de Build/QA.
-
-
-## Fixtures de autenticación QA (solo local)
-
-Compose local habilita el sembrador mediante `TESTING_SEED_ENABLED=true`. Las credenciales fijas y sintéticas son:
-
+## 5. Fixtures de QA (solo local, Compose con `TESTING_SEED_ENABLED=true`)
 - Owner/Superuser: `test.owner@pastel.local` / `Local-Only-Test-Owner-2026!`
 - Administrator sin rol Owner: `test.admin@pastel.local` / `Local-Only-Test-Admin-2026!`
 - Member: `test.member@pastel.local` / `Local-Only-Test-Member-2026!`
 
-El sembrador corre al arrancar después del catálogo y Bootstrap. Se permite solo con la opción explícita en `Development`/`Testing`; en `Production` su configuración provoca un fallo deliberado de inicio. Ajuste `TESTING_SEED_ENABLED=false` para todo entorno compartido. El código y las credenciales se publican porque solo sirven para datos locales sintéticos; no son cuentas productivas.
+Son sintéticas y solo funcionan en `Development`/`Testing`: en `Production` configurar el sembrador provoca un fallo deliberado de arranque. Desactívelo (`TESTING_SEED_ENABLED=false`) en todo entorno compartido.
 
-**No validado:** el seeder requiere build y pruebas de integración de Build. Tampoco se instalaron las dependencias de pruebas frontend de CCR-006 porque el entorno no pudo acceder al registry de npm.
+## 6. Verificación manual de Google
+Requiere cuenta real; la hace el propietario. Preparar OAuth: `docs/OPERATIONS.md`. Para probar sin el factor de reiniciar la base: `.\scripts\qa-phase0-stack.ps1 -KeepRunning -SkipFaultInjection`, abrir `http://localhost:18080/ingresar` (registrar `http://localhost:18080/api/auth/google/callback` en Google) y pulsar «Continuar con Google»:
+1. **Cuenta nueva:** entra como `Member`, sin contraseña.
+2. **Vincular al administrador de arranque:** con `$env:BOOTSTRAP_ADMIN_EMAIL` igual al correo de Google, entra a la cuenta de arranque (Administrator y Owner/Superuser) y su contraseña de arranque queda invalidada. Diagnóstico con `qa-inspect-identity.ps1`; compare los correos carácter por carácter.
+Limpieza: el script imprime el comando `docker compose -p pastel-fase0-qa … down -v` (solo afecta al proyecto de QA).
+
+## 7. CI
+Resumen: nunca por commit; solo al aprobar un PR hacia `dev` y solo lo básico (backend + frontend), salvo `ci:completo` o ejecución manual con alcance «completo». Detalle en `docs/GIT_WORKFLOW.md` §3.

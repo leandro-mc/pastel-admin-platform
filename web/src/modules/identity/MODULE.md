@@ -19,6 +19,6 @@ Estado: **implementación publicada; validación de Build/QA pendiente**.
 
 - Workspace general administra solo alcance de plataforma; no gestiona membresías de aplicaciones ni concede permisos reservados a Owner.
 - No existe aún la gestión propia de membresías de Cosecha; Huella no tiene editor/endpoint real del perfil público; Ágora no dispone todavía del feed de contenido real.
-- El repositorio aún no incorpora Vitest/Testing Library/axe/Playwright. La CCR-006 está aprobada pero la instalación y actualización del lockfile no se pudieron hacer porque el entorno de autoría no tiene acceso al registry de npm.
+- Pruebas de frontend: Vitest, Testing Library y axe (cliente API, diálogos, login) y un smoke de Playwright; los recorridos completos en navegador están diferidos (`docs/PROGRESS.md`).
 
-Build/QA debe probar la navegación y las pantallas con usuarios Owner, Administrator y Member en navegador, ambas apariencias, móvil/escritorio, accesibilidad y permisos. No se ejecutó esa validación.
+La validación completa en navegador con usuarios Owner, Administrator y Member, ambas apariencias, móvil y escritorio, queda diferida (`docs/PROGRESS.md`).

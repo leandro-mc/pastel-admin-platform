@@ -6,7 +6,7 @@
       Módulos incluidos en la compilación. "*" (por defecto) incluye todos los que existan en src/Modules.
       Lista separada por ";" o ",", con el nombre de carpeta respetando su capitalización:
         dotnet build -p:PastelModules=Brisa;Balance
-      Identity siempre se incluye. Ver docs/SPLIT_GUIDE.md.
+      Identity siempre se incluye. Ver docs/OPERATIONS.md.
     -->
     <PastelModules Condition="'$(PastelModules)' == ''">*</PastelModules>
     <PastelModulesList>$([System.String]::Copy('$(PastelModules)').Replace(',', ';'))</PastelModulesList>

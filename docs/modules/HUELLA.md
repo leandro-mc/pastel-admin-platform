@@ -1,6 +1,6 @@
 # Huella — ficha de producto y MVP
 
-Color `data-module="huella"` (terracota) · icono `Footprints` · esquema `huella` · ruta `/huella` · API `/api/huella`.
+Identidad visual por definir (investigación en curso); icono `Footprints` provisional · esquema `huella` · ruta `/huella` · API `/api/huella`.
 
 ## 1. Propósito
 Perfil profesional web **del Owner/Superuser de Pastel**, editable en privado y publicable mediante un único enlace para compartir con reclutadores. No existe un perfil de Huella por usuario ni una forma de descubrirlo desde el catálogo, la búsqueda o un directorio. Cualquier persona con el enlace vigente puede verlo sin registrarse.
@@ -34,7 +34,7 @@ Permisos: `huella.access` (entrar al panel), `huella.profile.manage` (editar y p
 ## 5. Reglas y detalles
 - **Privacidad:** control de qué se muestra; correo y teléfono ocultos salvo elección explícita; validar enlaces (solo `https`, sin credenciales en la URL); no exponer datos internos.
 - **CV en PDF (MVP):** hoja de estilos de impresión + botón "Guardar como PDF" (impresión del navegador). Un PDF generado en el servidor queda para una etapa posterior.
-- **Vista previa al compartir (importante para reclutadores):** las plataformas de mensajería leen metadatos sin ejecutar JavaScript. El agente debe proponer y documentar en un ADR el método más simple para entregar `title`, `description` y `og:*` del perfil publicado en `/huella/p/:token` (p. ej. el servidor devuelve el HTML de la aplicación con metadatos inyectados), sin añadir un servidor Node. Si requiere cambios en `nginx` o en zonas protegidas, solicitarlo por CCR.
+- **Vista previa al compartir (importante para reclutadores):** las plataformas de mensajería leen metadatos sin ejecutar JavaScript. El agente debe proponer y registrar en `docs/DECISIONS.md` el método más simple para entregar `title`, `description` y `og:*` del perfil publicado en `/huella/p/:token` (p. ej. el servidor devuelve el HTML de la aplicación con metadatos inyectados), sin añadir un servidor Node. Si requiere cambios en `nginx` o en zonas protegidas, pedir autorización del propietario (zonas compartidas, `AGENTS.md` §8).
 - **Público:** endpoints anónimos con límite de tasa y caché; sin cookies de sesión; sin datos del borrador. Requerir token vigente en la ruta, almacenar solo su hash, y mantener el token fuera de logs/referrers.
 - **No indexación:** el HTML inicial contiene `<meta name="robots" content="noindex,nofollow,noarchive">` y la respuesta HTML lleva `X-Robots-Tag: noindex, nofollow, noarchive`. No depender solo de `robots.txt`; este documento noindex aplica al perfil público, no a toda la plataforma.
 - **Accesibilidad y diseño:** tipografía clara, buen contraste, orden semántico (un `h1`, secciones con `h2`), imprimible.
@@ -53,7 +53,7 @@ Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (r
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-QA escribe `docs/testing/plans/HUELLA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. Anónimo abre `/huella/p/<token-vigente>` publicado → 200 y contenido de la **última versión publicada**; sin sesión ni cookie de sesión. Token aleatorio de alta entropía; almacenamiento solo de hash.
 2. Se edita el borrador después de publicar → la página pública **no cambia** hasta publicar de nuevo.

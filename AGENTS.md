@@ -1,81 +1,61 @@
-# Instrucciones para agentes de IA — Pastel
+# AGENTS.md — Reglas operativas de Pastel
 
-Pastel es una plataforma modular: un shell común, el módulo **Identity** (acceso y permisos) y subaplicaciones independientes: **Brisa, Balance, Ágora, Cosecha, Huella**. Lee solo lo necesario; el contexto es un recurso escaso.
+Pastel es un monolito modular (.NET 10 + React 19) con un módulo por aplicación. Este archivo es la **única fuente de reglas** para todos los agentes; el resto de `docs/` describe el sistema, no el proceso. Léelo completo antes de empezar.
 
-## Tu rol (se te indica en el prompt)
-- **Dev:** implementa el código de aplicación y deja hooks de testabilidad y `MODULE.md`; no escribe pruebas ni planes. **Si su entorno permite compilar/probar, debe hacerlo y reportar los comandos y resultados reales. Si no lo permite, puede publicar código sin compilar**, siempre que lo declare explícitamente en `PROGRESS.md` y en la entrega; no simula resultados ni afirma que compila.
-- **Build:** responsabilidad de compilar, corregir errores de build/pruebas en código de producto sin cambiar el comportamiento acordado, generar migraciones, escribir y ejecutar pruebas unitarias/caracterización e informar comandos reales. Se realiza por un agente con entorno de compilación.
-- **QA:** escribe el plan desde la ficha, ejecuta build y pruebas funcionales, permisos, integración y E2E en un entorno que **sí debe permitir compilar y ejecutar**; reporta defectos y resultados.
-- **Build y QA pueden combinarse en una misma sesión/agente** para ahorrar sesiones. Si se combinan, se deben completar ambas listas de responsabilidades, registrar qué se ejecutó y volver a ejecutar las validaciones afectadas tras cada corrección. La separación independiente es preferible cuando haya capacidad, pero no es obligatoria en esta etapa. Cuando el agente no pueda ejecutar el entorno (p. ej. sin .NET, Docker o PostgreSQL), el propietario ejecuta los comandos en PowerShell y devuelve la salida; el agente corrige y repite el ciclo registrando cada vuelta en `PROGRESS.md`.
-- **Investigación:** solo produce documentos. **Mantenimiento:** aplica CCR aprobados.
-Detalle: `docs/TESTING_STRATEGY.md`.
+## 1. Ruta de lectura (en este orden, solo lo que toque tu tarea)
+1. `README.md` (qué es y cómo se ejecuta) y este archivo.
+2. `docs/PROGRESS.md`: estado actual, pendientes y backlog. Es el único estado vigente.
+3. `docs/ARCHITECTURE.md` y, según el área, `docs/SECURITY.md`, `docs/DESIGN_SYSTEM.md`, `docs/ERROR_HANDLING_AND_LOGGING.md`.
+4. Tu módulo: `docs/modules/<MODULO>.md` y los `MODULE.md` de `src/Modules/<M>/` y `web/src/modules/<m>/`.
+5. `docs/GIT_WORKFLOW.md` (commits, ramas, PR, CI) y `docs/TESTING.md` (qué probar y cómo). `docs/DECISIONS.md` solo si necesitas el porqué de una decisión.
 
-## Tipo de agente y cadencia de commits (obligatorio)
+Contrasta siempre la documentación con el código vigente; si discrepan, gana el código y corriges el documento.
 
-El tipo de agente debe indicarse al asignar **cada tarea** y es independiente del rol funcional (Dev, Build, QA, Investigación o Mantenimiento).
+## 2. Roles
+- **Dev:** implementa en el área de su módulo (backend y frontend). Compila y prueba lo esencial si su entorno lo permite; si no, lo declara.
+- **Build/QA (combinado):** tiene Docker/.NET; compila, corrige, escribe las pocas pruebas esenciales, ejecuta y reporta con evidencia real. Cuando no puede ejecutar algo, el propietario corre los comandos en PowerShell y devuelve la salida; se itera hasta que quede aprobado.
+- **Investigación/Documentación:** produce documentos o prototipos; no toca código de producto.
+Todos los agentes trabajan igual: **commits lógicos por unidad de trabajo** (sección 4). No existen tipos de agente por cadencia de commits.
 
-- **Tipo 1 — checkpoint frecuente:** publicar commit + push con progreso coherente **al menos cada 3 minutos**, incluyendo la actualización correspondiente de `PROGRESS.md`. No esperar a completar una WP o subobjetivo.
-- **Tipo 2 — checkpoint por unidad de trabajo:** no tiene un límite fijo de tiempo. **Agrupar por defecto todos los cambios relacionados de una unidad lógica en un único commit** (código, configuración, documentación y progreso que correspondan). No crear commits por archivo, por cada arreglo pequeño ni como mecanismo de actualización durante la implementación. Solo crear un segundo commit si empieza una unidad funcional distinta, una corrección post-validación claramente separada o si el propietario lo solicita.
-- **Tipo no indicado:** preguntar al orquestador/propietario y no continuar con cambios de implementación hasta recibir la clasificación. No inferir el tipo por el rol ni por la tarea.
+## 3. Flujo
+1. Una rama corta por tarea (`feat/`, `fix/`, `docs/`, `chore/`), creada desde `dev`. **Un agente por rama.**
+2. Trabaja y valida en local; haz commit **cuando la unidad esté completa**.
+3. Entrega: PR hacia `dev` con resumen, validación realizada y lo no verificado.
+4. El propietario aprueba; **el CI básico corre al aprobar** (sección 6) y el propietario integra. Nadie integra en `dev` ni `main` ni abre/fusiona PR sin autorización expresa; `main` solo por promoción del propietario.
+5. Para la fase actual la rama de trabajo es la que indique el propietario (hoy `refactor/modular-foundation`).
 
-La clasificación controla la **frecuencia** de guardado, no la obligación de trabajar con seguridad, revisar el diff, mantener la documentación, evitar secretos ni informar con honestidad qué se validó.
+## 4. Commits (resumen; reglas completas y motivos en `docs/GIT_WORKFLOW.md`)
+- **Un commit = una unidad completa y coherente** (funcionalidad, arreglo con su prueba, cambio de documentación) que un revisor entienda y pueda revertir sola. Código, prueba y documentación de esa unidad van **juntos**.
+- **Prohibido** commitear por tiempo, por archivo, como punto de control o para «registrar avance». Prohibidos mensajes como `wip`, `checkpoint`, `record`, `docs: registrar…` aislados.
+- Tus propios arreglos no publicados se integran en su commit (`--amend` o rebase interactivo local) **antes** de empujar. Sin cadenas `fix`/`fix`/`fix`.
+- Valida antes de commitear. Si algo no pudo verificarse, se declara **una vez** en el cuerpo del commit y en `docs/PROGRESS.md`.
+- Mensaje: `tipo(ámbito): resumen en imperativo` ≤ 72 caracteres, en español; cuerpo con qué, por qué y cómo se verificó. Tipos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `style` (solo formato masivo, aislado).
+- Usa `git` local para commits de varios archivos. Una herramienta que solo crea commits de un archivo (API de contenidos) **no se usa** para trabajo multi-archivo.
+- Sincroniza con `git pull --rebase`; no hagas merges de sincronización. No reescribas historia compartida sin autorización del propietario.
 
-## Reglas duras de desarrollo, commits y CI
+## 5. Pruebas: solo lo esencial
+- Se escriben **solo pruebas fundamentales** (seguridad, autorización, integridad y concurrencia de datos críticos, ciclo de sesión, contrato de errores, ausencia de secretos en logs, compilación/formato/auditoría). Nada exhaustivo, ni una prueba por cada caso, ni permutaciones cosméticas.
+- Antes de escribir una prueba responde: ¿qué defecto concreto detecta?, ¿por qué no lo cubre ya otra? Sin respuesta, no se escribe.
+- Lo no esencial se anota como **diferido** en `docs/PROGRESS.md` para la siguiente planificación de pruebas. Ver `docs/TESTING.md`.
+- Nada se declara aprobado sin evidencia de ejecución real; lo no ejecutado se marca «por verificar». Cero fallos y cero omitidas.
 
-1. **Una unidad de trabajo, un commit.** Un agente Tipo 2 trabaja en una tanda coherente; revisa todas las modificaciones y registra el progreso una sola vez, en el mismo commit. No hagas commits de prueba para inspeccionar resultados.
-2. **No uses la API de Contents para guardar archivos relacionados uno por uno.** Las llamadas `create_file`, `update_file` y `delete_file` crean cada una un commit independiente y pueden disparar automatizaciones. Para un lote utiliza blobs + un árbol Git + un commit + un único movimiento de referencia. Si no puedes agrupar, no publiques el lote parcialmente.
-3. **CI nunca se usa como bucle interactivo de depuración.** El workflow `.github/workflows/ci.yml` es manual y requiere `confirm_validation=true`. No lo ejecutes durante desarrollo, no lo despaches por cada corrección y no alteres los checks para simular una aprobación.
-4. **Antes de validar en CI:** termina la unidad de trabajo, inspecciona el diff completo, ejecuta localmente todas las comprobaciones posibles (format, lint, build, pruebas y auditorías) y corrige todos los fallos conocidos en una sola tanda. Solo después, y con autorización explícita del propietario, se hace un despacho manual integral.
-5. **Si el entorno no permite validar:** dilo expresamente en `PROGRESS.md` y en la entrega; no dispares CI para sustituir un entorno local ausente. El estado es "sin validar" hasta la etapa Build/QA acordada.
-6. **Después de un CI fallido:** lee los logs de todos los jobs que fallaron, agrupa causas relacionadas, realiza las correcciones en un solo lote y no reintentes hasta tener comprobaciones locales y autorización explícita. Cancelar un run anterior, si la herramienta disponible lo permite, no sustituye estas reglas.
-7. **Historial compartido:** no reescribas, fuerces ni hagas squash del historial existente de la rama sin autorización explícita. La cadencia eficiente se aplica a los próximos lotes; no justifica destruir commits ajenos o checkpoints preexistentes.
+## 6. CI en GitHub (minutos limitados)
+- **Nunca** corre por commit, push ni por abrir/actualizar un PR. Solo al **aprobar un PR hacia `dev`** (revisión aprobada, o etiqueta `ci:basico`) y a mano (`workflow_dispatch`).
+- **Solo lo básico** (backend: formato, build y pruebas unitarias; frontend: formato, lint, build y pruebas de componentes). Los trabajos pesados (PostgreSQL, contenedores, aislamiento por módulo, CodeQL) corren únicamente si el propietario lo indica (etiqueta `ci:completo` o ejecución manual con alcance «completo»).
+- No se despacha CI manual durante la depuración. Detalle en `docs/GIT_WORKFLOW.md`.
 
-## Ruta de lectura (en orden, y nada más salvo necesidad)
-1. Este archivo. 2. Tu módulo: `src/Modules/<M>/MODULE.md` y `web/src/modules/<m>/MODULE.md`, más `docs/modules/<M>.md`. 3. `docs/ARCHITECTURE.md` §2–5. 4. `docs/DESIGN_SYSTEM.md` si tocas UI. 5. `docs/ERROR_HANDLING_AND_LOGGING.md` siempre que escribas endpoints, pantallas o logs. 6. `docs/SECURITY.md` si tocas acceso, permisos o datos personales. 7. `docs/AI_WORKFLOW.md` (ramas, commits).
-No leas `Migrations/`, `bin/`, `obj/`, `node_modules/` ni `package-lock.json` salvo necesidad.
+## 7. Diseño
+- **Reglas duras:** no usar morado ni sus derivados, ni lo habitual del diseño generado por IA (colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA). `scripts/check-design.mjs` verifica morado, iconos y emojis de IA y colores literales fuera de los archivos de tokens.
+- La **identidad visual de cada aplicación (paletas, acentos, tipografía propia) no está definida**: se determinará con la investigación y los prototipos en curso. No inventes ni fijes paletas por módulo; no hay restricciones de color por subapp más allá de las reglas duras. Ver `docs/DESIGN_SYSTEM.md`.
+- Accesibilidad (WCAG AA), textos en `strings.ts`, español de Costa Rica con trato de usted por defecto; el voseo se permite cuando el propietario lo pida.
 
-## Mapa
-`src/Host/Pastel.Host` (composición) · `src/BuildingBlocks/` (SharedKernel, Platform: **protegida**) · `src/Modules/<M>/` (Pastel.Modules.<M> + .Tests) · `web/src/core` y `web/src/app` (**protegidas**) · `web/src/modules/<m>/` · `tests/` · `docs/modules/` (fichas de producto) · `docs/testing/` (planes e informes).
+## 8. Arquitectura y seguridad (límites que no se cruzan)
+- Módulo = un proyecto .NET; un esquema y un historial de migraciones por módulo; sin claves foráneas ni joins entre esquemas. Un módulo no referencia el interior de otro; `web/src/modules/<m>` solo importa de `@/core/*`. Detalle y pruebas de arquitectura en `docs/ARCHITECTURE.md`.
+- Autorización siempre en el backend, denegar por defecto. Jamás secretos, tokens ni `.env` en el repositorio, en logs ni en commits. Ver `docs/SECURITY.md`.
+- **Zonas compartidas** (requieren autorización expresa del propietario en la tarea; si no la tienes, deja la propuesta en el PR): `src/BuildingBlocks/**`, `src/Host/**`, `src/Modules/Identity/**`, `web/src/core/**`, `web/src/app/**`, `compose*.yaml`, `deploy/**`, `.github/**`, `Directory.*.props`, `global.json`, dependencias y lockfiles, `AGENTS.md` y `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/DESIGN_SYSTEM.md`.
 
-## Zonas de escritura
-- **Dev:** tu módulo (backend, frontend, `MODULE.md`), sin pruebas ni planes.
-- **Build:** pruebas unitarias (`Pastel.Modules.<M>.Tests`, `*.test.tsx`), `tests/Pastel.IntegrationTests/Foundation/`, `tests/Pastel.ArchitectureTests/`, migraciones, informes en `docs/testing/reports/<M>-BUILD-<fecha>.md` y correcciones mínimas en el código de producto (commits `fix(build): …`).
-- **QA:** `tests/Pastel.IntegrationTests/QA/<M>/`, `tests/e2e/<m>/`, `docs/testing/plans/`, `docs/testing/reports/`.
-- Protegidas (solo orquestador/mantenimiento): `BuildingBlocks`, `Identity`, `web/src/core`, `web/src/app`, `Directory.*`, `compose.yaml`, `.github/**`, nginx, documentos raíz de `docs/`, dependencias. Necesitas un cambio allí → `docs/requests/CCR-<n>-<tema>.md` y solución local provisional.
+## 9. Comandos esenciales (Windows PowerShell, Docker Desktop)
+`.\scripts\test-backend.ps1` · `.\scripts\test-database.ps1` · `.\scripts\test-frontend.ps1` · `.\scripts\test-all.ps1` · `.\scripts\format-backend.ps1` / `format-frontend.ps1` · `.\scripts\install-hooks.ps1` (una vez por clon: formato y secretos en cada commit) · `.\scripts\qa-phase0-stack.ps1` (stack aislado). Detalle en `docs/TESTING.md`.
 
-## Reglas de arquitectura (CI las verifica)
-- Un módulo no referencia el interior de otro; solo `*.Contracts` o `Pastel.Platform`. Tipos `internal`. Un `DbContext` y un esquema por módulo; sin claves foráneas entre esquemas.
-- Vertical slices: `Features/<VerboSustantivo>/`. Permisos `<modulo>.<recurso>.<accion>`; cada endpoint con permiso o `AllowAnonymousExplicit()`; denegar por defecto.
-- Frontend: un módulo no importa de otro; solo de `@/core/*`. Quitar un módulo = borrar sus carpetas sin romper el resto.
-
-## Errores y logs (obligatorio)
-Errores esperables como `Result` → `problem+json` con `code` y `traceId`; sin `ex.Message` al cliente; sin `catch` que traguen errores. Logs con plantillas, sin secretos ni datos personales (ni `code`/`state` de OAuth). Auditoría aparte con antes/después. Frontend: estados de carga, vacío y error en cada pantalla; `core/log`, nunca `console.log`.
-
-## Interfaz (reglas duras)
-- **Prohibido el morado** (tono HSL 235°–345°) y los **símbolos de IA** (`Sparkles`, `Stars`, `Wand*`, `Bot`, `Brain*`, `Cpu`, ✨🤖🪄🔮). Marca: `Flower2`.
-- **Tailwind:** utilidades en JSX; los patrones compartidos son componentes de `core/ui`; **prohibido `@apply`** fuera de `core/design/base.css`. Color solo por tokens (`bg-accent`…); `data-module` da el color de cada módulo; sin hexadecimales sueltos.
-- UX primero: `DESIGN_SYSTEM.md` (heurísticas, WCAG 2.2 AA, móvil primero). Español de Costa Rica; por defecto, trato de usted o impersonal. **El voseo (u otra voz más personal) se permite cuando el propietario lo solicite**, para toda la plataforma o para un módulo; es una preferencia de estilo, no un criterio de bloqueo, y no requiere pruebas ni revisión obligatoria. Textos en `strings.ts`.
-
-## Seguridad (no negociable)
-Tokens solo en cookies `HttpOnly`, nunca en el navegador. Autorización siempre en el backend. No versionar secretos ni `.env`. No `EnsureCreated`. No registrar datos sensibles. Quien administra no puede escalar privilegios (concede solo lo que tiene).
-
-## Flujo
-- Parte de `dev`; rama por tarea: `feat/<m>-<alcance>`, `qa/<m>`, `chore/…`, `docs/…`. Nunca `main`.
-- **Nunca abras PR ni integres a `dev` sin autorización explícita del propietario.** Cuando el propietario lo autorice, sí puedes abrir un único PR para la tarea y, si también autoriza expresamente la integración, completar el merge siguiendo `docs/AI_WORKFLOW.md`.
-- Commits coherentes y revisables (evita volcados enormes). **El Dev sin entorno de compilación puede publicar código sin compilar y lo declara.** Por decisión del propietario (2026-10-21), **Build y QA también pueden publicar código que no han podido compilar o ejecutar**, siempre que (a) lo marquen como **POR VERIFICAR** en `PROGRESS.md`, en el mensaje del commit y en la entrega, (b) indiquen los comandos exactos que el propietario debe ejecutar para verificarlo y (c) iteren con la salida real que este aporte hasta que cada elemento pase a «aprobado con evidencia». Un elemento no verificado nunca se presenta como aprobado, y el código que se sabe que no compila se declara como tal. Formato con Prettier/`dotnet format` cuando puedas ejecutarlos; el hook de pre-commit (`node scripts/install-hooks.mjs`, ver `docs/testing/FORMAT-AUTOMATION.md`) aplica los chequeos rápidos en cada commit.
-- Informa solo lo que ejecutaste y **declara expresamente lo que no compilaste ni ejecutaste** («sin compilar», «sin ejecutar»); nunca afirmes que algo compila o pasa sin haberlo comprobado. Mantén `MODULE.md` y tu `PROGRESS.md` al día. Si algo contradice estos documentos, confirma el código real y corrige el documento.
-## Pruebas y validación proporcionales al riesgo
-
-La meta de las pruebas es reducir defectos de comportamiento, seguridad y regresión; no maximizar el número de comandos ni satisfacer métricas cosméticas a cualquier costo. Aplica la cadencia definida en `docs/TESTING_STRATEGY.md`.
-
-- Un cambio de comportamiento debe incluir o actualizar pruebas enfocadas de ese comportamiento siempre que sea viable. Si la tarea o las zonas protegidas reservan la escritura de pruebas a Build/QA (como en algunos WP de Fase 0), registra el caso pendiente y no afirmes que la funcionalidad quedó validada.
-- Cambios de autenticación, autorización, permisos entre módulos, persistencia, migraciones, manejo de datos sensibles o infraestructura requieren pruebas negativas y positivas relevantes; ejecuta integración con PostgreSQL cuando aplique. Una prueba de compilación no demuestra la seguridad de los permisos.
-- Cambios de UI deben comprobar los estados y controles afectados (teclado/labels y axe cuando corresponda) y revisar visualmente los flujos relevantes cuando se toca shell, navegación, tema, responsive o composición. No ejecutes una revisión visual completa por un cambio exclusivo de backend.
-- **Pruebas esenciales (decisión del propietario, 2026-10-24):** se escriben solo pruebas fundamentales, las que protegen un riesgo real de seguridad, integridad de datos, concurrencia, ciclo de sesión o contrato de errores y que ninguna prueba existente cubre. No se hacen matrices exhaustivas, permutaciones cosméticas ni una prueba por cada caso del plan; lo que no es esencial se documenta como **diferido** en el informe de estado para la siguiente planificación de pruebas, sin trabajarlo en esta etapa. Ver `docs/TESTING_STRATEGY.md`, «Política de pruebas esenciales».
-- Durante la iteración, ejecuta primero el control más pequeño que cubra el cambio. Ejecuta la batería integral al terminar una unidad lógica, antes del cierre de fase o cuando se toquen áreas compartidas con riesgo transversal. No uses CI como ciclo de depuración ni la despaches sin autorización.
-- Son bloqueos de entrega los errores de compilación, los tests relevantes fallidos, los defectos de seguridad/integridad, las violaciones reales de fronteras modulares y las restricciones de diseño explícitamente prohibidas. Nunca desactives una prueba para conseguir un resultado verde.
-- Por sí solas, son métricas informativas y no bloqueos de entrega: número de líneas de un CSS, porcentaje global de utilidades Tailwind, clases usadas una sola vez, volumen agregado de `@apply` dentro del archivo permitido, avisos de tamaño de bundle no asociados a un objetivo de rendimiento acordado y cantidad de pruebas/cobertura sin relación con escenarios de riesgo. No reorganices archivos solo para alcanzar un umbral numérico; usa esas métricas como señales de mantenimiento y atiéndelas cuando mejore la claridad.
-- Toda entrega indica el SHA inspeccionado, las comprobaciones realmente ejecutadas y los pendientes. «No ejecutado» no equivale a aprobado. No se exige un porcentaje universal de cobertura: se exige evidencia suficiente de los comportamientos críticos de la ficha.
-
-La división de responsabilidades Dev/Build/QA y los casos obligatorios de la Fase 0 siguen vigentes donde estén definidos expresamente; la proporcionalidad ajusta la cadencia y los falsos bloqueos, no elimina las pruebas de seguridad obligatorias ni autoriza a cerrar una fase sin su evidencia.
-
+## 10. Entrega
+Al terminar una unidad: qué hiciste, qué commits, qué ejecutaste y con qué resultado real, qué queda sin verificar y qué decisión necesitas del propietario. Actualiza `docs/PROGRESS.md` (una vez, en el mismo commit de la unidad).

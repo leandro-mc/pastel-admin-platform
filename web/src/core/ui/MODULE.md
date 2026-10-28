@@ -19,7 +19,7 @@ Kit común del shell y las subaplicaciones. Centraliza patrones de formularios, 
 ## Reglas de uso
 
 1. En nuevas pantallas, usar los componentes desde `@/core/ui`.
-2. Mantener los colores con tokens Tailwind y `data-module`; no usar hexadecimales sueltos, morados ni iconografía asociada con IA.
+2. Colores solo con tokens (los valores son provisionales); sin hexadecimales sueltos, sin morado y sin iconografía asociada con IA (reglas duras de `docs/DESIGN_SYSTEM.md`).
 3. Los controles requieren etiqueta accesible, foco visible y objetivos táctiles adecuados (44 px cuando aplique).
 4. Los módulos conservan sus propios textos y pueden inyectar variantes a través de props.
 5. No sustituir composiciones específicas por una tarjeta genérica; el kit apoya la jerarquía del producto, no la uniformiza.

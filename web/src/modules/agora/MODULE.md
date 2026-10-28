@@ -2,7 +2,7 @@
 
 Estado: **marcador** (esqueleto generado por `tools/new-module`).
 
-- Código `agora` · ruta `/agora` · icono `Landmark` (Lucide) · color por `data-module="agora"` (valores en `web/src/core/design/module-themes.css`).
+- Código `agora` · ruta `/agora` · icono `Landmark` (Lucide) · identidad visual por definir (tokens provisionales en `web/src/core/design/module-themes.css`).
 - Acceso en el manifiesto: `public`; permiso `agora.access`.
 - Backend: `src/Modules/Agora/MODULE.md`. Producto: `docs/modules/AGORA.md`.
 

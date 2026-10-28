@@ -2,7 +2,7 @@
 
 Estado: **marcador** (esqueleto generado por `tools/new-module`).
 
-- Código `brisa` · ruta `/brisa` · icono `ListChecks` (Lucide) · color por `data-module="brisa"` (valores en `web/src/core/design/module-themes.css`).
+- Código `brisa` · ruta `/brisa` · icono `ListChecks` (Lucide) · identidad visual por definir (tokens provisionales en `web/src/core/design/module-themes.css`).
 - Acceso en el manifiesto: `permission`; permiso `brisa.access`.
 - Backend: `src/Modules/Brisa/MODULE.md`. Producto: `docs/modules/BRISA.md`.
 

@@ -1,6 +1,6 @@
 # Cosecha — ficha de producto y MVP
 
-Color `data-module="cosecha"` (ocre) · icono `Sprout` · esquema `cosecha` · ruta `/cosecha` · API `/api/cosecha`.
+Identidad visual por definir (investigación en curso); icono `Sprout` provisional · esquema `cosecha` · ruta `/cosecha` · API `/api/cosecha`.
 
 ## 1. Propósito y usuario real
 
@@ -97,7 +97,7 @@ Requisitos de UX específicos:
 - Toda edición de cantidades o precios pide una **nota opcional** y queda en el registro de cambios; la pantalla muestra "Editado por … el …".
 - Confirmación antes de cerrar un envío, cancelar un pedido o registrar un pago; opción de deshacer cuando sea posible.
 - Listas con búsqueda, estados vacíos útiles y esqueletos de carga; tablas que en móvil se convierten en tarjetas.
-- Estados siempre con icono y texto (no solo color); color del módulo usado con sobriedad.
+- Estados siempre con icono y texto (no solo color).
 - Funciona bien en una conexión inestable: no perder lo escrito, mensajes claros, reintento.
 
 ## 7. Mensajes de WhatsApp (sin API)
@@ -130,7 +130,7 @@ Mapas incrustados y rutas optimizadas, vistas para transportistas, comprobante d
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-QA escribe `docs/testing/plans/COSECHA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 **Reparto proporcional (sección 5)**
 1. `T=100`, capacidades A=50, B=30, C=20 → 50 / 30 / 20.

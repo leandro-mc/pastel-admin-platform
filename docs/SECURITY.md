@@ -29,7 +29,7 @@ En producción, la aplicación debe negarse a iniciar si la configuración de ar
 
 ## Cuentas de prueba locales
 
-`TestingSeedUsersTask` solo crea fixtures cuando `TestingSeed:Enabled=true` y el entorno es `Development` o `Testing`. Produce las cuentas `test.owner@pastel.local`, `test.admin@pastel.local` y `test.member@pastel.local` con los roles exactos de prueba y las contraseñas locales documentadas en `docs/phase0/PROGRESS.md`. No registra contraseñas ni tokens. Cuando restaura una cuenta, invalida sesiones y registra un evento de auditoría sin credenciales.
+`TestingSeedUsersTask` solo crea fixtures cuando `TestingSeed:Enabled=true` y el entorno es `Development` o `Testing`. Produce las cuentas `test.owner@pastel.local`, `test.admin@pastel.local` y `test.member@pastel.local` con los roles exactos de prueba y las contraseñas locales documentadas en `docs/TESTING.md` §5. No registra contraseñas ni tokens. Cuando restaura una cuenta, invalida sesiones y registra un evento de auditoría sin credenciales.
 
 La protección se aplica tanto en la tarea como en `ProductionSecurityValidationTask`: si se activa el sembrador en `Production`, la API falla al iniciar. Las credenciales fixture están deliberadamente fijas, son públicas y no constituyen secretos; solo son admisibles para una base de datos sintética local. En cualquier despliegue compartido, configure `TESTING_SEED_ENABLED=false`. No use las cuentas ni sus contraseñas fuera de Development/Testing.
 
@@ -41,7 +41,7 @@ La protección se aplica tanto en la tarea como en `ProductionSecurityValidation
 - Registrar cambios administrativos sin guardar credenciales; auditar antes/después cuando corresponda.
 - Rotar claves y secretos, restringir la conectividad a PostgreSQL y usar HTTPS en despliegue real.
 
-## Límites conocidos de v0.1
+## Límites conocidos
 
 No incluye confirmación de correo, recuperación de contraseña por email, MFA ni notificaciones administrativas. Google OAuth 2.0/OIDC ya está implementado de forma opcional, conforme a la sección «Ingreso con Google»; requiere configurar las credenciales en el entorno. La verificación de bloqueo/versionado de usuario se hace por petición; cualquier optimización debe mantener el mismo modelo de permisos. Antes de producción, agregar pruebas de integración completas de los flujos de seguridad, evaluación de dependencias y revisión independiente.
 
@@ -66,7 +66,6 @@ En el entorno `Production`, `ProductionSecurityValidationTask` impide continuar 
 
 `IdentityRetentionService` ejecuta limpieza periódica (24 horas por defecto): elimina refresh tokens expirados hace más del plazo configurado, borra el ciphertext del sucesor cuando vence su ventana de gracia y aplica la retención configurada de auditoría. `Identity:Retention:AuditLogRetentionDays` tiene un valor predeterminado de 365 días y admite entre 30 y 3650 días. Ajuste la retención según las necesidades de seguridad, soporte y cumplimiento del responsable de la plataforma.
 
-
 ## Ingreso con Google (OAuth 2.0 / OIDC)
 
 Es opcional: sin `Authentication:Google:ClientId` y `ClientSecret` Google queda desactivado, la API arranca y `GET /api/auth/options` informa `google: false`.
@@ -84,21 +83,8 @@ Es opcional: sin `Authentication:Google:ClientId` y `ClientSecret` Google queda 
   | Cuenta inactiva | `account_disabled` (mensaje genérico) |
 - **Por qué la vinculación invalida la contraseña:** si alguien creó antes una cuenta con el correo de otra persona (o quedó una contraseña temporal sin usar), esa contraseña y esas sesiones dejan de servir en cuanto la persona dueña del correo ingresa con Google. El costo es que una cuenta vinculada pierde el ingreso por contraseña; para recuperarlo, administración restablece la contraseña. El primer administrador que use su cuenta de Google debe tener el mismo correo en `BOOTSTRAP_ADMIN_EMAIL`.
 - **Errores:** siempre redirigen a `/ingresar?error=<codigo>` con `google_denied`, `email_unverified`, `account_disabled`, `signup_closed` o `failed`. Los registros no incluyen ni el `code` ni el `state` de OAuth, ni el correo.
-- **Configuración:** `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (ver `docs/phase0/GOOGLE_OAUTH_SETUP.md`), `APP_PUBLIC_BASE_URL` (`App:PublicBaseUrl`, define el `redirect_uri` sin depender del proxy) y `AUTH_GOOGLE_ALLOW_SIGNUP`. nginx debe enviar `Host $http_host` y `X-Forwarded-Host $http_host`; con `$host` se pierde el puerto y Google responde `redirect_uri_mismatch`.
-- **Límites conocidos:** el secreto no debe versionarse ni registrarse; rótelo en la consola de Google si se expone. Las claves de Data Protection del esquema de correlación de OAuth deben persistirse antes de producción (ver advertencia de Development en `PROGRESS.md`).
-
-
-## Cómo reportar una vulnerabilidad
-
-No publique credenciales, tokens, datos personales ni detalles que permitan explotar una vulnerabilidad en un issue o comentario público.
-
-1. Para un hallazgo que pueda afectar a usuarios, utilice primero el canal privado de reporte de vulnerabilidades de GitHub del repositorio, si está habilitado. Si no aparece esa opción, contacte de forma privada con el responsable del repositorio mediante un canal que ya se haya verificado con él.
-2. Incluya una descripción breve, el impacto observado, la versión o SHA afectado, los pasos mínimos para reproducirlo y, cuando sea posible, una mitigación temporal. Use datos de prueba y redacte valores sensibles de logs y capturas.
-3. No adjunte secretos, cookies, encabezados de autorización, tokens OAuth, dumps de producción ni bases de datos reales. No pruebe el hallazgo contra sistemas ajenos o entornos sin autorización.
-4. Permita que el responsable confirme el alcance y coordine una corrección antes de hacer pública la información. No se promete un plazo de respuesta específico; si existe explotación activa, indíquelo al inicio del reporte privado.
-
-Los problemas de seguridad no se gestionan como solicitudes ordinarias de funcionalidad. Mantenga el detalle técnico y los artefactos de reproducción en el canal privado hasta acordar una divulgación coordinada.
-
+- **Configuración:** `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` (ver `docs/OPERATIONS.md` §4), `APP_PUBLIC_BASE_URL` (`App:PublicBaseUrl`, define el `redirect_uri` sin depender del proxy) y `AUTH_GOOGLE_ALLOW_SIGNUP`. nginx debe enviar `Host $http_host` y `X-Forwarded-Host $http_host`; con `$host` se pierde el puerto y Google responde `redirect_uri_mismatch`.
+- **Límites conocidos:** el secreto no debe versionarse ni registrarse; rótelo en la consola de Google si se expone. Las claves de Data Protection del esquema de correlación de OAuth deben persistirse antes de producción (advertencia de Data Protection en Development; pendiente antes de producción).
 
 ## Cómo reportar una vulnerabilidad
 
