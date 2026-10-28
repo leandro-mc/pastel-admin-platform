@@ -14,5 +14,5 @@ TestResults/
 .idea/
 .DS_Store
 
-# Archivos .csn: origen sin determinar, nunca se versionan (ver docs/testing/FORMAT-AUTOMATION.md)
+# Archivos .csn: origen sin determinar, nunca se versionan (ver docs/TESTING.md)
 *.csn

@@ -2,7 +2,7 @@
 
 Estado: **marcador** (esqueleto generado por `tools/new-module`).
 
-- Código `huella` · ruta `/huella` · icono `Footprints` (Lucide) · color por `data-module="huella"` (valores en `web/src/core/design/module-themes.css`).
+- Código `huella` · ruta `/huella` · icono `Footprints` (Lucide) · identidad visual por definir (tokens provisionales en `web/src/core/design/module-themes.css`).
 - Acceso en el manifiesto: `permission`; se exige `huella.access`, asignado únicamente a Owner/Superuser. La ruta de perfil público se implementará aparte mediante token secreto, sin aparecer en el selector ni en una búsqueda.
 - Backend: `src/Modules/Huella/MODULE.md`. Producto: `docs/modules/HUELLA.md`.
 

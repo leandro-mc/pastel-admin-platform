@@ -2,7 +2,7 @@
 
 Estado: **marcador** (esqueleto generado por `tools/new-module`).
 
-- Código `cosecha` · ruta `/cosecha` · icono `Sprout` (Lucide) · color por `data-module="cosecha"` (valores en `web/src/core/design/module-themes.css`).
+- Código `cosecha` · ruta `/cosecha` · icono `Sprout` (Lucide) · identidad visual por definir (tokens provisionales en `web/src/core/design/module-themes.css`).
 - Acceso en el manifiesto: `permission`; permiso `cosecha.access`.
 - Backend: `src/Modules/Cosecha/MODULE.md`. Producto: `docs/modules/COSECHA.md`.
 

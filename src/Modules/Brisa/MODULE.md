@@ -22,7 +22,7 @@ El rol `Administrator` recibe todos los permisos al sincronizar el catálogo.
 
 - Cada persona ve y modifica solo sus pendientes (filtro por usuario en el servidor).
 - Diseño preparado para sincronización móvil futura (no se implementa ahora): `UpdatedAt`, borrado lógico (`DeletedAt`), token de concurrencia y escrituras idempotentes con identificador de cliente (`docs/ARCHITECTURE.md` §5 y §7).
-- No se agrega compartir ni grupos sin decisión del propietario; el inventario funcional es `docs/migration/brisa-inventory.md`.
+- No se agrega compartir ni grupos sin decisión del propietario; el inventario funcional es `docs/migration/brisa-inventory.md` (aún no existe: lo producirá la investigación en curso).
 
 ## Endpoints
 

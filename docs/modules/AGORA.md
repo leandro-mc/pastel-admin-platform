@@ -1,6 +1,6 @@
 # Ágora — ficha de producto y MVP
 
-Color `data-module="agora"` (azul grisáceo) · icono `Landmark` · esquema `agora` · ruta `/agora` · API `/api/agora`.
+Identidad visual por definir (investigación en curso); icono `Landmark` provisional · esquema `agora` · ruta `/agora` · API `/api/agora`.
 
 ## 1. Propósito y principio editorial
 Divulgación humanística y de actualidad, centrada en Costa Rica, para ayudar a comprender hechos, procesos y decisiones públicas. **Facilitar la comprensión y el criterio propio**, no decir qué pensar. La confianza se construye mostrando **fuentes, contexto y estado de verificación**.
@@ -39,11 +39,11 @@ Permisos: `agora.access` (solo para el panel editorial), `agora.content.manage` 
 | `/agora/editorial/actualidad` | Noticias enlazadas | Alta/edición de enlaces |
 
 ## 5. Reglas y detalles
-- **Videos de YouTube:** se incrustan desde `youtube-nocookie.com` mediante **fachada** (miniatura + botón; el iframe se carga al pulsar), con `loading="lazy"` y título accesible. Validar el id; no alojar videos. La CSP de `nginx` hoy bloquea marcos externos: solicitar por CCR el `frame-src https://www.youtube-nocookie.com` y la política de imágenes necesaria para las miniaturas.
+- **Videos de YouTube:** se incrustan desde `youtube-nocookie.com` mediante **fachada** (miniatura + botón; el iframe se carga al pulsar), con `loading="lazy"` y título accesible. Validar el id; no alojar videos. La CSP de `nginx` hoy bloquea marcos externos: pedir autorización del propietario (zona compartida) para el `frame-src https://www.youtube-nocookie.com` y la política de imágenes necesaria para las miniaturas.
 - **Contenido Markdown:** renderizado con sanitización estricta (sin HTML crudo, sin scripts); enlaces externos con `rel="noopener noreferrer"`.
 - **Noticias:** solo se enlazan (medio, titular, fecha, URL y contexto propio); no se copia el texto ajeno.
 - **Distinción de tipo de contenido:** campo "Tipo" (Hechos documentados · Análisis/interpretación · Opinión) visible en cada pieza.
-- **SEO y vista previa al compartir:** las páginas públicas necesitan `title`, `description` y `og:*` sin ejecutar JavaScript; documentar en un ADR el método más simple (mismo enfoque que Huella; coordinar por CCR, no duplicar trabajo).
+- **SEO y vista previa al compartir:** las páginas públicas necesitan `title`, `description` y `og:*` sin ejecutar JavaScript; registrar en `docs/DECISIONS.md` el método más simple (mismo enfoque que Huella; coordinar con el propietario, no duplicar trabajo).
 - **Búsqueda:** MVP con filtro por título/etiqueta; búsqueda de texto completo en etapa posterior.
 - **Endpoints públicos:** anónimos, con límite de tasa y caché corta; nunca devuelven borradores ni piezas archivadas.
 - Auditoría: publicar, archivar, verificar, retirar verificación, correcciones.
@@ -60,7 +60,7 @@ Foros, comentarios, reportes y moderación; flujo formal de aprobación previa; 
 
 ## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
 
-QA escribe `docs/testing/plans/AGORA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. Matriz por rol (anónimo, registrado, autor, revisor, administrador) sobre cada acción de la sección 2; **un autor no puede verificar su propia pieza** (403 `agora.verification.self`).
 2. Borradores y piezas archivadas nunca aparecen en listados, búsqueda, página de pieza ni respuestas públicas.
