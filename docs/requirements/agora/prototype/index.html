@@ -9,6 +9,7 @@
 <!-- Fuentes solo para ver el diseño; en producción van autoalojadas (CSP). Hay respaldo del sistema. -->
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=Source+Serif+4:wght@600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../_shared/devkit.css">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -20,6 +21,7 @@
     <span class="grp" role="group" aria-label="Tamaño del texto"><button data-sz="0" aria-pressed="true" aria-label="Texto normal">A</button><button data-sz="1" aria-pressed="false" aria-label="Texto grande">A+</button><button data-sz="2" aria-pressed="false" aria-label="Texto muy grande">A++</button></span>
     <button id="theme" aria-label="Cambiar tema">Tema</button>
     <button id="calm" aria-pressed="false" title="Oculta la actualidad dura por 24 horas">Modo calma</button>
+    <span id="user"></span>
   </div>
 </header>
 <div class="shell">
@@ -29,6 +31,8 @@
 </div>
 <nav class="tabs" id="tabs" aria-label="Principal móvil"></nav>
 <div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="../../_shared/devkit.js"></script>
+<script src="data.js"></script>
 <script src="app.js"></script>
 <noscript>Este prototipo necesita JavaScript.</noscript>
 </body>

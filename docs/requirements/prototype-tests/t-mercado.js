@@ -1,5 +1,6 @@
 const assert = require("node:assert/strict");
-module.exports = async ({ w, d, $, $$, click, type, text, t }) => {
+module.exports = async ({ w, d, $, $$, click, type, text, t, wait }) => {
+  { const sl = $("#dk-role"); sl.value = "comercial"; sl.dispatchEvent(new w.Event("change", { bubbles: true })); await wait(10); click('[data-nav="mercado"]'); }
   const check = (sel, v) => { const n = $(sel); n.checked = v; n.dispatchEvent(new w.Event("change", { bubbles: true })); };
   const setSel = (sel, v) => { const n = $(sel); n.value = v; n.dispatchEvent(new w.Event("change", { bubbles: true })); };
   const score = (id) => { click('[data-v="pipeline"]'); click(`[data-a="lead"][data-id="${id}"]`); return parseInt($("#sheet .big").textContent, 10); };

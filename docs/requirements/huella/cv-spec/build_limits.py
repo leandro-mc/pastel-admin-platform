@@ -41,7 +41,7 @@ L = lambda chars, per: math.ceil(chars / per)
 LEVELS = {
     "junior": dict(
         label="Junior (0-3 años)", pages=1, font=10.5,
-        summary_chars=180, skills_groups=4, skills_group_chars=90, skills_total=22,
+        summary_chars=270, skills_groups=4, skills_group_chars=90, skills_total=22,
         entries=3, entry_bullet_lines=[5, 3, 0], bullet_max=170, bullet_ideal=(90, 150), bullet_min=55,
         projects=2, project_bullet_lines=[2, 2], project_title_chars=86,
         education=2, education_detail_lines=[1, 0], education_detail_chars=90, extras_lines=2, certs=2,

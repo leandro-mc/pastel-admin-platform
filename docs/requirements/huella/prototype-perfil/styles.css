@@ -1,8 +1,6 @@
 /* Huella · perfil público. Tinta + papel gris frío + UN acento: marcador amarillo.
    Prohibido (ver REQUERIMIENTOS-HUELLA §9.2): morado/degradados, héroe centrado + 3 tarjetas, barras de nivel, glassmorphism, crema+terracota+serif. */
-:root{--paper:#f1f2f4;--ink:#0d1117;--mut:#475060;--rule:#c4cad3;--hl:#ffe14d;--hl-ink:#111}
-@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--paper:#0e1116;--ink:#eceff4;--mut:#a3adbb;--rule:#2a313c}}
-:root[data-theme=dark]{--paper:#0e1116;--ink:#eceff4;--mut:#a3adbb;--rule:#2a313c}
+:root{--paper:light-dark(#f1f2f4,#0e1116);--ink:light-dark(#0d1117,#eceff4);--mut:light-dark(#475060,#a3adbb);--rule:light-dark(#c4cad3,#2a313c);--hl:light-dark(#ffe14d,#ffe14d);--hl-ink:light-dark(#111,#111)}
 *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:1.5rem}@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 body{margin:0;background:var(--paper);color:var(--ink);font:400 1.0625rem/1.6 "Atkinson Hyperlegible",system-ui,sans-serif}
 .skip{position:absolute;left:-99rem}.skip:focus{left:1rem;top:1rem;background:var(--hl);color:var(--hl-ink);padding:.5rem 1rem;z-index:9}
@@ -45,3 +43,11 @@ footer{margin-top:4rem;border-top:1px solid var(--rule);padding-top:1rem;color:v
   .rail nav a{white-space:nowrap;border-left:0}.fps{display:none}.tools{grid-template-columns:1fr}.fact{grid-template-columns:6.5rem 1fr}.ledger li{grid-template-columns:4.2rem 1fr}.top{flex-direction:column-reverse}.fp{align-self:flex-end;width:6.5rem}}
 @media print{:root{--paper:#fff;--ink:#000;--mut:#333;--rule:#999}.rail,.actions,#resaltador,.ghost,#reveal,footer button{display:none!important}.wrap{display:block;padding:0}.fp svg{width:70px}
   a[href]::after{content:" (" attr(href) ")";font-size:.8em}mark.hl{background:none}section{padding-top:1.2rem;break-inside:avoid}}
+
+/* v2: vistas por rol */
+.ownerbar{position:sticky;top:0;z-index:20;background:var(--hl);color:var(--hl-ink);border-bottom:2px solid var(--ink);padding:.6rem 1.25rem;font-size:.92rem}
+.ownerbar b{font-weight:800}.ownerbar .row{display:flex;flex-wrap:wrap;gap:.5rem 1rem;align-items:center}.ownerbar button{font:700 .85rem "Atkinson Hyperlegible",sans-serif;color:var(--hl-ink);background:none;border:2px solid var(--hl-ink);padding:.25rem .7rem;cursor:pointer}
+.ownerbar button:hover{background:var(--hl-ink);color:var(--hl)}.ownerbar label{display:inline-flex;gap:.35rem;align-items:center}
+.gone{max-width:34rem;margin:18vh auto;padding:0 1.25rem}.gone h1{font:850 clamp(2rem,6vw,3rem)/1 "Archivo",sans-serif;font-stretch:125%}
+.atsview{max-width:50rem;margin:2rem auto;padding:0 1.25rem}.atsview pre{white-space:pre-wrap;font:.85rem/1.5 ui-monospace,Menlo,Consolas,monospace;border:2px solid var(--ink);padding:1rem}
+[hidden]{display:none!important}

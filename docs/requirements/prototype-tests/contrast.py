@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verifica el contraste WCAG 2.x de los pares texto/fondo de las paletas de los prototipos.
+"""Verifica el contraste WCAG 2.x de los pares texto/fondo de las paletas de los prototipos (v2: incluye Estudio, CV, Cosecha unificado y barra de desarrollo).
 Texto normal >= 4.5:1 (AA). Componentes de interfaz y texto grande >= 3:1.
 Uso: python3 contrast.py   (código de salida != 0 si algún par falla)"""
 import sys
@@ -47,6 +47,19 @@ PAIRS = [
     ("Estudio oscuro", "medidor tramo 1", "#111111", "#eceff4", T), ("Estudio oscuro", "medidor tramo 2", "#111111", "#c5cbd6", T), ("Estudio oscuro", "medidor tramo 3", "#111111", "#9aa3b2", T),
     ("Estudio oscuro", "medidor tramo 4", "#ffffff", "#3c4452", T), ("Estudio oscuro", "medidor tramo 5", "#ffffff", "#2b3340", T), ("Estudio oscuro", "medidor tramo 6", "#ffffff", "#1d242e", T),
     ("Estudio", "medidor tramo 7 (marcador)", "#111111", "#ffe14d", T),
+    # ── v2: paletas nuevas ──
+    ("Estudio claro", "etiqueta de respaldo (ok sobre ok-bg)", "#0b6b3a", "#dff3e6", T), ("Estudio oscuro", "etiqueta de respaldo (ok sobre ok-bg)", "#6fd49c", "#12301f", T),
+    ("Estudio claro", "etiqueta de aviso (warn sobre warn-bg)", "#7d4a00", "#fdf0d6", T), ("Estudio oscuro", "etiqueta de aviso (warn sobre warn-bg)", "#f0c070", "#3a2d12", T),
+    ("Estudio claro", "texto secundario sobre papel", "#4b5563", "#f1f2f4", T), ("Estudio claro", "error sobre papel", "#a4161a", "#f1f2f4", T), ("Estudio oscuro", "error sobre papel", "#ff9b9b", "#0e1116", T),
+    ("CV (PDF/vista previa)", "acento sobre blanco (nombre y títulos)", "#0f4c5c", "#ffffff", T), ("CV (PDF/vista previa)", "texto principal sobre blanco", "#1b1f23", "#ffffff", T), ("CV (PDF/vista previa)", "texto apagado (fechas) sobre blanco", "#4a5560", "#ffffff", T),
+    ("Cosecha claro", "texto sobre superficie suave", "#17201b", "#e8efe9", T), ("Cosecha claro", "encabezado de tabla (mut sobre soft)", "#55625a", "#e8efe9", T), ("Cosecha oscuro", "texto sobre superficie suave", "#eaf0ec", "#222d26", T), ("Cosecha oscuro", "encabezado de tabla (mut sobre soft)", "#a9b6ae", "#222d26", T),
+    ("Cosecha claro", "texto secundario sobre fondo", "#55625a", "#f3f5f1", T), ("Cosecha oscuro", "texto secundario sobre fondo", "#a9b6ae", "#121714", T),
+    ("Cosecha claro", "burbuja propia (ink sobre ok-bg)", "#17201b", "#dff0e6", T), ("Cosecha oscuro", "burbuja propia (ink sobre ok-bg)", "#eaf0ec", "#183a28", T),
+    ("Cosecha claro", "interruptor activo (texto sobre ink)", "#f3f5f1", "#17201b", T), ("Cosecha oscuro", "interruptor activo (texto sobre ink)", "#121714", "#eaf0ec", T),
+    ("Cosecha claro", "enlace sobre fondo", "#1d6a43", "#f3f5f1", T), ("Cosecha oscuro", "enlace sobre fondo", "#5fc08a", "#121714", T),
+    ("Cosecha oscuro", "aviso (pill) sobre warn-bg", "#f1bf6a", "#3a2e13", T),
+    ("Barra de desarrollo", "claro: texto sobre franja 1", "#4a3b00", "#fff3bf", T), ("Barra de desarrollo", "claro: texto sobre franja 2", "#4a3b00", "#fff9db", T), ("Barra de desarrollo", "oscuro: texto sobre franja 1", "#f6e7a0", "#3b3410", T), ("Barra de desarrollo", "oscuro: texto sobre franja 2", "#f6e7a0", "#2f2a0d", T),
+    ("Huella perfil", "barra de propietaria (tinta sobre amarillo)", "#111111", "#ffe14d", T),
 ]
 
 def main():

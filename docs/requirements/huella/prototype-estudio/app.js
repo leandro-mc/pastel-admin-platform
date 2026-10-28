@@ -1,248 +1,189 @@
-/* Huella · Estudio (prototipo). La IA está SIMULADA (selección determinista + variantes corta/larga). Todo lo demás es la lógica real propuesta:
-   límites de cv-spec/limits.json, presupuesto de líneas, escalera de ajuste, guardián de verdad y reporte ATS. Persona FICTICIA. */
-(() => {
-  const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-  const fold = (s) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
-  const ln = (n, c) => Math.max(1, Math.ceil(n / c));
+/* Huella · Estudio v2 (prototipo). La IA está SIMULADA: derivación por reglas + el motor verificado de engine.js.
+   Todo lo escrito en el Banco es PRIVADO. Globales que usa engine.js: S y BANK. */
+const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const clone = (o) => JSON.parse(JSON.stringify(o)), words = (t) => (t || "").trim().split(/\s+/).filter(Boolean).length;
+const SEED = window.HUELLA_SEED, GUIDES = window.HUELLA_GUIDES;
+const EMPTY = () => ({ contacto: { name: "", headline: "", city: "", email: "", phone: "", linkedin: "", github: "" }, historia: "", exps: [], skills: [], projects: [], edu: [], certs: [], langs: [], otros: [], privado: { ubicacion: "", modalidad: "", disponibilidad: "", autorizacion: "", pretension: "", evitar: "" }, voz: "" });
+let B = clone(SEED), BANK = null;
+const S = { tab: "banco", sec: "exps", role: "owner", paper: "letter", level: "mid", mode: "oferta", focus: "Enfocado a QA y automatización; destaco CI/CD y pruebas de API.", offer: window.HUELLA_OFFER, prov: "gemini", tier: "fast", pii: true, over: true, map: null, hard: null, steps: [], res: null, ed: null, edErr: "", pv: "page", cvs: 0, saved: "" };
+const NOW = 2026;
 
-  // ── Límites verificados (docs/requirements/huella/cv-spec/limits.json) ──
-  const BASE = {
-    junior: { label: "Junior (0–3 años)", pages: 1, sum: 180, groups: 4, gchars: 90, skills: 22, entries: 3, lines: [5, 3, 0], bmax: 170, proj: 2, pl: [2, 2] },
-    mid: { label: "Mid-level (3–8 años)", pages: 2, sum: 270, groups: 5, gchars: 180, skills: 30, entries: 5, lines: [9, 8, 6, 4, 2], bmax: 175, proj: 2, pl: [3, 3] },
-    senior: { label: "Senior (8+ años)", pages: 2, sum: 380, groups: 6, gchars: 180, skills: 38, entries: 6, lines: [11, 9, 7, 5, 3, 0], bmax: 180, proj: 1, pl: [3] },
-  };
-  const PAPER = { letter: { junior: [50, 93, 91], mid: [97, 93, 91], senior: [101, 98, 95] }, a4: { junior: [53, 90, 88], mid: [103, 90, 88], senior: [109, 95, 92] } };
-  const BANNED = ["profesional apasionado", "orientado a resultados", "proactivo", "responsable de", "results-driven", "team player", "dinámico"];
-
-  // ── Banco de evidencia (ficticio). short ≤ 110 (1 línea) · long ≤ 170 (2 líneas) ──
-  const A = (id, short, long, skills, strength) => ({ id, short, long, skills, strength });
-  const BANK = {
-    name: "Marta Solís Araya", headline: "QA Engineer / Desarrolladora Fullstack", contact: ["marta.ejemplo@correo.test", "+506 8888-0000", "Heredia, Costa Rica"],
-    exps: [
-      { id: "e1", role: "QA Automation Engineer", company: "Empresa Ejemplo S.A.", loc: "San José, CR", from: "Mar 2022", to: "Presente", ach: [
-        A("a1", "Automaticé 140 pruebas E2E con Playwright; la regresión manual bajó de 2 días a 3 horas.", "Automaticé 140 pruebas end-to-end con Playwright y reduje la regresión manual de 2 días a 3 horas antes de cada versión.", ["Playwright", "E2E"], 5),
-        A("a2", "Integré las pruebas a GitHub Actions; los fallos por despliegue bajaron 35 % en seis meses.", "Integré las pruebas a GitHub Actions como puerta de despliegue; los fallos por despliegue bajaron 35 % en seis meses.", ["GitHub Actions", "CI/CD"], 5),
-        A("a3", "Pruebas de carga con k6 sobre 12 endpoints críticos antes de la versión 3.", "Diseñé pruebas de carga con k6 sobre 12 endpoints críticos de la API antes del lanzamiento de la versión 3.", ["k6", "API"], 4),
-        A("a4", "Definí la estrategia de regresión de 3 equipos con un tablero de calidad semanal.", "Definí la estrategia de pruebas de regresión de 3 equipos y un tablero de calidad semanal que producto usa en su revisión.", ["Estrategia de pruebas", "Liderazgo"], 4),
-        A("a5", "Mentoría a 2 personas junior en automatización de pruebas.", "Acompañé como mentora a 2 personas junior en automatización de pruebas; ambas pasaron a mantener sus propias suites.", ["Mentoría"], 3),
-        A("a6", "Reduje 40 % el tiempo de la suite al paralelizar la ejecución en CI.", "Reduje 40 % el tiempo de ejecución de la suite al paralelizarla en CI, de 25 a 15 minutos por cambio.", ["CI/CD", "Playwright"], 4),
-      ] },
-      { id: "e2", role: "Desarrolladora Fullstack", company: "Estudio Demo", loc: "Heredia, CR", from: "Jun 2020", to: "Feb 2022", ach: [
-        A("a7", "Elevé la cobertura de pruebas del 38 % al 71 % con pruebas unitarias y de integración.", "Elevé la cobertura de pruebas del 38 % al 71 % escribiendo pruebas unitarias y de integración en C# y TypeScript.", ["C#", "TypeScript"], 4),
-        A("a8", "Construí un módulo de reservas en C# y React usado por 8 clientes.", "Construí un módulo de reservas en C# y React que hoy usan 8 clientes, con confirmación automática por correo.", ["C#", "React"], 4),
-        A("a9", "Diseñé una API REST con 20 endpoints documentados con OpenAPI.", "Diseñé una API REST con 20 endpoints documentados con OpenAPI, consumida por la aplicación web y la móvil.", ["API", "C#"], 3),
-      ] },
-      { id: "e3", role: "Practicante de desarrollo", company: "Startup Piloto", loc: "Heredia, CR", from: "Ene 2019", to: "Dic 2019", ach: [
-        A("a10", "Automaticé reportes semanales en Python que ahorraban 4 horas de trabajo manual.", "Automaticé reportes semanales en Python que ahorraban 4 horas de trabajo manual al equipo de operaciones.", ["Python"], 3),
-        A("a11", "Corregí 30 defectos del backlog como primera experiencia en pruebas.", "Corregí 30 defectos del backlog y escribí mis primeros casos de prueba manuales para el equipo.", ["Pruebas manuales"], 2),
-      ] },
-    ],
-    projects: [
-      { id: "p1", name: "Bitácora de calidad", stack: "TypeScript, Playwright, GitHub Actions", ach: [A("a12", "Panel open source que agrupa fallos de pruebas por causa raíz; 120 estrellas en GitHub.", "Panel open source que agrupa fallos de pruebas por causa raíz; alcanzó 120 estrellas en GitHub y 4 contribuciones externas.", ["TypeScript", "Playwright"], 4)] },
-      { id: "p2", name: "Reportero de pruebas", stack: "Python, PDF", ach: [A("a13", "Script que genera cada semana el reporte de calidad en PDF a partir de los resultados.", "Script que genera cada semana el reporte de calidad en PDF a partir de los resultados de las pruebas del equipo.", ["Python"], 2)] },
-    ],
-    skills: [["Playwright", "Pruebas"], ["Cypress", "Pruebas"], ["Postman", "Pruebas"], ["k6", "Pruebas"], ["E2E", "Pruebas"], ["API", "Pruebas"], ["Estrategia de pruebas", "Pruebas"], ["TypeScript", "Lenguajes"], ["C#", "Lenguajes"], ["Python", "Lenguajes"], ["SQL", "Lenguajes"], ["React", "Frameworks y herramientas"], ["GitHub Actions", "Frameworks y herramientas"], ["CI/CD", "Frameworks y herramientas"], ["Docker", "Frameworks y herramientas"], ["Git", "Frameworks y herramientas"], ["Jira", "Frameworks y herramientas"], ["Mentoría", "Prácticas"]].map(([n, c]) => ({ n, c })),
-    edu: [{ degree: "Bachillerato en Ingeniería Informática", school: "Universidad Ejemplo", dates: "2016 - 2020", detail: "Énfasis en ingeniería de software." }],
-    extras: ["ISTQB Foundation Level (2023)", "Español: nativo | Inglés: B2 (lectura técnica avanzada)"],
-  };
-  const OFFER = "QA Automation Engineer — Fintech Ejemplo (remoto, Costa Rica)\nBuscamos una persona con experiencia en automatización de pruebas end-to-end con Playwright o Cypress, integración en CI/CD con GitHub Actions, pruebas de API y de carga (k6 o JMeter) y conocimientos de Docker y Kubernetes. Inglés técnico.\nValoramos: mentoría a personas junior, estrategia de pruebas de regresión y experiencia con TypeScript.";
-  const KNOWN = [["Playwright", ["playwright"]], ["Cypress", ["cypress"]], ["E2E", ["e2e", "end-to-end"]], ["CI/CD", ["ci/cd", "github actions", "pipeline"]], ["GitHub Actions", ["github actions"]], ["API", ["api", "endpoints"]], ["k6", ["k6"]], ["JMeter", ["jmeter"]], ["Docker", ["docker"]], ["Kubernetes", ["kubernetes", "k8s"]], ["TypeScript", ["typescript"]], ["C#", ["c#"]], ["React", ["react"]], ["Python", ["python"]], ["SQL", ["sql", "postgres"]], ["Mentoría", ["mentoria", "mentor"]], ["Estrategia de pruebas", ["estrategia de pruebas", "estrategia de regresion"]], ["Inglés", ["ingles", "english"]]];
-  const ADJ = { Kubernetes: "Docker", JMeter: "k6", Cypress: "Playwright" };
-  const PROV = { gemini: { n: "Gemini", m: { fast: "Flash-Lite (gratuito)", bal: "Flash (gratuito)", best: null }, rpm: 10, free: true }, openai: { n: "OpenAI", m: { fast: "mini (vigente)", bal: "estándar (vigente)", best: "superior (vigente)" }, rpm: 60 }, anthropic: { n: "Anthropic (Claude)", m: { fast: "claude-haiku-5-5", bal: "claude-sonnet-5-5", best: "claude-opus-5-5" }, rpm: 50 }, manual: { n: "Modo manual (copiar y pegar)", m: { fast: "cualquier chat", bal: "cualquier chat", best: "cualquier chat" }, rpm: 0 } };
-
-  const S = { tab: "generar", paper: "letter", level: "mid", mode: "oferta", focus: "Enfocado a QA y automatización; destaco CI/CD y pruebas de API.", offer: OFFER, prov: "gemini", tier: "fast", pii: true, over: true, map: null, steps: [], res: null, ed: null, edErr: "" };
-  const lim = () => { const b = BASE[S.level], [cap, cpl, bul] = PAPER[S.paper][S.level]; return { ...b, cap, cpl, bul }; };
-  const ACH = () => [...BANK.exps.flatMap((e) => e.ach), ...BANK.projects.flatMap((p) => p.ach)];
-  const synOf = (t) => (KNOWN.find((k) => k[0] === t) || [t, [fold(t)]])[1].map(fold);
-  const nums = (s) => (s.match(/\d+(?:[.,]\d+)?/g) || []);
-
-  // ── Análisis de la oferta (simula la llamada job_analysis) y mapa de evidencia ──
-  const analyze = (text, focus) => {
-    const f = fold(text), cut = focus ? -1 : f.search(/valoramos|deseable|nice to have/);
-    const terms = KNOWN.map(([t, syn]) => { const idx = Math.min(...syn.map((s) => { const i = f.indexOf(s); return i < 0 ? 1e9 : i; })); return idx < 1e9 ? { t, w: cut > -1 && idx > cut ? 1 : 3 } : null; }).filter(Boolean);
-    return { title: focus ? "Perfil enfocado" : text.split("\n")[0].trim().slice(0, 70), terms };
-  };
-  const evid = (t) => {
-    const syn = synOf(t), hits = ACH().filter((a) => a.skills.some((s) => syn.includes(fold(s))) || syn.some((s) => fold(a.short + " " + a.long).includes(s)));
-    if (hits.length) return { st: "ok", n: hits.length };
-    if (t === "Inglés") return { st: "ok", n: 1, note: "idiomas" };
-    if (BANK.skills.some((s) => syn.includes(fold(s.n)))) return { st: "part", n: 0, note: "figura en habilidades, sin logro que lo respalde" };
-    if (ADJ[t] && evid(ADJ[t]).st === "ok") return { st: "part", n: 0, note: "adyacente: " + ADJ[t] };
-    return { st: "gap", n: 0 };
-  };
-  const score = (a, r, terms) => { const f = fold(a.short + " " + a.long + " " + a.skills.join(" ")); let s = a.strength * 0.5 - r * 0.3; terms.forEach(({ t, w }) => { if (synOf(t).some((x) => f.includes(x))) s += w; }); return s; };
-
-  // ── Borrador por sección (simula las llamadas a la IA; puede pasarse de largo) ──
-  const draft = (L, terms, over) => {
-    const exps = BANK.exps.slice(0, L.entries).map((e, r) => {
-      const budget = L.lines[r] || 0, cap = over && budget ? Math.ceil(budget * 1.4) + 1 : budget; let used = 0; const bl = [];
-      e.ach.map((a) => ({ a, sc: score(a, r, terms) })).sort((x, y) => y.sc - x.sc).forEach(({ a, sc }) => {
-        const l = ln(a.long.length, L.bul), ls = ln(a.short.length, L.bul);
-        if (cap && used + l <= cap) { bl.push({ id: a.id, text: a.long, sh: a.short, v: "larga", sc }); used += l; } else if (cap && used + ls <= cap) { bl.push({ id: a.id, text: a.short, sh: a.short, v: "corta", sc }); used += ls; }
-      });
-      return { role: e.role, company: e.company, loc: e.loc, dates: `${e.from} - ${e.to}`, budget, bl };
-    });
-    const projects = BANK.projects.map((p, i) => ({ p, sc: Math.max(...p.ach.map((a) => score(a, 0, terms))) })).sort((x, y) => y.sc - x.sc).slice(0, L.proj)
-      .map(({ p }, i) => ({ name: p.name, stack: p.stack, budget: L.pl[i], bl: p.ach.map((a) => ({ id: a.id, text: ln(a.long.length, L.bul) <= L.pl[i] ? a.long : a.short, sh: a.short, v: "larga", sc: score(a, 0, terms) })) }));
-    const rel = (n) => (terms.some(({ t }) => synOf(t).includes(fold(n))) ? 1 : 0), ev = (n) => ACH().filter((a) => a.skills.includes(n)).length, cats = {};
-    BANK.skills.forEach((s) => (cats[s.c] = cats[s.c] || []).push(s.n));
-    let total = 0;
-    const skills = Object.entries(cats).map(([c, items]) => ({ c, items: items.sort((x, y) => rel(y) - rel(x) || ev(y) - ev(x)), r: Math.max(...items.map(rel)) })).sort((x, y) => y.r - x.r).slice(0, L.groups).map((g) => {
-      const its = []; g.items.forEach((n) => { if (total < L.skills && (c => c.length + 2 + [...its, n].join(", ").length <= L.gchars)(g.c)) { its.push(n); total++; } }); return { line: `${g.c}: ${its.join(", ")}` };
-    });
-    const top = terms.map((x) => x.t).filter((t) => evid(t).st === "ok" && !["Inglés", "API", "E2E"].includes(t)).slice(0, 3);
-    let sum = `QA y desarrolladora con 5 años automatizando pruebas de APIs y web. Experiencia comprobada con ${top.join(", ") || "automatización de pruebas"}${terms.some((x) => x.t === "Mentoría") ? " y mentoría de personas junior" : ""}.`;
-    if (over && sum.length < L.sum + 60) sum += " Trabajo cerca de producto para detectar fallos antes de producción y medir su impacto con datos.";
-    return { summary: sum, skills, exps, projects, edu: BANK.edu.map((e) => ({ ...e, detail: S.level === "junior" ? e.detail : S.level === "mid" ? e.detail : "" })), extras: BANK.extras.slice(), refs: top };
-  };
-  const luOf = (cv, L) => ({
-    header: 5.5, summary: 2 + ln(cv.summary.length, L.cpl), skills: 2 + cv.skills.reduce((a, g) => a + ln(g.line.length, L.cpl), 0),
-    experience: 2 + cv.exps.reduce((a, e) => a + 1.5 + e.bl.reduce((b, x) => b + ln(x.text.length, L.bul), 0), 0),
-    projects: cv.projects.length ? 2 + cv.projects.reduce((a, p) => a + 1.5 + p.bl.reduce((b, x) => b + ln(x.text.length, L.bul), 0), 0) : 0,
-    education: 2 + cv.edu.reduce((a, e) => a + 1.5 + (e.detail ? ln(e.detail.length, L.cpl) : 0), 0), extras: 2 + cv.extras.reduce((a, x) => a + ln(x.length, L.cpl), 0),
+// ── Derivación: del relato largo a logros (XYZ) — simulada con reglas; en producción la hace la IA con el mismo contrato ──
+const VERBS = /^(también\s+)?(automaticé|integré|diseñé|construí|reduje|definí|acompañé|elevé|corregí|escribí|creé|optimicé|documenté|coordiné|mejoré|desarrollé|configuré|implementé|migré|lideré|ayudé|publiqué|presenté|capacité|analicé|gestioné|negocié|organicé|aumenté|logré|establecí|resolví)(?![\p{L}])/iu;
+const STOP = new Set("de la el y en a con que los las un una por para al del antes como se su sus propia propias propio propios misma mismo".split(" "));
+const sentences = (t) => (t || "").replace(/\n+/g, " ").split(/(?<=[.!?])\s+(?=[A-ZÁÉÍÓÚÑ¿¡«])/).map((s) => s.trim()).filter((s) => s.length >= 20);
+const tidy = (s, max) => { let t = s; if (t.length > max - 1) { const sc = t.indexOf(";"), pre = t.slice(0, sc), post = t.slice(sc + 1); if (sc >= 45 && sc <= max - 1 && (/\d/.test(pre) || !/\d/.test(post))) t = pre; else { t = t.slice(0, max - 1); t = t.slice(0, t.lastIndexOf(" ")); } } const w = t.split(" "); while (w.length > 3 && STOP.has(fold(w[w.length - 1]))) w.pop(); return w.join(" ").replace(/[;,:]$/, "") + "."; };
+function extract(text, kind, eid) {
+  return sentences(text).map((s, i) => ({ s, i })).filter(({ s }) => kind === "proj" || VERBS.test(s.replace(/^[«"]/, ""))).map(({ s, i }) => {
+    const c = s.replace(/\s+/g, " ").replace(/\.$/, ""), dig = /\d/.test(c), f = fold(c);
+    return { id: `a-${eid}-${i + 1}`, short: tidy(c, 110), long: tidy(c, 170), skills: KNOWN.filter(([, syn]) => syn.some((x) => f.includes(x))).map(([t]) => t), strength: dig ? (/%|horas|días|minutos|semanas|clientes|personas|estrellas/.test(c) ? 5 : 4) : 2, noFigure: !dig };
   });
-  const total = (cv, L) => Object.values(luOf(cv, L)).reduce((a, b) => a + b, 0);
+}
+function deriveBank(b) {
+  const c = b.contacto;
+  return { name: c.name, headline: c.headline, contact_l1: [c.city, c.email, c.phone].filter(Boolean), contact_l2: [c.linkedin, c.github].filter(Boolean),
+    exps: b.exps.map((e) => ({ id: e.id, role: e.role, company: e.company, loc: e.loc, from: e.from, to: e.to, ach: extract(e.text, "exp", e.id) })),
+    projects: b.projects.map((p) => ({ id: p.id, name: p.name, stack: (p.how || "").split(".")[0].replace(/\s+y\s+/g, ", "), ach: extract(p.what, "proj", p.id) })),
+    skills: b.skills.map((s) => ({ n: s.n, c: s.c || "Otras" })), edu: b.edu.map((e) => ({ degree: e.degree, school: e.school, dates: `${e.from} - ${e.to}`, detail: e.note || "" })),
+    extras: [...b.certs.map((x) => `${x.name}${x.date ? ` (${x.date})` : ""}`), b.langs.map((l) => `${l.lang}: ${l.level}`).join(" | ")].filter(Boolean) };
+}
+const yearsPro = () => { const ys = B.exps.filter((e) => !/practicante/i.test(e.role)).map((e) => +(e.from || "").slice(-4)).filter(Boolean); return ys.length ? NOW - Math.min(...ys) : 0; };
+const suggest = () => { const y = yearsPro(); return y < 3 ? "junior" : y < 8 ? "mid" : "senior"; };
+const LV = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
+function hardFilters(txt) {
+  const rows = [], P = B.privado, f = fold(txt); let m;
+  if ((m = txt.match(/(\d+)\s*años?\s+de\s+experiencia\s+en\s+([^;.\n]+)/i))) { const need = +m[1], since = Math.min(...B.skills.filter((s) => s.c === "Pruebas" && s.since).map((s) => s.since)), mine = isFinite(since) ? NOW - since : 0, ok = mine >= need; rows.push([`${need} años de experiencia en ${m[2].trim()}`, `${mine} años (desde ${isFinite(since) ? since : "—"}, según sus habilidades de pruebas)`, ok ? "ok" : "no", ok ? "Cumple." : "No cumple: considere no aplicar, o explique experiencia equivalente con evidencia real."]); }
+  if (/remot/.test(f)) { const ok = /remot/i.test(P.modalidad); rows.push(["Trabajo remoto", P.modalidad || "—", ok ? "ok" : "no", ok ? "Cumple." : "Su preferencia no es remoto: responda con honestidad."]); }
+  if (/costa rica/.test(f)) { const ok = /costa rica/i.test(P.ubicacion); rows.push(["Ubicación: Costa Rica", P.ubicacion || "—", ok ? "ok" : "no", ok ? "Cumple." : "Revise la ubicación y la autorización de trabajo."]); }
+  if ((m = txt.match(/ingl[eé]s[^.\n]*?\b(A1|A2|B1|B2|C1|C2)\b/i))) { const need = m[1].toUpperCase(), mine = ((B.langs.find((l) => /ingl/i.test(l.lang)) || {}).level || "—"), ok = (LV[mine.toUpperCase()] || 0) >= LV[need]; rows.push([`Inglés ${need}`, mine, ok ? "ok" : "no", ok ? "Cumple." : "Nivel insuficiente o sin declarar."]); }
+  if (/bachillerato|licenciatura|grado universitario/i.test(txt)) { const e = B.edu.find((x) => /bachillerato|licenciatura/i.test(x.degree)); rows.push(["Título universitario", e ? e.degree : "—", e ? "ok" : "no", e ? "Cumple." : "Falta el título en el banco."]); }
+  return rows;
+}
 
-  // ── Escalera de ajuste (HUELLA §7.6): el conteo del compilador es la verdad; aquí, el presupuesto de líneas ──
-  const ladder = (cv, L) => {
-    const log = [`Borrador de la IA: ${total(cv, L)} LU frente a un cupo de ${L.cap} LU (${L.pages} pág.).`], lines = (e) => e.bl.reduce((b, x) => b + ln(x.text.length, L.bul), 0);
-    if (cv.summary.length > L.sum) { const cut = cv.summary.slice(0, L.sum + 1).replace(/\s+\S*$/, ""); log.push(`Paso 1 · Perfil: comprimido de ${cv.summary.length} a ${cut.length + 1} caracteres (tope ${L.sum}).`); cv.summary = cut.replace(/[.,;]$/, "") + "."; }
-    cv.exps.forEach((e) => { while (lines(e) > e.budget) {
-      const low = e.bl.slice().sort((a, b) => a.sc - b.sc), sw = low.find((x) => x.v === "larga" && ln(x.sh.length, L.bul) < ln(x.text.length, L.bul));
-      if (sw) { log.push(`Paso 1 · ${e.company}: variante corta para ${sw.id} (${ln(sw.text.length, L.bul)}→${ln(sw.sh.length, L.bul)} líneas).`); sw.text = sw.sh; sw.v = "corta"; continue; }
-      if (e.bl.length > 1) { const d = low[0]; e.bl.splice(e.bl.indexOf(d), 1); log.push(`Paso 2 · ${e.company}: se retira ${d.id}, la viñeta menos relevante (puntuación ${d.sc.toFixed(1)}).`); continue; }
-      break; } });
-    let guard = 40;
-    while (total(cv, L) > L.cap && guard--) {
-      if (cv.projects.length > 1) { const p = cv.projects.pop(); log.push(`Paso 3 · se retira el proyecto «${p.name}».`); }
-      else if (cv.skills.some((g) => g.line.split(", ").length > 3)) { const g = cv.skills.filter((x) => x.line.split(", ").length > 3).pop(); g.line = g.line.replace(/, [^,]+$/, ""); log.push("Paso 3 · se recorta la última habilidad de un grupo."); }
-      else break;
-    }
-    if (total(cv, L) > L.cap) log.push("Paso 5 · FALLA con guía: aún excede el cupo; se pedirá al candidato quitar contenido. No se reduce la fuente bajo 10 pt.");
-    else log.push(`Resultado: ${total(cv, L)} LU ≤ ${L.cap} LU. Cupo garantizado${log.length === 1 ? " sin ajustes" : ""}.`);
-    return log;
-  };
+// ── Utilidades de edición (enlace por ruta: data-p="exps.0.text") ──
+const getP = (o, p) => p.split(".").reduce((a, k) => (a == null ? a : a[k]), o), setP = (o, p, v) => { const k = p.split("."), last = k.pop(); k.reduce((a, x) => a[x], o)[last] = v; };
+const F = (p, l, o = {}) => `<label class="f">${l}<input type="${o.type || "text"}" data-p="${p}" value="${esc(getP(B, p))}" ${o.ph ? `placeholder="${esc(o.ph)}"` : ""}></label>`;
+const T = (p, l, o = {}) => `<label class="f">${l}<textarea class="${o.big ? "big" : ""}" data-p="${p}" ${o.ph ? `placeholder="${esc(o.ph)}"` : ""}>${esc(getP(B, p))}</textarea></label><div class="cnt" data-w="${p}">${words(getP(B, p))} palabras</div>`;
+const guide = (k) => (GUIDES[k] ? `<details class="guide" ${B.exps.length || B.historia ? "" : "open"}><summary><b>Preguntas para recordar mejor</b></summary><ul>${GUIDES[k].map((q) => `<li>${esc(q)}</li>`).join("")}</ul></details>` : "");
+const head = (k, i, t) => `<div class="hd"><b>${esc(t || "(sin título)")}</b><button class="btn sm" data-a="del" data-k="${k}" data-i="${i}" aria-label="Quitar">Quitar</button></div>`;
+const add = (k, t) => `<p><button class="btn" data-a="add" data-k="${k}">+ ${t}</button></p>`;
 
-  const atsText = (cv) => [BANK.name, BANK.headline, BANK.contact.join("  |  "), "", "Perfil profesional", cv.summary, "", "Habilidades técnicas", ...cv.skills.map((g) => g.line), "", "Experiencia laboral",
-    ...cv.exps.flatMap((e) => [`${e.role}, ${e.company}, ${e.loc}   ${e.dates}`, ...e.bl.map((b) => "• " + b.text), ""]),
-    ...(cv.projects.length ? ["Proyectos", ...cv.projects.flatMap((p) => [`${p.name} | ${p.stack}`, ...p.bl.map((b) => "• " + b.text)]), ""] : []),
-    "Educación", ...cv.edu.flatMap((e) => [`${e.degree}, ${e.school}   ${e.dates}`, ...(e.detail ? [e.detail] : [])]), "", "Certificaciones e idiomas", ...cv.extras].join("\n");
-  const srcNums = (id) => { const a = ACH().find((x) => x.id === id); return new Set(nums(a.short + " " + a.long)); };
-  const validate = (text, id, L) => {
-    if (text.length > L.bmax) return `Excede el tope duro (${text.length}/${L.bmax} caracteres).`;
-    const src = srcNums(id), bad = nums(text).find((n) => !src.has(n)); if (bad) return `Cifra nueva «${bad}» sin respaldo en el banco: agréguela al logro y márquela como verificada.`;
-    const b = BANNED.find((x) => fold(text).includes(fold(x))); return b ? `Frase prohibida: «${b}».` : "";
-  };
-  const checks = (cv, L, map) => {
-    const txt = atsText(cv), bl = [...cv.exps.flatMap((e) => e.bl), ...cv.projects.flatMap((p) => p.bl)], tot = total(cv, L);
-    return [
-      ["Una columna, sin tablas, iconos ni imágenes", true, "garantizado por la plantilla"], ["Encabezados estándar y contacto en el cuerpo", /Experiencia laboral/.test(txt) && txt.includes(BANK.contact[0]), ""],
-      ["Fecha en la misma línea que cargo y empresa", cv.exps.every((e) => txt.split("\n").some((l) => l.startsWith(e.role) && l.includes(e.dates))), ""], ["Sin ligaduras Unicode (ﬁ ﬂ ﬀ)", !/[\ufb00-\ufb06]/.test(txt), ""],
-      [`Dentro del cupo de páginas (${tot} de ${L.cap} LU)`, tot <= L.cap, ""], [`Ninguna viñeta supera el tope duro (${L.bmax})`, bl.every((b) => b.text.length <= L.bmax), ""],
-      ["Sin frases prohibidas", !BANNED.some((b) => fold(txt).includes(fold(b))), ""], ["Cada viñeta cita su logro de origen (sourceIds)", bl.every((b) => b.id), ""],
-      ["Todas las cifras existen en el banco", bl.every((b) => nums(b.text).every((n) => srcNums(b.id).has(n))), ""], ["Ninguna habilidad inventada (todas están en el banco)", cv.skills.every((g) => g.line.split(": ")[1].split(", ").every((s) => BANK.skills.some((k) => k.n === s))), ""],
-    ];
-  };
+const SECS = [["historia", "Mi historia"], ["exps", "Experiencia"], ["skills", "Habilidades y por qué"], ["projects", "Proyectos"], ["edu", "Educación"], ["certs", "Certificados"], ["langs", "Idiomas"], ["otros", "Otros (voluntariado, charlas…)"], ["privado", "Privado: filtros y preferencias"], ["voz", "Mi voz"], ["contacto", "Datos del encabezado"]];
+function secStatus(id) {
+  const n = (a) => a.length, ok = (t) => [t, "ok"], no = (t) => [t, "no"];
+  switch (id) {
+    case "historia": { const w = words(B.historia); return w >= 40 ? ok(`${w} pal.`) : no(w ? `${w} pal. · poco` : "vacío"); }
+    case "exps": { const w = B.exps.reduce((a, e) => a + words(e.text), 0); return n(B.exps) && w >= 60 ? ok(`${n(B.exps)} · ${w} pal.`) : no(n(B.exps) ? "cuente más" : "vacío"); }
+    case "skills": { const miss = B.skills.filter((s) => !(s.why || "").trim()).length; return n(B.skills) && !miss ? ok(`${n(B.skills)}`) : no(n(B.skills) ? `${miss} sin «por qué»` : "vacío"); }
+    case "projects": return n(B.projects) ? ok(`${n(B.projects)}`) : no("opcional");
+    case "edu": return n(B.edu) ? ok(`${n(B.edu)}`) : no("vacío");
+    case "certs": return n(B.certs) ? ok(`${n(B.certs)}`) : no("opcional");
+    case "langs": return n(B.langs) ? ok(`${n(B.langs)}`) : no("vacío");
+    case "otros": return n(B.otros) ? ok(`${n(B.otros)}`) : no("opcional");
+    case "privado": return B.privado.ubicacion && B.privado.modalidad ? ok("completo") : no("faltan datos");
+    case "voz": return words(B.voz) >= 10 ? ok("definida") : no("opcional");
+    default: return B.contacto.name && B.contacto.email ? ok("completo") : no("falta nombre o correo");
+  }
+}
+const snav = () => SECS.map(([id, l]) => { const [t, c] = secStatus(id); return `<button data-a="sec" data-id="${id}" aria-current="${S.sec === id}">${esc(l)}<span class="st ${c}">${esc(t)}</span></button>`; }).join("");
+const derivedExp = (e) => {
+  const at = extract(e.text, "exp", e.id), tools = [...new Set(at.flatMap((a) => a.skills))], nf = at.filter((a) => a.noFigure);
+  return `<summary><b>Lo que el sistema entiende de este relato</b> · ${at.length} logros · ${at.length - nf.length} con cifra${nf.length ? ` · <span class="tag w">${nf.length} sin cifra</span>` : ""}</summary>
+  ${tools.length ? `<p>${tools.map((t) => `<span class="tag k">${esc(t)}</span>`).join("")}</p>` : ""}
+  ${at.map((a) => `<div class="atom"><span class="mut">${a.id}</span> ${a.noFigure ? '<span class="tag w">sin cifra</span>' : ""}<br>${esc(a.long)}${a.noFigure ? `<br><span class="mut"><b>El sistema le preguntará:</b> ¿cuánto tiempo ahorró?, ¿a cuántas personas?, ¿con qué frecuencia?</span>` : ""}</div>`).join("") || '<p class="mut">Aún no se detectan logros. Cuente qué hizo usted, empezando cada frase por un verbo en pasado («automaticé», «reduje»…).</p>'}<p class="mut">Simulado con reglas; en producción la IA lo hace y usted confirma cada logro.</p>`;
+};
+const EDIT = {
+  historia: () => `<h1 id="eh">Mi historia</h1><p class="mut">Cuente quién es y qué busca, como si se lo contara a una persona de confianza. No se publica.</p>${guide("historia")}${T("historia", "Mi historia", { big: 1 })}`,
+  exps: () => `<h1 id="eh">Experiencia</h1><p class="mut">Escriba <b>contando</b>, con todo el detalle que recuerde: el sistema extrae lo que sirve y usted decide qué sale en cada CV.</p>${guide("exps")}
+    ${B.exps.map((e, i) => `<div class="entry">${head("exps", i, `${e.role} · ${e.company}`)}<div class="grid2">${F(`exps.${i}.company`, "Empresa")}${F(`exps.${i}.role`, "Cargo (como lo llamaba la empresa)")}${F(`exps.${i}.from`, "Desde", { ph: "Mar 2022" })}${F(`exps.${i}.to`, "Hasta", { ph: "Presente" })}${F(`exps.${i}.loc`, "Lugar")}</div>${T(`exps.${i}.text`, "Cuente qué hizo, con qué y qué cambió", { big: 1 })}<details class="guide derived" id="d-exps-${i}" open>${derivedExp(e)}</details></div>`).join("") || '<div class="empty"><b>Aún no hay experiencias.</b><br>Empiece por la más reciente: cuente cómo era el lugar, qué hizo usted y qué cambió.</div>'}${add("exps", "Agregar una experiencia")}`,
+  skills: () => `<h1 id="eh">Habilidades y por qué las tengo</h1><p class="mut">No se publican como barras de nivel. Sirven para que el sistema <b>no prometa de más</b> y para respaldar cada habilidad con evidencia.</p>${guide("skills")}
+    ${B.skills.map((s, i) => { const ev = extract(B.exps.map((e) => e.text).join(" "), "exp", "x").filter((a) => a.skills.includes(s.n)).length; return `<div class="entry">${head("skills", i, s.n)}<div class="grid2">${F(`skills.${i}.n`, "Habilidad")}${F(`skills.${i}.c`, "Grupo (Pruebas, Lenguajes…)")}${F(`skills.${i}.since`, "Desde (año)", { type: "number" })}</div>${T(`skills.${i}.why`, "¿Por qué la tengo? ¿Dónde la usé?")}<p>${ev ? `<span class="tag k">${ev} logro(s) la respaldan</span>` : '<span class="tag w">sin logro que la respalde: no se usará como argumento fuerte</span>'}</p></div>`; }).join("") || '<div class="empty">Agregue sus habilidades y cuente por qué las tiene.</div>'}${add("skills", "Agregar una habilidad")}`,
+  projects: () => `<h1 id="eh">Proyectos</h1>${guide("projects")}${B.projects.map((p, i) => `<div class="entry">${head("projects", i, p.name)}<div class="grid2">${F(`projects.${i}.name`, "Nombre")}${F(`projects.${i}.link`, "Enlace (opcional)")}</div>${T(`projects.${i}.what`, "¿Qué hace y para quién?")}${T(`projects.${i}.how`, "¿Cómo está hecho? (tecnologías y decisiones)")}</div>`).join("") || '<div class="empty">Sin proyectos todavía (opcional, pero muy valioso para Junior).</div>'}${add("projects", "Agregar un proyecto")}`,
+  edu: () => `<h1 id="eh">Educación</h1>${B.edu.map((e, i) => `<div class="entry">${head("edu", i, e.degree)}<div class="grid2">${F(`edu.${i}.degree`, "Título")}${F(`edu.${i}.school`, "Institución")}${F(`edu.${i}.from`, "Año de inicio")}${F(`edu.${i}.to`, "Año de fin")}</div>${F(`edu.${i}.note`, "Mención, énfasis, promedio (opcional)")}</div>`).join("") || '<div class="empty">Agregue sus estudios universitarios.</div>'}${add("edu", "Agregar un estudio")}`,
+  certs: () => `<h1 id="eh">Certificados</h1>${B.certs.map((e, i) => `<div class="entry">${head("certs", i, e.name)}<div class="grid2">${F(`certs.${i}.name`, "Nombre")}${F(`certs.${i}.issuer`, "Emisor")}${F(`certs.${i}.date`, "Año")}${F(`certs.${i}.exp`, "Vence (opcional)")}</div></div>`).join("") || '<div class="empty">Opcional.</div>'}${add("certs", "Agregar un certificado")}`,
+  langs: () => `<h1 id="eh">Idiomas</h1>${B.langs.map((e, i) => `<div class="entry">${head("langs", i, e.lang)}<div class="grid2">${F(`langs.${i}.lang`, "Idioma")}<label class="f">Nivel<select data-p="langs.${i}.level">${["Nativo", "C2", "C1", "B2", "B1", "A2", "A1"].map((l) => `<option ${e.level === l ? "selected" : ""}>${l}</option>`).join("")}</select></label></div>${F(`langs.${i}.ev`, "Cómo lo usa o cómo lo demuestra (opcional)")}</div>`).join("")}${add("langs", "Agregar un idioma")}`,
+  otros: () => `<h1 id="eh">Otros: voluntariado, charlas, publicaciones, premios</h1>${B.otros.map((e, i) => `<div class="entry">${head("otros", i, e.t)}${F(`otros.${i}.t`, "Título")}${T(`otros.${i}.x`, "Detalle")}</div>`).join("") || '<div class="empty">Opcional. Aquí caben cosas que a veces deciden una entrevista.</div>'}${add("otros", "Agregar")}`,
+  privado: () => `<h1 id="eh">Privado: filtros y preferencias</h1><div class="guide">Esto <b>nunca</b> sale en un CV. Sirve para avisarle si una oferta tiene un <b>requisito eliminatorio</b> que usted no cumple, antes de gastar tiempo.</div>${F("privado.ubicacion", "Dónde vive")}${F("privado.modalidad", "Modalidad que acepta (remoto, híbrido, presencial)")}${F("privado.disponibilidad", "Disponibilidad")}${F("privado.autorizacion", "Autorización para trabajar")}${F("privado.pretension", "Pretensión salarial (privada)")}${F("privado.evitar", "Lo que NO quiere")}`,
+  voz: () => `<h1 id="eh">Mi voz</h1><p class="mut">Cómo escribe usted. El sistema debe sonar como usted, no como un robot.</p>${T("voz", "Cómo escribo y qué palabras evito")}<div class="guide">Frases que el sistema nunca usará: <b>profesional apasionado, orientado a resultados, proactivo, responsable de, dinámico</b>.</div>`,
+  contacto: () => `<h1 id="eh">Datos del encabezado</h1><div class="grid2">${F("contacto.name", "Nombre completo")}${F("contacto.headline", "Titular (rol de mercado)")}${F("contacto.city", "Ciudad y país")}${F("contacto.email", "Correo")}${F("contacto.phone", "Teléfono")}${F("contacto.linkedin", "LinkedIn")}${F("contacto.github", "GitHub u otro enlace")}</div><p class="mut">Sin foto, sin cédula, sin estado civil ni edad: no ayudan al ATS y pueden sesgar.</p>`,
+};
+const ROLEMSG = { owner: "Todo lo que escriba aquí es <b>privado</b>: nunca se publica ni se envía. La IA lo lee solo cuando usted pide un CV.", primera: "<b>Bienvenida.</b> Empiece contando su historia y su experiencia más reciente con sus propias palabras. No tiene que ordenarlo ni acortarlo: eso lo hace el sistema.", invitada: "<b>Modo invitada (F3).</b> Su banco es solo suyo: ni la propietaria ni nadie más puede leerlo. La IA usa una cuota compartida de <b>3 CV por semana</b>." };
+const viewBanco = () => `<div class="banner">${ROLEMSG[S.role]}</div><div class="bank"><nav class="snav" id="snav" aria-label="Secciones del banco">${snav()}</nav><section id="editor" aria-labelledby="eh">${EDIT[S.sec]()}<p class="saved" id="saved" role="status">${S.saved}</p></section></div>`;
 
-  const tick = () => new Promise((r) => setTimeout(r, window.__NOWAIT ? 0 : 160));
-  const view = $("#view"), toast = (t) => { const n = $("#toast"); n.textContent = t; n.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (n.hidden = true), 2800); };
-  const cnt = (n, m) => `<div class="cnt ${n > m ? "over" : ""}">${n}/${m}</div>`;
-  const chipRow = (map) => `<div class="chips">${map.terms.map((x) => `<span class="${{ ok: "y", part: "p", gap: "n" }[x.ev.st]}" title="${esc(x.ev.note || "")}">${{ ok: "✓", part: "~", gap: "✕" }[x.ev.st]} ${esc(x.t)}${x.w === 1 ? " (deseable)" : ""}${x.ev.note ? " · " + esc(x.ev.note) : x.ev.st === "ok" ? " · " + x.ev.n + " evid." : " · brecha"}</span>`).join("")}</div>`;
+// ── Crear CV ──
+const chipRow = (map) => `<div class="chips">${map.terms.map((x) => `<span class="${{ ok: "y", part: "p", gap: "n" }[x.ev.st]}" title="${esc(x.ev.note || "")}">${{ ok: "✓", part: "~", gap: "✕" }[x.ev.st]} ${esc(x.t)}${x.w === 1 ? " (deseable)" : ""}${x.ev.note ? " · " + esc(x.ev.note) : x.ev.st === "ok" ? " · " + x.ev.n + " evid." : " · brecha"}</span>`).join("")}</div>`;
+const cnt = (n, m) => `<div class="cnt ${n > m ? "over" : ""}">${n}/${m}</div>`;
+function paper(cv) {
+  const c = BANK, rows = (e) => `<div class="r"><span><b>${esc(e.role)}</b>, ${esc(e.company)}${e.loc ? ", " + esc(e.loc) : ""}</span><span>${esc(e.dates)}</span></div>`;
+  return `<div class="paper" aria-label="Vista previa del CV"><h4>${esc(c.name)}</h4><div class="hl">${esc(c.headline)}</div><div class="ct">${esc(c.contact_l1.join(" · "))}${c.contact_l2.length ? "<br>" + esc(c.contact_l2.join(" · ")) : ""}</div>
+  <div class="sec">Perfil profesional</div><div>${esc(cv.summary)}</div><div class="sec">Habilidades técnicas</div>${cv.skills.map((g) => { const [a, ...b] = g.line.split(": "); return `<div><b>${esc(a)}:</b> ${esc(b.join(": "))}</div>`; }).join("")}
+  <div class="sec">Experiencia laboral</div>${cv.exps.map((e) => `${rows(e)}${e.bl.length ? `<ul>${e.bl.map((b) => `<li>${esc(b.text)}</li>`).join("")}</ul>` : '<div style="height:.35rem"></div>'}`).join("")}
+  ${cv.projects.length ? `<div class="sec">Proyectos</div>${cv.projects.map((p) => `<div class="r"><span><b>${esc(p.name)}</b> | ${esc(p.stack)}</span><span></span></div><ul>${p.bl.map((b) => `<li>${esc(b.text)}</li>`).join("")}</ul>`).join("")}` : ""}
+  <div class="sec">Educación</div>${cv.edu.map((e) => `<div class="r"><span><b>${esc(e.degree)}</b>, ${esc(e.school)}</span><span>${esc(e.dates)}</span></div>${e.detail ? `<div class="mu">${esc(e.detail)}</div>` : ""}`).join("")}
+  <div class="sec">Certificaciones e idiomas</div>${cv.extras.map((x) => `<div>${esc(x)}</div>`).join("")}</div>`;
+}
+function viewCrear() {
+  const L = lim(), P = PROV[S.prov], ready = BANK.exps.some((e) => e.ach.length), sug = suggest(), calls = 4 + Math.min(L.entries, 3), limit = S.role === "invitada" && S.cvs >= 3;
+  if (!ready) return `<div class="banner">${ROLEMSG[S.role]}</div><div class="empty"><b>Todavía no hay material para armar un CV.</b><br>Necesita al menos una experiencia con logros (frases que empiecen con un verbo en pasado). Es el único paso previo.<p><button class="btn go" data-a="tab" data-id="banco">Ir al Banco y empezar a contar</button></p></div>`;
+  const contact = S.pii ? "{{EMAIL}} | {{PHONE}} | {{CITY}}" : [...BANK.contact_l1, ...BANK.contact_l2].join(" | "), payload = JSON.stringify({ tarea: "experience_bullets", contacto: contact, logros: ACH().slice(0, 2).map((a) => ({ id: a.id, texto: a.short })) }, null, 1), leaks = /[\w.+-]+@[\w-]+\.[\w.]+|\+?\d[\d\s-]{7,}/.test(payload);
+  const r = S.res, tot = r ? total(r.cv, r.L) : 0, lu = r ? luOf(r.cv, r.L) : {}, scale = r ? Math.max(r.L.cap, tot) : 1, ck = r ? checks(r.cv, r.L, S.map) : [], txt = r ? atsText(r.cv) : "";
+  const inCV = r ? S.map.terms.map((x) => ({ ...x, in: synOf(x.t).some((s) => fold(txt).includes(s)) })) : [], cov = r ? Math.round((inCV.filter((x) => x.in && x.ev.st === "ok").reduce((a, x) => a + x.w, 0) / S.map.terms.reduce((a, x) => a + x.w, 0)) * 100) : 0;
+  const bl = (b) => (S.ed === b.id ? `<div class="bl"><span><textarea data-k="edtext">${esc(b.text)}</textarea>${S.edErr ? `<div class="err">${esc(S.edErr)}</div>` : ""}</span><button class="btn sm go" data-a="edsave" data-id="${b.id}">Guardar</button><button class="btn sm" data-a="edx">Cancelar</button></div>` : `<div class="bl"><span>• ${esc(b.text)} <small class="mut">[${b.id} · ${b.v} · ${b.text.length} car.]</small></span><button class="btn sm" data-a="ed" data-id="${b.id}">Editar</button></div>`);
+  const left = `${S.role !== "owner" ? `<div class="banner">${ROLEMSG[S.role]}</div>` : ""}
+  <h1><span class="stepn">1</span>¿Para qué puesto?</h1>
+  <div class="seg" role="radiogroup" aria-label="Entrada">${[["oferta", "Desde una oferta"], ["enfocado", "Perfil enfocado"]].map(([v, t]) => `<label><input type="radio" name="md" data-k="mode" value="${v}" ${S.mode === v ? "checked" : ""}>${t}</label>`).join("")}</div>
+  ${S.mode === "oferta" ? `<label class="f">Texto de la oferta (se trata como dato, nunca como instrucciones)<textarea data-k="offer" style="min-height:9rem">${esc(S.offer)}</textarea></label>` : `<label class="f">Mini-prompt de enfoque (máx. 200)<textarea data-k="focus" maxlength="200" style="min-height:4rem">${esc(S.focus)}</textarea></label>${cnt(S.focus.length, 200)}`}
+  <div class="grid2"><label class="f">Nivel <select data-k="level">${Object.entries(BASE).map(([k, b]) => `<option value="${k}" ${S.level === k ? "selected" : ""}>${b.label}${k === sug ? " · sugerido" : ""}</option>`).join("")}</select></label><label class="f">Papel <select data-k="paper"><option value="letter" ${S.paper === "letter" ? "selected" : ""}>Carta</option><option value="a4" ${S.paper === "a4" ? "selected" : ""}>A4</option></select></label></div>
+  <p class="mut">Con ${yearsPro()} años de experiencia profesional se sugiere <b>${BASE[sug].label}</b>. Cupo: ${L.pages} pág. · ${L.cap} LU · viñeta máx. ${L.bmax}.</p>
+  <details class="box"><summary><b>Conexión de IA</b> · ${S.role === "invitada" ? "cuota compartida" : P.n}</summary>${S.role === "invitada" ? '<p class="mut">Usa la cuota compartida del Estudio. No necesita claves.</p>' : `<label class="f">Proveedor<select data-k="prov">${Object.entries(PROV).map(([k, p]) => `<option value="${k}" ${S.prov === k ? "selected" : ""}>${p.n}</option>`).join("")}</select></label><label class="f">Nivel de modelo<select data-k="tier">${[["fast", "Rápido"], ["bal", "Equilibrado"], ["best", "Máximo"]].map(([k, t]) => `<option value="${k}" ${P.m[k] ? "" : "disabled"} ${S.tier === k ? "selected" : ""}>${t} · ${P.m[k] || "no disponible en el plan gratuito"}</option>`).join("")}</select></label>
+    <label style="display:flex;gap:.5rem"><input type="checkbox" data-k="pii" ${S.pii || P.free ? "checked" : ""} ${P.free ? "disabled" : ""}> Escudo de datos personales${P.free ? " (obligatorio en el plan gratuito de Gemini)" : ""}</label>`}
+    <p class="mut">≈ ${calls} llamadas${P.rpm && S.role !== "invitada" ? ` · ≈ ${calls * Math.ceil(60 / P.rpm)} s con el límite gratuito` : ""}. Lo que se enviaría: ${leaks ? "⚠ incluye datos personales" : "✓ sin correo ni teléfono"}.</p><pre>${esc(payload)}</pre></details>
+  <label style="display:flex;gap:.5rem;margin:.6rem 0"><input type="checkbox" data-k="over" ${S.over ? "checked" : ""}> Simular un borrador que se pasa de largo (para ver la escalera de ajuste)</label>
+  <p><button class="btn" data-a="map">Analizar y mapear evidencia</button></p>
+  ${S.map ? `<h1 style="margin-top:1.2rem"><span class="stepn">2</span>Evidencia y filtros duros</h1><p class="mut">Cobertura honesta de partida: <b class="num">${S.map.cov} %</b>. Lo que no tiene respaldo se muestra como brecha; nunca se inventa.</p>${chipRow(S.map)}
+    <h3>Filtros duros (requisitos eliminatorios)</h3>${S.hard.length ? `<table class="hard"><tr><th></th><th>La oferta pide</th><th>Usted tiene</th></tr>${S.hard.map(([q, m, st, adv]) => `<tr><td class="${st}">${{ ok: "✓", no: "✕", wn: "!" }[st]}</td><td>${esc(q)}</td><td>${esc(m)}<br><span class="mut">${esc(adv)}</span></td></tr>`).join("")}</table>` : '<p class="mut">No se detectaron requisitos eliminatorios en el texto.</p>'}
+    ${S.hard.some((h) => h[2] === "no") ? '<div class="banner">Hay requisitos eliminatorios que no cumple. Puede generar el CV igual, pero decida con honestidad si conviene postular.</div>' : ""}
+    <p><button class="btn go" data-a="gen" ${limit ? "disabled" : ""}>Generar CV</button>${limit ? ' <span class="err">Llegó al límite de 3 CV esta semana (modo invitada).</span>' : ""}</p>` : ""}
+  ${S.steps.length ? `<h3>Proceso</h3>${S.steps.map((s) => `<div class="st2 ${s[1] ? "done" : ""}"><b>${s[1] ? "✓" : "…"}</b><span>${esc(s[0])}</span></div>`).join("")}` : ""}
+  ${r ? `<h1 style="margin-top:1.2rem"><span class="stepn">3</span>Resultado · ${r.L.label}</h1><div class="box"><b>Presupuesto de la página:</b> <span class="num">${tot}</span> de <span class="num">${r.L.cap}</span> LU · ${Math.ceil(tot / (r.L.cap / r.L.pages))} de ${r.L.pages} página(s)
+    <div class="m" role="img" aria-label="Uso de la página por sección">${Object.entries(lu).filter(([, v]) => v).map(([k, v]) => `<i style="width:${(v / scale) * 100}%" title="${k}: ${v} LU">${k} ${v}</i>`).join("")}<span class="cap" style="left:calc(${(r.L.cap / scale) * 100}% - 2px)" title="Cupo"></span></div></div>
+    <p><a class="btn go" href="../cv-spec/samples/mid-qa-fullstack.pdf" download>Descargar PDF (muestra)</a> <a class="btn" href="../cv-spec/samples/mid-qa-fullstack.docx" download>Descargar Word (muestra)</a> <button class="btn" disabled title="Fase 2">LaTeX (F2)</button></p>
+    <p class="mut">En producción se compila con Typst el CV que acaba de generar. Los archivos de muestra son el ejemplo del repositorio.</p>
+    <h3>Escalera de ajuste</h3><ol>${r.log.map((l) => `<li>${esc(l)}</li>`).join("")}</ol>
+    <h3>Cobertura de la oferta · <span class="num">${cov} %</span> con evidencia en el CV</h3>${chipRow({ terms: inCV })}
+    <h3>Editar líneas (cada una se valida)</h3><div class="box">${r.cv.exps.map((e) => `<b>${esc(e.role)}, ${esc(e.company)}</b> <span class="mut">${e.dates}</span>${e.bl.map(bl).join("")}`).join("<br>")}${r.cv.projects.length ? `<br><b>Proyectos</b>${r.cv.projects.map((p) => `<div>${esc(p.name)}</div>${p.bl.map(bl).join("")}`).join("")}` : ""}</div>` : ""}`;
+  const right = `<div class="sticky"><div class="tabs2" role="group" aria-label="Vista"><button data-a="pv" data-id="page" aria-pressed="${S.pv === "page"}">Página</button><button data-a="pv" data-id="ats" aria-pressed="${S.pv === "ats"}">Lo que ve el ATS</button><button data-a="pv" data-id="rep" aria-pressed="${S.pv === "rep"}">Reporte ATS</button></div>
+    ${!r ? `<div class="empty"><b>Aquí aparecerá su CV</b><br>Siga los pasos de la izquierda: elija el puesto, analice la evidencia y genere. La vista previa se actualiza sola.<p><button class="btn" data-a="sample">Usar la oferta de ejemplo y analizar</button></p></div>`
+      : S.pv === "page" ? `${paper(r.cv)}<div class="pg">Vista aproximada de la plantilla (acento sobrio, una columna). El PDF real usa Source Sans 3.</div>`
+      : S.pv === "ats" ? `<pre class="cv" style="max-height:78vh;background:#fff;color:#000" aria-label="Texto extraído">${esc(txt)}</pre><div class="pg">Texto extraído en orden de lectura, tal como lo vería un ATS.</div>`
+      : `<ul class="chk">${ck.map(([t, ok, n]) => `<li><span class="${ok ? "ok" : "no"}">${ok ? "✓" : "✕"}</span><span>${esc(t)}${n ? ` <span class="mut">· ${n}</span>` : ""}</span></li>`).join("")}</ul>`}</div>`;
+  return `<div class="mk"><div>${left}</div>${right}</div>`;
+}
 
-  const V = {
-    banco() {
-      return `<h1>Banco de evidencia</h1><p class="mut">Cada logro tiene dos variantes para que la escalera de ajuste elija sin pedirle nada más a la IA: corta (1 línea, ≤ 110) y larga (2 líneas, ≤ 170).</p>
-      ${[...BANK.exps.map((e) => [e.role + " · " + e.company, e.ach]), ...BANK.projects.map((p) => ["Proyecto · " + p.name, p.ach])].map(([t, as]) => `<h2>${esc(t)}</h2>${as.map((a) => `<div class="ach">
-        <label class="f">Corta ${a.id}<textarea data-k="s:${a.id}" style="min-height:3rem">${esc(a.short)}</textarea></label>${cnt(a.short.length, 110)}
-        <label class="f">Larga<textarea data-k="l:${a.id}" style="min-height:3.5rem">${esc(a.long)}</textarea></label>${cnt(a.long.length, 170)}
-        ${a.skills.map((s) => `<span class="tag">${esc(s)}</span>`).join("")}${nums(a.short + a.long).length ? "" : '<span class="tag w">sin cifra: pregunte «¿cuánto?»</span>'}</div>`).join("")}`).join("")}
-      <h2>Habilidades y su respaldo</h2><div class="chips">${BANK.skills.map((s) => { const n = ACH().filter((a) => a.skills.includes(s.n)).length; return `<span class="${n ? "y" : "n"}">${esc(s.n)} · ${n ? n + " evid." : "sin respaldo"}</span>`; }).join("")}</div>`;
-    },
-    generar() {
-      const L = lim(), P = PROV[S.prov], calls = 4 + Math.min(L.entries, 3), secs = P.rpm ? calls * Math.ceil(60 / P.rpm) : 0;
-      const contact = S.pii ? "{{EMAIL}} | {{PHONE}} | {{CITY}}" : BANK.contact.join(" | "), payload = JSON.stringify({ tarea: "experience_bullets", contacto: contact, entrada: { rol: BANK.exps[0].role, empresa: BANK.exps[0].company }, logros: BANK.exps[0].ach.slice(0, 2).map((a) => ({ id: a.id, texto: a.short })) }, null, 1);
-      const leaks = /[\w.+-]+@[\w-]+\.[\w.]+|\+?\d[\d\s-]{7,}/.test(payload);
-      return `<h1>Generar un CV</h1>
-      <div class="grid"><div class="box"><b>1 · Nivel y papel</b><div class="seg" role="radiogroup" aria-label="Nivel">${Object.entries(BASE).map(([k, b]) => `<label><input type="radio" name="lv" data-k="level" value="${k}" ${S.level === k ? "checked" : ""}>${b.label}</label>`).join("")}</div>
-        <div class="seg" style="margin-top:.5rem">${["letter", "a4"].map((p) => `<label><input type="radio" name="pp" data-k="paper" value="${p}" ${S.paper === p ? "checked" : ""}>${p === "letter" ? "Carta" : "A4"}</label>`).join("")}</div>
-        <p class="mut">Cupo: ${L.pages} pág. · ${L.cap} LU · ${L.cpl} caracteres por línea · viñeta máx. ${L.bmax}</p></div>
-      <div class="box"><b>2 · Entrada</b><div class="seg">${[["oferta", "Desde una oferta"], ["enfocado", "Perfil enfocado"]].map(([v, t]) => `<label><input type="radio" name="md" data-k="mode" value="${v}" ${S.mode === v ? "checked" : ""}>${t}</label>`).join("")}</div>
-        ${S.mode === "oferta" ? `<label class="f">Texto de la oferta (se trata como dato, nunca como instrucciones)<textarea data-k="offer">${esc(S.offer)}</textarea></label>` : `<label class="f">Mini-prompt de enfoque (máx. 200)<textarea data-k="focus" maxlength="200" style="min-height:3.5rem">${esc(S.focus)}</textarea></label>${cnt(S.focus.length, 200)}`}</div>
-      <div class="box"><b>3 · Conexión de IA</b><label class="f">Proveedor<select data-k="prov">${Object.entries(PROV).map(([k, p]) => `<option value="${k}" ${S.prov === k ? "selected" : ""}>${p.n}</option>`).join("")}</select></label>
-        <label class="f">Nivel de modelo<select data-k="tier">${[["fast", "Rápido"], ["bal", "Equilibrado"], ["best", "Máximo"]].map(([k, t]) => `<option value="${k}" ${P.m[k] ? "" : "disabled"} ${S.tier === k ? "selected" : ""}>${t} · ${P.m[k] || "no disponible en el plan gratuito"}</option>`).join("")}</select></label>
-        <label class="seg"><span style="border:0;background:none;padding:0"><input type="checkbox" data-k="pii" ${S.pii || P.free ? "checked" : ""} ${P.free ? "disabled" : ""} style="position:static;opacity:1"> Escudo de datos personales${P.free ? " (obligatorio en el plan gratuito de Gemini)" : ""}</span></label>
-        <p class="mut">≈ ${calls} llamadas${secs ? ` · ≈ ${secs} s con el límite gratuito (1 cada ${Math.ceil(60 / P.rpm)} s)` : ""}. Costo estimado: céntimos de dólar en un modelo rápido de pago (verificar precios).</p></div></div>
-      <details class="box" style="margin-top:1rem"><summary><b>Lo que se enviaría al proveedor</b> · ${leaks ? "⚠ incluye datos personales" : "✓ sin correo ni teléfono"}</summary><pre>${esc(payload)}</pre>${S.prov === "manual" ? '<p class="mut">Modo manual: copie este paquete en cualquier chat, pegue el JSON de respuesta y pasará por el mismo validador.</p>' : ""}</details>
-      <label class="seg" style="margin:.8rem 0"><span style="border:0;background:none;padding:0"><input type="checkbox" data-k="over" ${S.over ? "checked" : ""} style="position:static;opacity:1"> Simular un borrador que se pasa de largo (para ver la escalera de ajuste)</span></label>
-      <p><button class="btn" data-a="map">1 · Analizar y mapear evidencia</button> <button class="btn go" data-a="gen" ${S.map ? "" : "disabled"}>2 · Generar CV</button></p>
-      ${S.map ? `<h2>Mapa de evidencia · ${esc(S.map.title)}</h2><p class="mut">Cobertura honesta de partida: <b class="num">${S.map.cov} %</b>. Lo que no tiene respaldo se muestra como brecha; nunca se inventa.</p>${chipRow(S.map)}` : ""}
-      ${S.steps.length ? `<h2>Proceso</h2>${S.steps.map((s) => `<div class="st ${s[1] ? "done" : ""}"><b>${s[1] ? "✓" : "…"}</b><span>${esc(s[0])}</span></div>`).join("")}` : ""}`;
-    },
-    resultado() {
-      const r = S.res; if (!r) return `<h1>Resultado</h1><p>Aún no hay un CV generado. Vaya a «Generar».</p>`;
-      const { cv, L, log } = r, lu = luOf(cv, L), tot = total(cv, L), scale = Math.max(L.cap, tot), ck = checks(cv, L, S.map), txt = atsText(cv);
-      const inCV = S.map.terms.map((x) => ({ ...x, in: synOf(x.t).some((s) => fold(txt).includes(s)) }));
-      const cov = Math.round((inCV.filter((x) => x.in && x.ev.st === "ok").reduce((a, x) => a + x.w, 0) / S.map.terms.reduce((a, x) => a + x.w, 0)) * 100);
-      const bl = (b) => (S.ed === b.id ? `<div class="bl"><span><textarea data-k="edtext">${esc(b.text)}</textarea>${S.edErr ? `<div class="err">${esc(S.edErr)}</div>` : ""}</span><button class="btn sm go" data-a="edsave" data-id="${b.id}">Guardar</button><button class="btn sm" data-a="edx">Cancelar</button></div>`
-        : `<div class="bl"><span>• ${esc(b.text)} <small class="mut">[${b.id} · ${b.v} · ${b.text.length} car.]</small></span><button class="btn sm" data-a="ed" data-id="${b.id}">Editar</button></div>`);
-      return `<h1>Resultado · ${L.label}</h1>
-      <div class="box"><b>Presupuesto de la página:</b> <span class="num">${tot}</span> de <span class="num">${L.cap}</span> LU · ${Math.ceil(tot / (L.cap / L.pages))} de ${L.pages} página(s)
-        <div class="m" role="img" aria-label="Uso de la página por sección">${Object.entries(lu).filter(([, v]) => v).map(([k, v]) => `<i style="width:${(v / scale) * 100}%" title="${k}: ${v} LU">${k} ${v}</i>`).join("")}<span class="cap" style="left:calc(${(L.cap / scale) * 100}% - 2px)" title="Cupo"></span></div>
-        <p class="mut">La línea roja es el cupo. El conteo definitivo de páginas lo da el compilador; esto es el presupuesto previo.</p></div>
-      <h2>Escalera de ajuste</h2><ol>${log.map((l) => `<li>${esc(l)}</li>`).join("")}</ol>
-      <h2>Cobertura de la oferta · <span class="num">${cov} %</span> con evidencia en el CV</h2>${chipRow({ terms: inCV })}
-      <h2>Vista editable (cada línea se valida)</h2>
-      <div class="box"><b>Perfil profesional</b> <small class="mut">${cv.summary.length}/${L.sum}</small><p>${esc(cv.summary)}</p>
-      ${cv.exps.map((e) => `<b>${esc(e.role)}, ${esc(e.company)}</b> <span class="mut">${e.dates}</span>${e.bl.map(bl).join("")}`).join("<br>")}
-      ${cv.projects.length ? `<br><b>Proyectos</b>${cv.projects.map((p) => `<div>${esc(p.name)} | ${esc(p.stack)}</div>${p.bl.map(bl).join("")}`).join("")}` : ""}</div>
-      <h2>Reporte ATS</h2><ul class="chk">${ck.map(([t, ok, n]) => `<li><span class="${ok ? "ok" : "no"}">${ok ? "✓" : "✕"}</span><span>${esc(t)}${n ? ` <span class="mut">· ${n}</span>` : ""}</span></li>`).join("")}</ul>
-      <h2>Lo que ve el ATS (texto extraído, en orden de lectura)</h2><pre class="cv" aria-label="Texto extraído">${esc(txt)}</pre>
-      <p class="mut">En producción el PDF se compila con Typst desde este mismo contenido y se extrae con dos motores; el prototipo muestra el texto que la plantilla produciría. Un PDF real de ejemplo está en <code>../cv-spec/samples/</code>.</p>`;
-    },
-  };
-  const TABS = [["banco", "Banco"], ["generar", "Generar"], ["resultado", "Resultado"]];
-  const render = () => {
-    const a = document.activeElement, key = a && a.dataset && a.dataset.k, pos = a && a.selectionStart;
-    view.innerHTML = V[S.tab](); $("#tabs").innerHTML = TABS.map(([v, t]) => `<button data-v="${v}" ${v === S.tab ? 'aria-current="page"' : ""}>${t}</button>`).join("");
-    if (key) { const n = view.querySelector(`[data-k="${key}"]`); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* radio */ } } }
-  };
-  const mapIt = () => { const m = analyze(S.mode === "oferta" ? S.offer : S.focus, S.mode !== "oferta"); m.terms.forEach((x) => (x.ev = evid(x.t))); m.cov = Math.round((m.terms.reduce((a, x) => a + x.w * ({ ok: 1, part: 0.5, gap: 0 }[x.ev.st]), 0) / (m.terms.reduce((a, x) => a + x.w, 0) || 1)) * 100); S.map = m; };
-  const gen = async () => {
-    const L = lim(), names = ["Analizar la oferta (llamada 1)", "Mapear evidencia: cubierto, parcial, brecha", "Planificar el presupuesto de líneas por sección", "Redactar por sección (simulado): perfil, habilidades, cada experiencia, proyectos", "Validar con el guardián de verdad", "Escalera de ajuste a la página", "Renderizar y extraer texto con dos motores"];
-    S.steps = []; S.res = null; for (const n of names) { S.steps.push([n, false]); render(); await tick(); S.steps[S.steps.length - 1][1] = true; }
-    const cv = draft(L, S.map.terms, S.over), log = ladder(cv, L); S.res = { cv, L, log }; S.tab = "resultado"; render(); window.scrollTo(0, 0);
-  };
+const view = $("#view"), toast = (t) => { const n = $("#toast"); n.textContent = t; n.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (n.hidden = true), 2800); };
+function render() {
+  const a = document.activeElement, key = a && a.dataset && (a.dataset.k || a.dataset.p), attr = a && a.dataset && (a.dataset.k ? "k" : "p"), pos = a && a.selectionStart;
+  BANK = deriveBank(B); view.innerHTML = S.tab === "banco" ? viewBanco() : viewCrear();
+  $("#tabs").innerHTML = [["banco", "Banco"], ["crear", "Crear CV"]].map(([v, t]) => `<button data-a="tab" data-id="${v}" ${v === S.tab ? 'aria-current="page"' : ""}>${t}</button>`).join("");
+  if (key) { const n = view.querySelector(`[data-${attr}="${key}"]`); if (n && n.type !== "radio" && n.type !== "checkbox") { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* select */ } } }
+}
+const tick = () => new Promise((r) => setTimeout(r, window.__NOWAIT ? 0 : 160));
+const mapIt = () => { const m = analyze(S.mode === "oferta" ? S.offer : S.focus, S.mode !== "oferta"); m.terms.forEach((x) => (x.ev = evid(x.t))); m.cov = Math.round((m.terms.reduce((a, x) => a + x.w * ({ ok: 1, part: 0.5, gap: 0 }[x.ev.st]), 0) / (m.terms.reduce((a, x) => a + x.w, 0) || 1)) * 100); S.map = m; S.hard = S.mode === "oferta" ? hardFilters(S.offer) : []; S.res = null; S.steps = []; };
+async function gen() {
+  const L = lim(), names = ["Analizar la oferta (llamada 1)", "Mapear evidencia: cubierto, parcial, brecha", "Planificar el presupuesto de líneas por sección", "Redactar por sección (simulado): perfil, habilidades, cada experiencia, proyectos", "Validar con el guardián de verdad", "Escalera de ajuste a la página", "Renderizar y extraer texto con dos motores"];
+  S.steps = []; S.res = null; for (const n of names) { S.steps.push([n, false]); render(); await tick(); S.steps[S.steps.length - 1][1] = true; }
+  const cv = draft(L, S.map.terms, S.over), log = ladder(cv, L); S.res = { cv, L, log }; S.cvs++; S.pv = "page"; render();
+}
+function applyRole(id) { S.role = id; B = id === "primera" ? EMPTY() : clone(SEED); if (id === "invitada") B.contacto.name = "Persona invitada (ejemplo)"; S.tab = "banco"; S.sec = id === "primera" ? "historia" : "exps"; S.map = S.res = S.hard = null; S.steps = []; S.cvs = 0; render(); }
 
-  document.addEventListener("click", (e) => {
-    const t = e.target.closest("[data-v],[data-a]"); if (!t) return;
-    if (t.dataset.v) { S.tab = t.dataset.v; return render(); }
-    const a = t.dataset.a, id = t.dataset.id;
-    if (a === "map") { mapIt(); S.steps = []; return render(); }
-    if (a === "gen") return gen();
-    if (a === "ed") { S.ed = id; S.edErr = ""; return render(); }
-    if (a === "edx") { S.ed = null; S.edErr = ""; return render(); }
-    if (a === "edsave") {
-      const text = $('[data-k="edtext"]').value.trim(), err = validate(text, id, S.res.L);
-      if (err) { S.edErr = err; return render(); }
-      [...S.res.cv.exps.flatMap((x) => x.bl), ...S.res.cv.projects.flatMap((x) => x.bl)].find((b) => b.id === id).text = text; S.ed = null; S.edErr = "";
-      render(); if (total(S.res.cv, S.res.L) > S.res.L.cap) toast("Atención: la edición excede el cupo de la página"); else toast("Línea guardada"); return;
-    }
-  });
-  const onChange = (e) => {
-    const t = e.target, k = t.dataset && t.dataset.k; if (!k) return;
-    if (/^[sl]:/.test(k)) { const a = ACH().find((x) => x.id === k.slice(2)); a[k[0] === "s" ? "short" : "long"] = t.value; S.map = null; S.res = null; return render(); }
-    if (k === "level" || k === "paper" || k === "mode") { S[k] = t.value; S.map = null; S.res = null; S.steps = []; }
-    else if (k === "prov") { S.prov = t.value; if (!PROV[S.prov].m[S.tier]) S.tier = "fast"; if (PROV[S.prov].free) S.pii = true; }
-    else if (k === "tier") S.tier = t.value; else if (k === "pii") S.pii = t.checked; else if (k === "over") S.over = t.checked; else return;
-    render();
-  };
-  document.addEventListener("change", onChange);
-  document.addEventListener("input", (e) => {
-    const t = e.target, k = t.dataset && t.dataset.k; if (!k) return;
-    if (k === "offer") { S.offer = t.value; S.map = null; } else if (k === "focus") { S.focus = t.value.slice(0, 200); S.map = null; }
-    else if (/^[sl]:/.test(k)) { const a = ACH().find((x) => x.id === k.slice(2)); a[k[0] === "s" ? "short" : "long"] = t.value; return; } else return;
-    render();
-  });
-  render();
-})();
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-a]"); if (!t) return; const a = t.dataset.a, id = t.dataset.id, k = t.dataset.k, i = +t.dataset.i;
+  if (a === "tab") { S.tab = id; return render(); } if (a === "sec") { S.sec = id; return render(); } if (a === "pv") { S.pv = id; return render(); }
+  if (a === "add") { const tpl = { exps: () => ({ id: "e" + (Date.now() % 100000), role: "", company: "", loc: "", from: "", to: "", text: "" }), skills: () => ({ n: "", c: "", since: "", why: "" }), projects: () => ({ id: "p" + (Date.now() % 100000), name: "", link: "", what: "", how: "" }), edu: () => ({ degree: "", school: "", from: "", to: "", note: "" }), certs: () => ({ name: "", issuer: "", date: "", exp: "" }), langs: () => ({ lang: "", level: "B1", ev: "" }), otros: () => ({ t: "", x: "" }) }; B[k].push(tpl[k]()); return render(); }
+  if (a === "del") { B[k].splice(i, 1); S.map = S.res = null; return render(); }
+  if (a === "map") { mapIt(); return render(); } if (a === "sample") { S.mode = "oferta"; S.offer = window.HUELLA_OFFER; mapIt(); return render(); } if (a === "gen") return gen();
+  if (a === "ed") { S.ed = id; S.edErr = ""; return render(); } if (a === "edx") { S.ed = null; S.edErr = ""; return render(); }
+  if (a === "edsave") { const text = $('[data-k="edtext"]').value.trim(), err = validate(text, id, S.res.L); if (err) { S.edErr = err; return render(); } [...S.res.cv.exps.flatMap((x) => x.bl), ...S.res.cv.projects.flatMap((x) => x.bl)].find((b) => b.id === id).text = text; S.ed = null; S.edErr = ""; render(); return toast(total(S.res.cv, S.res.L) > S.res.L.cap ? "Atención: la edición excede el cupo de la página" : "Línea guardada"); }
+});
+function refreshDerived() {
+  const sn = $("#snav"); if (sn) sn.innerHTML = snav(); BANK = deriveBank(B);
+  $$("[data-w]").forEach((n) => (n.textContent = words(getP(B, n.dataset.w)) + " palabras"));
+  $$("details.derived").forEach((d) => { const i = +d.id.split("-")[2]; if (B.exps[i]) d.innerHTML = derivedExp(B.exps[i]); });
+  const sv = $("#saved"); if (sv) sv.textContent = "Guardado ahora mismo (en el navegador)";
+}
+document.addEventListener("input", (e) => {
+  const t = e.target;
+  if (t.dataset.p) { setP(B, t.dataset.p, t.type === "number" ? +t.value || "" : t.value); S.map = S.res = null; return refreshDerived(); }
+  const k = t.dataset.k; if (!k) return;
+  if (k === "offer") { S.offer = t.value; S.map = null; } else if (k === "focus") { S.focus = t.value.slice(0, 200); S.map = null; } else return; render();
+});
+document.addEventListener("change", (e) => {
+  const t = e.target, k = t.dataset.k; if (t.dataset.p) { setP(B, t.dataset.p, t.value); S.map = S.res = null; return refreshDerived(); } if (!k) return;
+  if (k === "level" || k === "paper" || k === "mode") { S[k] = t.value; S.map = null; S.res = null; S.steps = []; } else if (k === "prov") { S.prov = t.value; if (!PROV[S.prov].m[S.tier]) S.tier = "fast"; if (PROV[S.prov].free) S.pii = true; }
+  else if (k === "tier") S.tier = t.value; else if (k === "pii") S.pii = t.checked; else if (k === "over") S.over = t.checked; else return; render();
+});
+DevKit.init({ app: "huella-estudio", roles: [
+  { id: "owner", label: "Propietaria (banco completo)", desc: "Su banco privado completo, filtros y conexión de IA propia (Gemini gratuito)." },
+  { id: "primera", label: "Primera vez (banco vacío)", desc: "Lo que ve alguien que acaba de empezar: guía para contar, sin material aún." },
+  { id: "invitada", label: "Invitada (F3)", desc: "Persona a quien la propietaria cede el Estudio: su banco es solo suyo; cuota compartida de IA." } ], role: "owner", onRole: applyRole });

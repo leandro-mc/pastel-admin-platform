@@ -22,7 +22,7 @@
     return { id, svg: `<svg viewBox="0 0 ${size} ${size}" role="img" aria-label="Huella generativa ${id}">${d}</svg>` };
   };
   const f = fingerprint("marta-solis|2026-10-23|v3");
-  $("#fp").innerHTML = f.svg; $("#fp-small").innerHTML = fingerprint("marta-solis|2026-10-23|v3", 140).svg;
+  $("#fp").innerHTML = f.svg;
   $("#fpcap").textContent = `Huella n.º ${f.id}. Cambia en cada publicación.`;
 
   // ── Resaltador: marca dónde hay evidencia; dice sin adornos lo que no la tiene ──
@@ -61,10 +61,28 @@
   // ── Contacto, tema, impresión, navegación por sección ──
   $("#reveal").addEventListener("click", (e) => { const m = $("#mail"); m.hidden = false; e.currentTarget.setAttribute("aria-expanded", "true"); e.currentTarget.hidden = true; });
   $("#prn").addEventListener("click", () => window.print());
-  let t = 0; const modes = [["auto", null], ["claro", "light"], ["oscuro", "dark"]];
-  $("#theme").addEventListener("click", (e) => { t = (t + 1) % 3; const [n, v] = modes[t]; v ? (document.documentElement.dataset.theme = v) : delete document.documentElement.dataset.theme; e.currentTarget.textContent = "Tema: " + n; });
+  const THEMES = [["auto", "auto"], ["claro", "light"], ["oscuro", "dark"]];
+  $("#theme").addEventListener("click", () => { const cur = document.documentElement.dataset.theme || "auto", n = (THEMES.findIndex((x) => x[1] === cur) + 1) % 3; DevKit.applyTheme(THEMES[n][1]); $("#theme").textContent = "Tema: " + THEMES[n][0]; $$("#devbar [data-t]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.t === THEMES[n][1]))); });
   if ("IntersectionObserver" in window) {
     const links = $$(".rail nav a"), io = new IntersectionObserver((es) => es.forEach((en) => { if (en.isIntersecting) links.forEach((a) => a.setAttribute("aria-current", String(a.getAttribute("href") === "#" + en.target.id))); }), { rootMargin: "-30% 0px -60% 0px" });
     $$("main section").forEach((s) => io.observe(s));
   }
+
+  // ── Vistas por rol (solo desarrollo) ──
+  const ROLES = [
+    { id: "visitante", label: "Reclutadora (enlace vigente)", desc: "Ve la página pública: ficha, resaltador, trayectoria. Nunca ve el banco ni los filtros privados." },
+    { id: "owner", label: "Propietaria (vista previa)", desc: "Ve la página como publicada, controla el enlace y cuántas veces se abrió (sin IP). El banco y el Estudio están en otra pantalla." },
+    { id: "revocado", label: "Enlace revocado o vencido", desc: "Lo que ve quien abre un enlace que ya no existe: nada del perfil." },
+    { id: "ats", label: "Sistema de lectura (ATS)", desc: "Texto plano que extrae una máquina, en orden de lectura." } ];
+  const atsText = () => $$("#main h1, #main h2, #main h3, #main p:not(.actions), #main li, #main dt, #main dd").filter((n) => !n.closest("#resaltador") && !n.closest("footer")).map((n) => n.textContent.replace(/\s+/g, " ").trim()).filter(Boolean).join("\n");
+  const apply = (id) => {
+    $("#wrap").hidden = id === "revocado" || id === "ats"; $("#revoked").hidden = id !== "revocado"; $("#atsview").hidden = id !== "ats"; $("#ownerbar").hidden = id !== "owner";
+    if (id === "ats") { $("#atspre").textContent = atsText(); }
+    document.title = id === "revocado" ? "Enlace no disponible" : "Marta Solís Araya · QA Engineer y desarrolladora fullstack";
+  };
+  $("#revoke").addEventListener("click", () => { DevKit.setRole("revocado"); });
+  $("#copy").addEventListener("click", (e) => { e.currentTarget.textContent = "Enlace copiado"; });
+  $("#showmail").addEventListener("change", (e) => { $("#contacto").hidden = !e.target.checked; $$('.rail nav a[href="#contacto"]').forEach((x) => (x.hidden = !e.target.checked)); $$('.actions a[href="#contacto"]').forEach((x) => (x.hidden = !e.target.checked)); });
+  $("#showavail").addEventListener("change", (e) => { const dd = $$(".fact dt").find((x) => x.textContent === "Disponible"); if (dd) { dd.hidden = !e.target.checked; dd.nextElementSibling.hidden = !e.target.checked; } });
+  DevKit.init({ app: "huella-perfil", roles: ROLES, role: "visitante", onRole: apply });
 })();

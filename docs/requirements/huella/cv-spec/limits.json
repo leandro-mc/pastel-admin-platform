@@ -26,7 +26,7 @@
       "label": "Junior (0-3 años)",
       "pages": 1,
       "font": 10.5,
-      "summary_chars": 180,
+      "summary_chars": 270,
       "skills_groups": 4,
       "skills_group_chars": 90,
       "skills_total": 22,
@@ -61,15 +61,15 @@
       "capacity_lu": 50,
       "sections_lu": {
         "header": 5.5,
-        "summary": 4.0,
+        "summary": 5.0,
         "skills": 6.0,
         "experience": 14.5,
         "projects": 9.0,
         "education": 6.0,
         "extras": 4.0
       },
-      "worst_case_lu": 49.0,
-      "slack_lu": 1.0
+      "worst_case_lu": 50.0,
+      "slack_lu": 0.0
     },
     "mid": {
       "label": "Mid-level (3-8 años)",
@@ -179,7 +179,7 @@
       "label": "Junior (0-3 años)",
       "pages": 1,
       "font": 10.5,
-      "summary_chars": 180,
+      "summary_chars": 270,
       "skills_groups": 4,
       "skills_group_chars": 90,
       "skills_total": 22,
@@ -214,15 +214,15 @@
       "capacity_lu": 53,
       "sections_lu": {
         "header": 5.5,
-        "summary": 4.0,
+        "summary": 5.0,
         "skills": 6.0,
         "experience": 14.5,
         "projects": 9.0,
         "education": 6.0,
         "extras": 4.0
       },
-      "worst_case_lu": 49.0,
-      "slack_lu": 4.0
+      "worst_case_lu": 50.0,
+      "slack_lu": 3.0
     },
     "mid": {
       "label": "Mid-level (3-8 años)",

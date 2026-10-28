@@ -10,13 +10,17 @@
 <!-- Fuentes solo para ver el diseño; en producción van autoalojadas (CSP). Hay respaldo del sistema. -->
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..900&family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../_shared/devkit.css">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 <a class="skip" href="#ficha">Saltar al contenido</a>
-<div class="wrap">
+<div class="ownerbar" id="ownerbar" hidden role="region" aria-label="Vista de la propietaria"><div class="row"><b>Propietaria · vista previa</b><span>Versión publicada v3 (23 oct) · enlace <b>activo</b> · 4 aperturas esta semana, la última hace 2 días (sin IP ni datos de quien abre)</span></div>
+<div class="row" style="margin-top:.4rem"><button id="copy" type="button">Copiar enlace</button><button id="revoke" type="button">Revocar enlace</button><label><input type="checkbox" id="showmail" checked> Mostrar el correo</label><label><input type="checkbox" id="showavail" checked> Mostrar disponibilidad</label></div></div>
+<section class="gone" id="revoked" hidden aria-labelledby="gone-h"><h1 id="gone-h">Este enlace ya no está disponible</h1><p>Puede haber sido retirado por la persona que lo compartió o haber vencido. Si lo recibió de un reclutador o un contacto, pídale uno nuevo.</p><p class="mut">No se conserva ni se muestra ningún dato del perfil.</p></section>
+<section class="atsview" id="atsview" hidden aria-labelledby="ats-h"><h1 id="ats-h" style="font-family:Archivo,sans-serif">Lo que lee una máquina</h1><p class="mut">Texto plano en orden de lectura, sin diseño: así lo extrae un sistema de reclutamiento o un lector de pantalla básico. Si algo importante falta aquí, no existe para la máquina.</p><pre id="atspre"></pre></section>
+<div class="wrap" id="wrap">
   <aside class="rail" aria-label="Navegación de la página">
-    <div class="fps" id="fp-small" aria-hidden="true"></div>
     <nav>
       <a href="#ficha">Ficha</a><a href="#resaltador">Resaltador</a><a href="#trayectoria">Trayectoria</a><a href="#evidencia">Evidencia</a><a href="#herramientas">Herramientas</a><a href="#formacion">Formación</a><a href="#contacto">Contacto</a>
     </nav>
@@ -110,6 +114,7 @@
     </footer>
   </main>
 </div>
+<script src="../../_shared/devkit.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

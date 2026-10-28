@@ -55,7 +55,7 @@ def build(level, p):
     return {
         "lang": "es", "layout": {"fontSize": p["font"], "paper": "us-letter" if PAPER == "letter" else "a4"},
         "name": text_of(F["name_max"])[:F["name_max"]].rstrip(" ."), "headline": text_of(F["headline_max"])[:F["headline_max"]].rstrip(" ."),
-        "contact": [text_of(34)[:34], text_of(34)[:34], text_of(34)[:34], text_of(34)[:34], text_of(34)[:34]],
+        "contact_l1": [text_of(28)[:28], text_of(28)[:28], text_of(28)[:28]], "contact_l2": [text_of(40)[:40], text_of(40)[:40]],
         "labels": {"summary": "Perfil profesional", "skills": "Habilidades técnicas", "experience": "Experiencia laboral",
                    "projects": "Proyectos", "education": "Educación", "extras": "Certificaciones e idiomas"},
         "summary": text_of(p["summary_chars"]), "skills": skills, "experience": exp, "projects": projects,
@@ -68,7 +68,7 @@ def pages_of(data):
         td = pathlib.Path(td)
         shutil.copy(root / "template/cv-ats.typ", td / "cv.typ")
         (td / "cv.json").write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
-        typst.compile(str(td / "cv.typ"), output=str(td / "cv.pdf"))
+        typst.compile(str(td / "cv.typ"), output=str(td / "cv.pdf"), font_paths=[str(root / "fonts")])
         info = subprocess.run(["pdfinfo", str(td / "cv.pdf")], capture_output=True, text=True).stdout
         return int(re.search(r"Pages:\s+(\d+)", info).group(1))
 

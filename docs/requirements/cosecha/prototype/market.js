@@ -1,4 +1,4 @@
-/* Cosecha · mercado (prototipo). No envía nada. Organizaciones, personas y cifras FICTICIAS. */
+/* Cosecha · módulo Mercado (ruta de arranque, seguimiento de compradores, contacto con guardas, kit). No envía nada. Datos FICTICIOS. Lo monta core.js. */
 (() => {
   const $ = (s, r = document) => r.querySelector(s);
   const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -148,13 +148,8 @@
   };
 
   const TABS = [["ruta", "flag", "Ruta"], ["pipeline", "cols", "Pipeline"], ["secuencia", "mail", "Secuencia"], ["kit", "globe", "Kit"]];
-  const view = $("#view"), toast = (t) => { const n = $("#toast"); n.textContent = t; n.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (n.hidden = true), 2800); };
-  const render = () => {
-    const a = document.activeElement, key = a && (a.dataset.k || a.dataset.g || a.dataset.f), attr = a && (a.dataset.k ? "k" : a.dataset.g ? "g" : "f"), pos = a && a.selectionStart;
-    view.innerHTML = V[S.v]();
-    $("#tabs").innerHTML = TABS.map(([v, i, t]) => `<button data-v="${v}" ${v === S.v ? 'aria-current="page"' : ""}>${ic(i)}${t}</button>`).join("");
-    if (key) { const n = view.querySelector(`[data-${attr}="${key}"]`); if (n && attr !== "f") { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* number */ } } }
-  };
+  const toast = (t) => window.Cosecha.toast(t);
+  const render = () => window.Cosecha.render();
   const sheet = (l) => {
     const f = fit(l), nx = STAGES[Math.min(STAGES.findIndex((s) => s[0] === l.stage) + 1, STAGES.length - 1)], sh = $("#sheet");
     sh.hidden = false;
@@ -166,7 +161,7 @@
     ${l.stage !== "client" ? `<button class="btn" data-a="mv" data-id="${l.id}">Mover a «${nx[1]}»</button>` : ""}`;
   };
 
-  document.addEventListener("click", (e) => {
+  const onClick = (e) => {
     const t = e.target.closest("[data-v],[data-a]"); if (!t) return;
     if (t.dataset.v) { S.v = t.dataset.v; $("#sheet").hidden = true; render(); window.scrollTo(0, 0); return; }
     const a = t.dataset.a, id = +t.dataset.id;
@@ -192,12 +187,12 @@
       S.leads.push({ ...L(200 + S.leads.length, org, "importador", "US", 300, [7, 8, 9, 10, 11], ["fito", "admisibilidad"], "email", "kit", "new", "Kit comercial (entrante)", "Solicitud del interesado"), domain: mail.split("@")[1] });
       S.sent2 = true; toast("Prospecto entrante creado en Pipeline"); return render();
     }
-  });
-  document.addEventListener("change", (e) => {
+  };
+  const onChange = (e) => {
     const t = e.target;
     if (t.dataset.a === "task") { TASKS.find((x) => x.id === t.dataset.id).done = t.checked; return render(); }
     if (t.dataset.g) { const k = t.dataset.g; S.g[k] = t.type === "checkbox" ? t.checked : k === "cold" ? t.value === "true" : ["n", "bounce", "spam"].includes(k) ? +t.value || 0 : t.value; S.sent = false; render(); }
-  });
-  document.addEventListener("input", (e) => { const t = e.target; if (t.dataset.k === "csv") S.csv = t.value; if (t.dataset.g && t.type === "number") { S.g[t.dataset.g] = +t.value || 0; S.sent = false; render(); } });
-  render();
+  };
+  const onInput = (e) => { const t = e.target; if (t.dataset.k === "csv") S.csv = t.value; if (t.dataset.g && t.type === "number") { S.g[t.dataset.g] = +t.value || 0; S.sent = false; render(); } };
+  window.CosechaMarket = { V, S, sheet, onClick, onChange, onInput, TASKS, fit, have, rung, STAGES };
 })();
