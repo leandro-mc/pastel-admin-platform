@@ -1,0 +1,11 @@
+#!/bin/sh
+# Valida el mensaje del commit (docs/GIT_WORKFLOW.md). Delega en Node para ser identico en Windows, Linux y macOS.
+if [ "${PASTEL_SKIP_HOOKS:-}" = "1" ]; then
+  exit 0
+fi
+if ! command -v node >/dev/null 2>&1; then
+  echo "[pastel] Node.js no esta en PATH: no se puede validar el mensaje del commit." >&2
+  exit 1
+fi
+root=$(git rev-parse --show-toplevel) || exit 1
+exec node "$root/scripts/hooks/commit-msg.mjs" "$1"
