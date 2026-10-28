@@ -106,7 +106,7 @@ function write(dir, path, content) {
   writeFileSync(full, content);
 }
 
-function commit(dir, message = "prueba") {
+function commit(dir, message = "chore: prueba del hook") {
   return spawnSync("git", ["commit", "-q", "-m", message], { cwd: dir, encoding: "utf8" });
 }
 
@@ -167,7 +167,7 @@ withRepo("no corrige solo un .cs con cambios sin preparar: bloquea e indica como
   write(dir, "src/Mod/A.cs", "class A {} \n");
   run("add", "src/Mod/A.cs");
   write(dir, "src/Mod/A.cs", "class A {} \nclass B {}\n");
-  const result = commit(dir, "parcial");
+  const result = commit(dir, "chore: prueba parcial");
   assert.equal(result.status, 1);
   assert.match(result.stderr, /cambios sin preparar/);
   assert.match(result.stderr, /espacios al final de linea/);
@@ -178,7 +178,7 @@ withRepo("no corrige solo un .cs con cambios sin preparar: bloquea e indica como
 withRepo("PASTEL_SKIP_HOOKS=1 omite el hook de forma explicita", ({ dir, run }) => {
   write(dir, "src/Mod/A.cs", "class A {} \n");
   run("add", "src/Mod/A.cs");
-  const result = spawnSync("git", ["commit", "-q", "-m", "omitir"], {
+  const result = spawnSync("git", ["commit", "-q", "-m", "chore: omitir el hook"], {
     cwd: dir,
     encoding: "utf8",
     env: { ...process.env, PASTEL_SKIP_HOOKS: "1" },

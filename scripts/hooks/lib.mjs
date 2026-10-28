@@ -2,7 +2,7 @@
 // scripts/tests/pre-commit.test.mjs.
 
 const FORBIDDEN_EXTENSIONS = new Map([
-  [".csn", "los archivos .csn no se versionan (origen sin determinar; ver docs/testing/FORMAT-AUTOMATION.md)"],
+  [".csn", "los archivos .csn no se versionan (origen sin determinar; ver docs/TESTING.md)"],
   [".pem", "las claves privadas y certificados no se versionan"],
   [".pfx", "las claves privadas y certificados no se versionan"],
   [".p12", "las claves privadas y certificados no se versionan"],
@@ -100,3 +100,37 @@ export function isPrettierManaged(path) {
 export function isCSharp(path) {
   return /^(src|tests)\/.+\.cs$/.test(path) && !/(^|\/)(bin|obj)\//.test(path);
 }
+
+const COMMIT_TYPES = "feat|fix|refactor|test|docs|chore|ci|style";
+const COMMIT_SUBJECT = new RegExp(`^(${COMMIT_TYPES})(\\([a-z0-9._/-]+\\))?!?: \\S`);
+const NOISE_SUBJECT = /^(wip|checkpoint|tmp|temp)\b|checkpoint/i;
+const PROGRESS_ONLY_SUBJECT = /^(docs|chore)(\([^)]*\))?: (record|registrar)\b/i;
+
+/**
+ * Valida el mensaje de un commit segun docs/GIT_WORKFLOW.md. Devuelve la lista de problemas (vacia si es valido).
+ * Se omiten los merges, reverts y los fixup/squash que genera un rebase interactivo.
+ */
+export function commitMessageProblems(message) {
+  const subject =
+    message
+      .split("\n")
+      .map((line) => line.trimEnd())
+      .find((line) => line.length > 0 && !line.startsWith("#")) ?? "";
+  if (/^(Merge |Revert |fixup! |squash! |amend! )/.test(subject)) return [];
+
+  const problems = [];
+  if (!COMMIT_SUBJECT.test(subject)) {
+    problems.push(`El resumen debe ser «tipo(ambito): resumen» con tipo en {${COMMIT_TYPES.replaceAll("|", ", ")}}.`);
+  }
+  if (subject.length > 72) {
+    problems.push(`El resumen mide ${subject.length} caracteres; el maximo es 72.`);
+  }
+  if (NOISE_SUBJECT.test(subject)) {
+    problems.push("No se commitea por punto de control ni a medias (wip, checkpoint, tmp): agrupe el trabajo en una unidad completa.");
+  }
+  if (PROGRESS_ONLY_SUBJECT.test(subject)) {
+    problems.push("No se registra el avance en commits aparte: actualice docs/PROGRESS.md dentro del commit de la unidad.");
+  }
+  return problems;
+}
+
