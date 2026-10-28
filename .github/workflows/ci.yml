@@ -1,17 +1,24 @@
 name: CI
+# Politica (docs/GIT_WORKFLOW.md, seccion 3): el CI NUNCA corre por commit, push ni por abrir o actualizar un PR.
+# Solo corre (1) al aprobar un PR cuya base es dev, (2) al poner la etiqueta ci:basico o ci:completo en un PR hacia dev
+# (alternativa para quien no puede aprobar su propio PR) y (3) a mano. Por defecto el alcance es BASICO (backend y
+# frontend); PostgreSQL, contenedores y aislamiento por modulo solo con ci:completo o con alcance "completo".
 on:
-  # Manual-only by design: never spend a CI run on each development push.
-  # Dispatch once per reviewed batch, after local validation and explicit approval.
+  pull_request_review:
+    types: [submitted]
+  pull_request:
+    types: [labeled]
   workflow_dispatch:
     inputs:
-      confirm_validation:
-        description: "Confirmo que el lote está completo y listo para validación integral."
+      scope:
+        description: "basico = backend y frontend; completo = ademas PostgreSQL, contenedores y aislamiento por modulo."
         required: true
-        type: boolean
-        default: false
+        type: choice
+        options: [basico, completo]
+        default: basico
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 permissions:
@@ -19,7 +26,10 @@ permissions:
 
 jobs:
   backend:
-    if: inputs.confirm_validation == true
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request_review' && github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'dev')
+      || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' && (github.event.label.name == 'ci:basico' || github.event.label.name == 'ci:completo'))
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -29,7 +39,10 @@ jobs:
         run: ./scripts/test-backend.ps1
 
   frontend:
-    if: inputs.confirm_validation == true
+    if: >-
+      github.event_name == 'workflow_dispatch'
+      || (github.event_name == 'pull_request_review' && github.event.review.state == 'approved' && github.event.pull_request.base.ref == 'dev')
+      || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' && (github.event.label.name == 'ci:basico' || github.event.label.name == 'ci:completo'))
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -39,7 +52,9 @@ jobs:
         run: ./scripts/test-frontend.ps1
 
   database-integration:
-    if: inputs.confirm_validation == true
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.scope == 'completo')
+      || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' && github.event.label.name == 'ci:completo')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     env:
@@ -55,7 +70,9 @@ jobs:
         run: ./scripts/test-database.ps1
 
   container-build:
-    if: inputs.confirm_validation == true
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.scope == 'completo')
+      || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' && github.event.label.name == 'ci:completo')
     runs-on: ubuntu-latest
     timeout-minutes: 30
     env:
@@ -95,7 +112,9 @@ jobs:
   # Comprueba que cada subapp puede compilarse sin el resto de módulos de negocio.
   # Identity permanece incluido por contrato en cada imagen backend.
   module-isolation:
-    if: inputs.confirm_validation == true
+    if: >-
+      (github.event_name == 'workflow_dispatch' && inputs.scope == 'completo')
+      || (github.event_name == 'pull_request' && github.event.pull_request.base.ref == 'dev' && github.event.label.name == 'ci:completo')
     runs-on: ubuntu-latest
     timeout-minutes: 45
     strategy:
