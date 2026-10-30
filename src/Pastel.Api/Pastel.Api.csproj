@@ -3,7 +3,7 @@
   <ItemGroup>
     <ProjectReference Include="../Pastel.Application/Pastel.Application.csproj" />
     <ProjectReference Include="../Pastel.Infrastructure/Pastel.Infrastructure.csproj" />
-    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.13" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.14" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.13" />
   </ItemGroup>
 </Project>
