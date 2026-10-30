@@ -5,7 +5,7 @@ Identidad visual por definir (investigación en curso); icono `ListChecks` provi
 ## 1. Situación
 Brisa organiza los pendientes del día a día. **Existe como aplicación Android** (con su propio almacenamiento local). Se migra a Pastel como módulo web **conservando su comportamiento**. Más adelante la aplicación Android se conectará al backend para funcionar con y sin internet con sincronización: **no se implementa ahora**, pero el diseño debe dejarlo preparado.
 
-Este documento no redefine sus funcionalidades: el **inventario del proyecto actual** (`docs/migration/brisa-inventory.md` (aún no existe: lo producirá la investigación en curso), lo produce un agente de investigación antes de la migración) es la fuente de verdad funcional.
+Este documento no redefine sus funcionalidades: el **inventario del proyecto actual** (`docs/migration/brisa-inventory.md` (está en la rama `docs/brisa-inventory`, aún sin integrar), lo produce un agente de investigación antes de la migración) es la fuente de verdad funcional.
 
 ## 2. Roles y permisos
 Inicial: `brisa.access` (usar el módulo) y `brisa.items.manage` (sobre **sus propios** datos). Cada persona ve solo sus pendientes. Rol sugerido `Brisa — Usuario`. Cualquier concepto de compartir o grupos que exista en la app actual se anota en el inventario; **no se agrega nada nuevo** sin decisión del propietario.

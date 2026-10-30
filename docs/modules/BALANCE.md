@@ -5,7 +5,7 @@
 Identidad visual por definir (investigación en curso); icono `Scale` provisional · esquema `balance` · ruta `/balance` · API `/api/balance`.
 
 ## 1. Situación
-Balance registra y liquida **gastos compartidos** entre personas o grupos. Existe como proyecto individual en **otro stack tecnológico**. Se migra a Pastel como módulo **conservando datos y reglas**. El inventario del proyecto actual (`docs/migration/balance-inventory.md` (aún no existe: lo producirá la investigación en curso), lo produce un agente de investigación) es la fuente de verdad funcional.
+Balance registra y liquida **gastos compartidos** entre personas o grupos. Existe como proyecto individual en **otro stack tecnológico**. Se migra a Pastel como módulo **conservando datos y reglas**. El inventario del proyecto actual (`docs/migration/balance-inventory.md` (está en la rama `docs/balance-inventory`, aún sin integrar), lo produce un agente de investigación) es la fuente de verdad funcional.
 
 ## 2. Roles y permisos
 Inicial: `balance.access` y `balance.groups.manage` (sobre los grupos de los que la persona forma parte). Rol sugerido `Balance — Usuario`. Los roles **dentro de un grupo** (por ejemplo, administrador del grupo y miembro) son datos del dominio de Balance, no roles de plataforma; el inventario los describe. Reglas: una persona solo ve los grupos y gastos de los que es miembro (verificación en el servidor).

@@ -47,4 +47,13 @@ La rama muestra **488 commits en total: 446 propios y 42 heredados de `dev`**. S
 
 **Qué no debe repetirse:** commits por cadencia o por archivo; registrar avance en commits aparte; publicar antes de validar; dos agentes por rama; mensajes genéricos; commits gigantes sin descripción.
 
-**Qué se hizo con la historia:** los 446 commits propios se unificaron en unidades lógicas sin cambiar el contenido final de la rama (el árbol resultante es idéntico). Cada commit nuevo lista en su cuerpo los commits originales que reúne. El estado previo se conserva en la rama de respaldo indicada en `docs/PROGRESS.md`.
+**Qué se hizo con la historia:** los 446 commits propios se unificaron en unidades lógicas sin cambiar el contenido final de la rama (el árbol resultante es idéntico). Cada commit nuevo lista en su cuerpo los commits originales que reúne. El estado previo se conserva en la rama de respaldo `backup/refactor-modular-foundation-2026-10-25` (puede borrarse cuando el propietario lo decida).
+
+**Ramas derivadas de la historia anterior.** Solo `research/requirements-and-prototypes` nació de ella (sus 6 commits propios parten de `a8c1c7d`); el resto de ramas no se ve afectado. Para moverla a la historia nueva (probado sin conflictos, porque solo añade `docs/requirements/**`):
+```powershell
+git fetch origin
+git switch research/requirements-and-prototypes
+git rebase --onto origin/refactor/modular-foundation a8c1c7d research/requirements-and-prototypes
+git push --force-with-lease origin research/requirements-and-prototypes
+```
+Quien tenga un clon local de `refactor/modular-foundation` sin trabajo propio pendiente: `git fetch origin; git switch refactor/modular-foundation; git reset --hard origin/refactor/modular-foundation`. Con trabajo pendiente, se rebasa con `git rebase --onto origin/refactor/modular-foundation <SHA-antiguo-de-su-base>`.

@@ -22,7 +22,7 @@ El rol `Administrator` recibe todos los permisos al sincronizar el catálogo.
 
 - Una persona solo ve los grupos y gastos de los que es miembro (verificación en el servidor).
 - Los roles dentro de un grupo (administrador del grupo, miembro) son datos del dominio de Balance, no roles de plataforma.
-- El nombre anterior «SaldApp» no se usa en código ni interfaz. Inventario y decisiones de migración: `docs/migration/balance-inventory.md` (aún no existe: lo producirá la investigación en curso).
+- El nombre anterior «SaldApp» no se usa en código ni interfaz. Inventario y decisiones de migración: `docs/migration/balance-inventory.md` (está en la rama `docs/balance-inventory`, aún sin integrar).
 
 ## Endpoints
 
