@@ -45,7 +45,7 @@ Todos los agentes trabajan igual: **commits lógicos por unidad de trabajo** (se
 - No se despacha CI manual durante la depuración. Detalle en `docs/GIT_WORKFLOW.md`.
 
 ## 7. Diseño
-- **Reglas duras:** no usar morado ni sus derivados, ni lo habitual del diseño generado por IA (colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA). `scripts/check-design.mjs` verifica morado, iconos y emojis de IA y colores literales fuera de los archivos de tokens.
+- **Reglas duras:** no usar morado ni sus derivados, ni lo habitual del diseño generado por IA (colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA). `scripts/check-design.mjs` verifica solo esas dos reglas (morado e iconos o emojis de IA); no restringe colores literales ni tokens.
 - La **identidad visual de cada aplicación (paletas, acentos, tipografía propia) no está definida**: se determinará con la investigación y los prototipos en curso. No inventes ni fijes paletas por módulo; no hay restricciones de color por subapp más allá de las reglas duras. Ver `docs/DESIGN_SYSTEM.md`.
 - Accesibilidad (WCAG AA), textos en `strings.ts`, español de Costa Rica con trato de usted por defecto; el voseo se permite cuando el propietario lo pida.
 

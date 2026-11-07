@@ -15,7 +15,7 @@ Reemplaza a la versión por capas (`Domain / Application / Infrastructure / Api`
 | D7 | **Autenticación con Google (OAuth 2.0 / OIDC, código + PKCE)**, sesión propia en cookies `HttpOnly` | Una sola identidad para todos los módulos; no se tocan los tokens de Google |
 | D8 | **Un `DbContext`, un esquema y un historial de migraciones por módulo** | Propiedad de datos explícita; extraíble a otra base |
 | D9 | **Compilación por subconjunto de módulos** (`PASTEL_MODULES`) | Desplegar un "Pastel" por proyecto sin reescribir nada |
-| D10 | **Tailwind: utilidades en JSX**; patrones compartidos = componentes React; `@apply` solo en `base.css` | Co-ubicación estilo/markup y hojas pequeñas (el análisis de `dev` halló 0 utilidades y 2 209 líneas de CSS) |
+| D10 | **Tailwind: utilidades en JSX**; patrones compartidos = componentes React (se prefieren a `@apply`) | Co-ubicación estilo/markup y hojas pequeñas (el análisis de `dev` halló 0 utilidades y 2 209 líneas de CSS) |
 | D11 | **Errores y logs estandarizados** (`Result` + `problem+json` + `traceId`; Serilog JSON; auditoría aparte) | Diagnóstico fiable y mensajes humanos en todos los módulos |
 | D12 | **Desarrollo y pruebas por agentes distintos** (Dev escribe el código; Build compila, corrige y escribe pruebas unitarias; QA planifica, ejecuta y reporta) | Verificación independiente; sin autocertificación |
 
@@ -200,7 +200,7 @@ Reglas: páginas finas, estado del servidor en TanStack Query, formularios con r
 ### 9.5 Estilos con Tailwind (regla única)
 - **Utilidades en el JSX.** Lo compartido son **componentes** de `core/ui` con variantes (`cva` + `cn()`), no clases semánticas con `@apply`.
 - Tokens en `core/design/tokens.css` y `module-themes.css`, expuestos con `@theme inline` (`bg-surface`, `text-fg`, `bg-accent`, `text-accent-strong`…). `data-module` cambia las variables del módulo. **Los valores actuales son provisionales** hasta que se defina la identidad visual (`DESIGN_SYSTEM.md`); `dark:` solo cuando sea imprescindible.
-- `@apply` únicamente en `core/design/base.css` (reseteos, Markdown, selectores complejos): máximo 60 líneas. Ningún CSS por módulo; ningún archivo CSS de más de 400 líneas.
+- Se prefieren componentes a `@apply`; no hay comprobación automática. El CSS propio se mantiene pequeño y compartido en `core/design` (`tailwind-audit` informa los archivos de más de 400 líneas).
 - `scripts/tailwind-audit.mjs` mide y el CI vigila estas metas. Orden de clases con `prettier-plugin-tailwindcss`.
 
 ## 10. Despliegue por subconjunto de módulos
@@ -215,7 +215,7 @@ Reglas: páginas finas, estado del servidor en TanStack Query, formularios con r
 | Integración por módulo | Endpoints + PostgreSQL real | `WebApplicationFactory` + Testcontainers |
 | Arquitectura | Fronteras, `internal`, prefijos de permiso, que cada módulo tenga `MODULE.md` | NetArchTest o ArchUnitNET |
 | Frontend | Componentes, flujos y accesibilidad (axe) | Vitest + Testing Library + `vitest-axe` |
-| Diseño | Sin morado, sin iconos/símbolos de IA, sin colores sueltos | `scripts/check-design.mjs` + ESLint |
+| Diseño | Sin morado y sin iconos/símbolos de IA | `scripts/check-design.mjs` + ESLint |
 | Aislamiento | Cada módulo compila y pasa pruebas solo | Matriz de CI que borra los demás módulos |
 | Integración independiente y E2E | Flujos por rol, permisos, aislamiento de datos, errores, logs, accesibilidad | Pruebas de QA (Playwright, `WebApplicationFactory` + PostgreSQL) |
 

@@ -4,7 +4,7 @@ Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **
 
 ## 1. Reglas duras (no negociables)
 - **No usar morado ni sus derivados**, ni nada de lo habitual del diseño generado por IA: colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA.
-- `scripts/check-design.mjs` (parte de `test-frontend.ps1`) verifica morado, iconos y emojis de IA y colores literales fuera de los archivos de tokens.
+- `scripts/check-design.mjs` (parte de `test-frontend.ps1`) verifica solo estas dos reglas: morado (en cualquier archivo) e iconos o emojis de IA.
 - No hay otras restricciones de paleta, acento ni identidad por subaplicación. No inventar ni fijar paletas por módulo mientras la investigación no las defina.
 
 ## 2. Principios
@@ -50,10 +50,10 @@ Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **
 
 ## 7. Implementación: Tailwind CSS 4 y CSS gobernado
 - **Tailwind 4** para utilidades en JSX (layout, espaciado, breakpoints, tipografía, estados simples), con clases ordenadas por `prettier-plugin-tailwindcss`.
-- **Tokens CSS** (`web/src/core/design/tokens.css` y `module-themes.css`, expuestos con `@theme inline`): colores, superficies, sombras, foco y tema se declaran una sola vez; no hay hexadecimales sueltos ni valores arbitrarios de color en JSX o CSS de componentes. **Los valores actuales de los tokens, incluidos los de `module-themes.css`, son provisionales** y cambiarán con la definición de identidad visual; el mecanismo (`data-module`) se conserva.
-- CSS de componentes acotado en `core/design/components/*.css` para composiciones que no se describen bien con utilidades; usa tokens. `@apply` solo en `core/design/base.css`. Sin estilos inline arbitrarios ni selectores globales que reemplacen la composición de componentes.
+- **Tokens CSS** (`web/src/core/design/tokens.css` y `module-themes.css`, expuestos con `@theme inline`): se recomienda declarar colores, superficies, sombras, foco y tema una sola vez como tokens (sin comprobación automática: no hay restricción sobre colores literales). **Los valores actuales de los tokens, incluidos los de `module-themes.css`, son provisionales** y cambiarán con la definición de identidad visual; el mecanismo (`data-module`) se conserva.
+- CSS de componentes acotado en `core/design/components/*.css` para composiciones que no se describen bien con utilidades; usa tokens cuando existan. Se prefieren componentes a `@apply`, sin restricción automática. Evite estilos inline arbitrarios y selectores globales que reemplacen la composición de componentes.
 - `scripts/tailwind-audit.mjs` informa métricas (el único criterio estructural que bloquea es el de CSS fuera de lo permitido).
 
 ## 8. Verificación
-- Automática: `check-design`, axe en las pruebas de componentes, Prettier/ESLint (incluye reglas de accesibilidad).
+- Automática: `check-design` (reglas duras), axe en las pruebas de componentes, Prettier/ESLint (incluye reglas de accesibilidad).
 - Manual antes de entregar una pantalla nueva: solo teclado, 320 px y zoom 200 %, modo oscuro y lector de pantalla en el flujo principal.
