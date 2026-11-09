@@ -170,6 +170,16 @@ internal sealed class PrivilegeGuard(
     public async Task<Error?> AuthorizeGrantAsync(
         IReadOnlyCollection<string> permissionCodes, string action, Guid? targetUserId, CancellationToken cancellationToken)
     {
+        // Developer mode is granted to concrete accounts (or by the seeded system roles), never through a
+        // custom role: otherwise anyone who manages roles could hand it out through a side door.
+        if ((action == "create_role" || action == "set_role_permissions")
+            && permissionCodes.Contains(IdentityPermissions.DeveloperMode))
+        {
+            return await DenyAsync(
+                IdentityErrors.PrivilegeDeveloperModeIndividualOnly, action, targetUserId, null,
+                new { permissions = new[] { IdentityPermissions.DeveloperMode } }, cancellationToken);
+        }
+
         // These boundaries apply even to Administrator, whose ordinary administrative permissions are broad.
         // Workspace role creation/editing only accepts platform permissions, regardless of actor.
         // App-specific roles are managed by the selected app, not from this global API.
@@ -202,18 +212,15 @@ internal sealed class PrivilegeGuard(
 
         // Workspace cannot issue one-off grants for app permissions, even for Owner.
         // App memberships/overrides belong to the selected app's own settings scope.
+        // The only non-platform grant allowed here is developer mode (individual accounts only).
         if (string.Equals(action, "set_permissions", StringComparison.Ordinal)
-            && permissionCodes.Any(code =>
-                code != IdentityPermissions.DashboardView
-                && !code.StartsWith("settings.", StringComparison.Ordinal)))
+            && permissionCodes.Any(code => !PlatformRoleScope.IsUserOverridablePermissionCode(code)))
         {
             return await DenyAsync(
                 IdentityErrors.PrivilegeAppScopeRequired, action, targetUserId, null,
                 new
                 {
-                    permissions = permissionCodes.Where(code =>
-                    code != IdentityPermissions.DashboardView
-                    && !code.StartsWith("settings.", StringComparison.Ordinal)).ToArray()
+                    permissions = permissionCodes.Where(code => !PlatformRoleScope.IsUserOverridablePermissionCode(code)).ToArray()
                 }, cancellationToken);
         }
 

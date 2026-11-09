@@ -21,6 +21,13 @@ internal static class PlatformRoleScope
         code == IdentityPermissions.DashboardView
         || code.StartsWith("settings.", StringComparison.Ordinal);
 
+    /// <summary>
+    /// Permisos que Workspace puede conceder como excepción individual: los de plataforma y el modo desarrollador.
+    /// El modo desarrollador nunca se concede por rol personalizado (no es un permiso de plataforma de rol).
+    /// </summary>
+    public static bool IsUserOverridablePermissionCode(string code) =>
+        IsPlatformPermissionCode(code) || code == IdentityPermissions.DeveloperMode;
+
     /// <summary>La entidad debe incluir RolePermissions y Permission antes de usar esta evaluación en memoria.</summary>
     public static bool IsPlatformRole(AppRole role)
     {

@@ -102,8 +102,8 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             owner.IsSystemRole = true;
         }
 
-        // Administrator recibe las funciones generales existentes, pero nunca obtiene platform.owner,
-        // ni acceso de Huella/Cosecha por el mero hecho de ser administrador.
+        // Administrator recibe las funciones generales existentes y el modo desarrollador (automático para todo
+        // Administrator), pero nunca obtiene platform.owner, ni acceso de Huella/Cosecha por ser administrador.
         var adminDesired = allPermissions.Where(p => IsGeneralAdministratorPermission(p.Code)).Select(p => p.Id).ToHashSet();
         var adminLinks = await db.RolePermissions.Include(x => x.Permission)
             .Where(x => x.RoleId == admin.Id).ToListAsync(cancellationToken);
@@ -116,11 +116,13 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
         }
 
         // El permiso de Workspace puede estar en Administrator para administración general, pero no en otros roles.
-        // platform.owner y huella.* solo pertenecen al rol Owner/Superuser.
+        // platform.owner y huella.* solo pertenecen al rol Owner/Superuser. El modo desarrollador pertenece
+        // únicamente a los dos roles de sistema: nunca a un rol personalizado (se asigna a cuentas concretas).
         var legacyRestricted = await db.RolePermissions.Include(x => x.Permission)
             .Where(x => x.RoleId != admin.Id && x.RoleId != owner.Id)
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
+                || x.Permission.Code == IdentityPermissions.DeveloperMode
                 || x.Permission.Code.StartsWith("huella."))
             .ToListAsync(cancellationToken);
         db.RolePermissions.RemoveRange(legacyRestricted);
@@ -169,8 +171,11 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
                 || x.Permission.Code.StartsWith("huella.")
+                // El modo desarrollador es una excepción individual de plataforma: puede concederla un
+                // Administrator que lo tenga, así que no se retira por no haberla concedido el Owner.
                 || (!(x.Permission.Code == IdentityPermissions.DashboardView
-                    || x.Permission.Code.StartsWith("settings."))
+                    || x.Permission.Code.StartsWith("settings.")
+                    || x.Permission.Code == IdentityPermissions.DeveloperMode)
                     && !ownerUserIds.Contains(x.AssignedByUserId ?? Guid.Empty)))
             .ToListAsync(cancellationToken);
         db.UserPermissionOverrides.RemoveRange(restrictedOverrides);
@@ -206,6 +211,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
 
     private static bool IsGeneralAdministratorPermission(string code) =>
         code == IdentityPermissions.WorkspaceAccess
+        || code == IdentityPermissions.DeveloperMode
         || code == IdentityPermissions.DashboardView
         || code.StartsWith("settings.", StringComparison.Ordinal);
 }

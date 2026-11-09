@@ -12,6 +12,7 @@ using Pastel.Modules.Identity.Features.GetUser;
 using Pastel.Modules.Identity.Features.GetUserPermissions;
 using Pastel.Modules.Identity.Features.GoogleComplete;
 using Pastel.Modules.Identity.Features.GoogleStart;
+using Pastel.Modules.Identity.Features.ListDeveloperRoles;
 using Pastel.Modules.Identity.Features.ListAudit;
 using Pastel.Modules.Identity.Features.ListModules;
 using Pastel.Modules.Identity.Features.ListPermissions;
@@ -98,5 +99,7 @@ internal static class IdentityEndpoints
         SetModuleEnabledEndpoint.Map(modules);
 
         ListAuditEndpoint.Map(apiRoot.MapGroup("/admin/audit"));
+
+        ListDeveloperRolesEndpoint.Map(apiRoot.MapGroup("/admin/developer"));
     }
 }

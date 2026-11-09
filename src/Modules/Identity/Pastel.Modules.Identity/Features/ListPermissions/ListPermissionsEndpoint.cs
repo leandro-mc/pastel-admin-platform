@@ -18,7 +18,8 @@ internal static class ListPermissionsEndpoint
     private static async Task<IResult> HandleAsync(IdentityDbContext db, CancellationToken cancellationToken) =>
         Results.Ok(await db.Permissions.AsNoTracking()
             // El catálogo global de Workspace incluye permisos de plataforma, nunca el catálogo privado de cada app.
-            .Where(x => x.Code == IdentityPermissions.DashboardView || x.Code.StartsWith("settings."))
+            // Incluye el modo desarrollador: se concede a cuentas concretas desde la pantalla de accesos.
+            .Where(x => x.Code == IdentityPermissions.DashboardView || x.Code.StartsWith("settings.") || x.Code == IdentityPermissions.DeveloperMode)
             .OrderBy(x => x.Module.SortOrder).ThenBy(x => x.Code)
             .Select(x => new PermissionSummary(x.Id, x.Module.Code, x.Module.Name, x.Code, x.Name, x.Description, x.IsSystemPermission))
             .ToListAsync(cancellationToken));

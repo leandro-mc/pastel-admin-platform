@@ -96,6 +96,13 @@ internal static class IdentityErrors
     public static readonly Error PrivilegeSystemRoleImmutable = Error.Forbidden(
         "identity.privilege.system_role_immutable", "Los roles de sistema no se pueden modificar.");
 
+    public static readonly Error PrivilegeDeveloperModeIndividualOnly = Error.Forbidden(
+        "identity.privilege.developer_mode_individual_only", "El modo desarrollador se concede a cuentas concretas, no a roles.");
+
+    // Modo desarrollador
+    public static readonly Error DeveloperAppNotFound = Error.NotFound(
+        "identity.developer.app_not_found", "No se encontró la aplicación.");
+
     // Módulos
     public static readonly Error ModuleNotFound = Error.NotFound("identity.module.not_found", "No se encontró el módulo.");
 

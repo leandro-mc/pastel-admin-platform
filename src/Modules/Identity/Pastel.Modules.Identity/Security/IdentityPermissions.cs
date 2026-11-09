@@ -22,6 +22,9 @@ internal static class IdentityPermissions
     public const string WorkspaceAccess = "platform.workspace.access";
     public const string OwnerPrivilege = "platform.owner";
 
+    /// <summary>Vista previa por rol (modo desarrollador). Solo cambia lo que muestra la interfaz; el servidor sigue autorizando con la sesión real.</summary>
+    public const string DeveloperMode = "platform.developer.mode";
+
     public static IReadOnlyList<PermissionGroup> Groups { get; } =
     [
         new("dashboard", "Inicio", 0,
@@ -46,6 +49,7 @@ internal static class IdentityPermissions
         new("platform", "Plataforma", 200,
         [
             new(WorkspaceAccess, "Acceder a Pastel Workspace", "Entrar al espacio de administración global de la plataforma."),
+            new(DeveloperMode, "Modo desarrollador", "Previsualizar cada aplicación con los permisos de otro rol. Solo cambia lo que se muestra; la autorización real no cambia."),
             new(OwnerPrivilege, "Propietario y superusuario", "Privilegio reservado al rol Owner/Superuser; no se concede a administradores generales ni a roles de aplicaciones."),
         ]),
     ];

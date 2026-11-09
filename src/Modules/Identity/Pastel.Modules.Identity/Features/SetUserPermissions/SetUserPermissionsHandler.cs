@@ -54,14 +54,10 @@ internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrai
         }
 
         // Este endpoint pertenece a Workspace. Los permisos de negocio de una subapp se gestionan
-        // desde su propio ámbito, incluso cuando el actor sea Owner/Superuser.
+        // desde su propio ámbito, incluso cuando el actor sea Owner/Superuser. La única excepción
+        // individual que no es de plataforma es el modo desarrollador.
         var crossAppChanges = changes
-            .Where(change =>
-            {
-                var code = permissions[change.PermissionId].Code;
-                return code != IdentityPermissions.DashboardView
-                    && !code.StartsWith("settings.", StringComparison.Ordinal);
-            })
+            .Where(change => !PlatformRoleScope.IsUserOverridablePermissionCode(permissions[change.PermissionId].Code))
             .Select(change => permissions[change.PermissionId].Code)
             .Distinct(StringComparer.Ordinal)
             .ToArray();
@@ -83,7 +79,8 @@ internal sealed class SetUserPermissionsHandler(IdentityDbContext db, IAuditTrai
         var existing = await db.UserPermissionOverrides.Include(x => x.Permission)
             .Where(x => x.UserId == userId
                 && (x.Permission.Code == IdentityPermissions.DashboardView
-                    || x.Permission.Code.StartsWith("settings.")))
+                    || x.Permission.Code.StartsWith("settings.")
+                    || x.Permission.Code == IdentityPermissions.DeveloperMode))
             .ToListAsync(cancellationToken);
         var before = existing.OrderBy(x => x.Permission.Code, StringComparer.Ordinal)
             .Select(x => new { permission = x.Permission.Code, effect = x.Effect.ToString() }).ToArray();
