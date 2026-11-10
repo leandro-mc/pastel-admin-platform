@@ -18,7 +18,10 @@ import { linkButton, primaryButton, secondaryButton } from "../styles";
 import { OverridePicker, type OverrideValue } from "./OverridePicker";
 import { QueryState } from "./QueryState";
 import { settingsStrings } from "./strings";
-import { isPlatformPermission, isPlatformRole } from "./permissionsScope";
+import {
+  isPlatformRole,
+  isUserOverridablePermission,
+} from "./permissionsScope";
 import { panel } from "./styles";
 
 const t = settingsStrings.access;
@@ -57,7 +60,9 @@ export function Component() {
     if (!isAdministrator) void overrides.refetch();
   };
 
-  const platformCatalog = (catalog.data ?? []).filter(isPlatformPermission);
+  const platformCatalog = (catalog.data ?? []).filter(
+    isUserOverridablePermission,
+  );
   const platformPermissionIds = new Set(
     platformCatalog.map((permission) => permission.id),
   );
