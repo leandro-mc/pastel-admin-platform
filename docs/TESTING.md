@@ -13,7 +13,7 @@ Más pruebas no significan más calidad: cada una cuesta tiempo de ejecución y 
 - **Backend (unitarias y arquitectura):** reglas de dominio, política de contraseñas, `ReturnUrl`, validación de arranque en Producción, evaluador de permisos y reglas de arquitectura entre módulos.
 - **PostgreSQL / integración HTTP** (`tests/Pastel.IntegrationTests`): host, migraciones desde base vacía, salud, CSRF, opciones de autenticación, **jerarquía de privilegios** (escalada, protección de administradores, último administrador, concurrencia), **Google** (vinculación, correo no verificado, cuentas inactivas, registro cerrado, `state`, `redirect_uri`, tokens, logs), **refresco de sesión** (ventana de gracia, reutilización, conflictos de serialización), **contrato de errores** y **logs** (JSON real de Serilog sin secretos, una línea por petición, denegaciones limitadas).
 - **Frontend (Vitest + Testing Library + axe):** cliente de API (un solo refresco ante varios 401), diálogos accesibles, login según opciones y política de contraseña. Hay un smoke de Playwright para `/ingresar` (`npm run test:e2e`).
-- **Guardas estáticas:** fronteras entre módulos (frontend y backend), `check-design`, `tailwind-audit`.
+- **Guardas estáticas:** fronteras entre módulos (frontend y backend), `check-design` (solo reglas duras: morado y símbolos de IA), `tailwind-audit`.
 
 ## 3. Comandos (PowerShell, Docker Desktop iniciado)
 | Comando | Qué hace |

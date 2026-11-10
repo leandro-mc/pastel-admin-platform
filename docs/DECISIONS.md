@@ -26,3 +26,4 @@ Decisiones vigentes de arquitectura y del propietario, en una línea cada una. E
 | 2026-10-25 | **CI de GitHub**: nunca por commit; solo al aprobar un PR hacia `dev` y solo lo básico, salvo indicación expresa. |
 | 2026-10-25 | **Diseño**: se eliminan las restricciones de paleta e identidad por subapp (en investigación); se mantienen las reglas duras (sin morado ni lo habitual del diseño de IA). |
 | 2026-10-25 | **Historia de `refactor/modular-foundation`**: unificada en unidades lógicas con el mismo contenido final; el estado previo queda en la rama de respaldo. |
+| 2026-10-25 | **`check-design` solo con reglas duras**: se retiran la exigencia de colores solo mediante tokens y la restricción de `@apply`; sigue verificando morado e iconos o emojis de IA. La identidad visual de cada app se define con la investigación. |

@@ -1,11 +1,9 @@
 #!/usr/bin/env node
-// Guarda de diseño (docs/DESIGN_SYSTEM.md; FASE-0 §11 y §12.6). Uso: node scripts/check-design.mjs
+// Guarda de diseño: solo las REGLAS DURAS de docs/DESIGN_SYSTEM.md. Uso: node scripts/check-design.mjs
 // Falla (código 1) si encuentra en web/src o web/index.html:
 //   1. Morado: color con tono HSL entre 235° y 345° (hexadecimal, rgb(), hsl()) o clases de Tailwind indigo/violet/purple/fuchsia/pink.
 //   2. Símbolos de IA: iconos de lucide (Sparkles, Stars, Wand*, Bot*, Brain*, Cpu) o los emojis ✨ 🤖 🪄 🔮.
-//   3. Colores sueltos: hexadecimales, rgb() o hsl() fuera de core/design/{tokens,module-themes}.css (y de las exenciones:
-//      GoogleLogo.tsx y `<meta name="theme-color">`, que el navegador solo admite como valor literal).
-//   4. `@apply` fuera de core/design/base.css.
+// No restringe paletas, colores literales ni dónde se declaran los tokens: la identidad visual de cada aplicación se está definiendo.
 // Heurística estática: no evalúa clases construidas dinámicamente ni valida el resultado visual.
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
@@ -16,15 +14,6 @@ const PURPLE_MIN = 235;
 const PURPLE_MAX = 345;
 /** Por debajo de esta saturación (%) el tono HSL no es perceptible y no se considera morado (grises azulados). */
 const MIN_SATURATION = 12;
-
-/** Archivos donde sí se definen valores de color. Todo lo demás debe usar tokens. */
-const COLOR_DEFINITION_FILES = [
-  "web/src/core/design/tokens.css",
-  "web/src/core/design/module-themes.css",
-];
-/** Exenciones documentadas: colores de marca de terceros (la «G» de Google exige sus colores oficiales). */
-const BRAND_EXEMPT_FILES = ["web/src/modules/identity/components/GoogleLogo.tsx"];
-const APPLY_FILES = ["web/src/core/design/base.css"];
 
 const AI_ICONS =
   /\b(Sparkles?|Stars?|Wand\d*|WandSparkles|Bot|BotMessageSquare|BotOff|Brain|BrainCircuit|BrainCog|Cpu)\b/;
@@ -72,32 +61,24 @@ export function scanSource(path, text) {
   const findings = [];
   const add = (line, rule, message) => findings.push({ path, line, rule, message });
   const isCss = path.endsWith(".css");
-  const defines = COLOR_DEFINITION_FILES.includes(path);
-  const brand = BRAND_EXEMPT_FILES.includes(path);
 
   text.split("\n").forEach((rawLine, index) => {
     const line = index + 1;
-    const themeColorMeta = /<meta\s+name="theme-color"/.test(rawLine);
     // En CSS se ignoran los comentarios de bloque en la misma línea; en TS, los de línea.
     const code = isCss ? rawLine.replace(/\/\*.*?\*\//g, "") : rawLine.replace(/^\s*\/\/.*$/, "");
     if (!code.trim()) return;
 
     if (AI_EMOJI.test(code)) add(line, "ai-symbol", "Emoji de IA prohibido (✨ 🤖 🪄 🔮).");
     if (!isCss && AI_ICONS.test(code) && /lucide|import|<\w|icon/i.test(code))
-      add(line, "ai-symbol", "Icono de IA prohibido (Sparkles, Stars, Wand*, Bot*, Brain*, Cpu). La marca es Flower2.");
+      add(line, "ai-symbol", "Icono de IA prohibido (Sparkles, Stars, Wand*, Bot*, Brain*, Cpu).");
     if (PURPLE_CLASS.test(code)) add(line, "purple", "Clase de Tailwind morada/violeta prohibida.");
-    if (/@apply\b/.test(code) && !APPLY_FILES.includes(path))
-      add(line, "apply", "`@apply` solo se permite en core/design/base.css.");
 
     for (const m of code.matchAll(HEX)) {
       if (isPurple(hexToHsl(m[0]))) add(line, "purple", `Color ${m[0]} con tono entre ${PURPLE_MIN}° y ${PURPLE_MAX}°.`);
-      else if (!defines && !brand && !themeColorMeta) add(line, "loose-color", `Color suelto ${m[0]}: use un token (bg-accent, text-fg…).`);
     }
     for (const m of code.matchAll(FUNC_COLOR)) {
       const hsl = functionToHsl(m[1], m[2]);
       if (hsl && isPurple(hsl)) add(line, "purple", `Color ${m[0]} con tono entre ${PURPLE_MIN}° y ${PURPLE_MAX}°.`);
-      else if (!defines && !brand && !themeColorMeta && !/^(rgba?|hsla?)\(\s*var\(/i.test(m[0]))
-        add(line, "loose-color", `Color suelto ${m[0]}: use un token.`);
     }
   });
   return findings;
