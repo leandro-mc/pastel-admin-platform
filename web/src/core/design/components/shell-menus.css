@@ -1,0 +1,61 @@
+/*
+ * Menús y descripciones emergentes del shell. Se dibujan en un portal fuera de `.shell`, por eso reciben
+ * `data-module` y repiten el tema de la app activa.
+ */
+
+/* ---------- Menús y descripciones emergentes (se dibujan en un portal; reciben `data-module`) ---------- */
+
+.shell-popover {
+  min-width: 14rem;
+  max-width: min(22rem, calc(100vw - 1rem));
+  padding: 0.25rem;
+  border: 1px solid var(--border-strong);
+  border-radius: calc(var(--shell-radius) + 2px);
+  background: var(--surface-raised);
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+.shell-menu-item {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: var(--shell-radius);
+  font-size: 0.875rem;
+  cursor: default;
+  outline: none;
+  text-decoration: none;
+}
+.shell-menu-item[data-focused],
+.shell-menu-item[data-hovered] {
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+}
+.shell-menu-item[data-selected],
+.shell-menu-item[aria-current="page"] {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-weight: 600;
+}
+.shell-menu-item[data-disabled] {
+  color: var(--text-secondary);
+}
+.shell-menu-header {
+  padding: 0.5rem 0.75rem 0.25rem;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+.shell-menu-sep {
+  height: 1px;
+  margin: 0.25rem 0;
+  background: var(--border);
+}
+.shell-tooltip {
+  padding: 0.25rem 0.625rem;
+  border-radius: var(--shell-radius);
+  background: var(--text);
+  color: var(--app-bg);
+  font-size: 0.75rem;
+  font-weight: 500;
+}

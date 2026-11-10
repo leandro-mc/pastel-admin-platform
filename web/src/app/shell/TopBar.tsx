@@ -1,86 +1,56 @@
-import {
-  ChevronRight,
-  Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
-  Sun,
-} from "lucide-react";
-import { Link, useLocation } from "react-router";
+import { Link } from "react-aria-components";
 import { useAuth } from "@/core/auth";
-import { usePreferences } from "@/core/preferences";
+import type { ModuleManifest } from "@/core/modules/types";
 import { routes } from "../routes";
 import { shellStrings } from "../strings";
 import AccountMenu from "./AccountMenu";
-import { barButton } from "./styles";
+import AppSwitcher from "./AppSwitcher";
+import Breadcrumbs from "./Breadcrumbs";
+import DevRoleSelector from "./DevRoleSelector";
+import HelpButton from "./HelpButton";
+import type { Crumb } from "./navigation";
+import PreferencesMenu from "./PreferencesMenu";
+import SimulationBanner from "./SimulationBanner";
 
-type Props = {
-  pageTitle: string;
-  contextLabel: string;
-  sidebarCollapsed: boolean;
-  onToggleSidebar: () => void;
-};
-
-/** La barra superior identifica la sección; el nombre de la app activa vive en la barra lateral. */
+/**
+ * Barra superior: solo acciones globales entre aplicaciones (ayuda, preferencias, cuenta y, si corresponde, el selector
+ * del modo desarrollador). Nada propio de una app. A la izquierda, el control de app en pantallas sin barra lateral y
+ * las migas reales de la ruta en escritorio. Es fija y arrastra consigo el aviso de vista previa.
+ */
 export default function TopBar({
-  pageTitle,
-  contextLabel,
-  sidebarCollapsed,
-  onToggleSidebar,
-}: Props) {
+  trail,
+  module,
+}: {
+  trail: readonly Crumb[];
+  module: ModuleManifest | null;
+}) {
   const { status } = useAuth();
-  const { theme, toggleTheme } = usePreferences();
-  const { pathname } = useLocation();
   return (
-    <header className="workspace-topbar">
-      <div className="workspace-topbar-left">
-        <button
-          type="button"
-          className="workspace-collapse-button"
-          aria-label={
-            sidebarCollapsed ? "Expandir menú lateral" : "Colapsar menú lateral"
-          }
-          title={
-            sidebarCollapsed ? "Expandir menú lateral" : "Colapsar menú lateral"
-          }
-          onClick={onToggleSidebar}
-        >
-          {sidebarCollapsed ? (
-            <PanelLeftOpen aria-hidden="true" size={22} />
-          ) : (
-            <PanelLeftClose aria-hidden="true" size={22} />
-          )}
-        </button>
-        <nav className="workspace-breadcrumbs" aria-label="Ubicación actual">
-          <span>{contextLabel}</span>
-          <ChevronRight aria-hidden="true" />
-          <strong>{pageTitle}</strong>
-        </nav>
-      </div>
-      <div className="workspace-topbar-actions">
-        <span className="workspace-topbar-note">Su espacio de trabajo</span>
-        <button
-          type="button"
-          className="workspace-theme-button"
-          aria-label={
-            theme === "light" ? "Activar modo oscuro" : "Activar modo claro"
-          }
-          title={theme === "light" ? "Modo oscuro" : "Modo claro"}
-          onClick={toggleTheme}
-        >
-          {theme === "light" ? (
-            <Moon aria-hidden="true" size={20} />
-          ) : (
-            <Sun aria-hidden="true" size={20} />
-          )}
-        </button>
-        {status === "authenticated" ? (
-          <AccountMenu />
-        ) : pathname !== routes.login ? (
-          <Link to={routes.login} className={barButton}>
-            {shellStrings.account.signIn}
-          </Link>
-        ) : null}
-      </div>
-    </header>
+    <div className="shell-header">
+      <header className="shell-topbar">
+        <div className="shell-topbar-start">
+          <div className="min-w-0 lg:hidden">
+            <AppSwitcher variant="topbar" current={module} />
+          </div>
+          <div className="hidden min-w-0 lg:block">
+            <Breadcrumbs trail={trail} />
+          </div>
+        </div>
+        <div className="shell-topbar-end">
+          <DevRoleSelector />
+          <HelpButton />
+          {status === "authenticated" ? <AccountMenu /> : null}
+          {status === "anonymous" ? (
+            <>
+              <PreferencesMenu />
+              <Link href={routes.login} className="shell-btn shell-btn-solid">
+                {shellStrings.account.signIn}
+              </Link>
+            </>
+          ) : null}
+        </div>
+      </header>
+      <SimulationBanner />
+    </div>
   );
 }
