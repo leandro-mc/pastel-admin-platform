@@ -2,10 +2,12 @@
 // Hook de pre-commit de Pastel: chequeos RAPIDOS sobre los archivos preparados (staged).
 // No ejecuta dotnet format, build ni pruebas: eso vive en scripts/test-*.ps1.
 //
-// Politica:
+// Politica (Etapa 1: el formato NO frena el desarrollo; los secretos si):
+//   - DETIENEN el commit solo las rutas prohibidas (.csn, .env, claves) y los patrones de secretos.
 //   - Correccion automatica solo cuando es segura y el archivo no tiene cambios sin preparar:
 //       C#: quitar BOM, finales LF, nueva linea final.  Frontend: Prettier.
-//   - Todo lo demas detiene el commit e indica como corregirlo.
+//   - Todo lo de formato que no se corrige solo (espacios finales, archivos con cambios sin preparar, error de Prettier)
+//     se AVISA y no bloquea: `test-backend.ps1` / `test-frontend.ps1` y el CI basico lo verifican y `format-*.ps1` lo corrigen.
 //   - Los archivos corregidos se vuelven a preparar (git add) antes de crear el commit.
 import { execFileSync, spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
@@ -48,6 +50,8 @@ const restage = new Set();
 const warnings = [];
 
 const problem = (file, message, fix) => problems.push({ file, message, fix });
+// Formato: aviso que no bloquea el commit.
+const formatNote = (file, message, fix) => warnings.push(`${file}: ${message}${fix ? ` -> ${fix}` : ""}`);
 
 // 1. Rutas prohibidas y secretos (sobre el contenido preparado).
 for (const file of staged) {
@@ -93,12 +97,12 @@ function reportCSharp(file, found, partial) {
   const hint = partial
     ? "El archivo tiene cambios sin preparar, por eso no se corrige solo. Corrijalo y use git add."
     : "";
-  if (found.hasBom) problem(file, `${where}tiene BOM (debe ser UTF-8 sin BOM)`, hint);
-  if (found.hasCarriageReturn) problem(file, `${where}tiene finales CRLF (debe ser LF)`, hint);
-  if (found.missingFinalNewline) problem(file, `${where}no termina con nueva linea`, hint);
+  if (found.hasBom) formatNote(file, `${where}tiene BOM (debe ser UTF-8 sin BOM)`, hint);
+  if (found.hasCarriageReturn) formatNote(file, `${where}tiene finales CRLF (debe ser LF)`, hint);
+  if (found.missingFinalNewline) formatNote(file, `${where}no termina con nueva linea`, hint);
   if (found.trailingWhitespaceLines.length > 0) {
     const shown = found.trailingWhitespaceLines.slice(0, 5).join(", ");
-    problem(
+    formatNote(
       file,
       `espacios al final de linea (lineas ${shown}${found.trailingWhitespaceLines.length > 5 ? ", ..." : ""})`,
       "Elimine los espacios sobrantes (no se corrige solo para no alterar cadenas literales) y use git add." +
@@ -128,10 +132,10 @@ if (prettierFiles.length > 0) {
         { cwd: join(root, "web"), encoding: "utf8" },
       );
       if (result.status !== 0) {
-        problem(
+        formatNote(
           "web/",
-          `Prettier fallo:\n${(result.stderr || result.stdout || "").trim()}`,
-          "Corrija el error indicado por Prettier y vuelva a intentar el commit.",
+          `Prettier fallo (no bloquea el commit): ${(result.stderr || result.stdout || "").trim().split("\n")[0]}`,
+          "Corrija el error y ejecute `npm run format` en web/.",
         );
       } else {
         for (const file of clean) {
@@ -148,9 +152,9 @@ if (prettierFiles.length > 0) {
       );
       if (result.status !== 0) {
         for (const file of partial) {
-          problem(
+          formatNote(
             file,
-            "no cumple Prettier y tiene cambios sin preparar, por eso no se corrige solo",
+            "no cumple Prettier y tiene cambios sin preparar, por eso no se corrige solo (no bloquea)",
             "cd web && npm run format   (luego git add del archivo)",
           );
         }
@@ -165,17 +169,15 @@ if (restage.size > 0) {
   console.log(`[pastel] Se corrigio y volvio a preparar ${restage.size} archivo(s):`);
   for (const file of restage) console.log(`  - ${file}`);
 }
-for (const warning of warnings) console.warn(`[pastel] AVISO: ${warning}`);
+for (const warning of warnings) console.warn(`[pastel] AVISO (no bloquea): ${warning}`);
 
 if (problems.length > 0) {
-  console.error("\n[pastel] Commit detenido: hay problemas que no se corrigen solos.\n");
+  console.error("\n[pastel] Commit detenido: archivos prohibidos o posibles secretos.\n");
   for (const { file, message, fix } of problems) {
     console.error(`  x ${file}: ${message}`);
     if (fix) console.error(`      -> ${fix}`);
   }
-  console.error(
-    "\nLas validaciones completas (dotnet format, build, pruebas) NO se ejecutan aqui: use scripts/*.ps1.",
-  );
+  console.error("\nEl formato y las pruebas NO se verifican aqui (no bloquean): use scripts/*.ps1.");
   console.error("Emergencia: PASTEL_SKIP_HOOKS=1 git commit ...  (quedara pendiente de corregir).");
   process.exit(1);
 }

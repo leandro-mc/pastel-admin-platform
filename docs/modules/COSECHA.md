@@ -66,14 +66,14 @@ Estados:
 9. **Liquidación a productores:** lista de entregas pendientes de pago por productor con monto (`acceptedKg × pricePerKg`), fecha prevista de pago y saldo; **Registrar pago** (selecciona entregas, monto sugerido = suma, método, referencia). Estado de cada entrega: Pendiente / Parcial / Pagada.
 10. **Reportes y exportación:** resumen por envío, por productor (estado de cuenta), por comprador y por campaña; exportar a CSV (compatible con Excel, codificación UTF-8 con BOM, separador acorde a Excel en español) y vista imprimible.
 
-## 5. Reglas de cálculo (con pruebas unitarias exhaustivas)
+## 5. Reglas de cálculo (se prueban con casos clave; ver sección 10)
 
 **Reparto proporcional a la capacidad** (función pura y determinista en `Domain/`):
 - Entrada: cantidad objetivo `T` (demanda + margen), productores incluidos con peso `w_i = estimatedCapacityKg` y tope opcional `u_i = availableKg`.
 - Reparto proporcional a `w_i`; si una cuota supera su tope, se fija en el tope y el sobrante se redistribuye entre los restantes proporcionalmente (repetir hasta estabilizar).
 - Redondeo a un paso configurable (por defecto 1 kg) con **método del mayor resto** para que la suma coincida exactamente con `T` cuando es factible.
 - Si la suma de topes es menor que `T`, devolver el faltante (`shortfallKg`) y mostrarlo de forma destacada.
-- Propiedades a probar: suma exacta cuando es factible; ningún valor negativo; respeta topes; productores con peso 0 o excluidos reciben 0; mismo resultado para la misma entrada (determinismo); estable ante el orden de entrada.
+- Propiedades que debe cumplir: suma exacta cuando es factible; ningún valor negativo; respeta topes; productores con peso 0 o excluidos reciben 0; mismo resultado para la misma entrada (determinismo); estable ante el orden de entrada. En la Etapa 1 basta con los casos clave de la sección 10; las pruebas de propiedades son de la Etapa 2.
 
 **Montos:** `acceptedKg = receivedKg − rejectedKg` (≥ 0); `amount = acceptedKg × pricePerKg` con redondeo a 2 decimales (hacia el más cercano, mitad hacia arriba); saldo del productor = suma de montos − suma de asignaciones de pago. **Margen informativo** por envío = Σ(`deliveredKg × precio del pedido`) − Σ(montos a productores).
 
@@ -123,37 +123,46 @@ Mapas incrustados y rutas optimizadas, vistas para transportistas, comprobante d
 
 ## 10. Criterios de aceptación
 
+### Etapa 1 — app funcional (obligatorio ahora)
 - Un gestor completa sin ayuda: crear campaña → 5 productores → 3 compradores → 4 pedidos → planificar un envío con reparto automático → registrar recepción con diferencias y notas → registrar entregas → cerrar → pagar a un productor → exportar CSV.
-- Pruebas unitarias del reparto y montos (sección 5) y pruebas de integración de todos los endpoints con permisos concedidos y denegados, incluido el filtro por propiedad del comprador.
-- Revisión de accesibilidad y recorrido a 320 px, claro/oscuro y texto "Muy grande".
-- `MODULE.md` backend y frontend actualizados; el módulo compila y pasa pruebas aislado (`PASTEL_MODULES=cosecha`).
+- Las **pruebas esenciales** de abajo en verde; `MODULE.md` (backend y frontend) actualizados; el módulo compila y respeta las fronteras entre módulos (pruebas de arquitectura).
 
-## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
+### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
+
 
 **Reparto proporcional (sección 5)**
 1. `T=100`, capacidades A=50, B=30, C=20 → 50 / 30 / 20.
 2. `T=101`, mismas capacidades → 51 / 30 / 20 (el resto va al mayor residuo; suma 101).
 3. `T=100`, A con tope 20 → A=20 y los 80 restantes en proporción 30:20 → B=48, C=32.
 4. `T=100`, topes A=10, B=10, C=10 → asignados 30, faltante 70 mostrado de forma destacada.
-5. Productor excluido o con capacidad 0 → recibe 0; el resultado no depende del orden de entrada.
 
 **Montos y pagos**
-6. Recibido 100 kg, rechazado 10 kg, precio ₡650 → aceptado 90 kg, monto ₡58 500,00.
-7. Redondeo: 3,33 kg × ₡100,55 = 334,8315 → ₡334,83.
-8. Entregas por ₡58 500 y ₡30 000; pago de ₡70 000 → la primera queda Pagada, la segunda Parcial (₡11 500 abonados); saldo ₡18 500.
-9. Margen informativo: entregado a comprador 90 kg × ₡900 = ₡81 000; costo ₡58 500 → margen ₡22 500.
+5. Recibido 100 kg, rechazado 10 kg, precio ₡650 → aceptado 90 kg, monto ₡58 500,00.
+6. Redondeo: 3,33 kg × ₡100,55 = 334,8315 → ₡334,83.
+7. Entregas por ₡58 500 y ₡30 000; pago de ₡70 000 → la primera queda Pagada, la segunda Parcial (₡11 500 abonados); saldo ₡18 500.
 
 **Permisos y datos**
-10. Anónimo → 401; usuario sin `cosecha.access` → 403; Gestor → acceso completo.
-11. Comprador A pide el pedido de comprador B → 404 (sin revelar existencia); su lista solo muestra lo suyo.
-12. Comprador no puede crear, editar ni ver precios de productores, pagos ni márgenes.
+8. Anónimo → 401; usuario sin `cosecha.access` → 403; Gestor → acceso completo.
+9. Comprador A pide el pedido de comprador B → 404 (sin revelar existencia); su lista solo muestra lo suyo.
+10. Comprador no puede crear, editar ni ver precios de productores, pagos ni márgenes.
 
 **Reglas y errores**
-13. Pedido cancelado no se puede asignar a un envío; cerrar un envío con recepciones sin registrar exige motivo.
-14. Dos ediciones simultáneas de la misma entrega de productor → la segunda recibe 409 de concurrencia con mensaje claro.
-15. Toda edición de cantidad o precio queda en el registro de cambios con antes/después, nota y usuario; los pagos y cierres quedan en la auditoría.
-16. Teléfono: `8888 1234`, `+506 8888-1234` y `88881234` se normalizan igual; WhatsApp genera `https://wa.me/50688881234?text=…` con el mensaje codificado.
-17. CSV: abre en Excel con tildes correctas (UTF-8 con BOM), decimales y separadores coherentes; los totales coinciden con la pantalla.
-18. Flujo completo del criterio de aceptación (sección 10) en un teléfono de 360 px, claro y oscuro, texto "Muy grande".
+11. Pedido cancelado no se puede asignar a un envío; cerrar un envío con recepciones sin registrar exige motivo.
+12. Dos ediciones simultáneas de la misma entrega de productor → la segunda recibe 409 de concurrencia con mensaje claro.
+
+### Diferido a QA — Etapa 2 (no bloquea la entrega de la primera versión)
+
+Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md`, `docs/PROGRESS.md` §5):
+
+- Productor excluido o con capacidad 0 → recibe 0; el resultado no depende del orden de entrada.
+- Margen informativo: entregado a comprador 90 kg × ₡900 = ₡81 000; costo ₡58 500 → margen ₡22 500.
+- Toda edición de cantidad o precio queda en el registro de cambios con antes/después, nota y usuario; los pagos y cierres quedan en la auditoría.
+- Teléfono: `8888 1234`, `+506 8888-1234` y `88881234` se normalizan igual; WhatsApp genera `https://wa.me/50688881234?text=…` con el mensaje codificado.
+- CSV: abre en Excel con tildes correctas (UTF-8 con BOM), decimales y separadores coherentes; los totales coinciden con la pantalla.
+- Flujo completo del criterio de aceptación (sección 10) en un teléfono de 360 px, claro y oscuro, texto "Muy grande".
+- Pruebas de integración de **todos** los endpoints con permisos concedidos y denegados.
+- Propiedades del reparto (sección 5) como pruebas generativas: suma exacta, sin negativos, respeta topes, determinismo y estabilidad ante el orden de entrada.
+- Accesibilidad y recorrido a 320 px, claro/oscuro y texto «Muy grande» de los flujos principales.
+- Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.

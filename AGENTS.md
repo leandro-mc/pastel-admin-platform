@@ -2,6 +2,9 @@
 
 Pastel es un monolito modular (.NET 10 + React 19) con un módulo por aplicación. Este archivo es la **única fuente de reglas** para todos los agentes; el resto de `docs/` describe el sistema, no el proceso. Léelo completo antes de empezar.
 
+## 0. Prioridad de la etapa actual
+**Etapa 1: construir las cinco aplicaciones (Ágora, Brisa, Balance, Cosecha y Huella) funcionales, completas y utilizables.** Concéntrate en entregar funcionalidad. Las pruebas exhaustivas, la automatización adicional, el QA profundo y las revisiones visuales sistemáticas son de la **Etapa 2**, que empieza cuando haya una primera versión funcional de las cinco (la declara el propietario). **Lo diferido no bloquea ninguna entrega.** Lo que no se negocia en ninguna etapa: seguridad del backend, autorización real, aislamiento entre usuarios y módulos, integridad de datos, protección de secretos y las reglas duras de diseño (sin morado ni iconografía de IA).
+
 ## 1. Ruta de lectura (en este orden, solo lo que toque tu tarea)
 1. `README.md` (qué es y cómo se ejecuta) y este archivo.
 2. `docs/PROGRESS.md`: estado actual, pendientes y backlog. Es el único estado vigente.
@@ -12,8 +15,8 @@ Pastel es un monolito modular (.NET 10 + React 19) con un módulo por aplicació
 Contrasta siempre la documentación con el código vigente; si discrepan, gana el código y corriges el documento.
 
 ## 2. Roles
-- **Dev:** implementa en el área de su módulo (backend y frontend). Compila y prueba lo esencial si su entorno lo permite; si no, lo declara.
-- **Build/QA (combinado):** tiene Docker/.NET; compila, corrige, escribe las pocas pruebas esenciales, ejecuta y reporta con evidencia real. Cuando no puede ejecutar algo, el propietario corre los comandos en PowerShell y devuelve la salida; se itera hasta que quede aprobado.
+- **Dev:** implementa en el área de su módulo (backend y frontend). Compila y escribe las pocas pruebas esenciales de lo que toca si su entorno lo permite; si no, lo declara.
+- **Build/QA (combinado):** tiene Docker/.NET; compila, corrige, escribe las pocas pruebas esenciales, ejecuta y reporta con evidencia real. Cuando no puede ejecutar algo, el propietario corre los comandos en PowerShell y devuelve la salida. El QA profundo es de la Etapa 2.
 - **Investigación/Documentación:** produce documentos o prototipos; no toca código de producto.
 Todos los agentes trabajan igual: **commits lógicos por unidad de trabajo** (sección 4). No existen tipos de agente por cadencia de commits.
 
@@ -33,11 +36,12 @@ Todos los agentes trabajan igual: **commits lógicos por unidad de trabajo** (se
 - Usa `git` local para commits de varios archivos. Una herramienta que solo crea commits de un archivo (API de contenidos) **no se usa** para trabajo multi-archivo.
 - Sincroniza con `git pull --rebase`; no hagas merges de sincronización. No reescribas historia compartida sin autorización del propietario.
 
-## 5. Pruebas: solo lo esencial
-- Se escriben **solo pruebas fundamentales** (seguridad, autorización, integridad y concurrencia de datos críticos, ciclo de sesión, contrato de errores, ausencia de secretos en logs, compilación/formato/auditoría). Nada exhaustivo, ni una prueba por cada caso, ni permutaciones cosméticas.
-- Antes de escribir una prueba responde: ¿qué defecto concreto detecta?, ¿por qué no lo cubre ya otra? Sin respuesta, no se escribe.
-- Lo no esencial se anota como **diferido** en `docs/PROGRESS.md` para la siguiente planificación de pruebas. Ver `docs/TESTING.md`.
-- Nada se declara aprobado sin evidencia de ejecución real; lo no ejecutado se marca «por verificar». Cero fallos y cero omitidas.
+## 5. Pruebas: por etapas y solo lo esencial
+- **Etapa 1 (ahora): aplicaciones funcionales.** Solo se escriben pruebas que protegen **seguridad del backend, autorización, aislamiento (entre usuarios y entre módulos), integridad de datos, reglas de negocio críticas (dinero, fechas) y secretos**, además de que compile y las reglas duras de diseño. Pocas: una por defecto concreto, sin matrices ni permutaciones.
+- **No se exige ahora** (queda para la Etapa 2 y no bloquea entregas ni PR): E2E, pruebas visuales, accesibilidad sistemática por pantalla, matrices por rol, exhaustividad de cálculos, aislamiento por módulo con `PASTEL_MODULES`, QA profundo.
+- Antes de escribir una prueba responde: ¿qué defecto concreto detecta?, ¿por qué no lo cubre ya otra? Sin respuesta, no se escribe. **Las pruebas existentes se conservan.**
+- Nada se declara aprobado sin evidencia de ejecución real; lo no ejecutado se marca «por verificar». Cero fallos y cero omitidas de lo que se ejecuta.
+- Lo diferido se anota en `docs/PROGRESS.md` (backlog de la Etapa 2). Ver `docs/TESTING.md`.
 
 ## 6. CI en GitHub (minutos limitados)
 - **Nunca** corre por commit, push ni por abrir/actualizar un PR. Solo al **aprobar un PR hacia `dev`** (revisión aprobada, o etiqueta `ci:basico`) y a mano (`workflow_dispatch`).
@@ -47,7 +51,7 @@ Todos los agentes trabajan igual: **commits lógicos por unidad de trabajo** (se
 ## 7. Diseño
 - **Reglas duras:** no usar morado ni sus derivados, ni lo habitual del diseño generado por IA (colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA). `scripts/check-design.mjs` verifica solo esas dos reglas (morado e iconos o emojis de IA); no restringe colores literales ni tokens.
 - La **identidad visual de cada aplicación (paletas, acentos, tipografía propia) no está definida**: se determinará con la investigación y los prototipos en curso. No inventes ni fijes paletas por módulo; no hay restricciones de color por subapp más allá de las reglas duras. Ver `docs/DESIGN_SYSTEM.md`.
-- Accesibilidad (WCAG AA), textos en `strings.ts`, español de Costa Rica con trato de usted por defecto; el voseo se permite cuando el propietario lo pida.
+- Accesibilidad como objetivo de calidad (WCAG AA; usa los componentes de `@/core/ui` y no dependas solo del color); su revisión sistemática es de la Etapa 2. Textos preferiblemente en `strings.ts`. Español de Costa Rica con trato de usted por defecto; el voseo y el tuteo se permiten cuando la ficha o el propietario lo pidan.
 
 ## 8. Arquitectura y seguridad (límites que no se cruzan)
 - Módulo = un proyecto .NET; un esquema y un historial de migraciones por módulo; sin claves foráneas ni joins entre esquemas. Un módulo no referencia el interior de otro; `web/src/modules/<m>` solo importa de `@/core/*`. Detalle y pruebas de arquitectura en `docs/ARCHITECTURE.md`.
@@ -58,4 +62,4 @@ Todos los agentes trabajan igual: **commits lógicos por unidad de trabajo** (se
 `.\scripts\test-backend.ps1` · `.\scripts\test-database.ps1` · `.\scripts\test-frontend.ps1` · `.\scripts\test-all.ps1` · `.\scripts\format-backend.ps1` / `format-frontend.ps1` · `.\scripts\install-hooks.ps1` (una vez por clon: formato y secretos en cada commit) · `.\scripts\qa-phase0-stack.ps1` (stack aislado). Detalle en `docs/TESTING.md`.
 
 ## 10. Entrega
-Al terminar una unidad: qué hiciste, qué commits, qué ejecutaste y con qué resultado real, qué queda sin verificar y qué decisión necesitas del propietario. Actualiza `docs/PROGRESS.md` (una vez, en el mismo commit de la unidad).
+Al terminar una unidad: qué hiciste, qué ejecutaste y con qué resultado real, qué queda sin verificar y qué decisión necesitas del propietario (lo diferido a la Etapa 2 no cuenta como «sin verificar»). Actualiza `docs/PROGRESS.md` (una vez, en el mismo commit de la unidad).

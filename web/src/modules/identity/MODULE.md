@@ -1,6 +1,6 @@
 # Identity — ficha técnica frontend
 
-Estado: **implementación publicada; validación de Build/QA pendiente**.
+Estado: **implementación completa; validada en lo esencial** (Vitest, guardas y verificación manual de Google; ver `docs/PROGRESS.md` §3). La validación completa en navegador es de la Etapa 2.
 
 - Código de manifiesto: `identity`; archivo: `web/src/modules/identity/manifest.ts`.
 - Dependencias permitidas: solo `@/core/*`. No importar otra subapp ni el shell desde sus páginas.

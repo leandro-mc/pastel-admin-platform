@@ -13,7 +13,7 @@ Reglas operativas resumidas en `AGENTS.md`; aquí están completas y con su moti
 1. **Un commit = una unidad de trabajo completa y coherente**: algo que un revisor entiende por sí solo y que se puede revertir sin dejar el proyecto roto. Código + prueba + documentación de la unidad van **en el mismo commit**.
 2. **No se commitea** por tiempo, por archivo, como «punto de control», para guardar o para registrar avance. Prohibidos `wip`, `checkpoint`, `tmp`, `record` y `docs: registrar…` como commits aislados. El avance se anota una vez, en `docs/PROGRESS.md`, dentro del commit de la unidad.
 3. **Los arreglos de trabajo no publicado se integran en su commit** (`git commit --amend` o `git rebase -i` local) antes de empujar. Una cadena `fix`/`fix`/`fix` sobre lo mismo es una señal de que se publicó antes de validar.
-4. **Valida antes de commitear** (compilar y las pruebas esenciales de lo tocado). Si algo no se pudo verificar, se declara una sola vez en el cuerpo del commit y en `PROGRESS.md`; no genera commits adicionales por cada error de compilación.
+4. **Valida antes de commitear** (compilar y las pruebas esenciales de lo tocado; ver Etapa 1 en `docs/TESTING.md`). Si algo no se pudo verificar, se declara una sola vez en el cuerpo del commit y en `PROGRESS.md`; no genera commits adicionales por cada error de compilación.
 5. **Mensaje**: `tipo(ámbito): resumen en imperativo` (≤ 72 caracteres, español). Cuerpo con qué cambió, por qué y cómo se verificó. Tipos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `style`. `style` es solo formato masivo y va **aislado** de la lógica. Sin mensajes genéricos («Refactor components…»).
 6. **Herramienta**: usa `git` local (`git add` de todos los archivos de la unidad y un solo `git commit`). Una API que crea un commit por archivo **no se usa** para trabajo de varios archivos: acumula el cambio y entrégalo como un único commit.
 7. **Tamaño de referencia**: un PR típico tiene de 1 a 15 commits. Si pasa de 30, o si hay tres o más commits seguidos con mensajes casi iguales, se unifican antes de pedir revisión. Un commit no mezcla temas ajenos ni supera unas 800 líneas, salvo código generado o migraciones.
@@ -27,8 +27,8 @@ Reglas operativas resumidas en `AGENTS.md`; aquí están completas y con su moti
   - al **aprobar** un PR cuya base es `dev` (revisión *approved*);
   - al añadir la etiqueta **`ci:basico`** o **`ci:completo`** a un PR hacia `dev` (alternativa para quien no puede aprobar su propio PR);
   - a mano (`workflow_dispatch`) eligiendo el alcance `basico` (por defecto) o `completo`.
-- **Básico** (siempre): backend (`test-backend.ps1`: formato, build Release, auditoría NuGet y pruebas unitarias) y frontend (`test-frontend.ps1`: formato, lint, build, pruebas de componentes y guardas).
-- **Completo** (solo si el propietario lo indica con `ci:completo` o alcance «completo»): además las pruebas de integración con PostgreSQL, la construcción y arranque de los contenedores, y el aislamiento por módulo.
+- **Básico** (siempre; es lo único que se espera en la Etapa 1): backend (`test-backend.ps1`: formato, build Release, auditoría NuGet y pruebas unitarias) y frontend (`test-frontend.ps1`: formato, lint, build, pruebas de componentes y guardas).
+- **Completo** (propio de la Etapa 2; solo si el propietario lo indica con `ci:completo` o alcance «completo»): además las pruebas de integración con PostgreSQL, la construcción y arranque de los contenedores, y el aislamiento por módulo.
 - **CodeQL** es manual y opcional.
 - Los agentes no despachan CI manual durante la depuración: validan en local. El CI de GitHub es la última puerta antes de integrar, no una herramienta de desarrollo.
 

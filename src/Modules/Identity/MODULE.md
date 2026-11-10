@@ -1,6 +1,6 @@
 # Identity — ficha técnica backend
 
-Estado: **implementación publicada; Build/QA pendientes**. No se considera validada por compilar el resto de la plataforma.
+Estado: **implementación completa y validada en lo esencial** (backend 51/51, PostgreSQL 46/46; ver `docs/PROGRESS.md` §3). Las pruebas diferidas pertenecen a la Etapa 2 (`docs/PROGRESS.md` §5).
 
 - Código: `identity`; esquema PostgreSQL: `identity`.
 - Proyecto: `src/Modules/Identity/Pastel.Modules.Identity`.

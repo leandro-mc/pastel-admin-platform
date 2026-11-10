@@ -138,11 +138,12 @@ withRepo("un .cs ya correcto se confirma sin modificarlo (idempotencia)", ({ dir
   assert.equal(run("hash-object", "src/Mod/A.cs"), before);
 });
 
-withRepo("bloquea espacios al final de linea en C# sin alterar el archivo", ({ dir, run }) => {
+withRepo("avisa (sin bloquear) de espacios al final de linea en C# y no altera el archivo", ({ dir, run }) => {
   write(dir, "src/Mod/A.cs", "class A {} \n");
   run("add", "src/Mod/A.cs");
   const result = commit(dir);
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 0, result.stderr);
+  assert.match(result.stderr, /AVISO \(no bloquea\)/);
   assert.match(result.stderr, /espacios al final de linea/);
   assert.equal(readFileSync(join(dir, "src/Mod/A.cs"), "utf8"), "class A {} \n");
 });
@@ -160,7 +161,7 @@ withRepo("bloquea un .csn, un .env y un secreto", ({ dir, run }) => {
   assert.equal(result.stderr.includes("Zz9_Zz9_"), false, "no debe imprimir el valor del secreto");
 });
 
-withRepo("no corrige solo un .cs con cambios sin preparar: bloquea e indica como", ({ dir, run }) => {
+withRepo("no corrige solo un .cs con cambios sin preparar: avisa e indica como, sin bloquear", ({ dir, run }) => {
   write(dir, "src/Mod/A.cs", "class A {}\n");
   run("add", "src/Mod/A.cs");
   assert.equal(commit(dir).status, 0);
@@ -168,10 +169,10 @@ withRepo("no corrige solo un .cs con cambios sin preparar: bloquea e indica como
   run("add", "src/Mod/A.cs");
   write(dir, "src/Mod/A.cs", "class A {} \nclass B {}\n");
   const result = commit(dir, "chore: prueba parcial");
-  assert.equal(result.status, 1);
+  assert.equal(result.status, 0, result.stderr);
   assert.match(result.stderr, /cambios sin preparar/);
   assert.match(result.stderr, /espacios al final de linea/);
-  assert.equal(run("show", ":src/Mod/A.cs"), "class A {} \n", "el contenido preparado no se altera");
+  assert.equal(run("show", "HEAD:src/Mod/A.cs"), "class A {} \n", "el contenido preparado no se altera");
   assert.equal(readFileSync(join(dir, "src/Mod/A.cs"), "utf8"), "class A {} \nclass B {}\n");
 });
 

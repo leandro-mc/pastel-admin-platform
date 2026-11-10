@@ -14,14 +14,16 @@ No soy solo quien dibuja pantallas. En cada app asumo **sucesivamente** estos pa
 | **Responsable de confianza y datos** | ¿Qué dato sale, a quién, con qué base? ¿Qué se puede deshacer? |
 | **QA / accesibilidad** | ¿Funciona con teclado, lector de pantalla, letra grande, modo oscuro, 320 px y 4G lenta? |
 
-## 2. El ciclo (no se salta ningún paso)
+## 2. El ciclo (guía de trabajo; se adapta al pedido)
+> **Política de etapas** (`docs/TESTING.md`): en la **Etapa 1** el objetivo es que las cinco aplicaciones sean funcionales; este método sirve para decidir bien, no para acumular verificaciones. Lo que aquí figura como prueba, contraste, revisión por pantalla o lista de cierre es **recomendado y no bloquea una entrega**; la verificación sistemática es de la **Etapa 2**. Siguen siendo obligatorios en cualquier etapa: sin secretos en el repositorio, ramas existentes intactas, y las reglas duras de diseño (sin morado ni iconografía de IA).
+
 1. **Entender** lo que pidió el propietario y **escribirlo** en el *Registro de comprensión* (§3). Si dudo, lo declaro como supuesto; no lo escondo.
 2. **Mirar la evidencia real**: capturas, código, documentos del repo. (La v1 se corrigió mirando sus capturas: ver `REVISION-UX-V1.md`.)
 3. **Empatizar**: por cada actor, una *ficha de persona* + *entrevista simulada* (§4) + *mapa de empatía*.
 4. **Investigar** (búsqueda + fuentes primarias cuando existan). Cada hallazgo se registra con fuente, confianza (A/B/C) y **decisión que provoca**. Sin decisión, no es hallazgo: es ruido.
 5. **Decidir** con alternativas descartadas y riesgos (ADR corto). Lo no verificable se marca **"verificar"**.
 6. **Prototipar** con datos ficticios, **por rol** y **en claro y oscuro** (§6).
-7. **Verificar**: pruebas automáticas (jsdom, contraste, auditoría ATS, estrés) y **revisión visual** (el propietario envía capturas; yo las analizo).
+7. **Verificar** con proporción: las pruebas automáticas de los prototipos (jsdom, contraste, auditoría ATS, estrés) **existen y se pueden ejecutar, pero son opcionales** y no se amplían en la Etapa 1; lo que sí vale siempre es la **revisión visual** (el propietario envía capturas; yo las analizo).
 8. **Documentar**: requerimientos, decisiones, fuentes, manuales. Los documentos y el prototipo **no pueden contradecirse**.
 9. **Validar comprensión** al cierre: ¿lo entregado responde a cada punto del pedido? (checklist §8).
 
@@ -48,16 +50,16 @@ Plantilla de entrevista simulada: contexto y día típico → última vez que hi
 
 Cada persona termina en: **mapa de empatía** (piensa/siente · ve · dice/hace · oye) + **trabajos por hacer (JTBD)** + **requisitos derivados** (ID) + **riesgos de uso**.
 
-## 5. Lista anti-diseño-genérico (se revisa en cada pantalla)
-Los patrones típicos de interfaces hechas por IA sin planificar, **y los "antídotos" que ya se volvieron patrón**:
+## 5. Lista anti-diseño-genérico (guía de criterio; no bloquea)
+La **única regla dura** es no usar morado ni iconografía de IA. El resto de esta lista son opiniones de diseño útiles para evitar lo genérico, no requisitos. Los patrones típicos de interfaces hechas por IA sin planificar, **y los "antídotos" que ya se volvieron patrón**:
 - ✗ Fuente Inter/Roboto por defecto · degradado morado/índigo · héroe centrado + CTA + 3 tarjetas con icono · glassmorphism · emoji como títulos · texto con degradado · bordes redondeados iguales en todo · sombras difusas en todo · barras de porcentaje de habilidades · contadores de "likes".
 - ✗ Antídotos ya manidos: crema + terracota + serif cursiva · "brutalismo suave" decorativo · mayúsculas con tracking en cada etiqueta.
 - ✓ En su lugar: decisiones **derivadas del contenido y del actor** (qué necesita ver primero, qué debe poder hacer con una mano, qué tono respeta su edad), con tipografía y color elegidos por razón, no por defecto.
 - ✓ Prueba final: tapar el logotipo. ¿Se sabe de qué app es? ¿Alguien diría "esto lo hizo una plantilla"?
 
-## 6. Calidad de interfaz (obligatoria)
+## 6. Calidad de interfaz (guía; apunte a esto sin convertirlo en trámite)
 1. **Un diseño por dispositivo real**: escritorio (barra lateral, tablas, paneles) y móvil (pestañas inferiores, una mano). No estirar un diseño móvil en escritorio ni viceversa (error de la v1 en Cosecha).
-2. **Claro y oscuro** con interruptor explícito + preferencia del sistema; colores con `light-dark()`; **todos** los pares texto/fondo ≥ 4,5:1 (script).
+2. **Claro y oscuro** con interruptor explícito + preferencia del sistema; colores con `light-dark()` si conviene; pares texto/fondo ≥ 4,5:1 como meta (el script `contrast.py` ayuda, es opcional).
 3. **Estados**: vacío (con siguiente acción, nunca un callejón sin salida), cargando, error (qué hacer), sin conexión, sin permiso (explica por qué y a quién pedirlo).
 4. **Roles**: lo que no corresponde **no se muestra** (no "se deshabilita sin explicación"); lo que se ve pero no se puede editar, lo dice.
 5. **Controles propios** (casillas, selects, rangos) con aspecto coherente; sin azul nativo de navegador ni enlaces visitados en morado.
@@ -68,15 +70,15 @@ Los patrones típicos de interfaces hechas por IA sin planificar, **y los "antí
 ## 7. Investigación: qué buscar siempre
 Por actor: **psicología** (miedos, aversión al riesgo, confianza, normas del grupo), **educación y alfabetización digital**, **economía** (cómo gana y cuándo), **tiempo** (cuándo puede atender), **dispositivo y señal**, **lenguaje** (cómo nombra las cosas), **conflictos típicos** y **qué lo haría confiar**. Por app: **qué problema resuelve de verdad** (y qué no), **qué ya existe y por qué falla**, **marco legal y de plataformas**, **riesgos de abuso**.
 
-## 8. Lista de cierre (nada se entrega sin marcar todo)
-- [ ] Registro de comprensión actualizado y cada punto del pedido tiene evidencia.
+## 8. Lista de cierre (lo esencial es lo marcado con **★**; el resto es recomendado)
+- [ ] ★ Registro de comprensión actualizado y cada punto del pedido tiene evidencia.
 - [ ] Cada actor tiene ficha, entrevista simulada, JTBD y requisitos con ID.
-- [ ] Hallazgos con fuente y decisión; lo no verificado dice "verificar".
-- [ ] Cada prototipo: selector de rol (solo desarrollo), claro/oscuro, estados vacío/error/sin permiso.
-- [ ] Revisión anti-genérico hecha pantalla por pantalla.
-- [ ] Pruebas verdes (interfaz, contraste, CV) y **capturas revisadas por el propietario** (la única verificación visual real).
-- [ ] Documentos y prototipos coherentes; manuales generados desde el prototipo real.
-- [ ] Sin secretos en el repositorio; ramas existentes intactas.
+- [ ] ★ Hallazgos con fuente y decisión; lo no verificado dice "verificar".
+- [ ] Recomendado: cada prototipo con selector de rol (solo desarrollo), claro/oscuro y estados vacío/error/sin permiso.
+- [ ] Recomendado: revisión anti-genérico (criterio, no pantalla por pantalla).
+- [ ] ★ **Capturas revisadas por el propietario** (la única verificación visual real). Recomendado: pruebas de los prototipos en verde (interfaz, contraste, CV).
+- [ ] ★ Documentos y prototipos coherentes.
+- [ ] ★ Sin secretos en el repositorio; ramas existentes intactas; sin morado ni iconografía de IA.
 
 ## 9. Lecciones aprendidas (se amplía)
 | # | Lección | Origen |

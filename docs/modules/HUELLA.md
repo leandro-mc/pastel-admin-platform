@@ -45,15 +45,16 @@ Permisos: `huella.access` (entrar al panel), `huella.profile.manage` (editar y p
 Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (requiere almacenamiento de archivos), PDF del servidor, analítica de visitas, dominio propio por perfil, internacionalización del perfil.
 
 ## 7. Criterios de aceptación
+
+### Etapa 1 — app funcional (obligatorio ahora)
 - Owner/Superuser crea el perfil, ve la vista previa, publica y obtiene un enlace largo y aleatorio que funciona sin sesión; despublica y el enlace deja de mostrar contenido.
 - El perfil público responde con meta robots y `X-Robots-Tag` noindex; los crawlers no deben indexarlo.
 - Lo editado después de publicar **no** aparece públicamente hasta una nueva publicación.
-- Pruebas de integración: autorización exclusiva de Owner/Superuser, tokens ausentes/mal formados/vencidos/revocados, regeneración que invalida el token anterior, privacidad de contacto y snapshot inmutable.
-- Revisión de accesibilidad, 320 px, claro/oscuro, impresión; `MODULE.md` actualizados; compila y pasa pruebas aislado (`PASTEL_MODULES=huella`).
+- Las **pruebas esenciales** de abajo en verde; `MODULE.md` (backend y frontend) actualizados; el módulo compila y respeta las fronteras entre módulos (pruebas de arquitectura).
 
-## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
+### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. Anónimo abre `/huella/p/<token-vigente>` publicado → 200 y contenido de la **última versión publicada**; sin sesión ni cookie de sesión. Token aleatorio de alta entropía; almacenamiento solo de hash.
 2. Se edita el borrador después de publicar → la página pública **no cambia** hasta publicar de nuevo.
@@ -62,8 +63,15 @@ Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`)
 5. Contacto: correo y teléfono ocultos por defecto; solo aparecen si el propietario lo habilita; nunca en el HTML ni en el JSON público cuando están ocultos.
 6. Un propietario no puede leer ni editar el perfil de otro (probar con IDs ajenos) → 403/404; sin permiso → 403; anónimo en el panel → 401.
 7. Entradas con `<script>`, `<img onerror>`, `javascript:` y enlaces `http://`/con credenciales → neutralizadas o rechazadas; enlaces externos con `rel="noopener noreferrer"`.
-8. Límite de tasa del endpoint público (429 con `Retry-After`) y cabeceras de caché correctas; sin datos del borrador.
-9. Impresión: la vista imprimible conserva orden, legibilidad y contraste; no imprime botones de edición.
-10. Metadatos de vista previa (`title`, `description`, `og:*`) presentes en la respuesta inicial del servidor para un perfil publicado, junto con `noindex,nofollow,noarchive` y `X-Robots-Tag`.
-12. Regenerar token invalida el anterior; solo el Owner/Superuser puede regenerarlo; el token en claro no aparece en base de datos, logs ni telemetría.
-11. Accesibilidad de la página pública: un solo `h1`, secciones con `h2`, teclado, 320 px, texto "Muy grande".
+8. Regenerar token invalida el anterior; solo el Owner/Superuser puede regenerarlo; el token en claro no aparece en base de datos, logs ni telemetría.
+
+### Diferido a QA — Etapa 2 (no bloquea la entrega de la primera versión)
+
+Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md`, `docs/PROGRESS.md` §5):
+
+- Límite de tasa del endpoint público (429 con `Retry-After`) y cabeceras de caché correctas; sin datos del borrador.
+- Impresión: la vista imprimible conserva orden, legibilidad y contraste; no imprime botones de edición.
+- Metadatos de vista previa (`title`, `description`, `og:*`) presentes en la respuesta inicial del servidor para un perfil publicado, junto con `noindex,nofollow,noarchive` y `X-Robots-Tag`.
+- Accesibilidad de la página pública: un solo `h1`, secciones con `h2`, teclado, 320 px, texto "Muy grande".
+- Revisión de accesibilidad, impresión, 320 px y claro/oscuro del perfil público y del editor.
+- Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.

@@ -20,6 +20,7 @@ Decisiones vigentes de arquitectura y del propietario, en una línea cada una. E
 |---|---|
 | 2026-10 | **Modelo multiaplicación**: Ágora es la app pública y obligatoria (solo el Owner/Superuser puede decidir no incluirla); Brisa y Balance las activa la persona; Cosecha solo para quienes el Owner/Superuser registre o autorice; Huella es exclusiva del Owner/Superuser. Detalle en `docs/product/PASTEL-PRODUCT-AND-UX.md`. |
 | 2026-10 | **Owner/Superuser** es un rol distinto de Administrator: Administrator no hereda privilegios exclusivos del propietario ni puede escalarlos. |
+| 2026-11-09 | **Pruebas por etapas**: la Etapa 1 (construir las cinco apps funcionales) exige solo pruebas de seguridad, autorización, aislamiento, integridad de datos, reglas de negocio críticas y secretos, además de compilar y las reglas duras de diseño; E2E, visuales, accesibilidad sistemática, matrices, aislamiento por módulo y QA profundo pasan a la Etapa 2, que empieza con la primera versión funcional. El formato deja de bloquear el pre-commit (solo secretos y rutas prohibidas lo detienen). Se conservan todas las pruebas existentes. |
 | 2026-10-24 | **Pruebas esenciales**: solo lo fundamental; lo demás se difiere y se documenta. Los 20 requisitos obligatorios restantes de la Fase 0 pasaron a diferidos. |
 | 2026-10-24 | **Voseo permitido** cuando el propietario lo pida; sin prueba ni revisión obligatoria. |
 | 2026-10-25 | **Un solo tipo de agente**: commits lógicos por unidad de trabajo (se elimina la cadencia por checkpoints). Reglas en `docs/GIT_WORKFLOW.md`. |

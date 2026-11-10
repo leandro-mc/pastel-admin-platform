@@ -23,4 +23,4 @@ Kit común del shell y las subaplicaciones. Centraliza patrones de formularios, 
 3. Los controles requieren etiqueta accesible, foco visible y objetivos táctiles adecuados (44 px cuando aplique).
 4. Los módulos conservan sus propios textos y pueden inyectar variantes a través de props.
 5. No sustituir composiciones específicas por una tarjeta genérica; el kit apoya la jerarquía del producto, no la uniformiza.
-6. Build/QA valida tipado, formato, accesibilidad y comportamiento antes de considerar cerrado WP8.
+6. Build/QA valida compilación, tipado y las pruebas esenciales; la revisión sistemática de accesibilidad y comportamiento de cada pantalla es de la Etapa 2 (`docs/TESTING.md`).

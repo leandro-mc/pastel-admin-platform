@@ -1,5 +1,7 @@
 # Pruebas de los prototipos
 
+> **Opcionales.** Se conservan y se pueden ejecutar, pero no son requisito de entrega de la Etapa 1 ni se amplían hasta la Etapa 2 (`docs/TESTING.md`). Ayudan a comprobar que los prototipos no se contradicen con sus documentos; no sustituyen la revisión visual del propietario.
+
 Usan **jsdom** (un DOM real dentro de Node), porque en el entorno de trabajo no había navegador. Cargan cada `index.html`, ejecutan sus scripts, **cambian de rol con la barra de desarrollo**, hacen clic y comprueban resultados.
 
 ```bash

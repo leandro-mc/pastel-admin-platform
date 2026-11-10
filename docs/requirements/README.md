@@ -20,7 +20,9 @@ Investigación y fuentes: [`research/`](research/FUENTES.md) (notas por app con 
 ## Cómo ver los prototipos
 HTML/CSS/JS sin compilar: doble clic en `index.html`. **Arriba hay una barra amarilla «Solo desarrollo»**: elija el **rol** (la vista cambia: navegación, datos y acciones) y el **tema** (Auto/Claro/Oscuro). Parámetros de URL para capturas: `?role=acopio&view=recepcion&theme=dark&dev=0`. Las fuentes vienen de Google Fonts (con respaldo); en producción irían autoalojadas. **Pruébelos también en el teléfono.**
 
-## Verificaciones ejecutables
+## Verificaciones ejecutables (opcionales; no son requisito de entrega)
+> Política de etapas (`docs/TESTING.md`): estas pruebas **ya existen y se conservan**, y sirven para comprobar que los prototipos no se contradicen con sus documentos. **No son un requisito** de la Etapa 1 (construir las cinco apps funcionales) y **no se amplían** hasta la Etapa 2; la verificación visual real es la revisión del propietario.
+
 ```bash
 cd docs/requirements/prototype-tests && npm install && npm test
 ```

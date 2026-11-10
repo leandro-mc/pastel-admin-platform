@@ -142,9 +142,9 @@ const violations = [];
 const warnings = [];
 
 if (checkMode) {
-  // Esta frontera es una regla estructural real; las demás cifras son métricas de migración/mantenimiento.
+  // Etapa 1: ninguna cifra bloquea; son señales de mantenimiento. (Antes, las clases semánticas fuera de core/design/components/ eran un bloqueo.)
   if (result.semanticClassesOutsideComponents !== 0) {
-    violations.push(`Hay ${result.semanticClassesOutsideComponents} clases semanticas fuera de core/design/components/.`);
+    warnings.push(`Hay ${result.semanticClassesOutsideComponents} clases semanticas fuera de core/design/components/; conviene moverlas allí cuando se toque ese CSS.`);
   }
   if (result.utilityPercent < 95) {
     warnings.push(`utilityPercent es ${result.utilityPercent}; la meta historica es 95.`);
@@ -172,6 +172,6 @@ if (checkMode) {
     for (const violation of violations) console.error(`tailwind-audit: ${violation}`);
     process.exitCode = 1;
   } else {
-    console.log("tailwind-audit: restricciones estructurales cumplidas; las métricas son informativas.");
+    console.log("tailwind-audit: sin bloqueos; las métricas son informativas.");
   }
 }

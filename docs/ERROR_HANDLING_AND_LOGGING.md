@@ -119,19 +119,22 @@ Docker con controlador `json-file` y `max-size` y `max-file` definidos en `compo
 ## 6. Salud y operación
 `/health/live` (proceso vivo), `/health/ready` (base de datos alcanzable y migraciones de cada módulo aplicadas). Compose usa `ready` para el orden de arranque y los `healthcheck` de `api` y `web`.
 
-## 7. Lista de verificación por módulo (se revisa en QA)
-- [ ] Todo endpoint devuelve `problem+json` con `code` y `traceId` en errores.
+## 7. Lista de verificación por módulo (guía de construcción)
+Se usa al construir; no es una puerta de QA por unidad. Lo marcado **(esencial)** lo cubre una prueba de la Etapa 1; lo demás se revisa en la Etapa 2.
+- [ ] **(esencial)** Todo endpoint devuelve `problem+json` con `code` y `traceId` en errores, y sin `ex.Message` en respuestas.
+- [ ] **(esencial)** Logs con plantillas, sin datos personales ni secretos.
 - [ ] Los códigos de error del módulo están en `Errors.cs` y en `MODULE.md`.
 - [ ] Sin `catch` vacíos ni `catch (Exception)` que traguen el error.
-- [ ] Sin `ex.Message` en respuestas.
-- [ ] Logs con plantillas, sin datos personales ni secretos; eventos de seguridad cubiertos.
-- [ ] Cambios relevantes auditados con antes/después.
+- [ ] Eventos de seguridad cubiertos y cambios relevantes auditados con antes/después.
 - [ ] Frontend: cada página tiene estados de carga, vacío y error; los formularios muestran errores por campo; 409 y 401 manejados.
-- [ ] Pruebas de integración para cada código de error y para la ausencia de datos sensibles en logs.
 
-## 8. Pruebas obligatorias (las escriben QA y Build a partir de este documento)
+## 8. Pruebas
+**Etapa 1 (esenciales, ya existen en `tests/Pastel.IntegrationTests/QA`):**
 1. Cada traducción de excepción (único, concurrencia, serialización con reintento, cancelación, inesperado) produce el estado y `code` correctos y nunca filtra detalles.
-2. `traceId` de la respuesta coincide con el del log del servidor.
-3. **Redacción:** al ejecutar login, refresco y callback de Google, ningún log contiene contraseñas, tokens, cookies, `code` ni `state`.
-4. `/health/ready` falla si la base de datos no está disponible y la API responde 503 coherente.
+2. **Redacción:** al ejecutar login, refresco y callback de Google, ningún log contiene contraseñas, tokens, cookies, `code` ni `state`.
+
+**Diferido a la Etapa 2** (no bloquea la entrega; ver `docs/PROGRESS.md` §5):
+3. `traceId` de la respuesta coincide con el del log del servidor.
+4. `/health/ready` falla si la base de datos no está disponible y la API responde 503 coherente (hoy lo cubre el stack aislado de operación).
 5. El manejador de errores del cliente (`/api/client-errors`) respeta límites y no almacena datos.
+6. Pruebas de integración por cada código de error de cada módulo nuevo.

@@ -52,23 +52,33 @@ Permisos: `agora.access` (solo para el panel editorial), `agora.content.manage` 
 Foros, comentarios, reportes y moderación; flujo formal de aprobación previa; reputación; líneas de tiempo y relaciones entre temas; historial completo de versiones; panel analítico; búsqueda avanzada; cobertura internacional estructurada.
 
 ## 7. Criterios de aceptación
+
+### Etapa 1 — app funcional (obligatorio ahora)
 - Un autor crea una pieza con fuentes y video, la publica y un visitante anónimo la lee en `/agora/p/:slug`; sin sello aparece "Pendiente de verificación".
 - Un revisor verifica la pieza y el sello aparece con su nombre y fecha; al editar el contenido sustantivo el sello pasa a "Modificada tras la verificación".
 - Un autor no puede verificar su propia pieza; un registrado puede guardar y ver sus guardados; un anónimo no ve borradores.
-- Pruebas de integración por rol, sanitización de Markdown, validación de id de YouTube, estados públicos.
-- Accesibilidad y 320 px; `MODULE.md` actualizados; compila y pasa pruebas aislado (`PASTEL_MODULES=agora`).
+- Las **pruebas esenciales** de abajo en verde; `MODULE.md` (backend y frontend) actualizados; el módulo compila y respeta las fronteras entre módulos (pruebas de arquitectura).
 
-## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
+### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
-1. Matriz por rol (anónimo, registrado, autor, revisor, administrador) sobre cada acción de la sección 2; **un autor no puede verificar su propia pieza** (403 `agora.verification.self`).
+1. **Autorización por rol en las acciones sensibles** (publicar, verificar, administrar): quien no tiene el permiso recibe 401/403; **un autor no puede verificar su propia pieza** (403 `agora.verification.self`).
 2. Borradores y piezas archivadas nunca aparecen en listados, búsqueda, página de pieza ni respuestas públicas.
-3. Sello: una pieza sin verificación muestra "Pendiente de verificación"; tras verificar, "Verificado por <nombre> el <fecha>"; tras editar contenido sustantivo, "Modificada tras la verificación"; el revisor puede retirar o renovar.
+3. Sello (regla central del módulo): sin verificación → "Pendiente de verificación"; tras verificar → "Verificado por <nombre> el <fecha>"; tras editar contenido sustantivo → "Modificada tras la verificación".
 4. Markdown malicioso (`<script>`, `<img onerror>`, `[x](javascript:…)`, HTML crudo, iframes) → sanitizado; el contenido legítimo se conserva.
-5. Video: solo se acepta un identificador de YouTube válido; una URL arbitraria o un identificador manipulado → rechazado; la fachada no carga el iframe hasta pulsar; el iframe usa `youtube-nocookie.com`.
-6. Fuentes: cada pieza muestra sus fuentes con enlace externo seguro; una pieza sin fuentes se marca de forma visible para el autor (aviso, no bloqueo).
-7. Registrado guarda y quita guardados; anónimo que intenta guardar → 401 y el frontend lo lleva a iniciar sesión conservando la acción.
-8. Noticias enlazadas: solo metadatos y enlace; URL inválida rechazada.
-9. Endpoints públicos: límite de tasa, caché corta y sin datos privados; metadatos de vista previa en la respuesta inicial.
-10. Accesibilidad de lectura: estructura de encabezados, contraste, teclado, 320 px, texto "Muy grande"; el sello no depende solo del color.
+5. Video: solo se acepta un identificador de YouTube válido; una URL arbitraria o un identificador manipulado → rechazado.
+6. Anónimo que intenta guardar → 401 (y el frontend lo lleva a iniciar sesión conservando la acción).
+
+### Diferido a QA — Etapa 2 (no bloquea la entrega de la primera versión)
+
+Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md`, `docs/PROGRESS.md` §5):
+
+- Matriz completa por rol (anónimo, registrado, autor, revisor, administrador) sobre cada acción de la sección 2.
+- Fuentes: cada pieza muestra sus fuentes con enlace externo seguro; una pieza sin fuentes se marca de forma visible para el autor (aviso, no bloqueo).
+- Noticias enlazadas: solo metadatos y enlace; URL inválida rechazada.
+- Endpoints públicos: límite de tasa, caché corta y sin datos privados; metadatos de vista previa en la respuesta inicial.
+- Accesibilidad de lectura: estructura de encabezados, contraste, teclado, 320 px, texto "Muy grande"; el sello no depende solo del color.
+- Video: la fachada no carga el iframe hasta pulsar y el iframe usa `youtube-nocookie.com`.
+- Accesibilidad y recorrido a 320 px, claro/oscuro y texto «Muy grande» de los flujos principales.
+- Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.

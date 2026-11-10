@@ -25,7 +25,7 @@ docker compose up -d --build
 Abra <http://localhost:8080> cuando los servicios estén saludables. La primera ejecución crea la cuenta de arranque definida en `BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD` (exige cambiar la contraseña al entrar). **No ejecute `docker compose down -v`** salvo que quiera borrar los datos locales. PostgreSQL externo, módulos por subconjunto, Google, proxy inverso y comandos frecuentes: `docs/OPERATIONS.md`.
 
 ## Calidad
-`.\scripts\test-backend.ps1`, `.\scripts\test-database.ps1`, `.\scripts\test-frontend.ps1` y `.\scripts\test-all.ps1`; instale el hook de commit con `.\scripts\install-hooks.ps1`. Política de pruebas esenciales y detalle en `docs/TESTING.md`.
+`.\scripts\test-backend.ps1`, `.\scripts\test-database.ps1`, `.\scripts\test-frontend.ps1` y `.\scripts\test-all.ps1`; instale el hook de commit con `.\scripts\install-hooks.ps1`. Política de pruebas **por etapas y solo lo esencial** (hoy: construir las cinco aplicaciones funcionales; QA profundo después) y detalle en `docs/TESTING.md`.
 
 ## Documentación
 | Documento | Contenido |

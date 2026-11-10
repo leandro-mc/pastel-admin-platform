@@ -30,20 +30,28 @@ Inicial: `balance.access` y `balance.groups.manage` (sobre los grupos de los que
 Pagos reales o integración bancaria, conversión de divisas en vivo, notificaciones por WhatsApp o correo, aplicación móvil.
 
 ## 6. Criterios de aceptación
+
+### Etapa 1 — app funcional (obligatorio ahora)
 - Las pruebas doradas pasan al 100 %; los totales y saldos tras la importación coinciden con los del sistema actual.
-- Aislamiento por grupo verificado con pruebas de integración (permisos concedidos/denegados).
-- Flujos críticos validados con el propietario; accesibilidad, 320 px, claro/oscuro.
-- `MODULE.md` actualizados; compila y pasa pruebas aislado (`PASTEL_MODULES=balance`).
+- Flujos críticos (registrar gasto, ver saldos, liquidar) validados con el propietario.
+- Las **pruebas esenciales** de abajo en verde; `MODULE.md` (backend y frontend) actualizados; el módulo compila y respeta las fronteras entre módulos (pruebas de arquitectura).
 
-## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
+### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
-1. **Casos dorados:** el 100 % de los ≥ 25 casos de `docs/migration/balance-inventory.md` §9 producen exactamente los saldos y liquidaciones del sistema SaldApp; QA los recalcula de forma independiente.
+1. **Casos dorados:** el 100 % de los ≥ 25 casos de `docs/migration/balance-inventory.md` §9 producen exactamente los saldos y liquidaciones del sistema SaldApp.
 2. Redondeo: reparto de ₡100,00 entre 3 personas → la suma de las partes es exactamente ₡100,00 y el centavo sobrante se asigna según la regla documentada del sistema anterior.
 3. Dinero: nunca se usa coma flotante; montos con 2 decimales; negativos, cero y valores enormes validados con mensajes claros.
 4. Aislamiento: una persona solo ve los grupos de los que es miembro; IDs de otros grupos → 404; un miembro sin rol de administrador del grupo no puede cambiar la configuración del grupo.
 5. Editar o borrar un gasto recalcula saldos; dos ediciones simultáneas → 409.
 6. Importación desde SaldApp: totales por grupo y saldos por persona **antes y después** coinciden; reimportar no duplica; participantes sin cuenta quedan como invitados según la decisión registrada.
-7. Auditoría de gastos y liquidaciones con antes/después; errores con `code` y `traceId`.
-8. Flujos críticos (registrar gasto, ver saldos, liquidar) en 360 px, teclado y texto "Muy grande".
+
+### Diferido a QA — Etapa 2 (no bloquea la entrega de la primera versión)
+
+Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md`, `docs/PROGRESS.md` §5):
+
+- Auditoría de gastos y liquidaciones con antes/después; errores con `code` y `traceId`.
+- Flujos críticos (registrar gasto, ver saldos, liquidar) en 360 px, teclado y texto "Muy grande".
+- Recalcular los casos dorados de forma independiente (segunda implementación) como verificación cruzada.
+- Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.

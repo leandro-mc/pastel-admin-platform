@@ -31,20 +31,29 @@ Inicial: `brisa.access` (usar el módulo) y `brisa.items.manage` (sobre **sus pr
 Conexión de la app Android, sincronización sin conexión, notificaciones push, recordatorios por WhatsApp o correo, compartir pendientes entre personas (salvo que ya exista).
 
 ## 6. Criterios de aceptación
+
+### Etapa 1 — app funcional (obligatorio ahora)
 - Todas las funciones del inventario marcadas "se conserva" funcionan en la web.
-- Datos de prueba importados sin pérdida; reglas de negocio con pruebas (incluidas las fechas y repetición de tareas, si existen).
-- Cada persona solo ve sus datos (prueba de integración).
-- Accesibilidad, 320 px, claro/oscuro; `MODULE.md` actualizados; compila y pasa pruebas aislado (`PASTEL_MODULES=brisa`).
+- Datos de prueba importados sin pérdida.
+- Las **pruebas esenciales** de abajo en verde; `MODULE.md` (backend y frontend) actualizados; el módulo compila y respeta las fronteras entre módulos (pruebas de arquitectura).
 
-## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
+### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Criterios de aceptación esenciales del módulo (política de `docs/TESTING.md`): solo se prueba esto y no se amplía sin decisión del propietario. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
-1. **Paridad:** ejecutar los ≥ 20 casos del inventario (`docs/migration/brisa-inventory.md` §11) y compararlos con el comportamiento de la app Android; cualquier diferencia es un defecto o un cambio aprobado por escrito.
+1. **Reglas de fechas y reprogramación** (la regla crítica del módulo): los vectores del inventario como pruebas unitarias de la función pura, y los casos de paridad que las cubren.
 2. Aislamiento: la persona A nunca ve, edita ni borra pendientes de la persona B (IDs ajenos → 404).
 3. Idempotencia: crear el mismo pendiente dos veces con el mismo `Guid` de cliente no genera duplicados.
 4. Borrado lógico y `UpdatedAt`: borrar y volver a listar; `?updatedSince=` devuelve solo cambios; la concurrencia devuelve 409 con mensaje claro.
 5. Fechas: un pendiente para las 23:30 hora de Costa Rica (UTC-6) aparece en la lista "Hoy" correcta aunque en UTC sea el día siguiente; repeticiones respetan la zona horaria.
 6. Importación: archivo de ejemplo del inventario → totales y campos íntegros; reimportar no duplica; archivo corrupto → error claro sin importar nada a medias.
 7. Permisos: anónimo 401; sin `brisa.access` 403.
-8. Flujo de uso rápido (alta veloz, marcar como hecho, filtros del día) en 360 px, teclado y texto "Muy grande".
+
+### Diferido a QA — Etapa 2 (no bloquea la entrega de la primera versión)
+
+Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md`, `docs/PROGRESS.md` §5):
+
+- Paridad completa: los ≥ 20 casos del inventario (`docs/migration/brisa-inventory.md` §11) contra el comportamiento de la app Android; toda diferencia es un defecto o un cambio aprobado por escrito.
+- Flujo de uso rápido (alta veloz, marcar como hecho, filtros del día) en 360 px, teclado y texto "Muy grande".
+- Accesibilidad y recorrido a 320 px y claro/oscuro de los flujos principales.
+- Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.
