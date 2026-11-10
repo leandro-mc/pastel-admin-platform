@@ -61,7 +61,7 @@ export const shellStrings = {
     banner: (role: string, app: string) =>
       `Vista previa como «${role}» en ${app}.`,
     bannerNote:
-      "Solo cambia lo que se muestra: sus permisos reales no cambian y los datos son los de su cuenta.",
+      "Cambia solo lo que se muestra; los permisos y los datos son los de su cuenta.",
     exit: "Salir de la vista previa",
   },
   account: {
