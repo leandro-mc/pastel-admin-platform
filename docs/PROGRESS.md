@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-Único documento de estado vigente. Se actualiza **una vez por unidad de trabajo**, dentro del mismo commit (ver `docs/GIT_WORKFLOW.md`). Última actualización: 2026-10-25.
+Único documento de estado vigente. Se actualiza **una vez por unidad de trabajo**, dentro del mismo commit (ver `docs/GIT_WORKFLOW.md`). Última actualización: 2026-11-10.
 
 ## 1. Resumen
 **La Fase 0 está cerrada** (base modular, Identity, infraestructura y validación). El propietario aceptó los requisitos diferidos, que ya no son obligatorios y quedan como backlog (§5). La rama de trabajo es `refactor/modular-foundation`; no hay integración a `dev` ni a `main` todavía y no hay PR abierto.
@@ -15,6 +15,13 @@
 Backend 51/51 (formato, build Release, NuGet sin vulnerabilidades) · PostgreSQL 46/46 · frontend completo (Vitest 21/21, `npm audit` limpio, guardas) · stack aislado 10/10 (salud real del API, esquemas migrados desde base vacía, caída y recuperación de la base, cabeceras sin duplicados) · construcción de las imágenes de los cinco módulos · verificación manual de Google (cuenta nueva y vinculación a la cuenta de arranque).
 **Defectos reales que esta validación encontró y corrigió:** ediciones simultáneas de un rol que se fundían, cabeceras de seguridad duplicadas en `/api/*` y advertencias por cada acceso denegado repetido.
 
+## 3.1 Rediseño del shell y modo desarrollador (2026-11-10, en `refactor/modular-foundation`)
+- **Hecho:** investigación y auditoría (`docs/design/SHELL_RESEARCH.md`); shell nuevo (sidebar de 16 rem con riel plegable, un único control de app, barra superior solo con acciones globales y migas reales, barra inferior visible en móvil, pie de una línea, scroll del documento); contrato del manifiesto (`alsoActiveOn`, `group`); reglas en `docs/DESIGN_SYSTEM.md` §9; modo desarrollador (permiso `platform.developer.mode`, `core/devmode`, selector «Ver como», endpoint de definiciones de rol, asignación individual en Accesos).
+- **Validado** (`docs/design/SHELL_VALIDATION.md`): Vitest 50/50, tsc, ESLint, Prettier, build y guardas; en Chrome real, axe sin incumplimientos del shell en 8 estados, contraste mínimo 4,79:1 en 6 apps × 2 temas y sin desbordes de 320 a 1440 px. Herramienta repetible: `node scripts/shell-visual.mjs`.
+- **Sin validar (hacer antes de aceptar):** el **backend** del modo desarrollador no se compiló ni se ejecutó (sin .NET en el entorno de investigación): correr `.\scripts\test-backend.ps1` y las pruebas con PostgreSQL (3 unitarias y 4 de integración nuevas en `DeveloperModeTests`). Tampoco hubo lector de pantalla real, dispositivos físicos, otros navegadores ni personas usuarias.
+- **Decisión del propietario pendiente:** ratificar o rechazar S1–S6 y M1–M4 de `docs/DECISIONS.md` (varias modifican puntos de `PASTEL-PRODUCT-AND-UX.md` §3), en especial M3 (el endpoint entrega permisos funcionales de los roles de cada app a quien tiene el modo).
+- **Hallazgos fuera del shell:** foco visible de `core/ui` bajo 3:1 (1,55:1 y 2,4:1 en tema claro) y `--muted` como texto a 4,44:1; patrones de «AI slop» en páginas de Workspace y Ágora (`SHELL_VALIDATION.md` §6).
+
 ## 4. Pendiente de producto (fuera de la Fase 0)
 - **Identidad visual por aplicación**: no definida; la investigación y los prototipos están en la rama `research/requirements-and-prototypes`. Hasta entonces los tokens de `module-themes.css` son provisionales (`docs/DESIGN_SYSTEM.md`).
 - **Selección de apps en el registro**: hoy el registro pide nombre, correo y contraseña y asigna solo `Member`; no existen entidades ni API de membresías. Reglas acordadas en `docs/product/PASTEL-PRODUCT-AND-UX.md`.
@@ -23,10 +30,10 @@ Backend 51/51 (formato, build Release, NuGet sin vulnerabilidades) · PostgreSQL
 
 ## 5. Backlog diferido (candidatos de la siguiente planificación de pruebas; no se trabajan sin decisión del propietario)
 - **Pruebas:** eventos de seguridad con antes/después (el núcleo ya está cubierto por las de privilegios), endpoint `/api/client-errors`, límite de errores de render, expiración de token por tiempo, pantalla de sesión vencida, esperas crecientes y aislamiento de Google en el limitador, recorridos en navegador (navegación, permisos, responsive y temas), regresión frente a `dev` y revisión visual y de contraste.
-- **Técnicas:** `SetUserPermissionsHandler` y `CreateRole` en transacción serializable (mismo patrón que corrigió el de roles); estrategia de reintento de EF Core ante conexiones caídas (tras reiniciar la base, la primera petición puede responder 503); nivel `Microsoft.AspNetCore` en Warning también en Development (hoy registraría la URL del callback con `code` y `state`); job de aislamiento por módulo en CI; bundle principal de ~520 kB y `app-shell.css` de 684 líneas; la importación sin extensión en `vite.config.ts` que avisa Vite.
+- **Técnicas:** `SetUserPermissionsHandler` y `CreateRole` en transacción serializable (mismo patrón que corrigió el de roles); estrategia de reintento de EF Core ante conexiones caídas (tras reiniciar la base, la primera petición puede responder 503); nivel `Microsoft.AspNetCore` en Warning también en Development (hoy registraría la URL del callback con `code` y `state`); job de aislamiento por módulo en CI; bundle principal de ~533 kB; la importación sin extensión en `vite.config.ts` que avisa Vite.
 
 ## 6. Historia de la rama `refactor/modular-foundation`
 La rama llegó a 488 commits (446 propios y 42 de `dev`); el análisis y las reglas nuevas están en `docs/GIT_WORKFLOW.md` §4. El 2026-10-25 los 446 propios se unificaron en unidades lógicas **sin cambiar el contenido final** (árbol idéntico). El estado anterior se conserva en la rama de respaldo `backup/refactor-modular-foundation-2026-10-25`; puede borrarse cuando el propietario lo decida. La rama `research/requirements-and-prototypes` nació de la historia anterior y debe rebasarse sobre la nueva con los comandos de `docs/GIT_WORKFLOW.md` §4.
 
 ## 7. Cómo continuar
-1. Lee `AGENTS.md` y este documento. 2. Rama corta desde `refactor/modular-foundation` (o `dev` cuando se integre). 3. Implementa tu módulo con los esqueletos existentes y `docs/modules/<MODULO>.md`. 4. Valida con los scripts de `docs/TESTING.md` y entrega por PR con commits lógicos.
+1. Lee `AGENTS.md` y este documento. 2. Rama corta desde `refactor/modular-foundation` (o `dev` cuando se integre). 3. Implementa tu módulo con los esqueletos existentes y `docs/modules/<MODULO>.md`. 4. Valida con los scripts de `docs/TESTING.md` y entrega por PR con commits lógicos. 5. Si tocas el shell, lee `docs/DESIGN_SYSTEM.md` §9 y ejecuta `node scripts/shell-visual.mjs audit`.

@@ -36,9 +36,9 @@ Tener acceso a Workspace no equivale a una membresía ni concede automáticament
 3. Tras iniciar sesión, el selector solo incluye apps activas y autorizadas para esa persona. Las apps que puede añadir se administran en Configuración/Catálogo, no se mezclan como tarjetas en el inicio. Cosecha y Huella quedan fuera de la autoactivación; Workspace aparece solo si la sesión contiene el permiso platform.workspace.access.
 4. Ágora no se puede quitar de la lista de apps activas. Una cuenta nueva comienza con Ágora activa.
 5. Seleccionar otra app cambia el contexto completo: nombre, color, navegación, destino inicial, rutas y configuración disponible. La app seleccionada se distingue también mediante texto/icono/estado, nunca solo por color.
-6. La flor se conserva como marca común. El selector desplegable con icono de actualización vive en la sidebar y la tarjeta de la app activa queda inmediatamente debajo, con nombre, identidad y descripción; la barra superior no repite el nombre de la app. En Workspace, la tarjeta debe identificar expresamente «Pastel Workspace». El logo/nombre de Pastel devuelve al inicio de la app activa.
+6. La flor se conserva como marca común. Un único control de app vive en la sidebar (en móvil, en la barra superior) y muestra nombre, identidad y descripción de la app activa y abre el selector; la barra superior no repite el nombre de la app. *(Decisión S1 del shell, pendiente de ratificar: antes eran un selector con icono de actualización y una tarjeta debajo; `docs/DECISIONS.md`.)* En Workspace, la tarjeta debe identificar expresamente «Pastel Workspace». El logo/nombre de Pastel devuelve al inicio de la app activa.
 7. Al pulsar la marca/nombre se vuelve al inicio de la app actual; no se cambia accidentalmente a un hub global. Después de login, un returnUrl interno y válido tiene prioridad; si no existe, la primera entrada abre Ágora y los inicios posteriores vuelven a la última app de producto usada. Por ahora la preferencia se guarda localmente en el navegador; no representa una preferencia sincronizada entre dispositivos. La resolución de app activa debe derivarse de la ruta/manifiesto, no de un estado visual independiente que pueda quedar desincronizado.
-8. El shell persiste en escritorio y móvil: navegación lateral en escritorio, patrón táctil equivalente en móvil, foco visible, ayuda, preferencias y menú de cuenta. No desaparecerá el footer ni se retirarán funciones originales sin decisión aprobada.
+8. El shell persiste en escritorio y móvil: navegación lateral en escritorio, barra inferior visible en móvil, foco visible, ayuda, preferencias y menú de cuenta (con tema y tamaño de texto). El footer se conserva en una línea. No se retirarán funciones originales sin decisión aprobada; las retiradas por el rediseño están en `docs/DECISIONS.md` (S1–S6), pendientes de ratificar. Reglas completas en `docs/DESIGN_SYSTEM.md` §9.
 9. La UI filtra enlaces por permisos, pero la API sigue siendo autoridad. Una ruta no autorizada no se vuelve segura por ocultar un botón.
 
 ## 4. Aplicaciones con una plantilla de configuración común
@@ -72,7 +72,7 @@ El permiso para gestionar miembros o roles no puede conceder privilegios que el 
 
 ### Shell y app
 
-- Mantener la presencia de marca, selector desplegable, sidebar con iconos y etiquetas, estado activo claro, barra superior, menú de cuenta/ayuda/tema, espaciado, jerarquía y footer.
+- Mantener la presencia de marca, control de app con selector desplegable, sidebar con iconos y etiquetas, estado activo claro, barra superior, menú de cuenta (con tema y tamaño de texto) y ayuda, espaciado, jerarquía y footer. Detalle y fuentes en `docs/DESIGN_SYSTEM.md` §9 y `docs/design/SHELL_RESEARCH.md`.
 - Al cambiar de app, el sidebar y el tema cambian según el manifiesto de la app. No reutilizar a la fuerza elementos de navegación propios de otra app.
 - No mostrar la cuadrícula de apps como página inicial. La lista de apps pertenece al selector y al flujo de gestión de apps.
 

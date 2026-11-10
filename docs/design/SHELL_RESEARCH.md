@@ -1,8 +1,8 @@
 # Investigación y propuesta de diseño del shell compartido
 
-Alcance: **solo el shell** que comparten Ágora, Brisa, Balance, Cosecha, Huella y Pastel Workspace (sidebar y navegación, barra superior, proporciones y distribución, y el modo desarrollador). No define ni modifica la identidad visual de ninguna aplicación (paletas, tokens de tema, tipografía propia, componentes y pantallas de cada una). Fecha de la investigación: 2026-11-09.
+Alcance: **solo el shell** que comparten Ágora, Brisa, Balance, Cosecha, Huella y Pastel Workspace (sidebar y navegación, barra superior, proporciones y distribución, y el modo desarrollador). No define ni modifica la identidad visual de ninguna aplicación (paletas, tokens de tema, tipografía propia, componentes y pantallas de cada una). Fecha de la investigación: 2026-11-10.
 
-Este documento es la justificación. Las reglas normativas que deben seguir los agentes quedan en `docs/DESIGN_SYSTEM.md` §9 y las decisiones en `docs/DECISIONS.md`; el resultado verificado se registra en `docs/design/SHELL_VALIDATION.md`. Esos tres archivos se completan al cerrar la implementación de esta misma serie de cambios.
+Este documento es la justificación. Las reglas normativas que deben seguir los agentes quedan en `docs/DESIGN_SYSTEM.md` §9 y las decisiones en `docs/DECISIONS.md`; el resultado verificado, con sus límites, está en `docs/design/SHELL_VALIDATION.md`. Las capturas citadas están en `docs/design/evidence/`.
 
 ## 1. Método y calidad de la evidencia
 
@@ -19,7 +19,7 @@ Lo que **no** se ha podido validar: comprensión real por personas con poca prá
 
 ## 2. Auditoría del shell actual
 
-Capturas en `docs/design/evidence/before-*.png` (shell real, API simulada). Cada fila es un hallazgo comprobable en el código (`web/src/app/layouts`, `web/src/app/shell`, `web/src/core/design/components/app-shell.css`).
+Capturas en `docs/design/evidence/antes-*.png` (shell real, API simulada). Cada fila es un hallazgo comprobable en el código (`web/src/app/layouts`, `web/src/app/shell`, `web/src/core/design/components/app-shell.css`).
 
 | # | Hallazgo | Evidencia | Consecuencia |
 |---|---|---|---|
@@ -29,12 +29,12 @@ Capturas en `docs/design/evidence/before-*.png` (shell real, API simulada). Cada
 | A4 | Etiquetas en **mayúsculas espaciadas de 9 y 10 px** («WORKSPACE», «MENÚ PRINCIPAL») | `app-shell.css` (`0.58rem`, `0.62rem`) | Por debajo de la escala mínima de 12 px de `DESIGN_SYSTEM.md` §3; rasgo típico de plantilla |
 | A5 | La barra superior muestra «Workspace › Usuarios» con una miga **constante** («Pastel» o «Workspace») y un texto fijo «Su espacio de trabajo» | `RootLayout.tsx`, `TopBar.tsx` | La primera miga no orienta (nunca cambia); el texto fijo no informa |
 | A6 | `Breadcrumbs.tsx` (migas reales por ruta) **existe pero no se usa** | `layouts/Breadcrumbs.tsx` | Código muerto mientras la barra usa una miga inventada |
-| A7 | En móvil, la sidebar se convierte con CSS (`!important`, 9 px de texto) en una barra inferior **con scroll horizontal**: en 390 px solo se ve «Usuarios» de cuatro destinos | `before-workspace-mobile.png` | Navegación oculta: es exactamente el problema medido por NN/g (§3.2) |
+| A7 | En móvil, la sidebar se convierte con CSS (`!important`, 9 px de texto) en una barra inferior **con scroll horizontal**: en 390 px solo se ve «Usuarios» de cuatro destinos | `antes-workspace-movil.png` | Navegación oculta: es exactamente el problema medido por NN/g (§3.2) |
 | A8 | El selector de apps en móvil queda comprimido en 4,1 rem con texto de 9 px | `app-shell.css` | Ilegible y con objetivo táctil insuficiente |
-| A9 | Sidebar de **300 px** (≈21 % de 1440 px) con ≈45 % de su altura vacía o de relleno | `before-workspace-desktop.png` | Mal aprovechamiento del espacio |
+| A9 | Sidebar de **300 px** (≈21 % de 1440 px) con ≈45 % de su altura vacía o de relleno | `antes-workspace-escritorio.png` | Mal aprovechamiento del espacio |
 | A10 | Contenedor con `height: 100vh; overflow: hidden` y scroll interno | `app-shell.css` | Se pierde el comportamiento nativo de scroll y de la barra del navegador en móvil; en móvil ya se revierte con otra regla |
 | A11 | «Mi cuenta» está **dentro de la navegación de la app**, y además en el menú de cuenta | `AppSidebar.tsx`, `AccountMenu.tsx` | Duplicado; mezcla navegación global con la de la app |
-| A12 | El foco visible usa `--focus` (verde global, 28 % de opacidad) y `ring-accent-strong/45` | `tokens.css`, `shell/styles.ts` | Contraste estimado por debajo de 3:1 sobre el fondo (WCAG 1.4.11); además no sigue el color de la app activa |
+| A12 | El foco visible usa `--focus` (verde global, 28 % de opacidad) y `ring-accent-strong/45` | `tokens.css`, `shell/styles.ts` | Medido con los tokens reales en tema claro: **1,55:1** y **2,4:1**, ambos por debajo de 3:1 (WCAG 1.4.11); además no sigue el color de la app activa. El shell usa ahora un contorno sólido (≥ 5,4:1); el foco de `core/ui` queda como hallazgo para el propietario (`SHELL_VALIDATION.md` §6) |
 | A13 | Los botones de plegar y de tema son **fichas con borde** de 44 px, y tema y nombre de usuario compiten en la barra | `TopBar.tsx` | Peso visual igual para acciones de frecuencia muy distinta |
 
 Observaciones fuera de alcance (pertenecen a las páginas, no al shell; se entregan al propietario): el `PageHeader` con «eyebrow» en mayúsculas espaciadas, el héroe de Workspace con degradados radiales y la portada de Ágora con órbitas decorativas siguen el catálogo de §4.

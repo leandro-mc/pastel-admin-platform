@@ -177,12 +177,14 @@ export default {
   basePath: "/cosecha",
   access: "permission",                 // "public" | "authenticated" | "permission"
   requiredPermission: "cosecha.access",
-  nav: [{ label: "Hoy", to: "", icon: CalendarDays }, ...],
+  nav: [{ label: "Hoy", to: "", icon: CalendarDays }, ...],   // opcionales por ítem: requiredPermission, alsoActiveOn, group
   routes: [{ index: true, lazy: () => import("./pages/TodayPage") }, ...],
 } satisfies ModuleManifest;
 ```
 
 Un plugin de Vite genera el módulo virtual `virtual:pastel-modules` recorriendo `src/modules/*/manifest.ts` y filtrando por `PASTEL_MODULES`. El shell nunca importa un módulo directamente. Con un solo módulo habilitado, `/` redirige a ese módulo y el shell adopta su marca.
+
+**Shell y vista previa por rol.** `web/src/app/shell` dibuja el marco común (sidebar, barra superior, barra inferior en móvil) leyendo el manifiesto y los tokens de la app (`data-module`); no inspecciona el interior de un módulo (las pantallas de detalle se declaran con `alsoActiveOn`). `RootLayout` envuelve todas las rutas con `core/devmode`, que, solo para cuentas con `platform.developer.mode`, sustituye por `useAuth()` los permisos de la app activa para dibujar la interfaz como la vería otro rol. Los módulos no importan `core/devmode`; la autorización sigue en el servidor. Reglas: `DESIGN_SYSTEM.md` §9 y `SECURITY.md`.
 
 ### 9.4 Estructura de un módulo web
 
