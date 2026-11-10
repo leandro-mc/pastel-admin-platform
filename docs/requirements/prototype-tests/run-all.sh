@@ -12,6 +12,12 @@ run "Cosecha · módulo Mercado" node smoke.js $R/cosecha/prototype t-mercado.js
 run "Huella · perfil público" node smoke.js $R/huella/prototype-perfil     t-perfil.js
 run "Huella · estudio de CV"  node smoke.js $R/huella/prototype-estudio    t-estudio.js
 run "Ágora"                   node smoke.js $R/agora/prototype             t-agora.js
+run "Brisa · lógica de fechas (vectores V1–V10, criterios AC1–AC7 y casos del inventario)" node $R/brisa/prototype/logic.test.js
+run "Brisa · app por roles (persona, nueva, sin acceso, sin sesión, error)" node smoke.js $R/brisa/prototype t-brisa.js
+run "Balance · motor de dinero (casos dorados G01–G41 + propiedades en 6 000 escenarios)" node $R/balance/prototype/money.test.js
+run "Balance · roles, ciclo de vida e ingreso por enlace y código" node $R/balance/prototype/rules.test.js
+run "Balance · app por roles (administra, miembro, sin grupos, invitada, sin acceso, sin sesión)" node smoke.js $R/balance/prototype t-balance.js
+run "Reglas duras de diseño (sin morado ni símbolos de IA)" node check-hard-rules.js
 run "Contraste WCAG de las paletas" python3 contrast.py
 run "Guías de Cosecha: cada captura abre en su rol y estado" node check-manuals.js
 run "CV: auditoría ATS del PDF (11+ comprobaciones)" python3 ../huella/cv-spec/samples/run_ats_check.py
