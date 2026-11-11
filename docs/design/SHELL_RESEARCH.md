@@ -105,19 +105,19 @@ La literatura de profesionales coincide en un catálogo. Se traduce aquí a crit
 ### 5.2 Anatomía en escritorio (≥ 1024 px)
 ```text
 ┌ sidebar 16 rem ────┬ columna principal ───────────────────────────────────────┐
-│ 🌸 pastel          │ Usuarios › Ana Pérez            [Ver como ▾] Ayuda  (M) ▾ │ ← barra superior 3,5 rem
+│ 🌸 pastel      «   │ Usuarios › Ana Pérez            [Ver como ▾] Ayuda  (M) ▾ │ ← barra superior 3,5 rem
 │ [▣ Brisa      ⇅]  │──────────────────────────────────────────────────────────│
 │ ▌ Inicio           │                                                          │
 │   Pendientes       │   contenido de la página (cada app decide su composición)│
 │   …                │                                                          │
 │                    │──────────────────────────────────────────────────────────│
-│ « Contraer menú    │ © 2026 Pastel · Todo en su lugar. Todo fluye mejor.      │
+│                    │ © 2026 Pastel · Todo en su lugar. Todo fluye mejor.      │
 └────────────────────┴──────────────────────────────────────────────────────────┘
 ```
 - **Sidebar de 16 rem** (256 px; 4,5 rem plegada). Filas de 44 px, un solo renglón, icono de 20 px y etiqueta. Activo: barra de acento de 3 px, fondo suave de la app y peso 600; además `aria-current`.
 - **Un solo control de app** (nombre, descripción corta e icono de la app, con indicador de menú) que sustituye al selector con icono de actualizar y a la tarjeta. Si la persona solo tiene una app, es un bloque informativo sin menú (sin controles muertos).
 - **Marca** a la altura de la barra superior (misma línea horizontal); devuelve al inicio de la app activa.
-- **Plegar** en la parte inferior; el estado se recuerda (`pastel-sidebar-collapsed`). Plegada, cada ítem tiene nombre accesible y descripción emergente accesible con teclado.
+- **Plegar** arriba, junto a la marca (decisión del propietario, 2026-11-10; la propuesta inicial lo ponía abajo). Plegada, la marca queda arriba y el botón para expandir justo debajo. El estado se recuerda (`pastel-sidebar-collapsed`) y cada ítem tiene nombre accesible y descripción emergente accesible con teclado.
 - **Barra superior**: migas reales a la izquierda; a la derecha, selector del modo desarrollador (solo si corresponde), Ayuda y menú de cuenta. Es `sticky`.
 - **Pie**: se conserva (decisión del propietario), reducido a una línea de 2,5 rem. Se retira el enlace decorativo «Hecho para crecer» que duplicaba la marca.
 - **Scroll del documento** (no de un contenedor interno).
@@ -128,7 +128,7 @@ La literatura de profesionales coincide en un catálogo. Se traduce aquí a crit
 - El contenido reserva el espacio de la barra inferior (`padding-bottom`) y `scroll-padding` (WCAG 2.4.11).
 
 ### 5.4 Menú de cuenta y preferencias
-- **Cuenta**: avatar con la inicial y nombre (oculto en pantallas estrechas); al abrir, nombre y correo, «Mi cuenta», **Apariencia** (tema claro/oscuro) y **Tamaño de texto** y «Cerrar sesión».
+- **Cuenta**: avatar con la inicial y nombre (oculto en pantallas estrechas); al abrir, un panel con nombre y correo, «Mi cuenta», las preferencias y «Cerrar sesión». Por indicación del propietario (2026-11-10), las preferencias no son listas de texto: el **tema es un único botón luna/sol** (como en el inicio de sesión) y el **tamaño de texto una fila de cuatro «A»** de tamaño creciente con la elegida marcada y su nombre en una descripción emergente. El **cierre de sesión** es el último elemento, separado y de ancho completo con icono, como indica la convención de los menús de cuenta.
 - El tema deja de ser un botón fijo en la barra: se establece una vez y es poco frecuente (se agrupa con otras preferencias). Para visitas sin sesión (Ágora es pública) hay un menú **Preferencias** con lo mismo, junto al botón «Ingresar», de modo que nadie pierde el control de tema ni de tamaño de texto.
 - **Ayuda**: siempre visible, con icono y texto desde 640 px (WCAG 3.2.6: misma posición en todas las páginas).
 

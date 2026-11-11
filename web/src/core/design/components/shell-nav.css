@@ -21,8 +21,19 @@
   height: var(--shell-topbar-height);
   flex: none;
   align-items: center;
-  padding: 0 1.25rem;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0 0.5rem 0 1.25rem;
   border-bottom: 1px solid var(--border);
+}
+.shell-collapse-btn {
+  color: var(--text-secondary);
+}
+.shell-rail-toggle {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  padding-top: 0.5rem;
 }
 
 .shell-brand {
@@ -108,18 +119,6 @@
   width: 3px;
   border-radius: 0 3px 3px 0;
   background: var(--accent);
-}
-
-.shell-sidebar-foot {
-  display: flex;
-  flex: none;
-  padding: 0.5rem 0.75rem 0.75rem;
-  border-top: 1px solid var(--border);
-}
-.shell-sidebar-foot .shell-btn {
-  width: 100%;
-  justify-content: flex-start;
-  color: var(--text-secondary);
 }
 
 /* ---------- Control de aplicación (selector + identidad en uno) ---------- */
@@ -213,10 +212,6 @@ button.shell-app[aria-expanded="true"] {
 }
 .shell[data-collapsed] .shell-nav-heading {
   display: none;
-}
-.shell[data-collapsed] .shell-sidebar-foot .shell-btn {
-  justify-content: center;
-  padding: 0;
 }
 
 /* ---------- Barra inferior (pantallas estrechas) ---------- */

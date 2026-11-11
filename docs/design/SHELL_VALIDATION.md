@@ -16,7 +16,7 @@ Qué se comprobó, cómo y con qué resultado, y **qué no se pudo comprobar**. 
 | Comprobación | Resultado |
 |---|---|
 | `tsc -b`, ESLint (con reglas de accesibilidad), Prettier | Sin hallazgos |
-| Vitest | **50/50** (21 previas + 12 de `core/devmode`, 14 del shell y 3 del alcance de permisos de Identity) |
+| Vitest | **54/54** (21 previas + 12 de `core/devmode`, 14 del shell, 3 del alcance de permisos de Identity y 4 de los controles de preferencias; una mutación que quita las dos defensas de la fila de tamaños hace fallar la prueba) |
 | Mutación deliberada de la lógica | Se rompió `applySimulation`, la regla de activo exacto y el límite de la barra inferior: las pruebas fallaron. Una primera versión de la prueba de «Inicio exacto» **no** detectaba la mutación; se reforzó y se repitió |
 | `check-design` | Sin hallazgos |
 | `check-module-boundaries` | Sin hallazgos; regla nueva: un módulo no puede importar `@/core/devmode` (probada con un import prohibido en Brisa y revertida) |
@@ -60,8 +60,8 @@ Con más de 5 destinos la barra muestra 4 y «Más» (probado con 7 destinos en 
 ### 4.4 Adaptación a las identidades
 Las seis aplicaciones (Ágora, Brisa, Balance, Cosecha, Huella y Workspace) comparten la misma estructura y solo cambian por los tokens de cada una (acento, tinte de la pestaña activa, mosaico del control de app, avatar, anillo de foco); los menús, que se dibujan en un portal, repiten `data-module` para heredar el tema. `despues-identidades-claro.png` y `despues-identidades-oscuro.png` lo muestran. Los fondos (`--app-bg`, `--sidebar-bg`) hoy son neutros globales: cada app puede redefinirlos sin tocar el shell.
 
-### 4.5 Interacciones (27 comprobaciones, todas correctas)
-Plegado (256 → 72 px), nombre accesible y `aria-current` al plegar, descripción emergente, plegado recordado tras recargar; selector con las 6 apps y tema heredado por el menú; Escape cierra y devuelve el foco; menú de cuenta con tema y tamaño de texto y cambio de tema efectivo; visitante anónimo con «Preferencias» e «Ingresar», sin cuenta ni «Ver como»; orden de teclado: enlace de salto, marca, control de app y destinos.
+### 4.5 Interacciones (28 comprobaciones, todas correctas, más 13 del panel de cuenta)
+Plegado (256 → 72 px), nombre accesible y `aria-current` al plegar, descripción emergente, plegado recordado tras recargar; selector con las 6 apps y tema heredado por el menú; Escape cierra y devuelve el foco; panel de cuenta con el tema como botón único luna/sol (cambia el tema y pasa a sol), el tamaño de texto como fila de cuatro «A» (una seleccionada, nombre emergente, el cambio surte efecto), cierre de sesión como botón final y Escape que lo cierra; el botón de plegar está arriba, también plegado (debajo de la marca) y con descripción emergente; el panel cabe en 320 y 390 px sin desborde; visitante anónimo con «Preferencias» e «Ingresar», sin cuenta ni «Ver como»; orden de teclado: enlace de salto, marca, control de app y destinos.
 
 ### 4.6 Modo desarrollador (frontend, API simulada)
 - Una cuenta Administrator sin permisos de Brisa ve la pantalla de acceso denegado; el selector «Ver como» aparece igualmente, y al elegir «Brisa — Usuario» se muestra la app, con aviso permanente y salida con un clic.

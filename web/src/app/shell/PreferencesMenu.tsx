@@ -1,7 +1,13 @@
 import { SlidersHorizontal } from "lucide-react";
-import { Button, Menu, MenuTrigger, Popover } from "react-aria-components";
+import {
+  Button,
+  Dialog,
+  DialogTrigger,
+  Heading,
+  Popover,
+} from "react-aria-components";
 import { shellStrings } from "../strings";
-import PreferenceSections from "./PreferenceSections";
+import PreferenceControls from "./PreferenceControls";
 import { useShell } from "./ShellContext";
 import { barButton, popover } from "./styles";
 
@@ -9,22 +15,25 @@ import { barButton, popover } from "./styles";
 export default function PreferencesMenu() {
   const { moduleCode } = useShell();
   return (
-    <MenuTrigger>
+    <DialogTrigger>
       <Button className={barButton} aria-label={shellStrings.preferences.menu}>
         <SlidersHorizontal aria-hidden="true" />
       </Button>
       <Popover
-        className={popover}
+        className={`${popover} shell-account`}
         placement="bottom end"
         data-module={moduleCode}
       >
-        <Menu
-          aria-label={shellStrings.preferences.menu}
+        <Dialog
           className="outline-none"
+          aria-label={shellStrings.preferences.menu}
         >
-          <PreferenceSections />
-        </Menu>
+          <Heading slot="title" className="shell-account-title">
+            {shellStrings.preferences.menu}
+          </Heading>
+          <PreferenceControls />
+        </Dialog>
       </Popover>
-    </MenuTrigger>
+    </DialogTrigger>
   );
 }

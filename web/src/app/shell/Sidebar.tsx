@@ -15,8 +15,9 @@ type Props = {
 };
 
 /**
- * Barra lateral (escritorio): marca, control de app, navegación de la app activa y plegado. Nada más: sin tarjetas,
- * estados ni avisos. Contraída queda un riel de iconos con nombre accesible y descripción emergente.
+ * Barra lateral (escritorio): marca y botón de plegar arriba, control de app y navegación de la app activa. Nada más:
+ * sin tarjetas, estados ni avisos. Plegada queda un riel de iconos: la marca, el botón para expandir justo debajo y los
+ * destinos, todos con nombre accesible y descripción emergente.
  */
 export default function Sidebar({
   module,
@@ -26,19 +27,28 @@ export default function Sidebar({
   const { moduleCode } = useShell();
   const label = collapsed ? shellStrings.expandNav : shellStrings.collapseNav;
   const toggle = (
-    <Button
-      className={barButton}
-      onPress={onToggleCollapsed}
-      aria-expanded={!collapsed}
-      aria-label={collapsed ? label : undefined}
-    >
-      {collapsed ? (
-        <PanelLeftOpen aria-hidden="true" />
-      ) : (
-        <PanelLeftClose aria-hidden="true" />
-      )}
-      {collapsed ? null : <span>{label}</span>}
-    </Button>
+    <TooltipTrigger delay={400}>
+      <Button
+        className={`${barButton} shell-collapse-btn`}
+        onPress={onToggleCollapsed}
+        aria-expanded={!collapsed}
+        aria-label={label}
+      >
+        {collapsed ? (
+          <PanelLeftOpen aria-hidden="true" />
+        ) : (
+          <PanelLeftClose aria-hidden="true" />
+        )}
+      </Button>
+      <Tooltip
+        placement={collapsed ? "right" : "bottom"}
+        offset={8}
+        className="shell-tooltip"
+        data-module={moduleCode}
+      >
+        {label}
+      </Tooltip>
+    </TooltipTrigger>
   );
 
   return (
@@ -52,7 +62,9 @@ export default function Sidebar({
           <Flower2 aria-hidden="true" />
           {collapsed ? null : <span>{shellStrings.brand.toLowerCase()}</span>}
         </Link>
+        {collapsed ? null : toggle}
       </div>
+      {collapsed ? <div className="shell-rail-toggle">{toggle}</div> : null}
       <div className="shell-sidebar-app">
         <AppSwitcher variant="sidebar" current={module} collapsed={collapsed} />
       </div>
@@ -61,23 +73,6 @@ export default function Sidebar({
       ) : (
         <div className="flex-1" />
       )}
-      <div className="shell-sidebar-foot">
-        {collapsed ? (
-          <TooltipTrigger delay={300}>
-            {toggle}
-            <Tooltip
-              placement="right"
-              offset={8}
-              className="shell-tooltip"
-              data-module={moduleCode}
-            >
-              {label}
-            </Tooltip>
-          </TooltipTrigger>
-        ) : (
-          toggle
-        )}
-      </div>
     </div>
   );
 }

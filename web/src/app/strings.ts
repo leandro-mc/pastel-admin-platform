@@ -49,6 +49,8 @@ export const shellStrings = {
   preferences: {
     menu: "Preferencias",
     appearance: "Apariencia",
+    themeToDark: "Activar modo oscuro",
+    themeToLight: "Activar modo claro",
   },
   dev: {
     menu: "Ver como",

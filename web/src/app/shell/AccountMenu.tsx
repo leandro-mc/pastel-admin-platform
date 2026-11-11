@@ -1,25 +1,26 @@
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import { useNavigate } from "react-router";
 import {
   Button,
-  Header,
-  Menu,
-  MenuItem,
-  MenuSection,
-  MenuTrigger,
+  Dialog,
+  DialogTrigger,
+  Link,
   Popover,
-  Separator,
 } from "react-aria-components";
 import { useAuth } from "@/core/auth";
 import { routes } from "../routes";
 import { shellStrings } from "../strings";
-import PreferenceSections from "./PreferenceSections";
+import PreferenceControls from "./PreferenceControls";
 import { useShell } from "./ShellContext";
-import { barButton, menuItem, menuSeparator, popover } from "./styles";
+import { barButton, popover } from "./styles";
 
 const { account } = shellStrings;
 
-/** Menú de cuenta: quién es la persona, su cuenta, apariencia y tamaño de texto, y cierre de sesión. */
+/**
+ * Panel de cuenta: quién es la persona, «Mi cuenta», sus preferencias (tema y tamaño de texto como controles de icono) y,
+ * al final y separado, el cierre de sesión como botón de ancho completo con icono. Es un panel y no una lista de menú
+ * porque contiene controles propios; Escape lo cierra y el foco vuelve al botón de cuenta.
+ */
 export default function AccountMenu() {
   const { user, logout } = useAuth();
   const { moduleCode } = useShell();
@@ -28,7 +29,7 @@ export default function AccountMenu() {
   const initial = user.displayName.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <MenuTrigger>
+    <DialogTrigger>
       <Button className={barButton}>
         {/* La inicial va como contenido generado: no cuenta como texto visible del botón (WCAG 2.5.3). */}
         <span
@@ -46,46 +47,42 @@ export default function AccountMenu() {
         />
       </Button>
       <Popover
-        className={popover}
+        className={`${popover} shell-account`}
         placement="bottom end"
         data-module={moduleCode}
       >
-        <Menu aria-label={account.menu} className="outline-none">
-          <MenuSection>
-            <Header className="grid px-3 pt-2 pb-2">
-              <span className="truncate text-sm font-semibold text-fg">
-                {user.displayName}
-              </span>
-              <span className="truncate text-xs font-normal text-fg-secondary">
-                {user.email}
-              </span>
-            </Header>
-            <MenuItem
-              id="account"
-              href={routes.account}
-              textValue={account.mine}
-              className={menuItem}
-            >
-              {account.mine}
-            </MenuItem>
-          </MenuSection>
-          <Separator className={menuSeparator} />
-          <PreferenceSections />
-          <Separator className={menuSeparator} />
-          <MenuSection>
-            <MenuItem
-              id="signout"
-              textValue={account.signOut}
-              className={menuItem}
-              onAction={() =>
-                void logout().finally(() => navigate(routes.home))
-              }
-            >
-              {account.signOut}
-            </MenuItem>
-          </MenuSection>
-        </Menu>
+        <Dialog className="outline-none" aria-label={account.menu}>
+          {({ close }) => (
+            <>
+              <div className="shell-account-head">
+                <span className="shell-account-name">{user.displayName}</span>
+                <span className="shell-account-email">{user.email}</span>
+              </div>
+              <Link
+                href={routes.account}
+                className="shell-account-link"
+                onPress={close}
+              >
+                <UserRound aria-hidden="true" />
+                {account.mine}
+              </Link>
+              <PreferenceControls />
+              <div className="shell-account-foot">
+                <Button
+                  className="shell-signout"
+                  onPress={() => {
+                    close();
+                    void logout().finally(() => navigate(routes.home));
+                  }}
+                >
+                  <LogOut aria-hidden="true" />
+                  {account.signOut}
+                </Button>
+              </div>
+            </>
+          )}
+        </Dialog>
       </Popover>
-    </MenuTrigger>
+    </DialogTrigger>
   );
 }

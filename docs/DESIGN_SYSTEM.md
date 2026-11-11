@@ -68,11 +68,11 @@ Código: `web/src/app/shell` y `web/src/core/design/components/shell*.css`. Just
 |---|---|---|
 | Marca | Arriba de la sidebar, a la altura de la barra superior; vuelve al inicio de la app activa | Se omite (el control de app ocupa su lugar) |
 | Control de app | Un solo control en la sidebar: icono, nombre y descripción de la app, con menú de aplicaciones | Mismo control, compacto, en el extremo inicial de la barra superior |
-| Navegación de la app | Sidebar de 16 rem (riel de 4,5 rem si se pliega; se recuerda). Un renglón de 44 px por destino | Barra inferior fija con etiqueta: hasta 5 destinos visibles; con más, 4 y «Más». Con menos de 2 no hay barra |
+| Navegación de la app | Sidebar de 16 rem (riel de 4,5 rem si se pliega; se recuerda), con el botón de plegar **arriba**, junto a la marca (plegada, justo debajo de ella). Un renglón de 44 px por destino | Barra inferior fija con etiqueta: hasta 5 destinos visibles; con más, 4 y «Más». Con menos de 2 no hay barra |
 | Barra superior | Migas reales, selector «Ver como» (solo modo desarrollador), Ayuda, cuenta | Selector «Ver como» (icono), Ayuda (icono) y cuenta (avatar) |
 | Pie | Una línea | Una línea |
 
-La barra superior contiene **solo acciones globales entre aplicaciones** (patrón de Atlassian: lo global arriba, lo propio de la app al lado). Las acciones de una página van en el encabezado de la propia página, nunca en el shell. El tema y el tamaño de texto viven en el menú de cuenta (o en «Preferencias» para quien no ha iniciado sesión).
+La barra superior contiene **solo acciones globales entre aplicaciones** (patrón de Atlassian: lo global arriba, lo propio de la app al lado). Las acciones de una página van en el encabezado de la propia página, nunca en el shell. El tema y el tamaño de texto se fijan una vez, por eso viven en el panel de cuenta (o en «Preferencias» para quien no ha iniciado sesión) y **son controles de icono, no listas de texto**: el tema es un único botón luna/sol, igual que en el inicio de sesión, y el tamaño es una fila de cuatro «A» de tamaño creciente con la elegida marcada. Cada botón muestra su nombre (Pequeño, Normal, Grande, Muy grande) al pasar el cursor o enfocarlo. El cierre de sesión es el último elemento del panel, separado y de ancho completo, con icono y texto.
 
 ### 9.2 Qué hereda toda app y qué personaliza
 | Hereda (no se rediseña por app) | Personaliza cada app |
@@ -95,7 +95,7 @@ La barra superior contiene **solo acciones globales entre aplicaciones** (patró
 4. **Nombre accesible desde el contenido visible** (WCAG 2.5.3): no sobrescribir con `aria-label` un botón que muestra texto; si el texto se oculta en pantallas estrechas, ocultarlo solo visualmente (`sr-only`).
 5. **Foco visible** de 3 px sólidos con `--accent-strong`, ≥ 3:1 sobre los fondos contiguos. `scroll-padding` superior e inferior para que la barra fija no tape el elemento enfocado (WCAG 2.4.11).
 6. **Landmarks**: `aside` con nombre para la sidebar, `nav` con nombre por app, `header`, `main#contenido`, `footer`. Solo una navegación (sidebar o barra inferior) está en el árbol de accesibilidad a la vez.
-7. **Ayuda siempre en la misma posición** (WCAG 3.2.6). Sin indicadores de estado que no provengan de un dato real consultado.
+7. **Controles de preferencias con icono y nombre emergente**: el nombre accesible sale del propio botón (la «A» es un dibujo, no texto) y la opción elegida no depende solo del color (fondo, contorno y trazo más grueso). **Ayuda siempre en la misma posición** (WCAG 3.2.6). Sin indicadores de estado que no provengan de un dato real consultado.
 8. **El documento se desplaza** (no un contenedor interno); el pie queda al final del contenido.
 9. **Migas** solo con jerarquía real (`handle.crumb`); sin repetir el nombre de la app; en móvil se omiten.
 
