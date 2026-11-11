@@ -134,3 +134,49 @@ Detalle de hallazgos y decisiones en [`NOTAS-HUELLA-V2.md`](NOTAS-HUELLA-V2.md) 
 | https://news.stanford.edu/2022/08/29/how-to-strengthen-democracy/ · https://news.cornell.edu/node/329591 · https://sociology.stanford.edu (megaestudio) | 23 de 25 intervenciones breves reducen animosidad; efecto decae a 2 semanas | A |
 | https://www.icip.cat (bridging) · https://bridging.reframetech.de · https://arxiv.org/pdf/2503.05830 · https://wiki.p2pfoundation.net/Crowdsourced_Factchecking | Ranking por puentes, Polis/vTaiwan, Community Notes | A/B |
 | https://delfino.cr · https://observador.cr · https://www.nacion.com · https://www.diarioextra.com | Contexto costarricense: confianza, abstencionismo, desinformación (CIEP-UCR, PROLEDI) | A/B |
+
+---
+
+# Fuentes de la v3 (Brisa y Balance, 2026-11-09)
+
+> Mismas reglas: todo parafraseado; A = primaria/oficial/estudio; B = guía especializada o prensa seria; C = blog/comercial/testimonio. Las comparativas de apps son **comerciales** y sus cifras cambian: revisar antes de decidir.
+
+## Balance
+
+### Competencia (todas C)
+| Fuente | Se tomó | Conf. |
+|---|---|---|
+| https://getfinny.app/blog/best-splitwise-alternatives-2026 · https://getfinny.app/blog/splitwise-pricing-2026 | El plan gratuito de Splitwise limita entradas diarias; alternativas sin tope | C |
+| https://tricount.com/blog/top-splitwise-alternatives-in-india-2025-which-app-should-you-switch-to | Tricount entra sin cuenta (fuente del propio competidor: sesgada) | C |
+| https://app-partly.web.app/en/blog/best-bill-splitting-apps/ · https://www.finanjo.com/personal-finance/splitwise-alternatives-apps-free-and-paid · https://financer.de/persoenliche-finanzen/ausgaben-erfassen-und-mit-freunden-teilen/ · https://comparecellular.whistleout.com/CellPhones/Apps/splid-app-for-splitting-group-expenses | Comparativas de Splitwise, Tricount, Splid y Settle Up (acceso, reparto, liquidación) | C |
+
+### Dinero entre personas
+| Fuente | Se tomó | Conf. |
+|---|---|---|
+| https://www.gelfmagazine.com/archives/moneygrubbing.php | Entrevista sobre el estudio de Gneezy, Haruvy y Yafe (2004): partes iguales aumentan lo que se pide | B |
+| https://www.opentable.co.uk/blog/going-dutch/ | Encuesta comercial: se reparte igual por comodidad y por miedo a parecer tacaño | C |
+| https://www.rnz.co.nz/life/relationships/time-to-ditch-split-bills-why-shouting-a-good-friend-makes-you-happier | Norma comunitaria vs. de intercambio en amistades | B/C |
+
+### Liquidación de deudas
+| Fuente | Se tomó | Conf. |
+|---|---|---|
+| https://infedu.vu.lt/journal/INFEDU/article/612/file/pdf | Revista *Informatics in Education*: liquidación de deudas (no se leyó completo) | A/B |
+| https://web3.arxiv.org/pdf/1402.6556 | Resolución evolutiva del problema de compensar deudas | B |
+| https://github.com/nimral/splitbill · https://www.jointaro.com/interviews/questions/optimal-account-balancing/ | Implementaciones y problema clásico de mínimo de transferencias | C |
+
+### Costa Rica
+| Fuente | Se tomó | Conf. |
+|---|---|---|
+| https://observador.cr/monto-transado-por-sinpe-movil-crecio-un-164-en-primeros-10-meses-del-2025/amp/ | Crecimiento del monto transado por SINPE Móvil en 2025 | B |
+| https://www.teletica.com/amp/calle-7/volver-al-efectivo-monitoreo-de-sinpe-movil-genera-dudas-entre-usuarios-y-comercios_413797 | Dudas por el monitoreo de SINPE Móvil (20-jul-2026) | B |
+| https://crhoy.com/no-caiga-en-la-trampa-asi-funcionan-las-estafas-por-sinpe-movil/ | Estafas con SINPE Móvil | B |
+| https://observador.cr/banco-central-prepara-sinpe-movil-con-qr-y-alias-para-reducir-pagos-en-efectivo/ · https://www.nacion.com/economia/sinpe-movil-cambiara-bccr-prepara-una-nueva/UN4SPSK2FVCQDFSRTD3ZVMP2YA/story/ | El BCCR prepara QR y alias | B |
+
+## Brisa
+| Fuente | Se tomó | Conf. |
+|---|---|---|
+| Gollwitzer y Sheeran (2006), *Advances in Experimental Social Psychology* 38 — se consultó un resumen; la URL del buscador no coincidía con el título | 94 pruebas, efecto medio d ≈ 0,65 de los planes «cuándo/dónde» | A (URL por verificar) |
+| https://www.zenithwithin.com/p/implementation-intentions-habits · https://yukaichou.com/gamification-analysis/implementation-intentions-if-then-planning-gollwitzer/ | Divulgación de la misma meta-análisis | C |
+| https://www.indiehackers.com/post/i-stopped-opening-todo-apps-because-of-the-guilt-so-i-built-one-with-no-overdue-label-at-all-gEmxidjhiObz4OgDfPs4 · https://www.indiehackers.com/post/i-think-productivity-apps-accidentally-optimize-for-guilt-retention-a6049f01c8 | Testimonios de abandono por la culpa de las «vencidas» | C |
+| https://goalsandprogress.com/why-task-systems-fail/ · https://suraj1074.github.io/Drift-Website/blog/todo-list-guilt.html | Blogs sobre por qué fallan los sistemas de tareas | C |
+

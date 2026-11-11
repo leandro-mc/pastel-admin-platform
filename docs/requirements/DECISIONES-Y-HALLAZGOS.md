@@ -25,6 +25,34 @@ Tras revisar sus capturas del navegador (ver [`REVISION-UX-V1.md`](REVISION-UX-V
 | D-72 | **Ágora: despolarización** (*Voces cercanas*, *Lo que nos une*, *Perspectivas*, **Escucha ciudadana**, «leí antes de compartir») y neutralidad electoral | El público está desencantado, no dividido en bandos; evidencia de intervenciones breves → [`agora/INVESTIGACION-AGORA.md`](agora/INVESTIGACION-AGORA.md) |
 | D-73 | **Revisión visual del propietario** como verificación obligatoria; las pruebas automáticas no ven el aspecto | Lección L6 del método |
 
+## 0b. Cambios de la v3 (2026-11-09): Brisa y Balance
+
+Se sumaron las dos apps que **ya existen** y se migran a Pastel, partiendo de las ramas `docs/brisa-inventory` y `docs/balance-inventory` (desactualizadas respecto del formato actual). Sus inventarios se conservan **intactos**; las decisiones que el propietario ya tomó (Brisa §13, Balance D1–D9) **prevalecen** y no se reabren.
+
+| ID | Decisión | Por qué |
+|---|---|---|
+| D-80 | **Brisa no se rediseña:** se conserva el prototipo del carrusel que el propietario aprobó y se le agrega barra de desarrollo con 5 situaciones, tema Auto/Claro/Oscuro, reloj simulado y estados | «Me gusta mucho» → no se cambia lo aprobado; solo lo que el método exige |
+| D-81 | **La regla de reprogramación diaria de Brisa vive en un módulo puro y probado** (`brisa/prototype/logic.js`): V1–V10 y AC1–AC7 del inventario como pruebas | Es el requisito obligatorio de Brisa; ahora es verificable (39 pruebas) |
+| D-82 | **Brisa oscuro: el texto dentro de las tarjetas pastel se aclara** (`#f7f8f5`, secundario `#eceff1`) conservando la mezcla al 36 % | 7 de 10 tarjetas quedaban entre 4,34 y 4,49:1; el secundario bajaba de 4,5:1. **Para producción requiere token (CCR) o mezcla al 28 %** |
+| D-83 | **Balance se rediseña** con el concepto «cuentas claras»: *su situación* primero, saldos **en palabras y cifra**, liquidación como **recibo**, saldos con **barra de eje central** | SaldApp mostraba una tabla de todos; la evidencia apunta a que la conversación sobre el dinero, no la aritmética, es el problema |
+| D-84 | **Balance: paleta sin rojo/verde:** verde azulado = *le deben*, ámbar = *debe*; rojo solo para errores; Public Sans | Deber no es fallar; rojo/verde falla para daltonismo; todo medido AA |
+| D-85 | **Balance: dominio ejecutable** (`money.js`, `rules.js`) probado con los casos dorados G01–G41 y 6 000 escenarios aleatorios | El diseño nuevo descansa sobre reglas ya verificadas (D1, D2, D4, D8, D3, D7) |
+| D-86 | **Balance: página de invitación** para quien no tiene cuenta (3 pasos y regreso al código), **la misma** para cualquier enlace | La cuenta obligatoria (D3) es decisión del propietario; la fricción se compensa, no se cambia la decisión |
+| D-87 | **Balance: «Copiar monto»** en los pagos propios | SINPE Móvil exige teclear el monto. **Propuesta, no aprobada** |
+| D-88 | **Balance: lista de todos los gastos** del grupo con orden definido y edición desde la fila | Problema 10.3.8 de SaldApp |
+| D-89 | **Los inventarios se movieron a `docs/requirements/<app>/INVENTARIO-*.md`**; las ramas `docs/*-inventory` quedan **sustituidas** (no se borraron) | Una sola ubicación y un solo formato; evita duplicados al fusionar |
+| D-90 | **`check-hard-rules.js`** (sin morado ni símbolos de IA) forma parte de las pruebas | Las reglas duras de `AGENTS.md` §7 se vigilan también en los prototipos |
+
+**Hallazgos de la v3**
+- **El inventario de Balance dice «41 códigos ISO» y su tabla trae 40** (contado por programa). Se implementaron los 40.
+- **El motor de dinero reproduce al centavo G26** (20 integrantes, 19 pagos) y cumple las propiedades: partes y saldos exactos, a lo sumo *n−1* pagos, independiente del orden de entrada.
+- **Tensiones de diseño entre decisiones del propietario y la evidencia** (se dejan como riesgo y pregunta, no se cambian): D3 (cuenta obligatoria) frente a la fricción de invitar; D6 (partes iguales sin excepción) frente a la equidad percibida.
+- **Defecto de arranque (Brisa):** si «hoy» no existe al cargar los datos de ejemplo, las fechas salen inválidas y se guardan. Cubierto por prueba.
+- **Singular:** el contador de Brisa decía «1 hechas».
+- **Fusión a `dev`:** `refactor/modular-foundation` tiene 1 commit más reciente que `research` (limpio) y el **CCR-1** (aprobado) choca con las zonas protegidas que `refactor` reescribió: ver [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md).
+
+---
+
 ## 1. Decisiones transversales (v1, vigentes)
 
 | ID | Decisión | Por qué | Alternativa descartada | Requiere |
@@ -156,6 +184,11 @@ Tras revisar sus capturas del navegador (ver [`REVISION-UX-V1.md`](REVISION-UX-V
 | 7 | Dominio de correo para secuencias | Abierta |
 | 8 | Resumen semanal de Ágora en F1 | Abierta |
 | 9 | Socio exportador candidato | Abierta |
+| 10 | **Balance:** ¿41 o 40 monedas? (la tabla del inventario trae 40) | Abierta |
+| 11 | **Balance:** cuenta obligatoria (D3) y fricción de invitar; partes iguales sin excepción (D6) | Abierta (se miden con el uso; ver `balance/REQUERIMIENTOS-BALANCE.md` §15) |
+| 12 | **Balance:** «Copiar monto», aviso de verificar el pago, vencimiento del enlace, texto para WhatsApp | Propuestas sin aprobar |
+| 13 | **Brisa:** tipografía, indicador de días acumulados, contraste oscuro de tarjetas (token o 28 %) | Abierta (`brisa/REQUERIMIENTOS-BRISA.md` §14) |
+| 14 | **Fusión a `dev`** (orden, CCR-1, fichas de módulo) | Plan listo, **espera autorización expresa**: [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md) |
 
 ## 8. Limitaciones y cosas no verificadas (honestidad)
 - **Repositorio:** el nombre indicado (`pastel-workspace`) no existe con ese nombre para el token; se trabaja en **`leandro-mc/pastel-admin-platform`** (rama base `refactor/modular-foundation`).
@@ -168,4 +201,9 @@ Tras revisar sus capturas del navegador (ver [`REVISION-UX-V1.md`](REVISION-UX-V
 - **Admisibilidad, factura electrónica, datos personales, marco editorial** y **validez de cláusulas**: **verificar** con SFE/PROCOMER, contador y abogado.
 - **ATS comerciales** no probados; solo la capa de texto del PDF y la lectura del Word.
 - **Cifras de IA** (cuotas, modelos) cambian a diario: tabla editable.
-- **Seguridad:** el token de GitHub compartido en la conversación debe considerarse expuesto: **revóquelo**. Se usó solo en memoria del entorno y **no está en el repositorio** (verificado en archivos e historial).
+- **v3 · revisión visual:** esta vez **sí** se abrieron Brisa y Balance en un navegador sin cabeza (escritorio y móvil, claro y oscuro) y se corrigieron un desborde móvil y un botón duplicado; **no** sustituye su revisión. La tipografía de Balance viene de Google Fonts: sin Internet se vio la del sistema, así que **su efecto real queda por revisar** (incluida la función de cifras tabulares).
+- **v3 · fuentes sin verificar:** Masicampo y Baumeister (2011) y el artículo de Verhoeff (2004) **no se leyeron completos**; la URL que devolvió el buscador para Gollwitzer y Sheeran (2006) no coincidía con el título; la **Ley 8968** no se evaluó. Las comparativas de apps son comerciales (C) y sus cifras cambian.
+- **v3 · alcance del prototipo de Balance:** datos en memoria, sin servidor, sin concurrencia (409), sin correo de invitación y con token de demostración (no criptográfico). **No** prueba SINPE Móvil.
+- **v3 · pruebas de CV:** en el entorno de esta iteración no estaban `typst` ni `python-docx`, por lo que **no se volvieron a correr** las 4 suites de CV de Huella (ajenas a esta iteración). Las demás, sí: 376 comprobaciones, 213/213 pares de contraste.
+- **v3 · las ramas existentes** (`dev`, `main`, `research`, `refactor/*`, `docs/*`) **no se tocaron**; todo está en `research/brisa-balance-prototypes`.
+- **Seguridad:** el token de GitHub compartido en la conversación (otra vez en la v3) debe considerarse expuesto: **revóquelo**. Se usó solo en memoria del entorno y **no está en el repositorio** (verificado en archivos e historial).

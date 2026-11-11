@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es-CR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<meta name="color-scheme" content="light dark">
+<title>Balance · prototipo</title>
+<!-- Fuentes solo para ver el diseño; en producción van autoalojadas (CSP). Hay respaldo del sistema. -->
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../../_shared/devkit.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#main">Saltar al contenido</a>
+<header class="top" id="top">
+  <a class="logo" href="#/" aria-label="Balance, sus grupos"><span class="mark" aria-hidden="true"><i></i><i></i></span>Balance</a>
+  <span class="who" id="who"></span>
+  <div class="tools"><span class="grp" role="group" aria-label="Tamaño del texto"><button data-sz="0" aria-pressed="true" aria-label="Texto normal">A</button><button data-sz="1" aria-pressed="false" aria-label="Texto grande">A+</button><button data-sz="2" aria-pressed="false" aria-label="Texto muy grande">A++</button></span></div>
+</header>
+<div class="shell" id="shell">
+  <nav class="side" id="side" aria-label="Sus grupos"></nav>
+  <main id="main" tabindex="-1"></main>
+</div>
+<nav class="tabs" id="tabs" aria-label="Secciones del grupo" hidden></nav>
+<div id="dlg"></div>
+<div id="toast" role="status" aria-live="polite" hidden></div>
+<script src="../../_shared/devkit.js"></script>
+<script src="money.js"></script>
+<script src="rules.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<noscript>Este prototipo necesita JavaScript.</noscript>
+</body>
+</html>
