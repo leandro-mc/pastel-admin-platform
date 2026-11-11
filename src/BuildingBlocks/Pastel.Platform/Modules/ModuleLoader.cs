@@ -84,4 +84,9 @@ public sealed class ModuleCatalog(IReadOnlyList<IPastelModule> modules)
     public IReadOnlyList<IPastelModule> Modules { get; } = modules;
 
     public IEnumerable<PermissionGroup> AllGroups => Modules.SelectMany(m => m.Permissions);
+
+    /// <summary>Política de concesión del grupo al que pertenece el permiso; <see cref="PermissionGrantPolicy.Delegable"/> si ningún módulo cargado lo declara.</summary>
+    public PermissionGrantPolicy GrantPolicyOf(string permissionCode) =>
+        AllGroups.FirstOrDefault(group => permissionCode.StartsWith(group.Code + ".", StringComparison.Ordinal))?.GrantPolicy
+        ?? PermissionGrantPolicy.Delegable;
 }

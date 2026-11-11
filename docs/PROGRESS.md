@@ -1,6 +1,6 @@
 # Estado del proyecto
 
-Único documento de estado vigente. Se actualiza **una vez por unidad de trabajo**, dentro del mismo commit (ver `docs/GIT_WORKFLOW.md`). Última actualización: 2026-11-10.
+Único documento de estado vigente. Se actualiza **una vez por unidad de trabajo**, dentro del mismo commit (ver `docs/GIT_WORKFLOW.md`). Última actualización: 2026-11-11.
 
 ## 1. Resumen
 **La Fase 0 está cerrada** (base modular, Identity, infraestructura y validación). El propietario aceptó los requisitos diferidos, que ya no son obligatorios y quedan como backlog (§5). La rama de trabajo es `refactor/modular-foundation`; no hay integración a `dev` ni a `main` todavía y no hay PR abierto.
@@ -21,6 +21,12 @@ Backend 51/51 (formato, build Release, NuGet sin vulnerabilidades) · PostgreSQL
 - **Sin validar (hacer antes de aceptar):** el **backend** del modo desarrollador no se compiló ni se ejecutó (sin .NET en el entorno de investigación): correr `.\scripts\test-backend.ps1` y las pruebas con PostgreSQL (3 unitarias y 5 de integración nuevas en `DeveloperModeTests`). Tampoco hubo lector de pantalla real, dispositivos físicos, otros navegadores ni personas usuarias. Primer `docker compose up -d --build` del propietario (2026-11-10): las imágenes se construyeron (el `dotnet publish` Release compiló todo el backend, incluido el código nuevo de Identity), pero el contenedor `api` no arrancó: `CatalogSyncTask` violaba la clave foránea de `role_permissions` porque EF trataba un permiso nuevo de un módulo ya sembrado como fila existente (UPDATE). Es un defecto latente del código previo que el permiso nuevo destapó en una base ya creada (en una vacía no ocurre); corregido con un `Add` explícito y cubierto por una prueba de integración de regresión. Falta confirmar que la API arranca sobre esa base.
 - **Decisiones:** el propietario ratificó íntegramente S1–S6 y M1–M4 el 2026-11-10 (`docs/DECISIONS.md`), incluida M3. S7 (`alsoActiveOn` y `group` en el manifiesto) sigue sin ratificar.
 - **Hallazgos fuera del shell:** foco visible de `core/ui` bajo 3:1 (1,55:1 y 2,4:1 en tema claro) y `--muted` como texto a 4,44:1; patrones de «AI slop» en páginas de Workspace y Ágora (`SHELL_VALIDATION.md` §6).
+
+## 3.2 Revisión de identificadores y PrivilegeGuard (2026-11-11, en `refactor/modular-foundation`)
+- **Hecho:** las claves de entidad de Identity usan `Guid.CreateVersion7()` (secretos y `jti` siguen aleatorios) y `ARCHITECTURE.md` §5 describe lo real: no existe generación de GUID desde el cliente. Las reservas de Cosecha y Huella las declara cada módulo con `PermissionGroup.GrantPolicy`; `PrivilegeGuard` y `CatalogSyncTask` ya no nombran módulos. Se eliminó una comprobación de Cosecha inalcanzable y se corrigieron los `MODULE.md` que decían que `Administrator` recibe todos los permisos.
+- **Sin validar (hacer antes de aceptar):** el entorno no alcanzaba NuGet, así que Identity no se compiló completo ni se ejecutaron sus pruebas. Sí se compilaron con advertencias como error el contrato de `Pastel.Platform` y los permisos de Cosecha/Huella, y se probó `GrantPolicyOf`; el resto de Identity solo tuvo compilación parcial (sin errores de sintaxis ni de los símbolos nuevos). Correr `.\scripts\test-backend.ps1` y `.\scripts\test-database.ps1` (las consultas de `CatalogSyncTask` ahora usan `ownerAccountOnlyCodes.Contains`).
+- **Cambios visibles:** el `reason` de la auditoría `identity.privilege.denied` pasó a `owner_account_only` / `owner_grants_only` (antes `huella_profile_is_owner_only` / `cosecha_access_requires_owner`) y cambió el texto de `identity.privilege.owner_permission_required`.
+- **Residual:** `CatalogSyncTask` conserva la limpieza del rol heredado «Huella — Propietario»; puede borrarse cuando se confirme que ninguna base lo tiene.
 
 ## 4. Pendiente de producto (fuera de la Fase 0)
 - **Identidad visual por aplicación**: no definida; la investigación y los prototipos están en la rama `research/requirements-and-prototypes`. Hasta entonces los tokens de `module-themes.css` son provisionales (`docs/DESIGN_SYSTEM.md`).

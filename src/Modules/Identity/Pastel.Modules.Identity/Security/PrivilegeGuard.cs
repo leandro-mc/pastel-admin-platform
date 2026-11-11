@@ -5,6 +5,7 @@ using Pastel.Modules.Identity.Common;
 using Pastel.Modules.Identity.Domain;
 using Pastel.Modules.Identity.Persistence;
 using Pastel.Platform.Auditing;
+using Pastel.Platform.Modules;
 using Pastel.Platform.Observability;
 using Pastel.Platform.Security;
 using Pastel.SharedKernel;
@@ -15,6 +16,7 @@ namespace Pastel.Modules.Identity.Security;
 /// Jerarquía de privilegios de administración. Owner/Superuser y Administrator general comparten
 /// la gestión ordinaria, pero solo Owner/Superuser puede conceder capacidades reservadas de plataforma.
 /// La membresía de Owner se crea/restaura únicamente por el bootstrap configurado.
+/// Las reservas propias de cada aplicación las declara su módulo (<see cref="PermissionGrantPolicy"/>); esta clase no nombra módulos.
 /// </summary>
 internal interface IPrivilegeGuard
 {
@@ -37,6 +39,7 @@ internal sealed class PrivilegeGuard(
     IPermissionEvaluator evaluator,
     IHttpContextAccessor accessor,
     IAuditTrail audit,
+    ModuleCatalog catalog,
     ILogger<PrivilegeGuard> logger) : IPrivilegeGuard
 {
     private IReadOnlyList<string> ActorRoles => accessor.HttpContext?.GetSessionUser()?.Roles ?? [];
@@ -116,18 +119,20 @@ internal sealed class PrivilegeGuard(
                 .Distinct()
                 .ToListAsync(cancellationToken);
 
-            if (addedCodes.Any(code => code.StartsWith("huella.", StringComparison.Ordinal)) && !targetHasOwner)
+            var ownerAccountOnly = CodesWithPolicy(addedCodes, PermissionGrantPolicy.OwnerAccountOnly);
+            if (ownerAccountOnly.Length > 0 && !targetHasOwner)
             {
                 return await DenyAsync(
                     IdentityErrors.PrivilegeOwnerPermissionRequired, action, target.Id, target.Email,
-                    new { reason = "huella_profile_is_owner_only" }, cancellationToken);
+                    new { reason = "owner_account_only", permissions = ownerAccountOnly }, cancellationToken);
             }
 
-            if (addedCodes.Any(code => code.StartsWith("cosecha.", StringComparison.Ordinal)) && !ActorIsOwner)
+            var ownerGrantsOnly = CodesWithPolicy(addedCodes, PermissionGrantPolicy.OwnerGrantsOnly);
+            if (ownerGrantsOnly.Length > 0 && !ActorIsOwner)
             {
                 return await DenyAsync(
                     IdentityErrors.PrivilegeOwnerPermissionRequired, action, target.Id, target.Email,
-                    new { reason = "cosecha_access_requires_owner" }, cancellationToken);
+                    new { reason = "owner_grants_only", permissions = ownerGrantsOnly }, cancellationToken);
             }
         }
 
@@ -192,22 +197,19 @@ internal sealed class PrivilegeGuard(
                 cancellationToken);
         }
 
-        // Owner and Workspace permissions belong only to the two seeded system roles; they are never
+        // Owner and Workspace permissions, and those a module reserves to the Owner account
+        // (PermissionGrantPolicy.OwnerAccountOnly), belong only to the two seeded system roles; they are never
         // grantable to custom roles or direct user overrides, even by Owner.
-        if (permissionCodes.Any(code =>
+        var reserved = permissionCodes.Where(code =>
                 code == IdentityPermissions.OwnerPrivilege
                 || code == IdentityPermissions.WorkspaceAccess
-                || code.StartsWith("huella.", StringComparison.Ordinal)))
+                || catalog.GrantPolicyOf(code) == PermissionGrantPolicy.OwnerAccountOnly)
+            .ToArray();
+        if (reserved.Length > 0)
         {
             return await DenyAsync(
                 IdentityErrors.PrivilegeOwnerRoleProtected, action, targetUserId, null,
-                new
-                {
-                    permissions = permissionCodes.Where(code =>
-                    code == IdentityPermissions.OwnerPrivilege
-                    || code == IdentityPermissions.WorkspaceAccess
-                    || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray()
-                }, cancellationToken);
+                new { permissions = reserved }, cancellationToken);
         }
 
         // Workspace cannot issue one-off grants for app permissions, even for Owner.
@@ -221,20 +223,6 @@ internal sealed class PrivilegeGuard(
                 new
                 {
                     permissions = permissionCodes.Where(code => !PlatformRoleScope.IsUserOverridablePermissionCode(code)).ToArray()
-                }, cancellationToken);
-        }
-
-        if (!ActorIsOwner && permissionCodes.Any(code =>
-                code.StartsWith("cosecha.", StringComparison.Ordinal)))
-        {
-            return await DenyAsync(
-                IdentityErrors.PrivilegeOwnerPermissionRequired, action, targetUserId, null,
-                new
-                {
-                    permissions = permissionCodes.Where(code =>
-                    code == IdentityPermissions.WorkspaceAccess
-                    || code.StartsWith("cosecha.", StringComparison.Ordinal)
-                    || code.StartsWith("huella.", StringComparison.Ordinal)).ToArray()
                 }, cancellationToken);
         }
 
@@ -269,6 +257,9 @@ internal sealed class PrivilegeGuard(
 
         return null;
     }
+
+    private string[] CodesWithPolicy(IEnumerable<string> codes, PermissionGrantPolicy policy) =>
+        codes.Where(code => catalog.GrantPolicyOf(code) == policy).ToArray();
 
     private async Task<IReadOnlySet<string>> ActorPermissionsAsync(CancellationToken cancellationToken) =>
         currentUser.UserId is { } id ? await evaluator.GetEffectivePermissionsAsync(id, cancellationToken) : new HashSet<string>();

@@ -12,7 +12,7 @@ Estado: **marcador** (esqueleto generado por `tools/new-module`; sin funcionalid
 | `huella.access` | Entrar al panel de edición (las rutas públicas no requieren permiso) |
 | `huella.profile.manage` | Editar, previsualizar y publicar su propio perfil |
 
-No hay rol sugerido `Huella — Propietario`. Los permisos `huella.access` y `huella.profile.manage` se conceden únicamente al rol de sistema `Owner/Superuser` desde `CatalogSyncTask`; no se conceden por rol personalizado ni excepción individual. `Administrator` general no recibe permisos `huella.*` ni permisos de negocio de las apps.
+No hay rol sugerido `Huella — Propietario`. Los permisos `huella.access` y `huella.profile.manage` se conceden únicamente al rol de sistema `Owner/Superuser` desde `CatalogSyncTask`; no se conceden por rol personalizado ni excepción individual (`HuellaPermissions` declara `PermissionGrantPolicy.OwnerAccountOnly`). `Administrator` general no recibe permisos `huella.*` ni permisos de negocio de las apps.
 
 ## Reglas de servidor (de la ficha)
 

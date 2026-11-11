@@ -26,6 +26,7 @@ Estado: **implementación publicada; Build/QA pendientes**. No se considera vali
 - `BootstrapAdminTask` (20) crea/restaura el administrador de arranque y el rol Owner/Superuser.
 - `TestingSeedUsersTask` (30) crea tres fixtures únicamente cuando `TestingSeed:Enabled=true` y el entorno es Development/Testing.
 - Administrator general no equivale a Owner/Superuser; las API administrativas no pueden conceder el rol Owner.
+- Las reservas al propietario de cada app las declara su módulo con `PermissionGroup.GrantPolicy`; `PrivilegeGuard` y `CatalogSyncTask` las aplican sin nombrar módulos (`docs/SECURITY.md`).
 - `platform.developer.mode` lo reciben automáticamente `Administrator` y `Owner/Superuser` en `CatalogSyncTask`; se concede además a cuentas concretas por excepción individual, nunca a roles personalizados (la sincronización lo retira de ellos).
 
 ## Pendientes explícitos
