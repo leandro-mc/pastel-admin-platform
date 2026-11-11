@@ -70,7 +70,7 @@ Plegado (256 → 72 px), nombre accesible y `aria-current` al plegar, descripci�
 - Salir restaura el acceso real. Sin el permiso no hay selector ni consulta. El rol que deja de existir se descarta solo.
 
 ## 5. Lo que NO se verificó
-1. **Backend del modo desarrollador** (permiso, siembra para `Administrator` y `Owner/Superuser`, reglas de la guardia, endpoint `GET /api/admin/developer/roles`, errores nuevos): sin compilar. Se añadieron 3 pruebas unitarias y 4 de integración (PostgreSQL) que **no se ejecutaron**. Deben correr en el entorno del propietario; si alguna falla, el defecto está en el código nuevo o en la prueba, no en lo previo.
+1. **Backend del modo desarrollador** (permiso, siembra para `Administrator` y `Owner/Superuser`, reglas de la guardia, endpoint `GET /api/admin/developer/roles`, errores nuevos): sin compilar. Se añadieron 3 pruebas unitarias y 5 de integración (PostgreSQL) que **no se ejecutaron**. Deben correr en el entorno del propietario; si alguna falla, el defecto está en el código nuevo o en la prueba, no en lo previo. El primer arranque con Docker (2026-11-10) compiló el backend, pero reveló un defecto de la siembra (permiso nuevo en un módulo ya sembrado tratado como UPDATE), que se corrigió y tiene una prueba de regresión también sin ejecutar.
 2. **Lector de pantalla real** (NVDA, JAWS, VoiceOver, TalkBack): axe no sustituye la escucha del flujo.
 3. **Dispositivos físicos y táctil**: solo ventanas de Chrome de escritorio con el tamaño correspondiente.
 4. **Otros navegadores** (Firefox, Safari): el CSS usa `color-mix`, `:has` y `dvh`, compatibles con versiones actuales, sin prueba.

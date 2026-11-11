@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Identity.Domain;
 using Pastel.Modules.Identity.Persistence;
+using Pastel.Platform.Modules;
 using Xunit;
 using static Pastel.IntegrationTests.QA.QaSupport;
 
@@ -92,6 +93,29 @@ public sealed class DeveloperModeTests : IClassFixture<IdentityApiFactory>
         using var member = await SignedInAsync(target.Email, target.Password);
         using var roles = await SendAsync(member, HttpMethod.Get, "/api/admin/developer/roles?app=identity");
         Assert.Equal(HttpStatusCode.OK, roles.StatusCode);
+    }
+
+    [RequiresPostgresFact]
+    public async Task Catalog_sync_inserts_a_new_permission_into_an_already_seeded_module()
+    {
+        // Simula una base sembrada antes de que existiera el permiso: lo que vive quien actualiza el código sobre su
+        // base local. EF no debe tratar el permiso nuevo como una fila existente (UPDATE) y romper la clave foránea.
+        _ = _factory.Server;
+        using (var scope = _factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+            var permission = await db.Permissions.SingleAsync(p => p.Code == DeveloperMode);
+            db.RolePermissions.RemoveRange(db.RolePermissions.Where(x => x.PermissionId == permission.Id));
+            db.UserPermissionOverrides.RemoveRange(db.UserPermissionOverrides.Where(x => x.PermissionId == permission.Id));
+            db.Permissions.Remove(permission);
+            await db.SaveChangesAsync();
+        }
+
+        var sync = _factory.Services.GetServices<IPastelStartupTask>()
+            .Single(task => task.GetType().Name == "CatalogSyncTask");
+        await sync.RunAsync(_factory.Services, CancellationToken.None);
+
+        Assert.Contains(DeveloperMode, await PermissionsOfAsync(AdminEmail, AdminPassword));
     }
 
     private async Task<HttpClient> SignedInAsync(string email, string password)
