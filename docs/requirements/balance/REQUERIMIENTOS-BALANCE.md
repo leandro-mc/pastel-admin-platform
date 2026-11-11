@@ -96,9 +96,20 @@ Seis situaciones (rol de la barra de desarrollo). Personas simuladas y entrevist
 Tarjetas con nombre, descripción, estado (icono **y** texto), moneda, personas y **su situación**. Acciones: «Nuevo grupo» y «Tengo un enlace». Estado vacío con esos dos caminos.
 
 ### 5.3 Gastos
-Lista de **todos** los gastos del grupo, del más reciente al más antiguo (empate por orden de registro). Cada fila: descripción, «Pagó X · fecha», monto y las acciones **que la persona puede hacer** (editar/eliminar solo los propios para miembros). Estado vacío con el primer paso. Grupo cerrado: aviso y, para quien administra, «Reabrir el grupo».
+Dos vistas sobre los mismos datos, con **filtros comunes**.
 
-**Registrar/editar gasto** (diálogo): descripción (4–500), **monto** con sufijo de moneda y teclado numérico/decimal, **pagador** (quien administra elige a cualquiera; un miembro solo se tiene a sí mismo, bloqueado y explicado), **fecha** (por defecto hoy en la zona del grupo, editable, D7). Errores junto al campo, con icono y texto.
+**Filtros (todas las personas):** buscar por texto (sin distinguir tildes), **quién pagó**, rango de fechas **desde/hasta** y orden (fecha, monto o registro). Un resumen dice «Mostrando N de M gastos · suma ₡X» y, al filtrar por una persona, «Beto pagó ₡X de ₡Y en total». «Ver sus gastos» en **Saldos** y **Personas** lleva a Gastos ya filtrado por esa persona (el «Detalles» del SaldApp original).
+
+**Lista:** todos los gastos, del más reciente al más antiguo (empate por orden de registro). Cada fila: descripción, «Pagó X · fecha», monto y las acciones **que la persona puede hacer** (un miembro, solo en los suyos). Estado vacío con el primer paso. Grupo cerrado: aviso y, para quien administra, «Reabrir el grupo».
+
+**Hoja de gastos (solo administración, grupo abierto):** vista tipo hoja de cálculo para **registrar, editar y eliminar muchos gastos sin abrir un formulario por cada uno** (inventario: el administrador gestiona los gastos de todo el grupo).
+- **Editar en la celda:** fecha, descripción, quién pagó y monto; **Enter** guarda y baja a la fila siguiente, **Tab** avanza, **Esc** deshace la celda; un valor inválido **no se guarda**, marca la celda y dice por qué.
+- **Fila nueva al final:** **Enter** agrega y conserva fecha y pagador para seguir capturando; si falta algo, marca el campo y lo dice.
+- **Eliminar:** un clic por fila o **selección múltiple**; en ambos casos con **«Deshacer»** (sin diálogo por cada borrado).
+- **Pegar desde Excel** en la fila nueva (fecha, descripción, pagó, monto; encabezado opcional; fecha ISO o DD/MM/AAAA; pagador por nombre): se revisan **todas** las filas y, si alguna falla, **no se agrega ninguna** (todo o nada); si todas son válidas se pide confirmar y se puede deshacer.
+- Total mostrado y resumen del grupo se actualizan al instante; respeta los filtros; todo queda en el **historial**. Pensada para pantallas grandes (en móvil se usa la lista).
+
+**Registrar/editar gasto (diálogo, para cualquier persona con permiso):** descripción (4–500), **monto** con sufijo de moneda y teclado numérico/decimal, **pagador** (quien administra elige a cualquiera; un miembro solo se tiene a sí mismo, bloqueado y explicado), **fecha** (por defecto hoy en la zona del grupo, editable, D7). Errores junto al campo, con icono y texto.
 
 ### 5.4 Saldos
 Una fila por persona: inicial, nombre, «#n en el orden de ingreso · pagó X · su parte Y», saldo **en palabras y cifra** y una **barra con eje central** (a la izquierda lo que debe, a la derecha lo que le deben; decorativa, `aria-hidden`). Si el reparto deja unidades mínimas sobrantes, un aviso explica que se asignan por orden de ingreso y que las partes suman exacto.
@@ -140,6 +151,8 @@ Sin sesión, sin acceso, no encontrado (404 para no miembros), sin permiso, erro
 | **BL-14** | «**Copiar monto**» en los pagos propios (sin registrar pagos) | Investigación (SINPE) | **Propuesta v3** (no aprobada) | UI |
 | **BL-15** | Historial de cambios del grupo (quién y qué) | D7 (auditoría) | Obligatorio | UI |
 | **BL-16** | Edición simultánea → 409 por versión | §3.2 / ficha | Obligatorio en producción | **No prototipado** |
+| **BL-18** | **Hoja de gastos** para administración: editar en la celda, fila nueva con Enter, eliminar (uno o varios) con «Deshacer», pegar filas desde Excel (todo o nada); mismos permisos y validaciones que el formulario | Revisión del propietario (función del original: gestionar muchos gastos sin formulario) | Obligatorio | `t-balance.js` (hoja, 22 comprobaciones junto con filtros) |
+| **BL-19** | **Filtros de gastos** (texto, quién pagó, fechas, orden) en lista y hoja, y **vista de los gastos de una sola persona** desde Saldos y Personas | Revisión del propietario; «Detalles» del SaldApp | Obligatorio | `t-balance.js` |
 | **BL-17** | Accesibilidad: diálogos con rol y foco, Esc, texto ampliable, nunca solo color, 320 px | `AGENTS.md` | Obligatorio | UI; contraste |
 
 ---
@@ -164,7 +177,7 @@ Sin cambios de esquema. El prototipo usa: `Group{name, description, currency, tz
 
 - **Exactitud:** aritmética entera (`BigInt` en el prototipo; `decimal`/entero en el servidor). Cero coma flotante en dinero.
 - **Seguridad:** denegar por defecto; 404 para no miembros (no revela existencia); error genérico de ingreso; límite de intentos por cuenta y enlace; token de alta entropía; auditoría.
-- **Accesibilidad:** AA en claro y oscuro (`contrast.py`: 213 pares en total, 119 de Brisa y Balance, incluidos los **componentes**: borde de campo, barras, foco); objetivos de 44 px; nunca solo color; texto ampliable (A / A+ / A++).
+- **Accesibilidad:** AA en claro y oscuro (`contrast.py`: 215 pares en total, 121 de Brisa y Balance, incluidos los **componentes**: borde de campo, barras, foco); objetivos de 44 px; nunca solo color; texto ampliable (A / A+ / A++).
 - **Texto:** español de Costa Rica, **usted**, sin voseo; cifras con espacio fino como separador de miles y coma decimal (`₡1 234,56`).
 - **Rendimiento:** grupos de hasta 20 integrantes y cientos de gastos sin recálculo perceptible (G26).
 
@@ -200,6 +213,27 @@ Tiempo para **registrar el primer gasto** (< 30 s); proporción de invitaciones 
 
 ---
 
+## 12b. Paridad de funciones con SaldApp (lo que el original hacía)
+
+Tabla creada tras una revisión del propietario que detectó dos pérdidas (la gestión masiva de gastos y los filtros por persona). Cada función del original (inventario §10) con su destino en Balance:
+
+| Función del original | En Balance | Estado |
+|---|---|---|
+| Crear grupo (moneda, nombre, descripción, **fecha de inicio**) | `#/nuevo`: moneda ISO, nombre, descripción, zona horaria. **Falta la fecha de inicio** | **Por confirmar** (§15) |
+| Agregar integrantes escribiendo un nombre | Se ingresa con enlace y código con cuenta de Pastel (D3) | Decidido |
+| Agregar gasto (formulario: pagó, descripción, monto, fecha) | Diálogo con el mismo contenido + validación (D4) | Hecho |
+| **Gestionar muchos gastos con rapidez** | **Hoja de gastos** (BL-18) | **Recuperado en esta revisión** |
+| **Ver los gastos de una persona** («Detalles» del integrante) | Filtro «Pagó» y «Ver sus gastos» (BL-19) | **Recuperado en esta revisión** |
+| Editar y eliminar gasto (con confirmación) | Lista (con confirmación) y hoja (con «Deshacer»); miembros solo los propios | Hecho |
+| Tabla de integrantes: gastado y balance, **con fila de totales** | Saldos con paga/parte/saldo por persona y **total pagado y suma de saldos (cero)** | Hecho |
+| «Correspondiente p/p» (parte por persona) | «Su parte» y la parte de cada persona en Saldos | Hecho |
+| Liquidación estimada y liquidación final (grupo cerrado) | «Liquidar» / «Liquidación (grupo cerrado)» (D2, D7) | Hecho |
+| Cerrar grupo (irreversible) | Cerrar y **reabrir** (D7) | Mejorado |
+| Editar grupo (nombre, descripción, moneda) | Ajustes (administración) | Hecho |
+| **Fechas de inicio y de cierre del grupo** (se muestran en el detalle) | La fecha de cierre no se muestra; el historial registra cuándo se cerró | **Por confirmar** (§15) |
+| Ingresar a un grupo con el ID | Enlace + código de 4 dígitos | Decidido (D3) |
+| Exportar | No existía; no se agrega | — |
+
 ## 13. Qué demuestra el prototipo (y qué no)
 
 **Demuestra:** el diseño nuevo en escritorio y móvil, claro y oscuro; qué ve cada rol; las reglas D1–D9 funcionando sobre datos de ejemplo, incluido el recálculo retroactivo al entrar una persona; el bloqueo por intentos; el cambio de moneda con rechazo por decimales; el ciclo cerrar/reabrir; el historial.
@@ -223,6 +257,9 @@ Se suman a las de la §12.11 del inventario. **Decide el propietario.**
 ---
 
 ## 15. Preguntas abiertas
+
+0. **Paridad (§12b):** ¿se muestra la **fecha de inicio** del grupo al crearlo y la **fecha de cierre** en el detalle, como en SaldApp? ¿Hay otra función del original que usted use y no figure aquí? (El inventario salió del código y **no registró** ningún panel estilo Excel: la hoja de gastos se construyó según su descripción; conviene que la compare con el original.)
+0b. **Hoja de gastos:** ¿debe existir también para miembros, limitada a sus propios gastos? ¿Hacen falta más columnas (categoría, notas) o importar un CSV?
 
 1. **¿41 o 40 monedas?** ¿Qué código falta en la tabla de la §12.8?
 2. **Cuenta obligatoria (D3):** ¿se acepta la fricción medida con la página de invitación, o se evalúa un acceso «solo lectura» por enlace?

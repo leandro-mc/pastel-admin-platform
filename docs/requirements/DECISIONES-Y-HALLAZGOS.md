@@ -41,6 +41,8 @@ Se sumaron las dos apps que **ya existen** y se migran a Pastel, partiendo de la
 | D-87 | **Balance: «Copiar monto»** en los pagos propios | SINPE Móvil exige teclear el monto. **Propuesta, no aprobada** |
 | D-88 | **Balance: lista de todos los gastos** del grupo con orden definido y edición desde la fila | Problema 10.3.8 de SaldApp |
 | D-89 | **Los inventarios se movieron a `docs/requirements/<app>/INVENTARIO-*.md`**; las ramas `docs/*-inventory` quedan **sustituidas** (no se borraron) | Una sola ubicación y un solo formato; evita duplicados al fusionar |
+| D-91 | **Balance: «Hoja de gastos»** para administración (editar en la celda, fila nueva, eliminar uno o varios con «Deshacer», pegar filas desde Excel, todo o nada) | El propietario detectó que se había perdido la gestión masiva de gastos; con muchos gastos un formulario por cada uno no es viable |
+| D-92 | **Balance: filtros de gastos** (texto, quién pagó, fechas, orden) y **«Ver sus gastos»** de una persona desde Saldos y Personas | También se había perdido: el «Detalles» por integrante del SaldApp |
 | D-90 | **`check-hard-rules.js`** (sin morado ni símbolos de IA) forma parte de las pruebas | Las reglas duras de `AGENTS.md` §7 se vigilan también en los prototipos |
 
 **Hallazgos de la v3**
@@ -49,6 +51,7 @@ Se sumaron las dos apps que **ya existen** y se migran a Pastel, partiendo de la
 - **Tensiones de diseño entre decisiones del propietario y la evidencia** (se dejan como riesgo y pregunta, no se cambian): D3 (cuenta obligatoria) frente a la fricción de invitar; D6 (partes iguales sin excepción) frente a la equidad percibida.
 - **Defecto de arranque (Brisa):** si «hoy» no existe al cargar los datos de ejemplo, las fechas salen inválidas y se guardan. Cubierto por prueba.
 - **Singular:** el contador de Brisa decía «1 hechas».
+- **Revisión del propietario sobre Balance (2026-11):** dos funciones del original se habían perdido en el rediseño (gestión masiva de gastos y vista por persona). Se recuperaron (D-91, D-92) y se creó la **tabla de paridad** de `balance/REQUERIMIENTOS-BALANCE.md` §12b. Al implementarlas la revisión visual con navegador sin cabeza halló tres defectos que las pruebas no ven (el atributo `hidden` anulado por el CSS, columnas cortadas y filtros truncados). **Limitación:** el inventario salió del código y **no registró** un panel estilo Excel; la hoja se construyó según la descripción del propietario y debe compararse con el original. Quedan por confirmar la **fecha de inicio/cierre** del grupo (§12b).
 - **Fusión a `dev`:** `refactor/modular-foundation` tiene 1 commit más reciente que `research` (limpio) y el **CCR-1** (aprobado) choca con las zonas protegidas que `refactor` reescribió: ver [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md).
 
 ---
@@ -204,6 +207,6 @@ Se sumaron las dos apps que **ya existen** y se migran a Pastel, partiendo de la
 - **v3 · revisión visual:** esta vez **sí** se abrieron Brisa y Balance en un navegador sin cabeza (escritorio y móvil, claro y oscuro) y se corrigieron un desborde móvil y un botón duplicado; **no** sustituye su revisión. La tipografía de Balance viene de Google Fonts: sin Internet se vio la del sistema, así que **su efecto real queda por revisar** (incluida la función de cifras tabulares).
 - **v3 · fuentes sin verificar:** Masicampo y Baumeister (2011) y el artículo de Verhoeff (2004) **no se leyeron completos**; la URL que devolvió el buscador para Gollwitzer y Sheeran (2006) no coincidía con el título; la **Ley 8968** no se evaluó. Las comparativas de apps son comerciales (C) y sus cifras cambian.
 - **v3 · alcance del prototipo de Balance:** datos en memoria, sin servidor, sin concurrencia (409), sin correo de invitación y con token de demostración (no criptográfico). **No** prueba SINPE Móvil.
-- **v3 · pruebas de CV:** en el entorno de esta iteración no estaban `typst` ni `python-docx`, por lo que **no se volvieron a correr** las 4 suites de CV de Huella (ajenas a esta iteración). Las demás, sí: 376 comprobaciones, 213/213 pares de contraste.
+- **v3 · pruebas de CV:** en el entorno de esta iteración no estaban `typst` ni `python-docx`, por lo que **no se volvieron a correr** las 4 suites de CV de Huella (ajenas a esta iteración). Las demás, sí: 398 comprobaciones, 215/215 pares de contraste.
 - **v3 · una sola rama:** todo (Brisa, Balance, la política de pruebas por etapas y la investigación) vive en `research/requirements-and-prototypes`. La rama intermedia `research/brisa-balance-prototypes` se reunió aquí (9 commits, sin conflictos) y puede retirarse con autorización. `dev`, `main`, `refactor/*` y `docs/*` no se tocaron.
 - **Seguridad:** el token de GitHub compartido en la conversación (otra vez en la v3) debe considerarse expuesto: **revóquelo**. Se usó solo en memoria del entorno y **no está en el repositorio** (verificado en archivos e historial).

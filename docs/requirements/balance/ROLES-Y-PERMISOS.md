@@ -28,7 +28,8 @@ Crear grupos: cualquier persona con acceso a Balance (queda como administradora)
 
 | Capacidad | Miembro | Administración |
 |---|:-:|:-:|
-| Ver gastos, saldos, liquidación y personas | ✓ | ✓ |
+| Ver gastos, saldos, liquidación y personas (con **filtros** y «Ver sus gastos» de una persona) | ✓ | ✓ |
+| Usar la **hoja de gastos** (editar en la celda, fila nueva, eliminar varios, pegar desde Excel): aplica las mismas reglas de las filas siguientes | — | ✓ |
 | Registrar un gasto **pagado por sí misma** | ✓ | ✓ |
 | Registrar un gasto a nombre de **otra persona** (cambiar pagador) | — | ✓ |
 | Editar / eliminar **sus** gastos | ✓ | ✓ |
@@ -75,7 +76,7 @@ Crear grupos: cualquier persona con acceso a Balance (queda como administradora)
 | Rol de la barra | Resultado verificado |
 |---|---|
 | Ana · administra | Pestañas Gastos, Saldos, Liquidar, Personas, **Ajustes**; ve enlace y código; edita todo |
-| Beto · miembro | Sin Ajustes; edita solo su gasto; no ve enlace ni código; por URL a Ajustes: «Sin permiso» con los nombres de quienes administran |
+| Beto · miembro | Sin Ajustes ni hoja de gastos (con los mismos filtros); edita solo su gasto; no ve enlace ni código; por URL a Ajustes: «Sin permiso» con los nombres de quienes administran |
 | Marcos · sin grupos | Estado vacío; por URL a un grupo ajeno: 404 |
 | Invitada sin cuenta | Página de invitación; sin datos de grupos |
 | Sin acceso a Balance | 403 con a quién pedirlo |

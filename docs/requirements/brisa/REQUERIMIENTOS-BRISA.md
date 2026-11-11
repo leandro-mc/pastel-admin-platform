@@ -149,7 +149,7 @@ Sin cambios respecto al inventario §4 y §13: `ScheduledDate` y `DueDate` son `
 ## 9. No funcionales
 
 - **Rendimiento:** el día efectivo se calcula en memoria al renderizar; sin tareas programadas ni escrituras nocturnas.
-- **Accesibilidad:** AA en claro y oscuro (medido: `prototype-tests/contrast.py`, 213 pares en total, 119 de Brisa y Balance); objetivos de 44 px; foco visible; nombres accesibles legibles.
+- **Accesibilidad:** AA en claro y oscuro (medido: `prototype-tests/contrast.py`, 215 pares en total, 121 de Brisa y Balance); objetivos de 44 px; foco visible; nombres accesibles legibles.
 - **Datos:** cada persona solo accede a lo suyo; sin datos personales en la URL.
 - **Sin conexión / sincronización:** diseño propuesto en el inventario §7.3 (no se prototipa).
 - **Textos:** español de Costa Rica, tuteo cálido (excepción del propietario).
