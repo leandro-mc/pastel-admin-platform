@@ -25,7 +25,7 @@
   const go = (h) => { if (location.hash === h) render(); else location.hash = h; };
 
   // ── Infraestructura: toast, diálogos ──
-  let tt; const toast = (m) => { const t = $("#toast"); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => (t.hidden = true), 3200); };
+  let tt, toastFn = null; const toast = (m, a) => { const t = $("#toast"); t.innerHTML = `<span>${esc(m)}</span>` + (a ? ` <button class="btn small" data-act="toast-undo">${esc(a.label)}</button>` : ""); toastFn = a ? a.fn : null; t.hidden = false; clearTimeout(tt); tt = setTimeout(() => { t.hidden = true; toastFn = null; }, a ? 9000 : 3200); };
   const closeDlg = () => { $("#dlg").innerHTML = ""; if (lastFocus && lastFocus.focus) lastFocus.focus(); };
   const dlg = (html) => { lastFocus = document.activeElement; $("#dlg").innerHTML = `<div class="back" id="back"><section class="modal" role="dialog" aria-modal="true" aria-labelledby="mt">${html}</section></div>`; const f = $("#dlg input,#dlg select,#dlg textarea,#dlg button"); if (f) f.focus(); };
   const confirmDlg = ({ title, body, ok, danger, onOk }) => { dlg(`<h2 id="mt">${esc(title)}</h2><div>${body}</div><div class="btns"><button class="btn" data-x="cancel">Cancelar</button><button class="btn ${danger ? "danger" : "primary"}" data-x="ok">${esc(ok)}</button></div>`); $("#dlg [data-x=ok]").onclick = () => { closeDlg(); onOk(); }; $("#dlg [data-x=cancel]").onclick = closeDlg; };
@@ -57,10 +57,14 @@
   }
   function noGroup() { gate("", "No encontramos ese grupo", "Puede que el enlace ya no sirva o que usted no forme parte de ese grupo.", "", '<a class="btn primary" href="#/">Ver mis grupos</a>', "Para una persona que no es miembro, el grupo «no existe» (404)"); }
 
+  function heroHtml(g) {
+    const { r } = calc(g), mineB = r.balances[me()] || 0n;
+    return `<div class="hero ${mineB < 0n ? "owe" : mineB === 0n ? "even" : ""}"><div><div class="lbl">Su situación en este grupo</div><div class="big num ${mineB > 0n ? "pos" : mineB < 0n ? "neg" : "zero"}">${mineB > 0n ? "Le deben " + money(mineB, g) : mineB < 0n ? "Usted debe " + money(-mineB, g) : "Está al día"}</div></div><div class="tot"><div><div class="lbl">Total del grupo</div><b class="num">${money(r.total, g)}</b></div><div><div class="lbl">Su parte</div><b class="num">${money(r.shares[me()] || 0n, g)}</b></div><div><div class="lbl">Usted pagó</div><b class="num">${money(r.paid[me()] || 0n, g)}</b></div></div></div>`;
+  }
   function group(g, tab) {
     const rl = roleIn(g), admin = rl === "admin"; const { r, transfers } = calc(g); const total = r.total; const mineB = r.balances[me()] || 0n;
     const canAdd = R.can("add_expense", ctx(g, { payerId: me() })).allowed;
-    const hero = `<div class="hero ${mineB < 0n ? "owe" : mineB === 0n ? "even" : ""}"><div><div class="lbl">Su situación en este grupo</div><div class="big num ${mineB > 0n ? "pos" : mineB < 0n ? "neg" : "zero"}">${mineB > 0n ? "Le deben " + money(mineB, g) : mineB < 0n ? "Usted debe " + money(-mineB, g) : "Está al día"}</div></div><div class="tot"><div><div class="lbl">Total del grupo</div><b class="num">${money(total, g)}</b></div><div><div class="lbl">Su parte</div><b class="num">${money(r.shares[me()] || 0n, g)}</b></div><div><div class="lbl">Usted pagó</div><b class="num">${money(r.paid[me()] || 0n, g)}</b></div></div></div>`;
+    const hero = heroHtml(g);
     const tabs = [["gastos", "Gastos"], ["saldos", "Saldos"], ["liquidar", g.closed ? "Liquidación" : "Liquidar"], ["personas", "Personas"]]; if (admin) tabs.push(["ajustes", "Ajustes"]);
     let body = "";
     if (tab === "gastos") body = tabGastos(g, canAdd); else if (tab === "saldos") body = tabSaldos(g, r); else if (tab === "liquidar") body = tabLiquidar(g, transfers, r); else if (tab === "personas") body = tabPersonas(g, admin); else if (tab === "ajustes") body = admin ? tabAjustes(g) : noPerm(g);
@@ -69,17 +73,127 @@
   }
   function noPerm(g) { return `<div class="card gate"><h2>Sin permiso</h2><p>${esc("Los ajustes del grupo los cambia quien lo administra.")}</p><p class="mut"><b>Qué hacer:</b> pídale a alguien que administre el grupo (${g.members.filter((m) => m.role === "admin").map((m) => esc(nm(m.id))).join(", ")}) que haga el cambio.</p><span class="code mut small">El servidor responde 403 · balance.forbidden</span></div>`; }
 
-  function tabGastos(g, canAdd) {
-    const ex = [...g.expenses].sort((a, b) => b.date.localeCompare(a.date) || b.id.localeCompare(a.id));
-    let h = g.closed ? `<div class="notice warn">${ic("lock")}<div>El grupo está cerrado: solo se puede leer.${roleIn(g) === "admin" ? ' <button class="btn small" data-act="reopen">Reabrir el grupo</button>' : " Pida a quien lo administra que lo reabra."}</div></div>` : "";
-    if (!ex.length) return h + `<div class="card empty"><b>Aún no hay gastos</b>Registre el primero: quién pagó y cuánto. Balance reparte en partes iguales entre todas las personas del grupo.${canAdd ? `<div><button class="btn primary" data-act="add-exp">${ic("plus")}Registrar el primer gasto</button></div>` : ""}</div>`;
-    return h + `<div class="card"><ul class="list">${ex.map((e) => { const can = (a) => R.can(a, ctx(g, { expense: e })).allowed; return `<li class="row"><div class="main"><b>${esc(e.description)}</b><span class="small mut">Pagó ${esc(nm(e.payerId))}${e.payerId === me() ? " (usted)" : ""} · ${fdate(e.date)}</span></div><span class="amt num">${money(M.toUnits(e.amount, g.currency), g)}</span><span class="acts">${can("edit_expense") ? `<button class="btn small" data-act="edit-exp" data-id="${e.id}" aria-label="Editar ${esc(e.description)}">${ic("pencil")}Editar</button>` : ""}${can("delete_expense") ? `<button class="btn small danger" data-act="del-exp" data-id="${e.id}" aria-label="Eliminar ${esc(e.description)}">${ic("trash")}</button>` : ""}</span></li>`; }).join("")}</ul></div>`;
+  // ── Gastos: filtros, lista y hoja de gastos (administración) ──
+  const UI = {}; const uiOf = (g) => UI[g.id] || (UI[g.id] = { q: "", who: "", from: "", to: "", sort: "date-desc", view: "list", sel: new Set(), draft: null });
+  const normT = (t) => String(t || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
+  const idn = (e) => parseInt(String(e.id).slice(1), 10) || 0;
+  const SORTS = { "date-desc": (a, b) => b.date.localeCompare(a.date) || idn(b) - idn(a), "date-asc": (a, b) => a.date.localeCompare(b.date) || idn(a) - idn(b), reg: (a, b) => idn(a) - idn(b) };
+  const SORT_LABEL = { "date-desc": "Fecha (reciente primero)", "date-asc": "Fecha (antigua primero)", "amt-desc": "Monto (mayor primero)", "amt-asc": "Monto (menor primero)", reg: "Orden de registro" };
+  const curG = () => byId(route().id);
+  const units = (e, g) => M.toUnits(e.amount, g.currency);
+  function filtered(g) {
+    const F = uiOf(g), q = normT(F.q); const sorter = F.sort === "amt-desc" ? (a, b) => (units(b, g) > units(a, g) ? 1 : units(b, g) < units(a, g) ? -1 : 0) : F.sort === "amt-asc" ? (a, b) => (units(a, g) > units(b, g) ? 1 : units(a, g) < units(b, g) ? -1 : 0) : SORTS[F.sort];
+    return g.expenses.filter((e) => (!F.who || e.payerId === F.who) && (!F.from || e.date >= F.from) && (!F.to || e.date <= F.to) && (!q || normT(e.description).includes(q))).sort(sorter);
   }
+  const clearBtn = (F) => (filtersActive(F) ? '<button class="btn small" data-act="clear-filters">Limpiar filtros</button>' : "");
+  const sumU = (ex, g) => ex.reduce((a, e) => a + units(e, g), 0n);
+  const filtersActive = (F) => !!(F.q || F.who || F.from || F.to);
+  function summaryText(g, ex) {
+    const F = uiOf(g), total = sumU(g.expenses, g), shown = sumU(ex, g);
+    let t = `Mostrando ${ex.length} de ${g.expenses.length} gastos · suma ${money(shown, g)}`;
+    if (F.who) t += ` · ${nm(F.who)} pagó ${money(sumU(g.expenses.filter((e) => e.payerId === F.who), g), g)} de ${money(total, g)} en total`;
+    return t;
+  }
+  function filtersBar(g) {
+    const F = uiOf(g);
+    return `<div class="filters" role="search" aria-label="Filtrar gastos"><div class="field"><label for="fQ">Buscar</label><input id="fQ" data-f="q" value="${esc(F.q)}" placeholder="Descripción…" autocomplete="off"></div><div class="field"><label for="fWho">Pagó</label><select id="fWho" data-f="who"><option value="">Todas</option>${g.members.map((m) => `<option value="${m.id}" ${F.who === m.id ? "selected" : ""}>${esc(nm(m.id))}${m.id === me() ? " (usted)" : ""}</option>`).join("")}</select></div><div class="field"><label for="fFrom">Desde</label><input id="fFrom" type="date" data-f="from" value="${F.from}"></div><div class="field"><label for="fTo">Hasta</label><input id="fTo" type="date" data-f="to" value="${F.to}"></div><div class="field"><label for="fSort">Ordenar</label><select id="fSort" data-f="sort">${Object.entries(SORT_LABEL).map(([k, l]) => `<option value="${k}" ${F.sort === k ? "selected" : ""}>${l}</option>`).join("")}</select></div><span id="fClear" style="align-self:end;margin-bottom:.9rem">${clearBtn(F)}</span></div><p class="small mut" id="fSummary" aria-live="polite">${esc(summaryText(g, filtered(g)))}</p>`;
+  }
+  const sheetOn = (g) => roleIn(g) === "admin" && !g.closed && uiOf(g).view === "sheet";
+  function expArea(g) {
+    const ex = filtered(g); const F = uiOf(g);
+    const sum = $("#fSummary"); if (sum) sum.textContent = summaryText(g, ex);
+    if (sheetOn(g)) return sheetView(g, ex);
+    if (!ex.length) return `<div class="card empty"><b>Ningún gasto coincide con los filtros</b>Pruebe con otra persona, otro rango de fechas o menos texto.<div><button class="btn" data-act="clear-filters">Limpiar filtros</button></div></div>`;
+    return `<div class="card"><ul class="list">${ex.map((e) => { const can = (a) => R.can(a, ctx(g, { expense: e })).allowed; return `<li class="row"><div class="main"><b>${esc(e.description)}</b><span class="small mut">Pagó ${esc(nm(e.payerId))}${e.payerId === me() ? " (usted)" : ""} · ${fdate(e.date)}</span></div><span class="amt num">${money(units(e, g), g)}</span><span class="acts">${can("edit_expense") ? `<button class="btn small" data-act="edit-exp" data-id="${e.id}" aria-label="Editar ${esc(e.description)}">${ic("pencil")}Editar</button>` : ""}${can("delete_expense") ? `<button class="btn small danger" data-act="del-exp" data-id="${e.id}" aria-label="Eliminar ${esc(e.description)}">${ic("trash")}</button>` : ""}</span></li>`; }).join("")}</ul></div>`;
+  }
+  function tabGastos(g, canAdd) {
+    const admin = roleIn(g) === "admin", F = uiOf(g);
+    const h = g.closed ? `<div class="notice warn">${ic("lock")}<div>El grupo está cerrado: solo se puede leer.${admin ? ' <button class="btn small" data-act="reopen">Reabrir el grupo</button>' : " Pida a quien lo administra que lo reabra."}</div></div>` : "";
+    if (!g.expenses.length && !sheetOn(g) && !(admin && !g.closed && F.view === "sheet")) return h + `<div class="card empty"><b>Aún no hay gastos</b>Registre el primero: quién pagó y cuánto. Balance reparte en partes iguales entre todas las personas del grupo.${canAdd ? `<div><button class="btn primary" data-act="add-exp">${ic("plus")}Registrar el primer gasto</button> ${admin ? `<button class="btn" data-act="view-sheet">Abrir la hoja de gastos</button>` : ""}</div>` : ""}</div>`;
+    const tog = admin && !g.closed ? `<div class="viewtog" role="group" aria-label="Vista de gastos"><button data-act="view-list" aria-pressed="${!sheetOn(g)}">Lista</button><button data-act="view-sheet" aria-pressed="${sheetOn(g)}">Hoja de gastos</button></div>` : "";
+    return h + tog + filtersBar(g) + `<div id="expArea">${expArea(g)}</div>`;
+  }
+  const payerOpts = (g, sel) => g.members.map((m) => `<option value="${m.id}" ${sel === m.id ? "selected" : ""}>${esc(nm(m.id))}</option>`).join("");
+  function sheetView(g, ex) {
+    const F = uiOf(g), dec0 = M.currency(g.currency).decimals, d = F.draft || (F.draft = { date: M.todayInZone(g.tz), payer: me() });
+    const mode = dec0 ? "decimal" : "numeric", all = ex.length && ex.every((e) => F.sel.has(e.id));
+    const rows = ex.map((e) => `<tr data-id="${e.id}" class="${F.sel.has(e.id) ? "sel" : ""}"><td class="c"><input type="checkbox" data-sel="${e.id}" ${F.sel.has(e.id) ? "checked" : ""} aria-label="Seleccionar ${esc(e.description)}"></td><td><input type="date" data-c="date" value="${e.date}" aria-label="Fecha de ${esc(e.description)}"></td><td><input data-c="desc" value="${esc(e.description)}" maxlength="500" aria-label="Descripción" autocomplete="off"></td><td><select data-c="payer" aria-label="Quién pagó ${esc(e.description)}">${payerOpts(g, e.payerId)}</select></td><td><input data-c="amt" class="r" inputmode="${mode}" value="${esc(dec(e.amount))}" aria-label="Monto de ${esc(e.description)}" autocomplete="off"></td><td class="c"><button class="btn small danger" data-act="sheet-del" data-id="${e.id}" aria-label="Eliminar ${esc(e.description)}">${ic("trash")}</button></td></tr>`).join("");
+    return `<div class="card sheetwrap"><div class="sheetbar"><span class="small mut">Edite una celda y pulse <b>Enter</b> o cambie de celda: se guarda al instante. <b>Tab</b> avanza; <b>Esc</b> deshace la celda. En la fila nueva, Enter agrega; también puede <b>pegar filas desde Excel</b> (fecha, descripción, pagó, monto).</span><button class="btn small danger" data-act="sheet-bulk-del" ${F.sel.size ? "" : "hidden"}>Eliminar seleccionados (${F.sel.size})</button></div><div class="sheetscroll"><table class="sheet" id="sheet"><caption class="sr">Hoja de gastos de ${esc(g.name)}</caption><thead><tr><th class="c"><input type="checkbox" id="selAll" ${all ? "checked" : ""} aria-label="Seleccionar todos los gastos mostrados"></th><th>Fecha</th><th>Descripción</th><th>Pagó</th><th class="r">Monto (${g.currency})</th><th><span class="sr">Acciones</span></th></tr></thead><tbody>${rows}</tbody><tfoot><tr class="newrow" id="newrow"><td class="c" aria-hidden="true">+</td><td><input type="date" data-n="date" value="${d.date}" aria-label="Fecha del gasto nuevo"></td><td><input data-n="desc" placeholder="Nuevo gasto…" maxlength="500" aria-label="Descripción del gasto nuevo" autocomplete="off"></td><td><select data-n="payer" aria-label="Quién pagó el gasto nuevo">${payerOpts(g, d.payer)}</select></td><td><input data-n="amt" class="r" inputmode="${mode}" placeholder="${dec0 ? "0,00" : "0"}" aria-label="Monto del gasto nuevo" autocomplete="off"></td><td class="c"><button class="btn small primary" data-act="sheet-add" aria-label="Agregar el gasto">${ic("plus")}</button></td></tr><tr class="tot"><td></td><td colspan="3">Total mostrado · ${ex.length} ${ex.length === 1 ? "gasto" : "gastos"}</td><td class="r num" id="sheetTot">${money(sumU(ex, g), g)}</td><td></td></tr></tfoot></table></div><div class="err-line" id="sheetMsg" role="alert" hidden></div></div>`;
+  }
+  const sheetMsg = (m) => { const el = $("#sheetMsg"); if (!el) return; el.hidden = !m; el.innerHTML = m ? ic("alert") + esc(m) : ""; };
+  function validateRow(g, v) {
+    if (v.desc.length < 4 || v.desc.length > 500) return { ok: false, field: "desc", message: "La descripción debe tener entre 4 y 500 caracteres." };
+    const a = M.parseInput(v.amt, g.currency); if (!a.ok) return { ok: false, field: "amt", message: a.message };
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(v.date) || Number.isNaN(Date.parse(v.date))) return { ok: false, field: "date", message: "Elija una fecha válida." };
+    if (!g.members.some((m) => m.id === v.payer)) return { ok: false, field: "payer", message: "Elija quién pagó." };
+    return { ok: true, value: { description: v.desc, amount: a.value, date: v.date, payerId: v.payer } };
+  }
+  const rowVals = (tr, k) => ({ date: tr.querySelector(`[${k}=date]`).value, desc: tr.querySelector(`[${k}=desc]`).value.trim(), payer: tr.querySelector(`[${k}=payer]`).value, amt: tr.querySelector(`[${k}=amt]`).value });
+  function refreshAfterEdit(g) { const h = $(".hero"); if (h) h.outerHTML = heroHtml(g); const ex = filtered(g), t = $("#sheetTot"); if (t) t.textContent = money(sumU(ex, g), g); const sum = $("#fSummary"); if (sum) sum.textContent = summaryText(g, ex); }
+  function commitCell(inp) {
+    const g = curG(), tr = inp.closest("tr"), e = g && g.expenses.find((x) => x.id === tr.dataset.id); if (!e) return;
+    const v = validateRow(g, rowVals(tr, "data-c"));
+    $$("[aria-invalid]", tr).forEach((x) => x.removeAttribute("aria-invalid"));
+    if (!v.ok) { const f = tr.querySelector(`[data-c=${v.field}]`); f.setAttribute("aria-invalid", "true"); sheetMsg(`«${e.description}»: ${v.message} (no se guardó)`); return; }
+    let res = R.can("edit_expense", ctx(g, { expense: e })); if (res.allowed && v.value.payerId !== e.payerId) res = R.can("change_payer", ctx(g));
+    if (!res.allowed) { sheetMsg(res.reason + " " + res.who); return; }
+    const changed = ["description", "amount", "date", "payerId"].some((k) => e[k] !== v.value[k]); if (!changed) { sheetMsg(""); return; }
+    Object.assign(e, v.value); tr.querySelector("[data-c=amt]").value = dec(e.amount); audit(g, `Modificó el gasto «${e.description}»`); sheetMsg(""); refreshAfterEdit(g);
+  }
+  function sheetAdd() {
+    const g = curG(), tr = $("#newrow"); if (!g || !tr) return; const F = uiOf(g);
+    const v = validateRow(g, rowVals(tr, "data-n")); $$("[aria-invalid]", tr).forEach((x) => x.removeAttribute("aria-invalid"));
+    if (!v.ok) { tr.querySelector(`[data-n=${v.field}]`).setAttribute("aria-invalid", "true"); tr.querySelector(`[data-n=${v.field}]`).focus(); sheetMsg("Fila nueva: " + v.message); return; }
+    const res = R.can("add_expense", ctx(g, { payerId: v.value.payerId })); if (!res.allowed) { sheetMsg(res.reason + " " + res.who); return; }
+    g.expenses.push({ id: "e" + nextId++, ...v.value }); F.draft = { date: v.value.date, payer: v.value.payerId }; audit(g, `Registró el gasto «${v.value.description}»`);
+    $("#expArea").innerHTML = expArea(g); refreshAfterEdit(g); sheetMsg(""); const d = $("#newrow [data-n=desc]"); if (d) d.focus();
+  }
+  function sheetDelete(g, ids) {
+    const F = uiOf(g); const removed = g.expenses.map((e, i) => ({ e, i })).filter((x) => ids.includes(x.e.id)); if (!removed.length) return;
+    for (const x of removed) { const res = R.can("delete_expense", ctx(g, { expense: x.e })); if (!res.allowed) return denyDlg(res); }
+    g.expenses = g.expenses.filter((e) => !ids.includes(e.id)); ids.forEach((i) => F.sel.delete(i)); audit(g, `Eliminó ${removed.length} ${removed.length === 1 ? "gasto" : "gastos"}`);
+    $("#expArea").innerHTML = expArea(g); refreshAfterEdit(g);
+    toast(`${removed.length} ${removed.length === 1 ? "gasto eliminado" : "gastos eliminados"}`, { label: "Deshacer", fn: () => { removed.forEach((x) => g.expenses.splice(Math.min(x.i, g.expenses.length), 0, x.e)); audit(g, `Restauró ${removed.length} ${removed.length === 1 ? "gasto" : "gastos"}`); if (curG() === g) { const a = $("#expArea"); if (a) { a.innerHTML = expArea(g); refreshAfterEdit(g); } } toast("Gastos restaurados"); } });
+  }
+  function parsePaste(g, text) {
+    const F = uiOf(g), d0 = (F.draft && F.draft.date) || M.todayInZone(g.tz); const rows = [], errs = [];
+    const lines = text.replace(/\r/g, "").split("\n").filter((l) => l.trim());
+    lines.forEach((line, i) => {
+      const c = line.split(/\t|;/).map((x) => x.trim()); const last = c[c.length - 1];
+      if (i === 0 && !M.parseInput(last, g.currency).ok && /monto|importe|descripci/i.test(line)) return;
+      let date = d0, desc, who, amt; if (c.length >= 4) [date, desc, who, amt] = c; else if (c.length === 3) [desc, who, amt] = c; else { errs.push(`Fila ${i + 1}: use fecha, descripción, pagó y monto separados por tabulador.`); return; }
+      const dm = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(date); if (dm) date = `${dm[3]}-${dm[2].padStart(2, "0")}-${dm[1].padStart(2, "0")}`;
+      const m = g.members.find((x) => normT(nm(x.id)) === normT(who)); if (!m) { errs.push(`Fila ${i + 1}: «${who}» no está en el grupo.`); return; }
+      const v = validateRow(g, { date, desc, payer: m.id, amt }); if (!v.ok) { errs.push(`Fila ${i + 1}: ${v.message}`); return; } rows.push(v.value);
+    });
+    if (!rows.length && !errs.length) return;
+    if (errs.length) return dlg(`<h2 id="mt">No se pegó ningún gasto</h2><p>Se revisan todas las filas y no se agrega nada si alguna tiene un error (así no queda a medias).</p><ul>${errs.slice(0, 8).map((x) => `<li>${esc(x)}</li>`).join("")}</ul>${errs.length > 8 ? `<p class="mut small">…y ${errs.length - 8} más.</p>` : ""}<div class="btns"><button class="btn primary" data-x="cancel">Entendido</button></div>`), ($("#dlg [data-x=cancel]").onclick = closeDlg);
+    const total = rows.reduce((a, r) => a + M.toUnits(r.amount, g.currency), 0n);
+    confirmDlg({ title: `¿Agregar ${rows.length} ${rows.length === 1 ? "gasto" : "gastos"}?`, body: `<p>Suman ${money(total, g)}. Se agregan todos juntos y puede deshacerlo.</p>`, ok: `Agregar ${rows.length}`, onOk: () => { const ids = rows.map((r) => { const id = "e" + nextId++; g.expenses.push({ id, ...r }); return id; }); audit(g, `Agregó ${rows.length} gastos pegados desde una hoja`); const a = $("#expArea"); if (a) { a.innerHTML = expArea(g); refreshAfterEdit(g); } toast(`${rows.length} gastos agregados`, { label: "Deshacer", fn: () => { g.expenses = g.expenses.filter((e) => !ids.includes(e.id)); audit(g, `Deshizo el pegado de ${rows.length} gastos`); const a2 = $("#expArea"); if (a2 && curG() === g) { a2.innerHTML = expArea(g); refreshAfterEdit(g); } } }); } });
+  }
+  // Eventos de filtros y de la hoja (delegados: el contenido se repinta)
+  document.addEventListener("input", (e) => { const f = e.target.closest && e.target.closest("[data-f]"); if (f) { const g = curG(); if (!g) return; uiOf(g)[f.dataset.f] = f.value; const a = $("#expArea"); if (a) a.innerHTML = expArea(g); const c = $("#fClear"); if (c) c.innerHTML = clearBtn(uiOf(g)); } });
+  document.addEventListener("change", (e) => {
+    const t = e.target, g = curG(); if (!g) return;
+    const f = t.closest && t.closest("[data-f]"); if (f) { uiOf(g)[f.dataset.f] = f.value; const a = $("#expArea"); if (a) a.innerHTML = expArea(g); const c = $("#fClear"); if (c) c.innerHTML = clearBtn(uiOf(g)); return; }
+    if (t.matches && t.matches("#sheet [data-c]")) return commitCell(t);
+    if (t.id === "selAll") { const F = uiOf(g), ex = filtered(g); if (t.checked) ex.forEach((x) => F.sel.add(x.id)); else ex.forEach((x) => F.sel.delete(x.id)); $("#expArea").innerHTML = expArea(g); return; }
+    if (t.dataset && t.dataset.sel) { const F = uiOf(g); if (t.checked) F.sel.add(t.dataset.sel); else F.sel.delete(t.dataset.sel); t.closest("tr").classList.toggle("sel", t.checked); const b = $('[data-act="sheet-bulk-del"]'); if (b) { b.hidden = !F.sel.size; b.textContent = `Eliminar seleccionados (${F.sel.size})`; } const all = $("#selAll"); if (all) all.checked = filtered(g).every((x) => F.sel.has(x.id)); }
+  });
+  document.addEventListener("keydown", (e) => {
+    const t = e.target; if (!t.closest || !t.closest("#sheet")) return; const g = curG(); if (!g) return; const tr = t.closest("tr"), col = t.dataset.c || t.dataset.n; if (!col) return;
+    if (e.key === "Enter" && t.tagName === "INPUT" && t.type !== "checkbox") { e.preventDefault(); if (tr.id === "newrow") return sheetAdd(); t.blur(); commitCell(t); const nx = tr.nextElementSibling; const target = nx && nx.dataset.id ? nx : $("#newrow"); const f = target && target.querySelector(`[data-c=${col}],[data-n=${col}]`); if (f) f.focus(); return; }
+    if (e.key === "Escape" && tr.dataset.id) { const x = g.expenses.find((y) => y.id === tr.dataset.id); if (x) { tr.querySelector("[data-c=date]").value = x.date; tr.querySelector("[data-c=desc]").value = x.description; tr.querySelector("[data-c=payer]").value = x.payerId; tr.querySelector("[data-c=amt]").value = dec(x.amount); $$("[aria-invalid]", tr).forEach((n) => n.removeAttribute("aria-invalid")); sheetMsg(""); } return; }
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && t.tagName === "INPUT" && t.type === "text") { const rowsEls = $$("#sheet tbody tr, #newrow"); const i = rowsEls.indexOf(tr), n = rowsEls[i + (e.key === "ArrowDown" ? 1 : -1)]; const f = n && n.querySelector(`[data-c=${col}],[data-n=${col}]`); if (f) { e.preventDefault(); f.focus(); } }
+  });
+  document.addEventListener("paste", (e) => { const t = e.target; if (!t.closest || !t.closest("#newrow")) return; const text = (e.clipboardData && e.clipboardData.getData("text")) || ""; if (!/[\n\t;]/.test(text.trim())) return; e.preventDefault(); const g = curG(); if (g) parsePaste(g, text); });
+
   function tabSaldos(g, r) {
     const mx = g.members.reduce((a, m) => { const b = r.balances[m.id]; const v = b < 0n ? -b : b; return v > a ? v : a; }, 0n);
-    const rows = g.members.map((m, i) => { const b = r.balances[m.id], v = b < 0n ? -b : b, w = mx ? Number((v * 100n) / mx) : 0; const txt = b > 0n ? `Le deben ${money(b, g)}` : b < 0n ? `Debe ${money(-b, g)}` : "Al día"; return `<div class="bal"><span class="av" aria-hidden="true">${esc(nm(m.id)[0])}</span><div><div class="t">${esc(nm(m.id))}${m.id === me() ? " (usted)" : ""}</div><div class="sub">#${i + 1} en el orden de ingreso · pagó ${money(r.paid[m.id], g)} · su parte ${money(r.shares[m.id], g)}</div></div><div class="bw"><div class="t num ${b > 0n ? "pos" : b < 0n ? "neg" : "zero"}">${txt}</div><div class="bar" aria-hidden="true"><span class="l" style="width:${b < 0n ? w : 0}%"></span><span class="r" style="width:${b > 0n ? w : 0}%"></span></div></div></div>`; }).join("");
+    const rows = g.members.map((m, i) => { const b = r.balances[m.id], v = b < 0n ? -b : b, w = mx ? Number((v * 100n) / mx) : 0; const txt = b > 0n ? `Le deben ${money(b, g)}` : b < 0n ? `Debe ${money(-b, g)}` : "Al día"; return `<div class="bal"><span class="av" aria-hidden="true">${esc(nm(m.id)[0])}</span><div><div class="t">${esc(nm(m.id))}${m.id === me() ? " (usted)" : ""}</div><div class="sub">#${i + 1} en el orden de ingreso · pagó ${money(r.paid[m.id], g)} · su parte ${money(r.shares[m.id], g)}</div><button class="btn small" data-act="who-filter" data-id="${m.id}" style="margin-top:.3rem">Ver sus gastos</button></div><div class="bw"><div class="t num ${b > 0n ? "pos" : b < 0n ? "neg" : "zero"}">${txt}</div><div class="bar" aria-hidden="true"><span class="l" style="width:${b < 0n ? w : 0}%"></span><span class="r" style="width:${b > 0n ? w : 0}%"></span></div></div></div>`; }).join("");
     const rest = r.extraUnits > 0n ? `<div class="notice">${ic("scale")}<div>Al repartir ${money(r.total, g)} entre ${g.members.length} personas sobran ${r.extraUnits} ${r.extraUnits === 1n ? "unidad mínima" : "unidades mínimas"} (${M.currency(g.currency).decimals ? "centavos" : "unidades"}). Se asignan de una en una a las primeras personas por orden de ingreso, así las partes suman <b>exactamente</b> el total y los saldos suman cero.</div></div>` : "";
-    return `<div class="card">${rows || '<div class="empty">Aún no hay personas.</div>'}</div>${rest}`;
+    const sumB = g.members.reduce((a, m) => a + r.balances[m.id], 0n);
+    return `<div class="card">${rows || '<div class="empty">Aún no hay personas.</div>'}<p class="small mut" style="margin:.8rem 0 0">Total pagado por el grupo: <b class="num">${money(r.total, g)}</b> · Suma de los saldos: <b class="num">${money(sumB, g)}</b> (siempre cero: lo que unos deben es lo que otros reciben).</p></div>${rest}`;
   }
   function tabLiquidar(g, transfers, r) {
     const title = g.closed ? "Liquidación (grupo cerrado)" : "Liquidación sugerida";
@@ -89,7 +203,7 @@
     return `<div class="tape"><h2><span>${title}</span><span class="num">${transfers.length} ${transfers.length === 1 ? "pago" : "pagos"}</span></h2>${transfers.map((t) => { const mine = t.from === me() || t.to === me(); const who = t.from === me() ? "Usted paga a" : t.to === me() ? `${esc(nm(t.from))} le paga a` : `${esc(nm(t.from))} paga a`; const to = t.to === me() ? "usted" : esc(nm(t.to)); return `<div class="pay ${mine ? "mine" : ""}"><span>${who} <b>${to}</b></span><span class="amt num">${money(t.units, g)}</span>${t.from === me() ? `<button class="btn small" data-act="copy-amt" data-v="${esc(dec(M.fromUnits(t.units, g.currency)))}">${ic("copy")}Copiar monto</button>` : ""}</div>`; }).join("")}<div class="sum"><span>Total que se mueve</span><span class="num">${money(tot, g, { code: true })}</span></div></div><p class="mut small" style="max-width:34rem">Balance no registra pagos: esta lista se recalcula con cada cambio y es la misma para todas las personas del grupo. Haga la transferencia por su banco o SINPE Móvil y avise al grupo.</p>`;
   }
   function tabPersonas(g, admin) {
-    const rows = g.members.map((m, i) => { const mine = m.id === me(); return `<li class="row"><span class="av" aria-hidden="true">${esc(nm(m.id)[0])}</span><div class="main"><b>${esc(nm(m.id))}${mine ? " (usted)" : ""}</b><span class="small mut">#${i + 1} · ${m.role === "admin" ? "Administra el grupo" : "Miembro"}</span></div><span class="acts">${admin && !mine ? `<button class="btn small" data-act="toggle-admin" data-id="${m.id}">${m.role === "admin" ? "Quitar administración" : "Nombrar administrador"}</button><button class="btn small danger" data-act="remove-p" data-id="${m.id}">Quitar</button>` : ""}${mine ? `<button class="btn small" data-act="leave">${ic("door")}Salir del grupo</button>` : ""}${admin && mine && m.role === "admin" ? `<button class="btn small" data-act="toggle-admin" data-id="${m.id}">Dejar la administración</button>` : ""}</span></li>`; }).join("");
+    const rows = g.members.map((m, i) => { const mine = m.id === me(); return `<li class="row"><span class="av" aria-hidden="true">${esc(nm(m.id)[0])}</span><div class="main"><b>${esc(nm(m.id))}${mine ? " (usted)" : ""}</b><span class="small mut">#${i + 1} · ${m.role === "admin" ? "Administra el grupo" : "Miembro"}</span></div><span class="acts"><button class="btn small" data-act="who-filter" data-id="${m.id}">Ver gastos</button>${admin && !mine ? `<button class="btn small" data-act="toggle-admin" data-id="${m.id}">${m.role === "admin" ? "Quitar administración" : "Nombrar administrador"}</button><button class="btn small danger" data-act="remove-p" data-id="${m.id}">Quitar</button>` : ""}${mine ? `<button class="btn small" data-act="leave">${ic("door")}Salir del grupo</button>` : ""}${admin && mine && m.role === "admin" ? `<button class="btn small" data-act="toggle-admin" data-id="${m.id}">Dejar la administración</button>` : ""}</span></li>`; }).join("");
     const join = admin ? `<div class="card"><h2>${ic("link")} Enlace y código de ingreso</h2><p class="small mut">Quien tenga una cuenta de Pastel con Balance puede entrar con el enlace y el código. No vencen: regenérelos si se filtran. Los miembros no ven esta sección.</p><div class="linkbox" id="jl">https://pastel.example/balance#/unirse/${esc(g.join.token)}</div><div class="codebox"><span class="cd num" aria-label="Código de ingreso ${esc(g.join.code.split("").join(" "))}">${esc(g.join.code)}</span><button class="btn small" data-act="copy-link">${ic("copy")}Copiar enlace</button><button class="btn small" data-act="copy-code">${ic("copy")}Copiar código</button><button class="btn small danger" data-act="regen">Regenerar</button></div></div>` : "";
     return `<div class="card"><h2>Personas del grupo</h2><p class="small mut">El orden de ingreso decide a quién se asigna cada unidad mínima sobrante.</p><ul class="list">${rows}</ul></div>${join}`;
   }
@@ -97,7 +211,7 @@
     return `<div class="card"><h2>Configuración del grupo</h2><div class="field"><label for="sName">Nombre</label><input id="sName" value="${esc(g.name)}" maxlength="200"><span class="err" id="sNameE" hidden></span></div><div class="field"><label for="sDesc">Descripción (opcional)</label><textarea id="sDesc" maxlength="500">${esc(g.description)}</textarea></div><div class="field"><label for="sTz">Zona horaria</label><select id="sTz">${D.ZONES.map(([z, l]) => `<option value="${z}" ${z === g.tz ? "selected" : ""}>${l} — ${z}</option>`).join("")}</select><span class="help">La fecha de «hoy» al registrar un gasto sale de esta zona.</span></div><button class="btn primary" data-act="save-settings" ${g.closed ? "disabled aria-disabled=true" : ""}>Guardar cambios</button>${g.closed ? '<p class="small mut">Reabra el grupo para cambiar su configuración.</p>' : ""}</div>
     <div class="card"><h2>Moneda</h2><p class="small mut">Cambiarla <b>no convierte</b> ningún monto: 10 EUR pasan a ser 10 USD. Sirve para corregir un error de captura.</p><div class="field"><label for="sCur">Moneda del grupo</label><select id="sCur">${curOptions(g.currency)}</select></div><button class="btn" data-act="change-cur" ${g.closed ? "disabled aria-disabled=true" : ""}>Cambiar moneda</button></div>
     <div class="card"><h2>Estado del grupo</h2>${g.closed ? '<p>Cerrado: solo lectura. Los saldos y la liquidación se siguen calculando.</p><button class="btn" data-act="reopen">Reabrir el grupo</button>' : '<p>Abierto. Al cerrarlo nadie puede registrar cambios, pero se puede reabrir cuando haga falta.</p><button class="btn" data-act="close">Cerrar el grupo</button>'} <button class="btn danger" data-act="del-group">Borrar el grupo</button><p class="small mut">Solo se puede borrar un grupo sin gastos.</p></div>
-    <div class="card"><h2>Historial</h2><ul class="log">${g.audit.slice(0, 8).map((a) => `<li>${esc(a.at)} · ${esc(a.who)}: ${esc(a.what)}</li>`).join("")}</ul></div>`;
+    <div class="card"><h2>Historial</h2><p class="small mut">Los últimos 25 cambios.</p><ul class="log">${g.audit.slice(0, 25).map((a) => `<li>${esc(a.at)} · ${esc(a.who)}: ${esc(a.what)}</li>`).join("")}</ul></div>`;
   }
   const curOptions = (sel) => { const F = D.FEATURED, all = M.CURRENCIES; const o = (c) => `<option value="${c.code}" ${c.code === sel ? "selected" : ""}>${c.code} · ${esc(c.symbol)} · ${esc(c.name)}</option>`; return `<optgroup label="Más usadas">${F.map((c) => o(M.currency(c))).join("")}</optgroup><optgroup label="Todas">${all.filter((c) => !F.includes(c.code)).sort((a, b) => a.name.localeCompare(b.name, "es")).map(o).join("")}</optgroup>`; };
 
@@ -145,6 +259,13 @@
       case "back-apps": toast("En Pastel este botón lleva a sus aplicaciones."); break;
       case "have-link": dlg(`<h2 id="mt">Tengo un enlace</h2><div class="field"><label for="lk">Pegue el enlace de ingreso</label><input id="lk" placeholder="https://…/unirse/…"></div><div class="btns"><button class="btn" data-x="cancel">Cancelar</button><button class="btn primary" data-x="ok">Continuar</button></div>`); $("#dlg [data-x=cancel]").onclick = closeDlg; $("#dlg [data-x=ok]").onclick = () => { const m = /unirse\/([^/?#\s]+)/.exec($("#lk").value); closeDlg(); go("#/unirse/" + (m ? m[1] : "enlace-invalido")); }; break;
       case "add-exp": if (g) expenseForm(g); break;
+      case "view-list": case "view-sheet": { const F = uiOf(g); F.view = a === "view-sheet" ? "sheet" : "list"; if (F.view === "sheet" && F.sort === "date-desc") F.sort = "reg"; if (F.view === "list" && F.sort === "reg") F.sort = "date-desc"; render(); break; }
+      case "clear-filters": { const F = uiOf(g); Object.assign(F, { q: "", who: "", from: "", to: "" }); render(); break; }
+      case "who-filter": { const F = uiOf(g); Object.assign(F, { q: "", from: "", to: "", who: id }); go("#/g/" + g.id + "/gastos"); break; }
+      case "sheet-add": sheetAdd(); break;
+      case "sheet-del": sheetDelete(g, [id]); break;
+      case "sheet-bulk-del": sheetDelete(g, [...uiOf(g).sel]); break;
+      case "toast-undo": { const f = toastFn; toastFn = null; $("#toast").hidden = true; if (f) f(); break; }
       case "edit-exp": expenseForm(g, g.expenses.find((x) => x.id === id)); break;
       case "del-exp": { const e = g.expenses.find((x) => x.id === id), res = R.can("delete_expense", ctx(g, { expense: e })); if (!res.allowed) return denyDlg(res); confirmDlg({ title: "¿Eliminar este gasto?", body: `<p>«${esc(e.description)}» por ${money(M.toUnits(e.amount, g.currency), g)}. Los saldos se recalculan.</p>`, ok: "Eliminar gasto", danger: true, onOk: () => { g.expenses = g.expenses.filter((x) => x.id !== id); audit(g, `Eliminó el gasto «${e.description}»`); render(); toast("Gasto eliminado"); } }); break; }
       case "copy-amt": copy(el.dataset.v, "Monto"); break;
@@ -176,7 +297,7 @@
     home();
   }
   addEventListener("hashchange", render);
-  DevKit.init({ app: "balance", role: "admin", onRole: (id) => { roleId = id; if (id === "invitada") location.hash = "#/unirse/" + groups[0].join.token; else if (route().k === "join" && D.ROLES[id].session === false && id !== "invitada") { /* se queda en el ingreso */ } render(); }, roles: [
+  DevKit.init({ app: "balance", role: "admin", onRole: (id) => { roleId = id; Object.keys(UI).forEach((k) => delete UI[k]); if (id === "invitada") location.hash = "#/unirse/" + groups[0].join.token; else if (route().k === "join" && D.ROLES[id].session === false && id !== "invitada") { /* se queda en el ingreso */ } render(); }, roles: [
     { id: "admin", label: "Ana · administra el paseo", desc: "Ve todo, ve el enlace y el código, edita la configuración, cierra y reabre, nombra administradores." },
     { id: "member", label: "Beto · miembro del paseo", desc: "Registra solo gastos que él pagó; ve todo; no ve el enlace, el código ni los ajustes del paseo." },
     { id: "nueva", label: "Marcos · con acceso, sin grupos", desc: "Estado vacío. Para ingresar: #/unirse/paseo-7k3m9xq2 con el código 4821 (tras 5 fallos, pausa de 15 min)." },

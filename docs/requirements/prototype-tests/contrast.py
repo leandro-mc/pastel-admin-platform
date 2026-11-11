@@ -95,7 +95,7 @@ def brisa_balance_pairs():
             out.append((nm, "texto secundario sobre " + b, k["mut"], k[b], T)); out.append((nm, "marca/«le deben» sobre " + b, k["brand"], k[b], T)); out.append((nm, "«debe» (ámbar) sobre " + b, k["owe"], k[b], T))
         out += [(nm, "marca sobre fondo de marca suave", k["brand"], k["bsoft"], T), (nm, "botón principal (texto sobre marca)", k["bink"], k["brand"], T), (nm, "«debe» sobre fondo ámbar suave", k["owe"], k["osoft"], T),
                 (nm, "error sobre superficie", k["bad"], k["s"], T), (nm, "error sobre fondo suave", k["bad"], k["bsoftbad"], T), (nm, "grupo cerrado (aviso) sobre fondo suave", k["warn"], k["wsoft"], T),
-                (nm, "borde de campo (componente) sobre superficie", k["mut"], k["s"], UI), (nm, "barra «a favor» sobre pista (componente)", k["brand"], k["s2"], UI), (nm, "barra «debe» sobre pista (componente)", k["owe"], k["s2"], UI),
+                (nm, "texto en celda inválida de la hoja (tinta sobre fondo de error suave)", k["ink"], k["bsoftbad"], T), (nm, "borde de campo (componente) sobre superficie", k["mut"], k["s"], UI), (nm, "barra «a favor» sobre pista (componente)", k["brand"], k["s2"], UI), (nm, "barra «debe» sobre pista (componente)", k["owe"], k["s2"], UI),
                 (nm, "foco (marca) sobre superficie (componente)", k["brand"], k["s"], UI), (nm, "aviso emergente (fondo sobre tinta)", k["bg"], k["ink"], T)]
     return out
 
