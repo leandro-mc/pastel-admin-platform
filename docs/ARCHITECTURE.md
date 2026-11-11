@@ -116,7 +116,9 @@ public interface IPastelModule
 - Cada `DbContext`: `HasDefaultSchema("<code>")` y `MigrationsHistoryTable("__EFMigrationsHistory", "<code>")`. Migraciones dentro del proyecto del módulo:
   `dotnet ef migrations add Nombre --project src/Modules/<M>/Pastel.Modules.<M> --startup-project src/Host/Pastel.Host --context <M>DbContext`
 - El host migra en el orden de `IPastelModule.Order`. Se conserva `Database:ApplyMigrationsAtStartup` (con un solo nodo es correcto; con réplicas habría que pasar a un trabajo de migración aparte).
-- Identificadores: `Guid` v7 generados en el cliente o servidor (permite crear offline y sincronizar). Fechas en UTC (`timestamptz`). Dinero en `numeric(18,2)` con moneda explícita.
+- Identificadores: las claves de entidad son `Guid` v7 que asigna el servidor con `Guid.CreateVersion7()` en la propiedad `Id` de la entidad (el orden por tiempo mantiene compactos los índices de PostgreSQL). Lo secreto o impredecible (refresh tokens, token CSRF, contraseñas temporales con `RandomNumberGenerator`; el `jti` del JWT con `Guid.NewGuid()`) no es una clave y sigue siendo aleatorio. Un v7 deja ver su fecha de creación: nunca se usa como secreto ni como credencial, y la autorización no depende de que un identificador sea inadivinable.
+- Identificadores desde el cliente: **hoy no existen**; ningún endpoint acepta un `Id` propuesto por el cliente ni hay generador de GUID en el frontend. Si un módulo lo necesita (p. ej. Brisa al sincronizar sin conexión), lo diseña y documenta en su `MODULE.md` o en `DECISIONS.md`.
+- Fechas en UTC (`timestamptz`). Dinero en `numeric(18,2)` con moneda explícita.
 - Datos con vocación de sincronización móvil (Brisa): `UpdatedAt`, borrado lógico (`DeletedAt`) y token de concurrencia en cada entidad editable.
 
 ## 6. Comunicación entre módulos
@@ -130,7 +132,7 @@ public interface IPastelModule
 - Rutas: `/api/<modulo>/<recurso>`. Plataforma: `/api/auth/*`, `/api/admin/*`.
 - Errores: `application/problem+json` con `title`, `detail` (en español, accionable) y, para validaciones, `errors` por campo. Sin filtrar excepciones internas.
 - Listas: paginación (`page`, `pageSize`, máximo 100) y orden explícito.
-- Escrituras que puedan repetirse (móvil/offline) aceptan un identificador de cliente y son idempotentes.
+- Escrituras que puedan repetirse (móvil/offline): criterio de diseño para cuando un módulo las necesite (identificador de cliente e idempotencia). Hoy ningún endpoint lo implementa; ver §5.
 - Cada endpoint tiene permiso o `.AllowAnonymous()` explícito; las rutas públicas llevan límite de tasa.
 - Zona horaria de presentación: `America/Costa_Rica`. Formatos `es-CR` (ver `DESIGN_SYSTEM.md`).
 

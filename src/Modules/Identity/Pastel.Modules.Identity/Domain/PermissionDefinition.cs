@@ -2,7 +2,7 @@ namespace Pastel.Modules.Identity.Domain;
 
 internal sealed class PermissionDefinition
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public Guid ModuleId { get; set; }
     public ModuleDefinition Module { get; set; } = null!;
     public required string Code { get; set; }

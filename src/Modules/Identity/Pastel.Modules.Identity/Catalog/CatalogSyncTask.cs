@@ -54,7 +54,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
                 {
                     var created = new PermissionDefinition { Code = info.Code, Name = info.Name, Description = info.Description, IsSystemPermission = true };
                     module.Permissions.Add(created);
-                    // La clave se genera en el cliente. Sin este Add explícito, EF interpreta un permiso nuevo que cuelga de un
+                    // La aplicación asigna la clave (no la base de datos). Sin este Add explícito, EF interpreta un permiso nuevo que cuelga de un
                     // módulo que ya existe en la base como una fila existente (UPDATE) y no como una nueva (INSERT), y los
                     // vínculos de rol que lo referencian violan la clave foránea. En una base vacía no ocurre porque el módulo
                     // también es nuevo; sí al añadir un permiso a una base ya sembrada.

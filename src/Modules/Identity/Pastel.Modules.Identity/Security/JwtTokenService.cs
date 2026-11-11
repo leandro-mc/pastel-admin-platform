@@ -23,6 +23,7 @@ internal sealed class JwtTokenService(IOptions<JwtOptions> options) : ITokenServ
         var claims = new List<Claim>
         {
             new(JwtRegisteredClaimNames.Sub, user.Id.ToString()),
+            // El jti no es una clave de fila: se mantiene aleatorio (v4) a propósito. Las claves de entidad usan v7 (docs/ARCHITECTURE.md §5).
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString("N")),
             new(JwtRegisteredClaimNames.Iat, now.ToUnixTimeSeconds().ToString(), ClaimValueTypes.Integer64),
             new("token_version", user.TokenVersion.ToString()),

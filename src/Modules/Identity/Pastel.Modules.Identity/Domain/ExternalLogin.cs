@@ -8,7 +8,7 @@ internal sealed class ExternalLogin
 {
     public const string GoogleProvider = "google";
 
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public Guid UserId { get; set; }
     public AppUser User { get; set; } = null!;
 
