@@ -145,7 +145,7 @@ La literatura de profesionales coincide en un catálogo. Se traduce aquí a crit
 Variables de geometría disponibles (sin valores de color): `--shell-sidebar-width`, `--shell-sidebar-rail-width`, `--shell-topbar-height`, `--shell-bottomnav-height`, `--shell-radius`. El shell no introduce ningún color global: solo lee `--app-bg`, `--surface`, `--surface-raised`, `--sidebar-bg`, `--text`, `--text-secondary`, `--muted`, `--border`, `--border-strong`, `--accent`, `--accent-strong`, `--accent-soft` y `--on-accent`.
 
 ### 5.6 Decisiones que se apartan de documentos vigentes
-Se registran en `docs/DECISIONS.md` como **propuestas pendientes de ratificación** porque `PASTEL-PRODUCT-AND-UX.md` pide plantear las diferencias al propietario:
+Se registraron en `docs/DECISIONS.md` porque `PASTEL-PRODUCT-AND-UX.md` pide plantear las diferencias al propietario. **El propietario ratificó las seis el 2026-11-10:**
 
 1. Selector y tarjeta de la app activa pasan a **un único control** (se conserva su ubicación en la sidebar, la identidad y la descripción; se retira el icono de actualizar).
 2. Pie de página: se conserva, sin el enlace decorativo.
