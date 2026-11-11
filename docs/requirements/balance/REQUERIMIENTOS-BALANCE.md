@@ -1,6 +1,6 @@
 # Balance — Requerimientos v3 (rediseño sobre las decisiones D1–D9)
 
-> **Estado:** propuesta para validación del propietario · **Rama:** `research/brisa-balance-prototypes` (desde `research/requirements-and-prototypes`) · **Fecha:** 2026-11-09
+> **Estado:** propuesta para validación del propietario · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-11-09
 > **Prototipo:** [`prototype/`](prototype/index.html) — diseño **nuevo** (no una copia de SaldApp), 6 roles, 3 grupos de ejemplo (colones con centavos sobrantes, grupo cerrado, yenes). Datos **ficticios**, en memoria.
 > **Fuente funcional:** [`INVENTARIO-BALANCE.md`](INVENTARIO-BALANCE.md) (SaldApp tal como es + decisiones D1–D9 en su §12, que **prevalecen**). Quién puede qué: [`ROLES-Y-PERMISOS.md`](ROLES-Y-PERMISOS.md). Por qué se diseñó así: [`INVESTIGACION-BALANCE.md`](INVESTIGACION-BALANCE.md).
 

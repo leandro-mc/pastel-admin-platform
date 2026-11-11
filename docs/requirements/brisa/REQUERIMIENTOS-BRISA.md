@@ -1,6 +1,6 @@
 # Brisa — Requerimientos v3 (migración de la app Android a Pastel)
 
-> **Estado:** propuesta para validación del propietario · **Rama:** `research/brisa-balance-prototypes` (desde `research/requirements-and-prototypes`) · **Fecha:** 2026-11-09
+> **Estado:** propuesta para validación del propietario · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-11-09
 > **Prototipo:** [`prototype/`](prototype/index.html) — el carrusel de 7 días que el propietario aprobó, con roles, tema Auto/Claro/Oscuro, reloj simulado y estados (datos de **ejemplo**).
 > **Fuente funcional:** [`INVENTARIO-BRISA.md`](INVENTARIO-BRISA.md) (app Android actual + decisiones del propietario en su §13, que **prevalecen**). Este documento no las reabre: las ordena en requerimientos con identificador y dice cómo se prueba cada una. Investigación: [`INVESTIGACION-BRISA.md`](INVESTIGACION-BRISA.md).
 

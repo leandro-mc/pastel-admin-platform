@@ -5,7 +5,7 @@ Identidad visual por definir (investigación en curso); icono `ListChecks` provi
 ## 1. Situación
 Brisa organiza los pendientes del día a día. **Existe como aplicación Android** (con su propio almacenamiento local). Se migra a Pastel como módulo web **conservando su comportamiento**. Más adelante la aplicación Android se conectará al backend para funcionar con y sin internet con sincronización: **no se implementa ahora**, pero el diseño debe dejarlo preparado.
 
-Este documento no redefine sus funcionalidades: el **inventario del proyecto actual** (`docs/migration/brisa-inventory.md` (está en la rama `docs/brisa-inventory`, aún sin integrar), lo produce un agente de investigación antes de la migración) es la fuente de verdad funcional.
+Este documento no redefine sus funcionalidades: el **inventario del proyecto actual** (`docs/requirements/brisa/INVENTARIO-BRISA.md`; su §13, con las decisiones del propietario, prevalece) es la fuente de verdad funcional. Requerimientos y prototipo: `docs/requirements/brisa/`.
 
 ## 2. Roles y permisos
 Inicial: `brisa.access` (usar el módulo) y `brisa.items.manage` (sobre **sus propios** datos). Cada persona ve solo sus pendientes. Rol sugerido `Brisa — Usuario`. Cualquier concepto de compartir o grupos que exista en la app actual se anota en el inventario; **no se agrega nada nuevo** sin decisión del propietario.
@@ -53,7 +53,7 @@ Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, inte
 
 Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md`, `docs/PROGRESS.md` §5):
 
-- Paridad completa: los ≥ 20 casos del inventario (`docs/migration/brisa-inventory.md` §11) contra el comportamiento de la app Android; toda diferencia es un defecto o un cambio aprobado por escrito.
+- Paridad completa: los ≥ 20 casos del inventario (`docs/requirements/brisa/INVENTARIO-BRISA.md` §11) contra el comportamiento de la app Android; toda diferencia es un defecto o un cambio aprobado por escrito.
 - Flujo de uso rápido (alta veloz, marcar como hecho, filtros del día) en 360 px, teclado y texto "Muy grande".
 - Accesibilidad y recorrido a 320 px y claro/oscuro de los flujos principales.
 - Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.

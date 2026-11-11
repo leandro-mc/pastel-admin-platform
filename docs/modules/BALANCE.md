@@ -5,7 +5,7 @@
 Identidad visual por definir (investigación en curso); icono `Scale` provisional · esquema `balance` · ruta `/balance` · API `/api/balance`.
 
 ## 1. Situación
-Balance registra y liquida **gastos compartidos** entre personas o grupos. Existe como proyecto individual en **otro stack tecnológico**. Se migra a Pastel como módulo **conservando datos y reglas**. El inventario del proyecto actual (`docs/migration/balance-inventory.md` (está en la rama `docs/balance-inventory`, aún sin integrar), lo produce un agente de investigación) es la fuente de verdad funcional.
+Balance registra y liquida **gastos compartidos** entre personas o grupos. Existe como proyecto individual en **otro stack tecnológico**. Se migra a Pastel como módulo **conservando datos y reglas**. El inventario del proyecto actual (`docs/requirements/balance/INVENTARIO-BALANCE.md`; sus decisiones D1–D9 prevalecen) es la fuente de verdad funcional. Requerimientos, roles y prototipo: `docs/requirements/balance/`.
 
 ## 2. Roles y permisos
 Inicial: `balance.access` y `balance.groups.manage` (sobre los grupos de los que la persona forma parte). Rol sugerido `Balance — Usuario`. Los roles **dentro de un grupo** (por ejemplo, administrador del grupo y miembro) son datos del dominio de Balance, no roles de plataforma; el inventario los describe. Reglas: una persona solo ve los grupos y gastos de los que es miembro (verificación en el servidor).
@@ -40,7 +40,7 @@ Pagos reales o integración bancaria, conversión de divisas en vivo, notificaci
 
 Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
-1. **Casos dorados:** el 100 % de los ≥ 25 casos de `docs/migration/balance-inventory.md` §9 producen exactamente los saldos y liquidaciones del sistema SaldApp.
+1. **Casos dorados:** el 100 % de los ≥ 25 casos de `docs/requirements/balance/INVENTARIO-BALANCE.md` §9 producen exactamente los saldos y liquidaciones del sistema SaldApp.
 2. Redondeo: reparto de ₡100,00 entre 3 personas → la suma de las partes es exactamente ₡100,00 y el centavo sobrante se asigna según la regla documentada del sistema anterior.
 3. Dinero: nunca se usa coma flotante; montos con 2 decimales; negativos, cero y valores enormes validados con mensajes claros.
 4. Aislamiento: una persona solo ve los grupos de los que es miembro; IDs de otros grupos → 404; un miembro sin rol de administrador del grupo no puede cambiar la configuración del grupo.
