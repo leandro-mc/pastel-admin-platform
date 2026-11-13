@@ -13,7 +13,7 @@ vc.on("error", (e) => errors.push(String(e)));
   dom.window.Element.prototype.scrollIntoView = () => {}; // jsdom no lo implementa; los navegadores sí
   const w = dom.window, d = w.document;
   const $ = (s) => d.querySelector(s), $$ = (s) => [...d.querySelectorAll(s)];
-  const click = (s) => { const n = typeof s === "string" ? $(s) : s; if (!n) throw new Error("no existe: " + s); n.dispatchEvent(new w.MouseEvent("click", { bubbles: true })); };
+  const click = (s) => { const n = typeof s === "string" ? $(s) : s; if (!n) throw new Error("no existe: " + s); n.dispatchEvent(new w.MouseEvent("click", { bubbles: true, cancelable: true })); };
   const type = (s, v) => { const n = $(s); if (!n) throw new Error("no existe: " + s); n.value = v; n.dispatchEvent(new w.Event("input", { bubbles: true })); n.dispatchEvent(new w.Event("change", { bubbles: true })); };
   const text = () => d.body.textContent.replace(/\s+/g, " ");
   const res = [];
