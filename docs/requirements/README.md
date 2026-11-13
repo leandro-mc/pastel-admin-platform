@@ -32,7 +32,7 @@ cd docs/requirements/prototype-tests && npm install && npm test
 ```
 | Qué | Resultado |
 |---|---|
-| Interfaz y lógica de los **7** prototipos con jsdom (por rol, incluyendo lo que **no** debe ver cada rol) + algoritmo de reparto de Cosecha + motor de dinero y reglas de Balance (casos dorados G01–G41) + lógica de fechas de Brisa (V1–V10, AC1–AC7) | 398 comprobaciones (202 + 66 de Brisa + 130 de Balance) |
+| Interfaz y lógica de los **7** prototipos con jsdom (por rol, incluyendo lo que **no** debe ver cada rol) + algoritmo de reparto de Cosecha + motor de dinero y reglas de Balance (casos dorados G01–G41) + lógica de fechas de Brisa (V1–V10, AC1–AC7) | 408 comprobaciones (202 + 66 de Brisa + 140 de Balance) |
 | Contraste WCAG de las paletas en claro y oscuro (incluye componentes: bordes, barras, foco) | 215/215 pares |
 | Reglas duras de diseño: sin morado ni símbolos de IA | 32 archivos de prototipo |
 | Cada «captura» de las guías abre en su rol y estado | 25/25 |

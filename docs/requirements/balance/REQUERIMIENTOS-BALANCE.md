@@ -20,6 +20,8 @@
 5. **El ingreso es una conversación, no un trámite.** Enlace + código de 4 dígitos, con una página que explica qué hacer a quien **no tiene cuenta** (el obstáculo principal de adopción en esta categoría; ver investigación §3).
 6. **Mobile primero.** Los gastos se registran en la calle: pestañas inferiores, botón flotante «Registrar gasto», cifras grandes y táctiles.
 
+7. **Todo lo útil del prototipo original se conserva** (§12b): resumen por participante, **gestión de gastos con borrador y guardado atómico** (la hoja tipo Excel), totales «Cuadra», «Por qué queda saldado», grupos con filtros y ayuda. El diseño nuevo cambia la presentación; **no** se pierde funcionalidad.
+
 **Hallazgos de la v3 (detalle en `../DECISIONES-Y-HALLAZGOS.md`):**
 - **El inventario dice «41 códigos ISO» pero su tabla trae 40.** Se implementaron los 40; falta confirmar si se omitió uno.
 - **El motor de dinero reproduce exactamente los resultados esperados** de G01–G41, incluido G26 (20 integrantes, 19 pagos) y las propiedades en 6 000 escenarios aleatorios (partes y saldos exactos, a lo sumo *n−1* pagos, independiente del orden).
@@ -89,44 +91,51 @@ Seis situaciones (rol de la barra de desarrollo). Personas simuladas y entrevist
 
 ## 5. Experiencia (pantallas)
 
+> **Fuentes del diseño:** la investigación de este proyecto (situación personal primero, saldos en palabras, recibo, sin juicio) **y** el prototipo original de Balance (`referencia/balance-prototipo-original.html`), del que se rescataron todas las funciones útiles (tabla de paridad en §12b). La identidad visual es la de esta investigación; la funcionalidad incluye lo del original.
+
 ### 5.1 Estructura
-**Escritorio:** barra lateral «Sus grupos» + contenido; encabezado de grupo con chips (Abierto/Cerrado, `CRC · ₡`, personas, su rol), tarjeta **«Su situación»**, pestañas **Gastos · Saldos · Liquidar · Personas · Ajustes** (esta solo para quien administra). **Móvil:** pestañas inferiores (4 o 5) y botón flotante **«Registrar gasto»**; el botón del encabezado se oculta para no duplicarlo.
+**Escritorio:** barra lateral «Sus grupos» con «Nuevo grupo», «Tengo un enlace» y «Cómo funciona»; encabezado de grupo con chips (Abierto/Cerrado, `CRC · ₡`, zona horaria, personas, su rol) y la tarjeta **«Su situación»**; pestañas **Resumen · Gastos · Saldos · Liquidar · Personas · Gestión de gastos · Ajustes** (las dos últimas, solo administración; se recorren con las flechas). **Móvil:** cinco pestañas inferiores (Resumen, Gastos, Saldos, Liquidar, Personas), botón flotante «Registrar gasto» y, para administración, accesos a «Gestión de gastos» y «Ajustes» en el encabezado.
 
 ### 5.2 Sus grupos
-Tarjetas con nombre, descripción, estado (icono **y** texto), moneda, personas y **su situación**. Acciones: «Nuevo grupo» y «Tengo un enlace». Estado vacío con esos dos caminos.
+Resumen («3 grupos · 2 abiertos · 1 cerrado»), filtros **Todos / Abiertos / Cerrados** con conteos y **búsqueda** por nombre o descripción. Cada tarjeta: estado (icono **y** texto), moneda, **total de gastos**, cantidad, participantes (iniciales) y **su situación**. Estado vacío con dos caminos (crear o abrir un enlace) y acceso a «Cómo funciona».
 
-### 5.3 Gastos
-Dos vistas sobre los mismos datos, con **filtros comunes**.
+### 5.3 Resumen (por participante)
+Una vista de conjunto: **«Gastos y saldos por participante»** con un acordeón por persona (total pagado, parte asignada y saldo **en palabras y cifra**); al abrirlo se ven **solo sus gastos**, con «Editar/Eliminar» según el rol y «Ver en Gastos». A su lado, la **vista previa de la liquidación** (las 3 primeras transferencias, «y N más») con enlaces a Gastos, Saldos y Liquidar. Es el «Detalles» del original.
 
-**Filtros (todas las personas):** buscar por texto (sin distinguir tildes), **quién pagó**, rango de fechas **desde/hasta** y orden (fecha, monto o registro). Un resumen dice «Mostrando N de M gastos · suma ₡X» y, al filtrar por una persona, «Beto pagó ₡X de ₡Y en total». «Ver sus gastos» en **Saldos** y **Personas** lleva a Gastos ya filtrado por esa persona (el «Detalles» del SaldApp original).
+### 5.4 Gastos (lista con filtros)
+**Filtros para todas las personas:** buscar por texto (sin distinguir tildes); **«Pagó»**: todas, **pagados por mí**, **pagados por otras personas** o una persona concreta; rango de fechas **desde/hasta**; orden por **fecha, monto o descripción A–Z/Z–A**. Un resumen dice «Mostrando N de M gastos · suma ₡X» y, al filtrar por una persona, «Beto pagó ₡X de ₡Y en total». «Ver sus gastos» en **Saldos** y **Personas** lleva aquí ya filtrado. Cada fila: descripción, «Pagó X · fecha», monto y las acciones que la persona **puede** hacer (un miembro, solo en los suyos). Estado vacío con el primer paso; grupo cerrado: aviso y «Reabrir el grupo».
 
-**Lista:** todos los gastos, del más reciente al más antiguo (empate por orden de registro). Cada fila: descripción, «Pagó X · fecha», monto y las acciones **que la persona puede hacer** (un miembro, solo en los suyos). Estado vacío con el primer paso. Grupo cerrado: aviso y, para quien administra, «Reabrir el grupo».
+**Registrar/editar un gasto (diálogo):** descripción (4–500), **monto** con sufijo de moneda y teclado numérico/decimal, **pagador** (administración elige a cualquiera; un miembro solo se tiene a sí mismo, bloqueado y explicado) y **fecha** (hoy en la zona del grupo, editable, D7). Errores junto al campo, con icono y texto. Los diálogos atrapan el foco y se cierran con Esc.
 
-**Hoja de gastos (solo administración, grupo abierto):** vista tipo hoja de cálculo para **registrar, editar y eliminar muchos gastos sin abrir un formulario por cada uno** (inventario: el administrador gestiona los gastos de todo el grupo).
-- **Editar en la celda:** fecha, descripción, quién pagó y monto; **Enter** guarda y baja a la fila siguiente, **Tab** avanza, **Esc** deshace la celda; un valor inválido **no se guarda**, marca la celda y dice por qué.
-- **Fila nueva al final:** **Enter** agrega y conserva fecha y pagador para seguir capturando; si falta algo, marca el campo y lo dice.
-- **Eliminar:** un clic por fila o **selección múltiple**; en ambos casos con **«Deshacer»** (sin diálogo por cada borrado).
-- **Pegar desde Excel** en la fila nueva (fecha, descripción, pagó, monto; encabezado opcional; fecha ISO o DD/MM/AAAA; pagador por nombre): se revisan **todas** las filas y, si alguna falla, **no se agrega ninguna** (todo o nada); si todas son válidas se pide confirmar y se puede deshacer.
-- Total mostrado y resumen del grupo se actualizan al instante; respeta los filtros; todo queda en el **historial**. Pensada para pantallas grandes (en móvil se usa la lista).
+### 5.5 Gestión de gastos (solo administración): hoja con borrador y guardado atómico
+Vista tipo hoja de cálculo para **cargar, corregir y eliminar muchos gastos sin abrir un formulario por cada uno**. Sigue el modelo del prototipo original, porque protege la integridad de los datos:
+- **Borrador:** nada cambia en los saldos hasta pulsar **«Guardar cambios»**; hasta entonces se ve «Hay cambios sin guardar» y el total de la tabla se recalcula al instante.
+- **Guardado atómico:** al guardar se validan **todas** las filas; si una celda es inválida **no se guarda nada**, se marcan las celdas con su mensaje y se avisa. «Descartar» recupera lo guardado.
+- **Filas:** «Agregar fila» (arriba, con la fecha de hoy y quien paga por defecto, foco en la descripción), papelera por fila y **selección múltiple**; quitar una fila es parte del borrador (con «Deshacer»).
+- **Teclado y Excel (añadidos de esta iteración):** Enter pasa a la fila de abajo y, en el monto de una fila nueva, **agrega otra** (carga continua); las flechas arriba y abajo cambian de fila; Esc deshace la celda; se pueden **pegar filas desde Excel** (fecha, descripción, pagó, monto; encabezado opcional; fecha ISO o DD/MM/AAAA; pagador por nombre): si una falla, no se agrega ninguna.
+- **Aviso al salir con cambios sin guardar** (clic en otra pestaña, enlaces, atrás del navegador y cierre de la página): «Seguir editando», «Descartar y salir» o «Guardar y continuar» (si hay errores no sale).
+- Tras guardar: aviso «Cambios guardados… **Deshacer**» (restaura el estado anterior); el historial registra «nuevos, modificados y eliminados».
+- **Grupo cerrado:** se consulta, pero los campos y «Agregar fila» quedan deshabilitados y se ofrece «Reabrir el grupo». Pensada para pantallas grandes (en móvil se usan la lista y el diálogo).
 
-**Registrar/editar gasto (diálogo, para cualquier persona con permiso):** descripción (4–500), **monto** con sufijo de moneda y teclado numérico/decimal, **pagador** (quien administra elige a cualquiera; un miembro solo se tiene a sí mismo, bloqueado y explicado), **fecha** (por defecto hoy en la zona del grupo, editable, D7). Errores junto al campo, con icono y texto.
+### 5.6 Saldos
+Franja **Total de gastos · Por recibir · Por pagar**; una fila por persona con inicial, nombre, «#n en el orden de ingreso · pagó X · su parte Y», **saldo en palabras y cifra**, **barra con eje central** (decorativa, `aria-hidden`) y «Ver sus gastos»; **fila de totales** (total pagado, parte asignada y saldo neto) con la comprobación **«Cuadra»** (el saldo neto es cero). Si el reparto deja unidades mínimas sobrantes, un aviso explica que se asignan por orden de ingreso y que las partes suman exacto.
 
-### 5.4 Saldos
-Una fila por persona: inicial, nombre, «#n en el orden de ingreso · pagó X · su parte Y», saldo **en palabras y cifra** y una **barra con eje central** (a la izquierda lo que debe, a la derecha lo que le deben; decorativa, `aria-hidden`). Si el reparto deja unidades mínimas sobrantes, un aviso explica que se asignan por orden de ingreso y que las partes suman exacto.
+### 5.7 Liquidar
+**Recibo**: «Liquidación sugerida» (o «Liquidación (grupo cerrado)», D7), número de pagos, cada pago como «Elena le paga a usted ₡70 596,15» con **los de la persona resaltados**, «Copiar monto» en los propios y «Total que se mueve» con código de moneda. Junto al recibo, **«Por qué queda saldado»**: una explicación por persona (pagó X, su parte era Y, debe recibir o le falta aportar Z, con sus transferencias, su total y la marca **«Cubierto»**) que permite comprobar el número (nacida del original). Debajo: *Balance no registra pagos; la lista se recalcula con cada cambio y es la misma para todas las personas.* Estados: sin gastos y cuentas claras.
 
-### 5.5 Liquidar
-**Recibo**: «Liquidación sugerida» (o «Liquidación (grupo cerrado)», D7), número de pagos, cada pago como «Elena le paga a usted ₡70 596,15» con **los de la persona resaltados**, «Copiar monto» en los pagos propios y «Total que se mueve» con código de moneda. Debajo: *Balance no registra pagos; la lista se recalcula con cada cambio y es la misma para todas las personas del grupo.* Estados: sin gastos («Todavía no hay nada que liquidar») y cuentas claras.
+### 5.8 Personas
+Lista en **orden de ingreso** (decide los centavos sobrantes; el primero se marca «se unió primero») con rol y «Ver gastos». Administración ve las acciones (nombrar/quitar administrador, quitar) y el **cuadro de invitación**: enlace y código, **«Copiar enlace y código»** (mensaje listo para compartir), solo el enlace, solo el código y «Regenerar» con confirmación. Quien **no** administra ve «¿Necesita invitar a alguien?» con los nombres de quienes pueden hacerlo. Todas las personas ven «Salir del grupo». Las acciones bloqueadas por invariantes **se intentan y se explican** (tiene gastos, última administración).
 
-### 5.6 Personas
-Lista en **orden de ingreso** (decide los centavos sobrantes) con rol; quien administra ve acciones (nombrar/quitar administrador, quitar) y el **cuadro de enlace y código** (copiar, regenerar con confirmación). Todas las personas ven «Salir del grupo». Las acciones bloqueadas por invariantes **se intentan y se explican** (tiene gastos, último administrador).
-
-### 5.7 Ajustes (solo administración)
+### 5.9 Ajustes (solo administración)
 Nombre, descripción, **zona horaria** (D9), **moneda** (cambio sin conversión con aviso y bloqueo por decimales incompatibles, D8), cerrar/reabrir, borrar (solo sin gastos) e **historial**. Quien no administra y llega por URL ve «Sin permiso» con el motivo y los nombres de quienes administran.
 
-### 5.8 Crear grupo y entrar a uno
+### 5.10 Crear grupo y entrar a uno
 **Crear:** nombre obligatorio, descripción, moneda (15 más usadas primero, luego todas, con código · símbolo · nombre), zona horaria; la persona queda como administradora y se abre «Personas» con su enlace y código. **Entrar:** enlace + código de 4 dígitos (teclado numérico); **error genérico** idéntico para enlace o código inválidos o regenerados; **5 fallos → pausa de 15 minutos** con mensaje; éxito → miembro, al final del orden de ingreso.
 
-### 5.9 Estados por situación
+### 5.11 Cómo funciona
+Página corta (`#/ayuda`, también desde «Sus grupos») con **4 pasos** (crear el grupo, registrar gastos, revisar saldos, consultar la liquidación) y los **principios importantes**: la suma siempre coincide, los grupos son privados y cerrar no elimina.
+
+### 5.12 Estados por situación
 Sin sesión, sin acceso, no encontrado (404 para no miembros), sin permiso, error de carga, vacío. Todos con acción o explicación.
 
 ---
@@ -151,9 +160,14 @@ Sin sesión, sin acceso, no encontrado (404 para no miembros), sin permiso, erro
 | **BL-14** | «**Copiar monto**» en los pagos propios (sin registrar pagos) | Investigación (SINPE) | **Propuesta v3** (no aprobada) | UI |
 | **BL-15** | Historial de cambios del grupo (quién y qué) | D7 (auditoría) | Obligatorio | UI |
 | **BL-16** | Edición simultánea → 409 por versión | §3.2 / ficha | Obligatorio en producción | **No prototipado** |
-| **BL-18** | **Hoja de gastos** para administración: editar en la celda, fila nueva con Enter, eliminar (uno o varios) con «Deshacer», pegar filas desde Excel (todo o nada); mismos permisos y validaciones que el formulario | Revisión del propietario (función del original: gestionar muchos gastos sin formulario) | Obligatorio | `t-balance.js` (hoja, 22 comprobaciones junto con filtros) |
-| **BL-19** | **Filtros de gastos** (texto, quién pagó, fechas, orden) en lista y hoja, y **vista de los gastos de una sola persona** desde Saldos y Personas | Revisión del propietario; «Detalles» del SaldApp | Obligatorio | `t-balance.js` |
+| **BL-18** | **Gestión de gastos** (administración): hoja con **borrador y guardado atómico**, validación de todas las filas, descartar, aviso de cambios sin guardar, total de la tabla y «Deshacer» el guardado; más teclado, selección múltiple y **pegar desde Excel (todo o nada)** | Prototipo original («Gestión integral de gastos») + revisión del propietario | Obligatorio | `t-balance.js` (borrador, errores, guardado, descarte, aviso, pegado, grupo cerrado) |
+| **BL-19** | **Filtros de gastos**: texto, quién pagó (incluye «pagados por mí/otras personas»), fechas, orden (fecha, monto, A–Z) y **vista de los gastos de una sola persona** desde Resumen, Saldos y Personas | Prototipo original + revisión del propietario | Obligatorio | `t-balance.js` |
 | **BL-17** | Accesibilidad: diálogos con rol y foco, Esc, texto ampliable, nunca solo color, 320 px | `AGENTS.md` | Obligatorio | UI; contraste |
+| **BL-20** | **Resumen por participante** (acordeón con sus gastos y su saldo) y vista previa de la liquidación | Prototipo original | Obligatorio | `t-balance.js` |
+| **BL-21** | **Saldos** con franja Total/Por recibir/Por pagar y fila de totales con «Cuadra» | Prototipo original | Obligatorio | `t-balance.js` |
+| **BL-22** | **«Por qué queda saldado»**: explicación por persona en Liquidar | Prototipo original | Obligatorio | `t-balance.js` |
+| **BL-23** | **Sus grupos** con resumen, filtros Todos/Abiertos/Cerrados y búsqueda; tarjetas con total, cantidad y participantes | Prototipo original | Obligatorio | `t-balance.js` |
+| **BL-24** | **Cómo funciona** (ayuda) y, para quien no administra, cómo invitar; «Copiar enlace y código» | Prototipo original | Obligatorio | `t-balance.js` |
 
 ---
 
@@ -213,26 +227,28 @@ Tiempo para **registrar el primer gasto** (< 30 s); proporción de invitaciones 
 
 ---
 
-## 12b. Paridad de funciones con SaldApp (lo que el original hacía)
+## 12b. Paridad de funciones con el prototipo original
 
-Tabla creada tras una revisión del propietario que detectó dos pérdidas (la gestión masiva de gastos y los filtros por persona). Cada función del original (inventario §10) con su destino en Balance:
+Cruce hecho con el archivo `referencia/balance-prototipo-original.html` (el prototipo original, sin investigación), que el propietario aportó después de que una primera versión del rediseño perdiera funciones. Cada función del original con su destino:
 
-| Función del original | En Balance | Estado |
+| Función del prototipo original | En Balance | Estado |
 |---|---|---|
-| Crear grupo (moneda, nombre, descripción, **fecha de inicio**) | `#/nuevo`: moneda ISO, nombre, descripción, zona horaria. **Falta la fecha de inicio** | **Por confirmar** (§15) |
-| Agregar integrantes escribiendo un nombre | Se ingresa con enlace y código con cuenta de Pastel (D3) | Decidido |
-| Agregar gasto (formulario: pagó, descripción, monto, fecha) | Diálogo con el mismo contenido + validación (D4) | Hecho |
-| **Gestionar muchos gastos con rapidez** | **Hoja de gastos** (BL-18) | **Recuperado en esta revisión** |
-| **Ver los gastos de una persona** («Detalles» del integrante) | Filtro «Pagó» y «Ver sus gastos» (BL-19) | **Recuperado en esta revisión** |
-| Editar y eliminar gasto (con confirmación) | Lista (con confirmación) y hoja (con «Deshacer»); miembros solo los propios | Hecho |
-| Tabla de integrantes: gastado y balance, **con fila de totales** | Saldos con paga/parte/saldo por persona y **total pagado y suma de saldos (cero)** | Hecho |
-| «Correspondiente p/p» (parte por persona) | «Su parte» y la parte de cada persona en Saldos | Hecho |
-| Liquidación estimada y liquidación final (grupo cerrado) | «Liquidar» / «Liquidación (grupo cerrado)» (D2, D7) | Hecho |
-| Cerrar grupo (irreversible) | Cerrar y **reabrir** (D7) | Mejorado |
-| Editar grupo (nombre, descripción, moneda) | Ajustes (administración) | Hecho |
-| **Fechas de inicio y de cierre del grupo** (se muestran en el detalle) | La fecha de cierre no se muestra; el historial registra cuándo se cerró | **Por confirmar** (§15) |
-| Ingresar a un grupo con el ID | Enlace + código de 4 dígitos | Decidido (D3) |
-| Exportar | No existía; no se agrega | — |
+| Sus grupos: resumen, filtros Todos/Abiertos/Cerrados y búsqueda; tarjetas con total, cantidad y participantes | Igual (§5.2) | **Recuperado** |
+| Resumen del grupo: estadísticas, acordeón por participante con sus gastos y saldo, vista previa de la liquidación | Resumen (§5.3); las estadísticas están en «Su situación» | **Recuperado** |
+| Gastos: buscar, «Mostrar» (todos / pagados por mí / por otras), orden por fecha, importe y A–Z | Igual (§5.4) + filtros por persona y por fechas | **Recuperado y ampliado** |
+| Saldos: franja, tabla con totales y «Cuadra», nota de unidades sobrantes | Igual (§5.6) + barra con eje | **Recuperado y ampliado** |
+| Liquidación: transferencias, total y **«Por qué queda saldado»** por persona | Igual (§5.7) + pagos propios resaltados y «Copiar monto» | **Recuperado y ampliado** |
+| Participantes: roles, cambio de rol, invitación con copiar y regenerar, ayuda a quien no administra | Igual (§5.8) + quitar participantes y salir | **Recuperado y ampliado** |
+| **Gestión integral de gastos** (hoja con borrador, guardado atómico y aviso de cambios sin guardar) | Gestión de gastos (§5.5) | **Recuperado y ampliado** (teclado, pegar desde Excel, selección múltiple, deshacer) |
+| Configuración: nombre, descripción, moneda, zona horaria, cerrar/reabrir, borrar sin gastos | Ajustes (§5.9) + historial | Hecho |
+| Cómo funciona (ayuda) | §5.11 | **Recuperado** |
+| Crear grupo (modal) | Página con validación (§5.10) | Hecho |
+| Pestañas con flechas, Inicio y Fin; diálogos con foco atrapado | Igual | **Recuperado** |
+| Cuenta (nombre y correo) y tema claro/oscuro dentro de la app | Los gobierna la plataforma Pastel | No aplica |
+| Icono de categoría según la descripción del gasto | No se rescata: es decorativo y «juzga» el gasto | Descartado |
+| Avisos «datos de demostración» y pie con texto de reparto | Reemplazados por la barra de desarrollo | No aplica |
+
+**Del SaldApp real (inventario), por confirmar:** la **fecha de inicio** del grupo al crearlo y la **fecha de cierre** en el detalle (el prototipo original no las tiene; SaldApp sí).
 
 ## 13. Qué demuestra el prototipo (y qué no)
 
@@ -258,9 +274,8 @@ Se suman a las de la §12.11 del inventario. **Decide el propietario.**
 
 ## 15. Preguntas abiertas
 
-0. **Paridad (§12b):** ¿se muestra la **fecha de inicio** del grupo al crearlo y la **fecha de cierre** en el detalle, como en SaldApp? ¿Hay otra función del original que usted use y no figure aquí? (El inventario salió del código y **no registró** ningún panel estilo Excel: la hoja de gastos se construyó según su descripción; conviene que la compare con el original.)
-0b. **Hoja de gastos:** ¿debe existir también para miembros, limitada a sus propios gastos? ¿Hacen falta más columnas (categoría, notas) o importar un CSV?
-
+0. **Fecha de inicio y de cierre del grupo** (existían en el SaldApp real, no en el prototipo original): ¿se muestran?
+0b. **Gestión de gastos para miembros:** hoy solo administración (es lo que describe el original). ¿Debe existir también para miembros, limitada a sus propios gastos? ¿Hacen falta más columnas (categoría, notas) o importar un CSV?
 1. **¿41 o 40 monedas?** ¿Qué código falta en la tabla de la §12.8?
 2. **Cuenta obligatoria (D3):** ¿se acepta la fricción medida con la página de invitación, o se evalúa un acceso «solo lectura» por enlace?
 3. **Equidad (D6):** ¿se mantiene «partes iguales sin excepción» en el MVP y se mide si los grupos se parten en dos?

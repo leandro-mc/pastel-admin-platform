@@ -35,7 +35,7 @@ Matemáticamente, dividir gastos es fácil. Lo difícil es **la conversación**:
 ## 5. Personas y entrevistas simuladas [H]
 
 ### 5.1 Ana, 29 años — organiza el paseo (rol: administra)
-*«Siempre me toca llevar las cuentas y al final me da pena cobrar.»* Quiere **una lista que no sea suya**: que el número salga de la app y no de ella. Necesita invitar sin explicar cinco veces. → regla D1/D2 visible, enlace + código, «Una lista para todos».
+*«Siempre me toca llevar las cuentas y al final me da pena cobrar.»* Quiere **una lista que no sea suya**: que el número salga de la app y no de ella. Necesita invitar sin explicar cinco veces. → regla D1/D2 visible, enlace + código, «Una lista para todos». Al volver de un viaje necesita **cargar muchos gastos de una vez** (a veces decenas) y corregir errores sin abrir un formulario por cada uno → **Gestión de gastos** con borrador y guardado atómico (prototipo original), con pegado desde Excel.
 
 ### 5.2 Beto, 31 años — miembro, paga poco
 Compró el súper y pagó la gasolina un día; el resto lo pagaron otras personas. Quiere **ver todo** (transparencia) pero **no tocar** lo ajeno. A veces se equivoca de monto. → ve todos los gastos, edita solo los suyos; validación junto al campo.
@@ -64,6 +64,8 @@ Quiere que el estado «sin acceso» sea claro y **no genere soporte**. → 403 c
 | **Liquidación como recibo** | Objeto conocido; pasos concretos | No registra pagos (D6) |
 | **Copiar monto** | Evita errores al teclear en SINPE | Propuesta no aprobada; no guarda datos bancarios |
 | **Centavos con explicación** | «Sobran N unidades mínimas… las partes suman exacto» | Solo aparece si sobran |
+| **Gestión de gastos con borrador** | Carga y corrige muchos gastos en una hoja; nada cambia hasta «Guardar» y, si una celda es inválida, no se guarda nada | Es para pantallas grandes y administración; el diálogo individual sigue para el día a día |
+| **«Por qué queda saldado»** | Cada persona comprueba su número (pagó, parte, recibe o aporta) | Es una explicación, no una confirmación de pagos (D6) |
 | **Pagos propios resaltados** | La persona encuentra «lo mío» sin leer todo | Los demás siguen visibles (transparencia) |
 | **Página de invitación** | Reduce abandono de quien no tiene cuenta | No cambia D3 |
 | **Bloqueo por intentos** | Protege el código de 4 dígitos (10 000 combinaciones) | 5 fallos por cuenta y enlace, 15 min |
