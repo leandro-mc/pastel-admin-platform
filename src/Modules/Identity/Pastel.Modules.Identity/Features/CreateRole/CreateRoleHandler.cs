@@ -45,6 +45,13 @@ internal sealed partial class CreateRoleHandler(IdentityDbContext db, IAuditTrai
         {
             return IdentityErrors.UnknownPermissions;
         }
+        if (permissions.Any(permission => permission.Code == IdentityPermissions.DeveloperMode))
+        {
+            // El modo desarrollador se concede a cuentas concretas, no a roles; la guardia audita la denegación.
+            var developerDenied = await guard.AuthorizeGrantAsync(
+                permissions.Select(x => x.Code).ToArray(), "create_role", null, cancellationToken);
+            return developerDenied ?? IdentityErrors.PrivilegeDeveloperModeIndividualOnly;
+        }
         if (permissions.Any(permission => !PlatformRoleScope.IsPlatformPermissionCode(permission.Code)))
         {
             return IdentityErrors.PrivilegeAppScopeRequired;

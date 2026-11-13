@@ -28,16 +28,48 @@ export const strings = {
 
 export const shellStrings = {
   brand: "Pastel",
+  workspaceName: "Pastel Workspace",
   home: "Inicio",
   modules: "Aplicaciones",
+  chooseApp: "Elegir aplicación",
+  /** Prefijo oculto del control de app: el nombre accesible sale del contenido visible (WCAG 2.5.3). */
+  switchAppPrefix: "Cambiar de aplicación. Actual: ",
+  sidebar: "Menú de Pastel",
+  accountPrefix: "Cuenta: ",
+  brandHome: "Pastel, ir al inicio de la aplicación",
+  collapseNav: "Contraer menú",
+  expandNav: "Expandir menú",
+  moreNav: "Más",
+  moreNavLabel: "Más secciones",
   help: {
     button: "Ayuda",
     title: "¿Necesita ayuda?",
     body: "Si algo no funciona o necesita acceso a una aplicación, comuníquese con administración. Si ve un código de soporte, indíquelo al escribir.",
   },
+  preferences: {
+    menu: "Preferencias",
+    appearance: "Apariencia",
+    themeToDark: "Activar modo oscuro",
+    themeToLight: "Activar modo claro",
+  },
+  dev: {
+    menu: "Ver como",
+    real: "Mi acceso real",
+    noRole: "Sin rol en esta aplicación",
+    roles: "Roles de la aplicación",
+    loading: "Cargando roles…",
+    error: "No se pudieron cargar los roles.",
+    retry: "Reintentar",
+    banner: (role: string, app: string) =>
+      `Vista previa como «${role}» en ${app}.`,
+    bannerNote:
+      "Cambia solo lo que se muestra; los permisos y los datos son los de su cuenta.",
+    exit: "Salir de la vista previa",
+  },
   account: {
     menu: "Cuenta",
     mine: "Mi cuenta",
+    security: "Seguridad",
     profileDescription: "Perfil y seguridad",
     theme: "Tema",
     light: "Claro",

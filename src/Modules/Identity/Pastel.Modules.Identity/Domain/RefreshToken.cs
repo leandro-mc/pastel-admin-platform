@@ -2,7 +2,7 @@ namespace Pastel.Modules.Identity.Domain;
 
 internal sealed class RefreshToken
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public Guid UserId { get; set; }
     public AppUser User { get; set; } = null!;
     public required string TokenHash { get; set; }

@@ -2,7 +2,7 @@ namespace Pastel.Modules.Identity.Domain;
 
 internal sealed class AppUser
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public required string Email { get; set; }
     public required string NormalizedEmail { get; set; }
     public required string DisplayName { get; set; }

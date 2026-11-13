@@ -24,7 +24,7 @@ Roles sugeridos (se crean una sola vez si no existen; nunca se sobrescriben):
 - `Cosecha — Gestor`: todos los permisos excepto `cosecha.orders.read.own`
 - `Cosecha — Comprador`: `cosecha.access`, `cosecha.orders.read.own`
 
-El rol `Administrator` recibe todos los permisos al sincronizar el catálogo.
+El rol `Administrator` no recibe estos permisos al sincronizar el catálogo; solo Owner/Superuser asigna los roles de Cosecha (`PermissionGrantPolicy.OwnerGrantsOnly`).
 
 ## Reglas de servidor (de la ficha)
 

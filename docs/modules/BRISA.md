@@ -13,7 +13,7 @@ Inicial: `brisa.access` (usar el módulo) y `brisa.items.manage` (sobre **sus pr
 ## 3. Principios de la migración
 1. **Paridad primero:** misma funcionalidad y reglas; cualquier cambio de comportamiento se registra aparte y se decide con el propietario.
 2. **Preparado para sincronización (sin implementarla):**
-   - Identificadores `Guid` v7 generados por el cliente; creación idempotente.
+   - Identificadores `Guid` (hoy los asigna el servidor en v7; ver `docs/ARCHITECTURE.md` §5). El diseño no debe impedir que el cliente aporte el identificador al crear, con creación idempotente; eso se decide e implementa junto con la sincronización, porque hoy no existe ni endpoint ni generador en el cliente.
    - `UpdatedAt`, borrado lógico (`DeletedAt`) y token de concurrencia en cada entidad.
    - Endpoints de lectura incremental (`?updatedSince=`) y escritura por lotes diseñables después; documentar el modelo de conflicto propuesto (último cambio gana por campo, o por entidad) en `docs/DECISIONS.md`, sin construir el motor.
 3. **Datos del usuario:** estrategia de importación desde la base o exportación de la app Android (formato a definir en el inventario), con respaldo, validación de integridad y reversión.

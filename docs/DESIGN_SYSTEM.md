@@ -2,7 +2,7 @@
 
 Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **todavía no está definida**: se determinará con la investigación y los prototipos en curso, y este documento se ampliará entonces.
 
-**Qué obliga y qué orienta:** solo la sección 1 (reglas duras) **bloquea**. El resto son **guías** para construir pantallas coherentes y accesibles sin burocracia: se siguen por criterio, no se verifican pantalla por pantalla en la Etapa 1, y su revisión sistemática es de la Etapa 2 (`docs/TESTING.md`).
+**Qué obliga y qué orienta:** solo la sección 1 (reglas duras) **bloquea**, además de la sección 9 para quien toque el shell compartido (zona compartida, con autorización expresa del propietario; ver `AGENTS.md` §8). El resto son **guías** para construir pantallas coherentes y accesibles sin burocracia: se siguen por criterio, no se verifican pantalla por pantalla en la Etapa 1, y su revisión sistemática es de la Etapa 2 (`docs/TESTING.md`).
 
 ## 1. Reglas duras (no negociables)
 - **No usar morado ni sus derivados**, ni nada de lo habitual del diseño generado por IA: colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA.
@@ -21,7 +21,7 @@ Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **
 - Referencia: base 16 px y texto de lectura sin bajar de 16 px; escala 12/14/16/18/20/24/30/36; interlineado 1,5 en párrafos y 1,25 en títulos; ancho de lectura ≈ 70 caracteres; espaciado en múltiplos de 4 px. Una aplicación puede apartarse si su identidad visual lo pide.
 
 ## 4. Estructura y componentes (guía)
-- **Navegación:** sidebar en escritorio y navegación táctil equivalente en móvil. La app actual se distingue con icono, texto y `aria-current="page"`, no solo con color. No arrastrar acciones de un módulo a otro.
+- **Navegación:** sidebar visible con texto en escritorio y barra inferior visible en móvil (§9). La app actual se distingue con icono, texto y `aria-current="page"`, no solo con color. No arrastrar acciones de un módulo a otro.
 - **Tablas:** en móvil conviene convertirlas en listas de tarjetas o priorizar los campos clave.
 - Los componentes compartidos viven en `web/src/core/ui` con variantes explícitas; se prefieren a armar a mano un `div` con `role="dialog"`. Si una pantalla necesita algo que el kit no ofrece, constrúyala y, si se repite, súbalo al kit.
 
@@ -58,3 +58,57 @@ Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **
 ## 8. Verificación
 - **Etapa 1 (ahora):** `check-design` (reglas duras) y lo que ya existe (axe en las pruebas de componentes, Prettier/ESLint). **No** se exige un recorrido manual por cada pantalla nueva.
 - **Etapa 2:** revisión visual y de accesibilidad sistemática (solo teclado, 320 px, zoom 200 %, modo oscuro, lector de pantalla en los flujos principales) y pruebas visuales automatizadas si el propietario las pide.
+- Shell (solo si se toca; manual y opcional en la Etapa 1): `node scripts/shell-visual.mjs audit` (axe del shell, contraste por app y tema, desbordes) y `gallery` (capturas); resultados y límites en `docs/design/SHELL_VALIDATION.md`.
+
+## 9. Shell compartido (sidebar, barra superior y navegación móvil)
+
+Código: `web/src/app/shell` y `web/src/core/design/components/shell*.css`. Justificación y fuentes: `docs/design/SHELL_RESEARCH.md`. Verificación: `docs/design/SHELL_VALIDATION.md`. Es una zona compartida: cambiarla exige autorización expresa del propietario (`AGENTS.md` §8). **El shell es un marco, no una función: el contenido es el producto.**
+
+### 9.1 Estructura
+| Región | Escritorio (≥ 64 rem) | Pantallas estrechas (< 64 rem) |
+|---|---|---|
+| Marca | Arriba de la sidebar, a la altura de la barra superior; vuelve al inicio de la app activa | Se omite (el control de app ocupa su lugar) |
+| Control de app | Un solo control en la sidebar: icono, nombre y descripción de la app, con menú de aplicaciones | Mismo control, compacto, en el extremo inicial de la barra superior |
+| Navegación de la app | Sidebar de 16 rem (riel de 4,5 rem si se pliega; se recuerda), con el botón de plegar **arriba**, junto a la marca (plegada, justo debajo de ella). Un renglón de 44 px por destino | Barra inferior fija con etiqueta: hasta 5 destinos visibles; con más, 4 y «Más». Con menos de 2 no hay barra |
+| Barra superior | Migas reales, selector «Ver como» (solo modo desarrollador), Ayuda, cuenta | Selector «Ver como» (icono), Ayuda (icono) y cuenta (avatar) |
+| Pie | Una línea | Una línea |
+
+La barra superior contiene **solo acciones globales entre aplicaciones** (patrón de Atlassian: lo global arriba, lo propio de la app al lado). Las acciones de una página van en el encabezado de la propia página, nunca en el shell. El tema y el tamaño de texto se fijan una vez, por eso viven en el panel de cuenta (o en «Preferencias» para quien no ha iniciado sesión) y **son controles de icono, no listas de texto**: el tema es un único botón luna/sol, igual que en el inicio de sesión, y el tamaño es una fila de cuatro «A» de tamaño creciente con la elegida marcada. Cada botón muestra su nombre (Pequeño, Normal, Grande, Muy grande) al pasar el cursor o enfocarlo. El cierre de sesión es el último elemento del panel, separado y de ancho completo, con icono y texto.
+
+### 9.2 Qué hereda toda app y qué personaliza
+| Hereda (no se rediseña por app) | Personaliza cada app |
+|---|---|
+| Estructura, geometría, puntos de ruptura, plegado, barra inferior y menús | **Tokens de tema** claro y oscuro (`module-themes.css` o el archivo de la app), incluidos fondo, superficies, bordes y acentos |
+| Landmarks, enlace «Saltar al contenido», foco al `h1`, orden de teclado | Nombre, descripción corta, icono y orden en el manifiesto |
+| Control de app, ayuda, preferencias, cuenta, migas y modo desarrollador | Ítems de navegación: etiquetas, iconos, permisos y, si hay muchos, `group` |
+| Aviso de vista previa y pie | Composición y contenido de sus páginas; tipografía autoalojada; radios mediante `--shell-radius` |
+
+### 9.3 Tokens y geometría
+- El shell **solo lee** tokens semánticos: `--app-bg`, `--surface`, `--surface-raised`, `--sidebar-bg`, `--text`, `--text-secondary`, `--muted`, `--border`, `--border-strong`, `--accent`, `--accent-strong`, `--accent-soft`, `--on-accent`. No define ni impone ningún color: la identidad llega por `data-module` y `data-theme`. Una app puede redefinir cualquiera (incluidos `--app-bg` y `--sidebar-bg`) sin tocar el shell.
+- Geometría como variables con especificidad cero: `--shell-sidebar-width` (16 rem), `--shell-sidebar-rail-width` (4,5 rem), `--shell-topbar-height` (3,5 rem), `--shell-bottomnav-height` (4 rem), `--shell-radius` (0,5 rem). Se redefinen con el selector de la app (`[data-module="brisa"] { --shell-radius: … }`).
+- Los menús y descripciones emergentes se dibujan en un portal fuera del shell: reciben `data-module` con `useShell().moduleCode` para repetir el tema. Cualquier menú nuevo del shell debe hacerlo.
+- Sin degradados, vidrio ni sombras decorativas; la elevación es solo para superficies flotantes (menús, descripciones).
+
+### 9.4 Comportamiento obligatorio
+1. **Navegación visible y con texto** (NN/g). El riel de iconos es una opción recordada, con nombre accesible y descripción emergente; no es el estado por defecto. Nunca una hamburguesa para lo principal.
+2. **Un renglón por destino**: icono y texto, objetivo ≥ 44 px, texto ≥ 12 px. Sin subtítulos, sin mayúsculas espaciadas, sin tarjetas.
+3. **Activo = `aria-current="page"`** más barra de acento, peso y fondo suave; nunca solo color. El ítem activo es el de coincidencia más específica; la raíz del módulo (`to: ""`) coincide exacta. Las pantallas de detalle se declaran en el manifiesto con `alsoActiveOn`; **el shell no inspecciona rutas ni textos de un módulo**.
+4. **Nombre accesible desde el contenido visible** (WCAG 2.5.3): no sobrescribir con `aria-label` un botón que muestra texto; si el texto se oculta en pantallas estrechas, ocultarlo solo visualmente (`sr-only`).
+5. **Foco visible** de 3 px sólidos con `--accent-strong`, ≥ 3:1 sobre los fondos contiguos. `scroll-padding` superior e inferior para que la barra fija no tape el elemento enfocado (WCAG 2.4.11).
+6. **Landmarks**: `aside` con nombre para la sidebar, `nav` con nombre por app, `header`, `main#contenido`, `footer`. Solo una navegación (sidebar o barra inferior) está en el árbol de accesibilidad a la vez.
+7. **Controles de preferencias con icono y nombre emergente**: el nombre accesible sale del propio botón (la «A» es un dibujo, no texto) y la opción elegida no depende solo del color (fondo, contorno y trazo más grueso). **Ayuda siempre en la misma posición** (WCAG 3.2.6). Sin indicadores de estado que no provengan de un dato real consultado.
+8. **El documento se desplaza** (no un contenedor interno); el pie queda al final del contenido.
+9. **Migas** solo con jerarquía real (`handle.crumb`); sin repetir el nombre de la app; en móvil se omiten.
+
+### 9.5 Prueba de eliminación (antes de añadir algo al shell)
+Responda por escrito: ¿qué pregunta de la persona contesta (dónde estoy, a dónde voy, qué puedo hacer globalmente)?, ¿ya existe en otro lugar de la pantalla?, ¿se basa en un dato real?, ¿sigue funcionando sin color? Sin respuesta a la primera, no entra. No sustituya una plantilla genérica por otra: el shell no impone paleta ni tipografía.
+
+### 9.6 Modo desarrollador (vista previa por rol)
+- Permiso `platform.developer.mode`: automático para `Administrator` y `Owner/Superuser`; asignable a cuentas concretas desde Configuración › Usuarios › Accesos; nunca por rol personalizado. Detalle en `docs/SECURITY.md`.
+- Solo **cambia lo que se muestra**: `core/devmode` reemplaza la porción de permisos de la app activa y la entrega por `useAuth()`. Los módulos lo heredan sin conocerlo: **no importan `@/core/devmode`** (lo verifica `check-module-boundaries`), no leen `sessionStorage` ni deciden nada según estar en vista previa.
+- El cliente **nunca envía el rol simulado**; el servidor autoriza con la sesión real. Mientras se simula, las acciones que la cuenta real sí puede ejecutar se ejecutan de verdad (el aviso lo indica). Los datos de la API son los de la cuenta real.
+- Aviso permanente con el rol y salida con un clic; selector «Ver como» en la barra superior solo con el permiso; la elección se guarda por pestaña y por cuenta (solo el nombre del rol).
+
+### 9.7 Cómo adapta una app el shell
+1. Definir sus tokens claros y oscuros (§9.3). 2. Declarar nombre, descripción, icono, `basePath` y `nav` en el manifiesto (`alsoActiveOn` y `group` son opcionales). 3. Nada más: no hay ranuras, ni componentes del shell que reemplazar. Si una app necesita algo que el shell no ofrece, se plantea al propietario; no se bifurca el shell por app.
+

@@ -16,3 +16,6 @@ TestResults/
 
 # Archivos .csn: origen sin determinar, nunca se versionan (ver docs/TESTING.md)
 *.csn
+
+# Salida local de scripts/shell-visual.mjs
+web/test-results/

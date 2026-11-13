@@ -22,6 +22,11 @@ internal sealed record ModuleSummary(
 
 internal sealed record UserPermissionAssignment(Guid PermissionId, string PermissionCode, string PermissionName, PermissionEffect Effect);
 
+/// <summary>Definición de un rol y sus permisos dentro de una aplicación (vista previa del modo desarrollador). Sin personas ni datos.</summary>
+internal sealed record DeveloperRoleView(string Name, string? Description, bool IsSystemRole, IReadOnlyList<string> Permissions);
+
+internal sealed record DeveloperRolesResponse(string App, IReadOnlyList<string> AppPermissions, IReadOnlyList<DeveloperRoleView> Roles);
+
 internal sealed record AuditEntry(
     long Id, Guid? ActorUserId, string? ActorEmail, Guid? TargetUserId, string Action, string Module,
     string? Target, string? DetailsJson, string? IpAddress, string? TraceId, DateTimeOffset CreatedAt);

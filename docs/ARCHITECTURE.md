@@ -106,7 +106,7 @@ public interface IPastelModule
 ```
 
 - **Descubrimiento:** `Pastel.Host` referencia por *glob* de MSBuild los proyectos `src/Modules/*/Pastel.Modules.*.csproj` (excluyendo `.Tests` y `.Contracts`), filtrados por `PastelModules` (por defecto todos; `Identity` siempre). Al arrancar carga los ensamblados `Pastel.Modules.*.dll` y lee `[assembly: PastelModule(...)]`. Agregar un módulo no edita `Program.cs`.
-- **Permisos y roles:** al arrancar, el catálogo declarado por cada módulo se sincroniza de forma idempotente en las tablas de Identity (`Modules`, `Permissions`). Los `SuggestedRoles` se crean solo si no existen; **nunca** se sobrescribe lo que un administrador haya editado. El rol `Administrator` recibe todos los permisos.
+- **Permisos y roles:** al arrancar, el catálogo declarado por cada módulo se sincroniza de forma idempotente en las tablas de Identity (`Modules`, `Permissions`). Los `SuggestedRoles` se crean solo si no existen; **nunca** se sobrescribe lo que un administrador haya editado. El rol `Administrator` recibe solo los permisos generales (panel, `settings.*`, Workspace y modo desarrollador); `Owner/Superuser` recibe todos. Si el producto reserva los permisos de un módulo al propietario, el módulo lo declara con `PermissionGroup.GrantPolicy` (`OwnerGrantsOnly` u `OwnerAccountOnly`) y Identity lo aplica sin nombrar módulos (`SECURITY.md`).
 - **Acceso al módulo:** cada módulo privado declara `<code>.access`; el hub y el router lo usan para mostrar u ocultar el módulo. Los módulos con partes públicas marcan esos endpoints con `.AllowAnonymous()` de forma explícita.
 - **Abstracciones transversales (en `Pastel.Platform`, implementadas por Identity):** `ICurrentUser` (id, nombre, `HasPermission`), `IPermissionEvaluator` (permisos efectivos con caché por petición), `IAuditTrail` (escritura de auditoría con el módulo de origen).
 
@@ -116,7 +116,9 @@ public interface IPastelModule
 - Cada `DbContext`: `HasDefaultSchema("<code>")` y `MigrationsHistoryTable("__EFMigrationsHistory", "<code>")`. Migraciones dentro del proyecto del módulo:
   `dotnet ef migrations add Nombre --project src/Modules/<M>/Pastel.Modules.<M> --startup-project src/Host/Pastel.Host --context <M>DbContext`
 - El host migra en el orden de `IPastelModule.Order`. Se conserva `Database:ApplyMigrationsAtStartup` (con un solo nodo es correcto; con réplicas habría que pasar a un trabajo de migración aparte).
-- Identificadores: `Guid` v7 generados en el cliente o servidor (permite crear offline y sincronizar). Fechas en UTC (`timestamptz`). Dinero en `numeric(18,2)` con moneda explícita.
+- Identificadores: las claves de entidad son `Guid` v7 que asigna el servidor con `Guid.CreateVersion7()` en la propiedad `Id` de la entidad (el orden por tiempo mantiene compactos los índices de PostgreSQL). Lo secreto o impredecible (refresh tokens, token CSRF, contraseñas temporales con `RandomNumberGenerator`; el `jti` del JWT con `Guid.NewGuid()`) no es una clave y sigue siendo aleatorio. Un v7 deja ver su fecha de creación: nunca se usa como secreto ni como credencial, y la autorización no depende de que un identificador sea inadivinable.
+- Identificadores desde el cliente: **hoy no existen**; ningún endpoint acepta un `Id` propuesto por el cliente ni hay generador de GUID en el frontend. Si un módulo lo necesita (p. ej. Brisa al sincronizar sin conexión), lo diseña y documenta en su `MODULE.md` o en `DECISIONS.md`.
+- Fechas en UTC (`timestamptz`). Dinero en `numeric(18,2)` con moneda explícita.
 - Datos con vocación de sincronización móvil (Brisa): `UpdatedAt`, borrado lógico (`DeletedAt`) y token de concurrencia en cada entidad editable.
 
 ## 6. Comunicación entre módulos
@@ -130,7 +132,7 @@ public interface IPastelModule
 - Rutas: `/api/<modulo>/<recurso>`. Plataforma: `/api/auth/*`, `/api/admin/*`.
 - Errores: `application/problem+json` con `title`, `detail` (en español, accionable) y, para validaciones, `errors` por campo. Sin filtrar excepciones internas.
 - Listas: paginación (`page`, `pageSize`, máximo 100) y orden explícito.
-- Escrituras que puedan repetirse (móvil/offline) aceptan un identificador de cliente y son idempotentes.
+- Escrituras que puedan repetirse (móvil/offline): criterio de diseño para cuando un módulo las necesite (identificador de cliente e idempotencia). Hoy ningún endpoint lo implementa; ver §5.
 - Cada endpoint tiene permiso o `.AllowAnonymous()` explícito; las rutas públicas llevan límite de tasa.
 - Zona horaria de presentación: `America/Costa_Rica`. Formatos `es-CR` (ver `DESIGN_SYSTEM.md`).
 
@@ -177,12 +179,14 @@ export default {
   basePath: "/cosecha",
   access: "permission",                 // "public" | "authenticated" | "permission"
   requiredPermission: "cosecha.access",
-  nav: [{ label: "Hoy", to: "", icon: CalendarDays }, ...],
+  nav: [{ label: "Hoy", to: "", icon: CalendarDays }, ...],   // opcionales por ítem: requiredPermission, alsoActiveOn, group
   routes: [{ index: true, lazy: () => import("./pages/TodayPage") }, ...],
 } satisfies ModuleManifest;
 ```
 
 Un plugin de Vite genera el módulo virtual `virtual:pastel-modules` recorriendo `src/modules/*/manifest.ts` y filtrando por `PASTEL_MODULES`. El shell nunca importa un módulo directamente. Con un solo módulo habilitado, `/` redirige a ese módulo y el shell adopta su marca.
+
+**Shell y vista previa por rol.** `web/src/app/shell` dibuja el marco común (sidebar, barra superior, barra inferior en móvil) leyendo el manifiesto y los tokens de la app (`data-module`); no inspecciona el interior de un módulo (las pantallas de detalle se declaran con `alsoActiveOn`). `RootLayout` envuelve todas las rutas con `core/devmode`, que, solo para cuentas con `platform.developer.mode`, sustituye por `useAuth()` los permisos de la app activa para dibujar la interfaz como la vería otro rol. Los módulos no importan `core/devmode`; la autorización sigue en el servidor. Reglas: `DESIGN_SYSTEM.md` §9 y `SECURITY.md`.
 
 ### 9.4 Estructura de un módulo web
 

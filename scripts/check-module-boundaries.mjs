@@ -57,6 +57,10 @@ function auditFrontend() {
       if (moduleName) {
         if (shellImport) add(file, `la subapp '${moduleName}' importa del shell (${specifier}); use @/core/*.`);
         if (directModuleImport) add(file, `la subapp '${moduleName}' importa un módulo por alias (${specifier}); los módulos son independientes.`);
+        // La vista previa por rol (modo desarrollador) es transversal: llega por useAuth() y los módulos no la conocen.
+        if (specifier === "@/core/devmode" || specifier.startsWith("@/core/devmode/")) {
+          add(file, `la subapp '${moduleName}' importa el modo desarrollador (${specifier}); es transversal y se hereda por useAuth().`);
+        }
         if (specifier.startsWith(".")) {
           const target = resolve(dirname(file), specifier);
           if (!within(moduleRoot, target)) {

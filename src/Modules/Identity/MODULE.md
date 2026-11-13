@@ -13,6 +13,7 @@ Estado: **implementación completa y validada en lo esencial** (backend 51/51, P
 - `/api/auth/options`, `/api/auth/csrf`, login, registro si está habilitado, refresh, logout, cuenta actual y cambio de contraseña.
 - Google opcional: `/api/auth/google/start` y `/api/auth/google/complete`, con callback según `App:PublicBaseUrl`.
 - Administración: usuarios, roles, permisos, módulos y auditoría en `/api/admin/*`.
+- Modo desarrollador: `GET /api/admin/developer/roles?app=<código>` (permiso `platform.developer.mode`) con las definiciones de rol de una app para la vista previa de la interfaz; no concede nada. Códigos propios: `identity.developer.app_not_found` (404) e `identity.privilege.developer_mode_individual_only` (403, no se concede a roles). Ver `docs/SECURITY.md`.
 - Permisos funcionales: `dashboard.view`, `settings.*` y permisos reservados `platform.*`.
 - La autorización se aplica en servidor con `RequirePermission`, `RequireSession` o `AllowAnonymousExplicit`; denegación por defecto.
 - Las cookies de sesión son `HttpOnly`; las escrituras verifican CSRF. Refresh tokens se almacenan como hash y se rotan.
@@ -25,6 +26,8 @@ Estado: **implementación completa y validada en lo esencial** (backend 51/51, P
 - `BootstrapAdminTask` (20) crea/restaura el administrador de arranque y el rol Owner/Superuser.
 - `TestingSeedUsersTask` (30) crea tres fixtures únicamente cuando `TestingSeed:Enabled=true` y el entorno es Development/Testing.
 - Administrator general no equivale a Owner/Superuser; las API administrativas no pueden conceder el rol Owner.
+- Las reservas al propietario de cada app las declara su módulo con `PermissionGroup.GrantPolicy`; `PrivilegeGuard` y `CatalogSyncTask` las aplican sin nombrar módulos (`docs/SECURITY.md`).
+- `platform.developer.mode` lo reciben automáticamente `Administrator` y `Owner/Superuser` en `CatalogSyncTask`; se concede además a cuentas concretas por excepción individual, nunca a roles personalizados (la sincronización lo retira de ellos).
 
 ## Pendientes explícitos
 

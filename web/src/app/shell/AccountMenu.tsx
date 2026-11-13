@@ -1,119 +1,88 @@
+import { ChevronDown, LogOut, UserRound } from "lucide-react";
 import { useNavigate } from "react-router";
-import { Check } from "lucide-react";
 import {
   Button,
-  Header,
-  Menu,
-  MenuItem,
-  MenuSection,
-  MenuTrigger,
+  Dialog,
+  DialogTrigger,
+  Link,
   Popover,
-  Separator,
 } from "react-aria-components";
 import { useAuth } from "@/core/auth";
-import { usePreferences, type TextSize } from "@/core/preferences";
 import { routes } from "../routes";
 import { shellStrings } from "../strings";
-import { barButton, menuHeader, menuItem, popover } from "./styles";
+import PreferenceControls from "./PreferenceControls";
+import { useShell } from "./ShellContext";
+import { barButton, popover } from "./styles";
 
 const { account } = shellStrings;
-const sizes: { id: TextSize; label: string }[] = [
-  { id: "small", label: account.small },
-  { id: "normal", label: account.normal },
-  { id: "large", label: account.large },
-  { id: "xlarge", label: account.xlarge },
-];
 
-function Checked({ label, selected }: { label: string; selected: boolean }) {
-  return (
-    <>
-      <span>{label}</span>
-      {selected ? (
-        <Check aria-hidden="true" className="size-4 text-accent-strong" />
-      ) : null}
-    </>
-  );
-}
-
-/** Menú de cuenta: perfil, tamaño de texto y cierre de sesión. El tema tiene control directo en la barra superior. */
+/**
+ * Panel de cuenta: quién es la persona, «Mi cuenta», sus preferencias (tema y tamaño de texto como controles de icono) y,
+ * al final y separado, el cierre de sesión como botón de ancho completo con icono. Es un panel y no una lista de menú
+ * porque contiene controles propios; Escape lo cierra y el foco vuelve al botón de cuenta.
+ */
 export default function AccountMenu() {
   const { user, logout } = useAuth();
-  const { textSize, setTextSize } = usePreferences();
+  const { moduleCode } = useShell();
   const navigate = useNavigate();
   if (!user) return null;
   const initial = user.displayName.trim().charAt(0).toUpperCase() || "?";
 
   return (
-    <MenuTrigger>
-      <Button
-        className={barButton}
-        aria-label={`${account.menu}: ${user.displayName}`}
-      >
+    <DialogTrigger>
+      <Button className={barButton}>
+        {/* La inicial va como contenido generado: no cuenta como texto visible del botón (WCAG 2.5.3). */}
         <span
           aria-hidden="true"
-          className="flex size-8 items-center justify-center rounded-full bg-accent-strong text-sm font-semibold text-on-accent"
-        >
-          {initial}
-        </span>
-        <span className="hidden max-w-40 truncate sm:inline">
+          className="shell-avatar"
+          data-initial={initial}
+        />
+        <span className="sr-only">{shellStrings.accountPrefix}</span>
+        <span className="sr-only md:not-sr-only md:max-w-40 md:truncate">
           {user.displayName}
         </span>
+        <ChevronDown
+          aria-hidden="true"
+          className="shell-caret hidden md:inline"
+        />
       </Button>
-      <Popover className={popover} placement="bottom end">
-        <Menu aria-label={account.menu} className="outline-none">
-          <MenuSection>
-            <Header className={menuHeader}>{user.email}</Header>
-            <MenuItem
-              id="account"
-              href={routes.account}
-              textValue={account.mine}
-              className={menuItem}
-            >
-              {account.mine}
-            </MenuItem>
-          </MenuSection>
-          <Separator className="my-1 border-t border-line" />
-          <MenuSection
-            selectionMode="single"
-            selectedKeys={[textSize]}
-            onSelectionChange={(keys) => {
-              const next = [...keys][0];
-              if (
-                next === "small" ||
-                next === "normal" ||
-                next === "large" ||
-                next === "xlarge"
-              )
-                setTextSize(next);
-            }}
-          >
-            <Header className={menuHeader}>{account.textSize}</Header>
-            {sizes.map((s) => (
-              <MenuItem
-                key={s.id}
-                id={s.id}
-                textValue={s.label}
-                className={menuItem}
+      <Popover
+        className={`${popover} shell-account`}
+        placement="bottom end"
+        data-module={moduleCode}
+      >
+        <Dialog className="outline-none" aria-label={account.menu}>
+          {({ close }) => (
+            <>
+              <div className="shell-account-head">
+                <span className="shell-account-name">{user.displayName}</span>
+                <span className="shell-account-email">{user.email}</span>
+              </div>
+              <Link
+                href={routes.account}
+                className="shell-account-link"
+                onPress={close}
               >
-                <Checked label={s.label} selected={textSize === s.id} />
-              </MenuItem>
-            ))}
-          </MenuSection>
-          <Separator className="my-1 border-t border-line" />
-          <MenuSection>
-            <MenuItem
-              id="signout"
-              textValue={account.signOut}
-              className={menuItem}
-              onAction={() =>
-                void logout().finally(() => navigate(routes.home))
-              }
-            >
-              {account.signOut}
-            </MenuItem>
-          </MenuSection>
-        </Menu>
+                <UserRound aria-hidden="true" />
+                {account.mine}
+              </Link>
+              <PreferenceControls />
+              <div className="shell-account-foot">
+                <Button
+                  className="shell-signout"
+                  onPress={() => {
+                    close();
+                    void logout().finally(() => navigate(routes.home));
+                  }}
+                >
+                  <LogOut aria-hidden="true" />
+                  {account.signOut}
+                </Button>
+              </div>
+            </>
+          )}
+        </Dialog>
       </Popover>
-    </MenuTrigger>
+    </DialogTrigger>
   );
 }

@@ -2,7 +2,10 @@ using Pastel.Platform.Modules;
 
 namespace Pastel.Modules.Cosecha;
 
-/// <summary>Permisos de Cosecha, según su ficha (<c>docs/modules/COSECHA.md</c>, «Roles y permisos»). Formato <c>cosecha.&lt;recurso&gt;.&lt;accion&gt;</c>.</summary>
+/// <summary>
+/// Permisos de Cosecha, según su ficha (<c>docs/modules/COSECHA.md</c>, «Roles y permisos»). Formato <c>cosecha.&lt;recurso&gt;.&lt;accion&gt;</c>.
+/// Solo Owner/Superuser asigna roles de Cosecha (<see cref="PermissionGrantPolicy.OwnerGrantsOnly"/>).
+/// </summary>
 internal static class CosechaPermissions
 {
     public const string Code = "cosecha";
@@ -41,6 +44,6 @@ internal static class CosechaPermissions
             new(SettlementsRead, "Ver pagos", "Consultar liquidaciones y pagos."),
             new(SettlementsManage, "Gestionar pagos", "Registrar liquidaciones y pagos."),
             new(ReportsRead, "Ver reportes", "Consultar reportes."),
-        ]),
+        ], PermissionGrantPolicy.OwnerGrantsOnly),
     ];
 }

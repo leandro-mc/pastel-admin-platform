@@ -16,7 +16,7 @@ Roles sugeridos (se crean una sola vez si no existen; nunca se sobrescriben):
 
 - `Balance — Usuario`: `balance.access`, `balance.groups.manage`
 
-El rol `Administrator` recibe todos los permisos al sincronizar el catálogo.
+El rol `Administrator` no recibe los permisos de esta app al sincronizar el catálogo (solo `Owner/Superuser`); ver `docs/SECURITY.md`.
 
 ## Reglas de servidor (de la ficha)
 

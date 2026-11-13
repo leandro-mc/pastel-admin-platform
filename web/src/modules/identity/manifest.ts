@@ -33,12 +33,15 @@ export default {
       to: "usuarios",
       icon: Users,
       requiredPermission: identityPermissions.usersRead,
+      // La raíz de Configuración y el editor de accesos de una persona cuelgan de esta sección.
+      alsoActiveOn: ["", "accesos/usuario"],
     },
     {
       label: tabs.roles,
       to: "roles",
       icon: ShieldCheck,
       requiredPermission: identityPermissions.rolesRead,
+      alsoActiveOn: ["accesos/rol"],
     },
     {
       label: tabs.modules,

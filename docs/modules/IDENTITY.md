@@ -4,8 +4,8 @@ Identity administra el acceso transversal a Pastel y la configuración de plataf
 
 ## Roles de plataforma
 
-- **Owner/Superuser:** rol de sistema reservado; tiene acceso global y privilegios exclusivos de Huella/Cosecha. Su concesión normal la controla Bootstrap; las APIs de administración no permiten asignarlo o retirarlo.
-- **Administrator:** administración general, con permisos de plataforma `dashboard.view`, `settings.*` y acceso a Workspace. No se le conceden automáticamente permisos exclusivos del Owner ni permisos de negocio.
+- **Owner/Superuser:** rol de sistema reservado; tiene acceso global y los privilegios que los módulos reservan al propietario (`PermissionGrantPolicy`; ver `docs/SECURITY.md`). Su concesión normal la controla Bootstrap; las APIs de administración no permiten asignarlo o retirarlo.
+- **Administrator:** administración general, con permisos de plataforma `dashboard.view`, `settings.*`, acceso a Workspace y el modo desarrollador (`platform.developer.mode`, vista previa por rol; ver `docs/SECURITY.md`). No se le conceden automáticamente permisos exclusivos del Owner ni permisos de negocio.
 - **Member:** rol base sugerido para acceso mínimo al panel; permisos efectivos se evalúan en el servidor. Las apps pueden tener sus propios roles de membresía cuando su contrato esté implementado.
 
 Bootstrap usa `BOOTSTRAP_ADMIN_EMAIL` y `BOOTSTRAP_ADMIN_PASSWORD`; por diseño la cuenta inicial recibe Administrator y Owner/Superuser y exige cambiar la contraseña en el primer acceso. La contraseña de bootstrap se establece al crear la cuenta: reiniciar el servicio o cambiar la variable no sustituye la contraseña de una cuenta que ya existe. Las operaciones privilegiadas quedan registradas por separado de los logs técnicos.

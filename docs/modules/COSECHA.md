@@ -16,13 +16,14 @@ Se reducen los siete roles del catálogo a lo indispensable (el administrador de
 |---|---|---|
 | **Gestor planificador** (`Cosecha — Gestor`) | Propietario y apoyo | Todo en Cosecha: catálogo, productores, compradores, pedidos, envíos, recepciones, entregas, pagos, reportes |
 | **Comprador** (`Cosecha — Comprador`) | Comprador con cuenta (opcional) | Ver únicamente **sus** pedidos y el estado de sus envíos. Solo lectura |
-| **Administrador de Pastel** | Ya existe | Todos los permisos; gestión de usuarios y roles |
+| **Administrador de Pastel** | Ya existe | Gestión de usuarios y roles de plataforma; **no** recibe permisos de Cosecha |
 
 Productores: **sin cuenta** en el MVP. Su ficha admite un `UserId` opcional para un futuro rol productor. Roles futuros (no implementar): coordinador de asociación, planificador logístico, transportista, productor con acceso propio.
 
 Permisos (todos con prefijo `cosecha.`):
 `access`, `catalog.read`, `catalog.manage`, `producers.read`, `producers.manage`, `buyers.read`, `buyers.manage`, `orders.read`, `orders.manage`, `orders.read.own` (comprador), `shipments.read`, `shipments.manage`, `settlements.read`, `settlements.manage`, `reports.read`.
 - `Cosecha — Gestor`: todos excepto `orders.read.own`. `Cosecha — Comprador`: `access` + `orders.read.own`.
+- Solo Owner/Superuser asigna estos roles (`CosechaPermissions` declara `PermissionGrantPolicy.OwnerGrantsOnly`).
 - El comprador solo ve datos de los compradores vinculados a su `UserId` (filtro en el servidor).
 
 ## 3. Modelo de datos (esquema `cosecha`)

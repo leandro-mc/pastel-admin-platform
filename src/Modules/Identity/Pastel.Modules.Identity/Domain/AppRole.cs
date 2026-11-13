@@ -6,7 +6,7 @@ internal sealed class AppRole
     public const string OwnerName = "Owner/Superuser";
     public const string MemberName = "Member";
 
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid Id { get; set; } = Guid.CreateVersion7();
     public required string Name { get; set; }
     public required string NormalizedName { get; set; }
     public string? Description { get; set; }

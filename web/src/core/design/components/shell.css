@@ -1,0 +1,265 @@
+/*
+ * Shell compartido (docs/DESIGN_SYSTEM.md §9, justificación en docs/design/SHELL_RESEARCH.md).
+ *
+ * Contrato:
+ *  - Solo lee tokens semánticos que define cada app: --app-bg, --surface, --surface-raised, --sidebar-bg, --text,
+ *    --text-secondary, --muted, --border, --border-strong, --accent, --accent-strong, --accent-soft, --on-accent.
+ *    No define ningún color propio ni impone paleta: la identidad llega por `data-module` y `data-theme`.
+ *  - La geometría son variables con especificidad cero (`:where`): una app las redefine con su propio selector.
+ *  - Sin degradados, vidrio ni sombras decorativas; la elevación es solo para superficies flotantes.
+ *  - Texto nunca por debajo de 12 px; objetivos táctiles de al menos 44 px.
+ */
+
+:where(:root) {
+  --shell-sidebar-width: 16rem;
+  --shell-sidebar-rail-width: 4.5rem;
+  --shell-topbar-height: 3.5rem;
+  --shell-bottomnav-height: 4rem;
+  --shell-radius: 0.5rem;
+}
+
+/* El documento es el que se desplaza; la barra superior fija y la inferior no pueden tapar el elemento enfocado (WCAG 2.4.11). */
+html {
+  scroll-padding-top: calc(var(--shell-topbar-height) + 0.75rem);
+}
+html:has(.shell[data-bottomnav]) {
+  scroll-padding-bottom: calc(var(--shell-bottomnav-height) + 1rem);
+}
+
+.shell {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100dvh;
+  background: var(--app-bg);
+  color: var(--text);
+}
+
+/* ---------- Controles comunes ---------- */
+
+.shell-btn {
+  display: inline-flex;
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0 0.75rem;
+  border-radius: var(--shell-radius);
+  background: transparent;
+  color: var(--text);
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.25rem;
+  text-decoration: none;
+  cursor: default;
+}
+.shell-btn:hover,
+.shell-btn[data-hovered],
+.shell-btn[data-pressed],
+.shell-btn[aria-haspopup][aria-expanded="true"] {
+  background: color-mix(in srgb, var(--accent-soft) 70%, transparent);
+}
+.shell-btn svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+}
+.shell-btn svg.shell-caret {
+  width: 1rem;
+  height: 1rem;
+  color: var(--text-secondary);
+}
+.shell-btn-solid {
+  background: var(--accent-strong);
+  color: var(--on-accent);
+}
+.shell-btn-solid:hover,
+.shell-btn-solid[data-hovered] {
+  background: var(--accent-strong);
+  filter: brightness(1.08);
+}
+
+/* Foco: 3 px sólidos con el acento fuerte de la app activa (visible en claro y oscuro). */
+.shell
+  :where(a, button, [role="menuitem"], [role="menuitemradio"]):focus-visible,
+.shell-popover
+  :where([role="menuitem"], [role="menuitemradio"], a, button):focus-visible,
+.shell [data-focus-visible],
+.shell-popover [data-focus-visible] {
+  outline: 3px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+
+/* ---------- Columna principal ---------- */
+
+.shell-main {
+  display: flex;
+  min-width: 0;
+  min-height: 100dvh;
+  flex-direction: column;
+}
+
+.shell-header {
+  position: sticky;
+  top: 0;
+  z-index: 30;
+  background: var(--app-bg);
+}
+
+.shell-topbar {
+  display: flex;
+  height: var(--shell-topbar-height);
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0 0.5rem 0 0.75rem;
+  border-bottom: 1px solid var(--border);
+}
+.shell-topbar-start {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 auto;
+  align-items: center;
+}
+.shell-topbar-end {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.shell-crumbs ol {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.875rem;
+}
+.shell-crumbs li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+.shell-crumbs a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  border-radius: var(--shell-radius);
+  color: var(--text-secondary);
+  text-decoration: none;
+}
+.shell-crumbs a:hover {
+  color: var(--text);
+  text-decoration: underline;
+}
+.shell-crumbs [aria-current="page"] {
+  overflow: hidden;
+  color: var(--text);
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.shell-crumbs-sep {
+  color: var(--muted);
+}
+
+.shell-avatar::before {
+  content: attr(data-initial);
+}
+.shell-avatar {
+  display: inline-flex;
+  width: 2rem;
+  height: 2rem;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+/* Selector del modo desarrollador: discontinuo en reposo, relleno cuando hay una vista previa activa. */
+.shell-dev {
+  border: 1px dashed var(--border-strong);
+}
+.shell-dev[data-active] {
+  border: 1px solid var(--accent-strong);
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.shell-simbanner {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0 0.5rem 0 1rem;
+  border-bottom: 2px dashed var(--accent-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.875rem;
+}
+.shell-simbanner svg {
+  width: 1.25rem;
+  height: 1.25rem;
+  flex: none;
+  color: var(--accent-strong);
+}
+.shell-simbanner .shell-btn {
+  flex: none;
+  border: 1px solid var(--border-strong);
+  white-space: nowrap;
+}
+.shell-simbanner p {
+  min-width: 0;
+  flex: 1 1 auto;
+  margin: 0;
+}
+
+.shell-content {
+  min-width: 0;
+  flex: 1 1 auto;
+  background: var(--app-bg);
+  color: var(--text);
+}
+
+.shell-footer {
+  display: flex;
+  min-height: 2.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.5rem 1rem;
+  border-top: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+}
+
+/* ---------- Escritorio: reparto de columnas y márgenes ---------- */
+
+@media (min-width: 64rem) {
+  .shell {
+    grid-template-columns: var(--shell-sidebar-width) minmax(0, 1fr);
+  }
+  .shell[data-collapsed] {
+    grid-template-columns: var(--shell-sidebar-rail-width) minmax(0, 1fr);
+  }
+  .shell-topbar {
+    padding: 0 0.75rem 0 1.5rem;
+  }
+  .shell-footer {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .shell {
+    transition: grid-template-columns 160ms ease;
+  }
+}

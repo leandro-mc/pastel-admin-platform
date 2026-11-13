@@ -156,7 +156,7 @@ export const settingsStrings = {
     overridesHint:
       "Conceda o deniegue un permiso solo a esta persona. «Heredar» usa lo que dan sus roles.",
     overridesAdmin:
-      "Las cuentas con rol de sistema no admiten excepciones individuales. Sus privilegios se sincronizan desde el catálogo.",
+      "Las cuentas con rol de sistema no admiten excepciones individuales. Sus privilegios se sincronizan desde el catálogo; el modo desarrollador (vista previa por rol) lo reciben de forma automática.",
     search: "Buscar permisos",
     inherit: "Heredar",
     grant: "Conceder",

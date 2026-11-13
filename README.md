@@ -35,5 +35,6 @@ Abra <http://localhost:8080> cuando los servicios estén saludables. La primera 
 | `docs/GIT_WORKFLOW.md` | Ramas, commits, PR y CI |
 | `docs/ARCHITECTURE.md` · `docs/SECURITY.md` · `docs/ERROR_HANDLING_AND_LOGGING.md` | Sistema vigente |
 | `docs/DESIGN_SYSTEM.md` · `docs/product/PASTEL-PRODUCT-AND-UX.md` | Diseño y producto |
+| `docs/design/SHELL_RESEARCH.md` · `docs/design/SHELL_VALIDATION.md` | Investigación, propuesta y validación del shell compartido (con capturas en `docs/design/evidence/`) |
 | `docs/TESTING.md` · `docs/OPERATIONS.md` | Pruebas y operación |
 | `docs/DECISIONS.md` · `docs/modules/` | Registro de decisiones y fichas de cada módulo |

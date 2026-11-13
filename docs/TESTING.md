@@ -40,7 +40,8 @@ La declara el propietario cuando las cinco aplicaciones estén funcionales. Ento
 - **Backend (unitarias y arquitectura):** reglas de dominio, política de contraseñas, `ReturnUrl`, validación de arranque en Producción, evaluador de permisos y reglas de arquitectura entre módulos.
 - **PostgreSQL / integración HTTP** (`tests/Pastel.IntegrationTests`): host, migraciones desde base vacía, salud, CSRF, opciones de autenticación, **jerarquía de privilegios** (escalada, protección de administradores, último administrador, concurrencia), **Google** (vinculación, correo no verificado, cuentas inactivas, registro cerrado, `state`, `redirect_uri`, tokens, logs), **refresco de sesión** (ventana de gracia, reutilización, conflictos de serialización), **contrato de errores** y **logs** (JSON real de Serilog sin secretos, una línea por petición, denegaciones limitadas).
 - **Frontend (Vitest + Testing Library + axe):** cliente de API (un solo refresco ante varios 401), diálogos accesibles, login según opciones y política de contraseña. Hay un smoke de Playwright para `/ingresar` (`npm run test:e2e`); es **opcional** y no se amplía hasta la Etapa 2.
-- **Guardas estáticas:** fronteras entre módulos (frontend y backend), `check-design` (solo reglas duras: morado y símbolos de IA), `tailwind-audit`.
+- **Guardas estáticas:** fronteras entre módulos (frontend y backend; un módulo tampoco puede importar `@/core/devmode`), `check-design` (solo reglas duras: morado y símbolos de IA), `tailwind-audit`.
+- **Shell (navegador real, API simulada):** `node scripts/shell-visual.mjs audit` (axe del shell, contraste por app y tema, desbordes) y `gallery` (capturas); no forma parte de `test-frontend.ps1` ni del CI y es opcional en la Etapa 1. El modo desarrollador tiene 3 pruebas unitarias y 5 de integración (`DeveloperModeTests`) en el backend.
 
 ## 3. Comandos (PowerShell, Docker Desktop iniciado)
 | Comando | Qué hace |

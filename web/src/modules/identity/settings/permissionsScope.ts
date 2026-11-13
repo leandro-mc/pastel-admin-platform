@@ -9,6 +9,17 @@ export function isPlatformPermission(permission: Permission): boolean {
   return isPlatformPermissionCode(permission.code);
 }
 
+/** Modo desarrollador (vista previa por rol): se concede a cuentas concretas, nunca a un rol personalizado. */
+export const DEVELOPER_MODE_CODE = "platform.developer.mode";
+
+/** Lo que Workspace puede conceder como excepción individual: permisos de plataforma y el modo desarrollador. */
+export function isUserOverridablePermission(permission: Permission): boolean {
+  return (
+    isPlatformPermissionCode(permission.code) ||
+    permission.code === DEVELOPER_MODE_CODE
+  );
+}
+
 /** Los roles de sistema son visibles para explicar la jerarquía; otros roles deben tener solo permisos globales. */
 export function isPlatformRole(role: Role): boolean {
   if (role.isSystemRole) return true;

@@ -11,7 +11,7 @@ namespace Pastel.Modules.Identity.Catalog;
 
 /// <summary>
 /// Sincroniza el catálogo declarado en código con la base. Administrator conserva administración general,
-/// pero no recibe privilegios reservados a Owner/Superuser ni permisos de Huella/Cosecha.
+/// pero no recibe privilegios reservados a Owner/Superuser ni permisos de aplicaciones.
 /// Owner/Superuser se mantiene como rol de sistema con alcance global completo.
 /// </summary>
 internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSyncTask> logger) : IPastelStartupTask
@@ -52,7 +52,13 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
                 var permission = module.Permissions.FirstOrDefault(p => p.Code == info.Code);
                 if (permission is null)
                 {
-                    module.Permissions.Add(new PermissionDefinition { Code = info.Code, Name = info.Name, Description = info.Description, IsSystemPermission = true });
+                    var created = new PermissionDefinition { Code = info.Code, Name = info.Name, Description = info.Description, IsSystemPermission = true };
+                    module.Permissions.Add(created);
+                    // La aplicación asigna la clave (no la base de datos). Sin este Add explícito, EF interpreta un permiso nuevo que cuelga de un
+                    // módulo que ya existe en la base como una fila existente (UPDATE) y no como una nueva (INSERT), y los
+                    // vínculos de rol que lo referencian violan la clave foránea. En una base vacía no ocurre porque el módulo
+                    // también es nuevo; sí al añadir un permiso a una base ya sembrada.
+                    db.Permissions.Add(created);
                 }
                 else
                 {
@@ -64,6 +70,11 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
 
         var allPermissions = modules.Values.SelectMany(m => m.Permissions).ToList();
         var byCode = allPermissions.ToDictionary(p => p.Code, StringComparer.Ordinal);
+
+        // Permisos que su módulo reserva a la cuenta Owner (PermissionGrantPolicy.OwnerAccountOnly): solo viven en su rol de sistema.
+        var ownerAccountOnlyCodes = allPermissions.Select(p => p.Code)
+            .Where(code => catalog.GrantPolicyOf(code) == PermissionGrantPolicy.OwnerAccountOnly)
+            .ToArray();
 
         var admin = await db.Roles.SingleOrDefaultAsync(r => r.NormalizedName == AppRole.AdministratorName.ToUpperInvariant(), cancellationToken);
         if (admin is null)
@@ -90,7 +101,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             {
                 Name = AppRole.OwnerName,
                 NormalizedName = AppRole.OwnerName.ToUpperInvariant(),
-                Description = "Propietario y superusuario: acceso global y permisos reservados de Huella y Cosecha.",
+                Description = "Propietario y superusuario: acceso global y permisos reservados de plataforma y aplicaciones.",
                 IsSystemRole = true,
             };
             db.Roles.Add(owner);
@@ -98,12 +109,12 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
         else
         {
             owner.Name = AppRole.OwnerName;
-            owner.Description = "Propietario y superusuario: acceso global y permisos reservados de Huella y Cosecha.";
+            owner.Description = "Propietario y superusuario: acceso global y permisos reservados de plataforma y aplicaciones.";
             owner.IsSystemRole = true;
         }
 
-        // Administrator recibe las funciones generales existentes, pero nunca obtiene platform.owner,
-        // ni acceso de Huella/Cosecha por el mero hecho de ser administrador.
+        // Administrator recibe las funciones generales existentes y el modo desarrollador (automático para todo
+        // Administrator), pero nunca obtiene platform.owner ni permisos de aplicaciones por ser administrador.
         var adminDesired = allPermissions.Where(p => IsGeneralAdministratorPermission(p.Code)).Select(p => p.Id).ToHashSet();
         var adminLinks = await db.RolePermissions.Include(x => x.Permission)
             .Where(x => x.RoleId == admin.Id).ToListAsync(cancellationToken);
@@ -116,12 +127,14 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
         }
 
         // El permiso de Workspace puede estar en Administrator para administración general, pero no en otros roles.
-        // platform.owner y huella.* solo pertenecen al rol Owner/Superuser.
+        // platform.owner y los permisos OwnerAccountOnly de los módulos solo pertenecen al rol Owner/Superuser. El modo desarrollador pertenece
+        // únicamente a los dos roles de sistema: nunca a un rol personalizado (se asigna a cuentas concretas).
         var legacyRestricted = await db.RolePermissions.Include(x => x.Permission)
             .Where(x => x.RoleId != admin.Id && x.RoleId != owner.Id)
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
-                || x.Permission.Code.StartsWith("huella."))
+                || x.Permission.Code == IdentityPermissions.DeveloperMode
+                || ownerAccountOnlyCodes.Contains(x.Permission.Code))
             .ToListAsync(cancellationToken);
         db.RolePermissions.RemoveRange(legacyRestricted);
 
@@ -157,7 +170,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
             db.Roles.Remove(role);
         }
 
-        // Los overrides exclusivos del sistema y Huella nunca se conservan. Las excepciones de apps
+        // Los overrides exclusivos del sistema y los OwnerAccountOnly nunca se conservan. Las excepciones de apps
         // solo se mantienen si fueron concedidas por una cuenta Owner/Superuser; las anteriores de
         // Administrators generales se retiran para aplicar el nuevo límite. Los endpoints de Workspace
         // no pueden consultar ni modificar overrides de apps; cada módulo recibirá sus propios endpoints.
@@ -168,9 +181,12 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
         var restrictedOverrides = await db.UserPermissionOverrides.Include(x => x.Permission)
             .Where(x => x.Permission.Code == IdentityPermissions.WorkspaceAccess
                 || x.Permission.Code == IdentityPermissions.OwnerPrivilege
-                || x.Permission.Code.StartsWith("huella.")
+                || ownerAccountOnlyCodes.Contains(x.Permission.Code)
+                // El modo desarrollador es una excepción individual de plataforma: puede concederla un
+                // Administrator que lo tenga, así que no se retira por no haberla concedido el Owner.
                 || (!(x.Permission.Code == IdentityPermissions.DashboardView
-                    || x.Permission.Code.StartsWith("settings."))
+                    || x.Permission.Code.StartsWith("settings.")
+                    || x.Permission.Code == IdentityPermissions.DeveloperMode)
                     && !ownerUserIds.Contains(x.AssignedByUserId ?? Guid.Empty)))
             .ToListAsync(cancellationToken);
         db.UserPermissionOverrides.RemoveRange(restrictedOverrides);
@@ -206,6 +222,7 @@ internal sealed class CatalogSyncTask(ModuleCatalog catalog, ILogger<CatalogSync
 
     private static bool IsGeneralAdministratorPermission(string code) =>
         code == IdentityPermissions.WorkspaceAccess
+        || code == IdentityPermissions.DeveloperMode
         || code == IdentityPermissions.DashboardView
         || code.StartsWith("settings.", StringComparison.Ordinal);
 }

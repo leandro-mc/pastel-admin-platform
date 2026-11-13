@@ -11,6 +11,16 @@ export type ModuleNavItem = {
   icon: LucideIcon;
   /** Si se indica, el ítem solo se ofrece a quien tenga este permiso (el servidor autoriza igual). */
   requiredPermission?: string;
+  /**
+   * Rutas relativas a `basePath` (por prefijo) que también marcan este ítem como activo, p. ej. una pantalla de detalle
+   * que cuelga de otra sección. `""` es la raíz exacta del módulo. Así el shell no necesita conocer el interior del módulo.
+   */
+  alsoActiveOn?: readonly string[];
+  /**
+   * Encabezado de grupo opcional (p. ej. «Personas»). Solo se muestra si hay al menos dos grupos; los ítems sin grupo
+   * van primero. Sin esta propiedad el menú es una lista plana, que es lo recomendable para pocos destinos.
+   */
+  group?: string;
 };
 
 /** Ruta de módulo. `lazy` devuelve un módulo que exporta `Component` (convención de React Router en modo datos). */
