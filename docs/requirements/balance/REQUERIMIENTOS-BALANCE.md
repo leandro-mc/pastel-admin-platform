@@ -147,7 +147,7 @@ Sin sesión, sin acceso, no encontrado (404 para no miembros), sin permiso, erro
 |---|---|---|---|---|
 | **BL-01** | Reparto en partes iguales con **centavos sobrantes por orden de alta**; partes suman el total; saldos suman 0 | D1 | Obligatorio | `money.test.js`: G02, G03, G10–G13, G23, G26 + 6 000 escenarios |
 | **BL-02** | **Liquidación determinista** (mayor monto primero, empate por orden de alta; reordena tras cada pago); a lo sumo *n−1* pagos; falla si los saldos no suman 0 | D2 | Obligatorio | G04, G05, G23, G24, G26, G30–G33 |
-| **BL-03** | Autenticación obligatoria; **pertenencia**; roles administración/miembro; matriz de permisos | D3 | Obligatorio | `rules.test.js` (26) + `t-balance.js` |
+| **BL-03** | Autenticación obligatoria; **pertenencia**; roles administración/miembro; matriz de permisos | D3 | Obligatorio | `rules.test.js` (32) + `t-balance.js` |
 | **BL-04** | **Ingreso por enlace y código de 4 dígitos**; error genérico; 5 fallos → 15 min; regenerar invalida el anterior; **el enlace y el código no vencen** (decisión inicial, 2026-11-13) | D3 | Obligatorio | `rules.test.js`; UI |
 | **BL-05** | Campo de monto: coma o punto, decimales según moneda, mayor que cero, hasta `numeric(18,2)`; mensajes en español | D4 | Obligatorio | G28, G38; UI |
 | **BL-06** | Balance inicia **desde cero** | D5 | Decidido | — |
@@ -196,7 +196,7 @@ Sin cambios de esquema. El prototipo usa: `Group{name, description, currency, tz
 
 - **Exactitud:** aritmética entera (`BigInt` en el prototipo; `decimal`/entero en el servidor). Cero coma flotante en dinero.
 - **Seguridad:** denegar por defecto; 404 para no miembros (no revela existencia); error genérico de ingreso; límite de intentos por cuenta y enlace; token de alta entropía; auditoría.
-- **Accesibilidad:** AA en claro y oscuro (`contrast.py`: 215 pares en total, 121 de Brisa y Balance, incluidos los **componentes**: borde de campo, barras, foco); objetivos de 44 px; nunca solo color; texto ampliable (A / A+ / A++).
+- **Accesibilidad:** AA en claro y oscuro (`contrast.py`: 217 pares en total, 123 de Brisa y Balance, incluidos los **componentes**: borde de campo, barras, foco); objetivos de 44 px; nunca solo color; texto ampliable (A / A+ / A++).
 - **Texto:** español de Costa Rica, **usted**, sin voseo; cifras con espacio fino como separador de miles y coma decimal (`₡1 234,56`).
 - **Rendimiento:** grupos de hasta 20 integrantes y cientos de gastos sin recálculo perceptible (G26).
 

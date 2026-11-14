@@ -32,28 +32,73 @@ Se sumaron las dos apps que **ya existen** y se migran a Pastel, partiendo de la
 | ID | Decisión | Por qué |
 |---|---|---|
 | D-80 | **Brisa no se rediseña:** se conserva el prototipo del carrusel que el propietario aprobó y se le agrega barra de desarrollo con 5 situaciones, tema Auto/Claro/Oscuro, reloj simulado y estados | «Me gusta mucho» → no se cambia lo aprobado; solo lo que el método exige |
-| D-81 | **La regla de reprogramación diaria de Brisa vive en un módulo puro y probado** (`brisa/prototype/logic.js`): V1–V10 y AC1–AC7 del inventario como pruebas | Es el requisito obligatorio de Brisa; ahora es verificable (39 pruebas) |
-| D-82 | **Brisa oscuro: el texto dentro de las tarjetas pastel se aclara** (`#f7f8f5`, secundario `#eceff1`) conservando la mezcla al 36 % | 7 de 10 tarjetas quedaban entre 4,34 y 4,49:1; el secundario bajaba de 4,5:1. **Para producción requiere token (CCR) o mezcla al 28 %** |
+| D-81 | **La regla de reprogramación diaria de Brisa vive en un módulo puro y probado** (`brisa/prototype/logic.js`): V1–V10 y AC1–AC7 del inventario como pruebas | Es el requisito obligatorio de Brisa; ahora es verificable (46 pruebas, con las del «Deshacer» de D-106) |
+| D-82 | **Brisa oscuro: el texto dentro de las tarjetas pastel se aclara** (`#f7f8f5`, secundario `#eceff1`) conservando la mezcla al 36 % | 7 de 10 tarjetas quedaban entre 4,34 y 4,49:1; el secundario bajaba de 4,5:1. **Superado el 2026-11-13 por D-105:** se resuelve con la mezcla al 28 % y los tokens existentes, sin token ni CCR |
 | D-83 | **Balance se rediseña** con el concepto «cuentas claras»: *su situación* primero, saldos **en palabras y cifra**, liquidación como **recibo**, saldos con **barra de eje central** | SaldApp mostraba una tabla de todos; la evidencia apunta a que la conversación sobre el dinero, no la aritmética, es el problema |
 | D-84 | **Balance: paleta sin rojo/verde:** verde azulado = *le deben*, ámbar = *debe*; rojo solo para errores; Public Sans | Deber no es fallar; rojo/verde falla para daltonismo; todo medido AA |
 | D-85 | **Balance: dominio ejecutable** (`money.js`, `rules.js`) probado con los casos dorados G01–G41 y 6 000 escenarios aleatorios | El diseño nuevo descansa sobre reglas ya verificadas (D1, D2, D4, D8, D3, D7) |
 | D-86 | **Balance: página de invitación** para quien no tiene cuenta (3 pasos y regreso al código), **la misma** para cualquier enlace | La cuenta obligatoria (D3) es decisión del propietario; la fricción se compensa, no se cambia la decisión |
-| D-87 | **Balance: «Copiar monto»** en los pagos propios | SINPE Móvil exige teclear el monto. **Propuesta, no aprobada** |
+| D-87 | **Balance: «Copiar monto»** en los pagos propios | SINPE Móvil exige teclear el monto. ~~Propuesta, no aprobada~~ **Aprobada el 2026-11-13 (D-99)** |
 | D-88 | **Balance: lista de todos los gastos** del grupo con orden definido y edición desde la fila | Problema 10.3.8 de SaldApp |
 | D-89 | **Los inventarios se movieron a `docs/requirements/<app>/INVENTARIO-*.md`**; las ramas `docs/*-inventory` quedan **sustituidas** (no se borraron) | Una sola ubicación y un solo formato; evita duplicados al fusionar |
-| D-91 | **Balance: «Gestión de gastos»** para administración con el modelo del prototipo original (hoja con **borrador y guardado atómico**, validación de todas las filas, descartar, aviso de cambios sin guardar), ampliada con teclado, selección múltiple, pegar desde Excel (todo o nada) y deshacer el guardado | El propietario detectó que se había perdido la gestión masiva de gastos; con muchos gastos un formulario por cada uno no es viable. Una primera versión de la hoja guardaba celda por celda y se **sustituyó** por el modelo del original, que protege mejor la integridad |
+| D-91 | **Balance: «Gestión de gastos»** (administración; desde el 2026-11-13 también miembros, limitada a sus gastos, D-95) con el modelo del prototipo original (hoja con **borrador y guardado atómico**, validación de todas las filas, descartar, aviso de cambios sin guardar), ampliada con teclado, selección múltiple, pegar desde Excel (todo o nada) y deshacer el guardado | El propietario detectó que se había perdido la gestión masiva de gastos; con muchos gastos un formulario por cada uno no es viable. Una primera versión de la hoja guardaba celda por celda y se **sustituyó** por el modelo del original, que protege mejor la integridad |
 | D-92 | **Balance: filtros de gastos** (texto, quién pagó incl. «por mí/otras», fechas, orden con A–Z) y **vista por persona** (Resumen, Saldos, Personas) | También se había perdido: el «Detalles» por integrante |
 | D-93 | **Balance: se rescata del prototipo original** el Resumen por participante, la fila de totales con «Cuadra», «Por qué queda saldado», sus grupos con búsqueda y filtros, «Cómo funciona», la ayuda para quien no administra, «Copiar enlace y código», las flechas en las pestañas y el foco atrapado en los diálogos. No se rescata el icono por categoría (decorativo y «juzga» el gasto) ni lo que gobierna la plataforma (cuenta y tema) | Cruce del prototipo original con la investigación y las necesidades del propietario (`balance/REQUERIMIENTOS-BALANCE.md` §12b) |
 | D-90 | **`check-hard-rules.js`** (sin morado ni símbolos de IA) forma parte de las pruebas | Las reglas duras de `AGENTS.md` §7 se vigilan también en los prototipos |
 
 **Hallazgos de la v3**
-- **El inventario de Balance dice «41 códigos ISO» y su tabla trae 40** (contado por programa). Se implementaron los 40.
+- **El inventario de Balance dice «41 códigos ISO» y su tabla trae 40** (contado por programa). Se implementaron los 40. **Resuelto el 2026-11-13 (D-96):** se mantienen las 40.
 - **El motor de dinero reproduce al centavo G26** (20 integrantes, 19 pagos) y cumple las propiedades: partes y saldos exactos, a lo sumo *n−1* pagos, independiente del orden de entrada.
-- **Tensiones de diseño entre decisiones del propietario y la evidencia** (se dejan como riesgo y pregunta, no se cambian): D3 (cuenta obligatoria) frente a la fricción de invitar; D6 (partes iguales sin excepción) frente a la equidad percibida.
+- **Tensiones de diseño entre decisiones del propietario y la evidencia** (se dejaron como riesgo y pregunta): D3 (cuenta obligatoria) frente a la fricción de invitar; D6 (partes iguales sin excepción) frente a la equidad percibida. **El propietario las mantuvo el 2026-11-13 (D-97, D-98).**
 - **Defecto de arranque (Brisa):** si «hoy» no existe al cargar los datos de ejemplo, las fechas salen inválidas y se guardan. Cubierto por prueba.
 - **Singular:** el contador de Brisa decía «1 hechas».
 - **Revisión del propietario sobre Balance (2026-11):** el rediseño había perdido funciones del prototipo original (gestión masiva de gastos, detalle por persona, totales, explicación de la liquidación, filtros de grupos, ayuda). **Error mío:** busqué ese prototipo en el repositorio y no estaba; se había pedido solo la rama de inventario, que contiene únicamente texto. El propietario aportó el archivo, se guardó en `balance/referencia/balance-prototipo-original.html` y se recuperó todo lo útil (D-91 a D-93; tabla de paridad en `balance/REQUERIMIENTOS-BALANCE.md` §12b). La revisión visual con navegador sin cabeza halló defectos que las pruebas no ven (el atributo `hidden` anulado por el CSS, columnas cortadas, un resumen que se desbordaba). **Defecto del arnés de pruebas:** su `click` no era cancelable y ocultó un fallo del aviso de cambios sin guardar; se corrigió. Quedan por confirmar la **fecha de inicio y de cierre** del grupo (existían en el SaldApp real, no en el prototipo original).
-- **Fusión a `dev`:** `refactor/modular-foundation` tiene 1 commit más reciente que `research` (limpio) y el **CCR-1** (aprobado) choca con las zonas protegidas que `refactor` reescribió: ver [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md).
+- **Fusión a `dev`:** ver [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md). *(Actualizado el 2026-11-13: `refactor/modular-foundation` ya se integró en esta rama —merge `a619019`—; el **CCR-1** se reaplicará adaptado durante la integración a `dev`, que sigue sin autorizarse.)*
+
+---
+
+## 0c. Decisiones del propietario del 2026-11-13
+
+Estados usados en todo el registro (y en los requerimientos de cada app):
+
+| Estado | Significa |
+|---|---|
+| **Decidido** | Se incorporó a la documentación (y al prototipo cuando correspondía). |
+| **Aprobado, pendiente de ejecución** | El propietario lo aprobó, pero falta hacerlo (y en algunos casos autorizar o esperar una condición). |
+| **Pendiente de validación externa** | Es un dato o un parámetro que hay que investigar o validar con personas o entidades; **no es una decisión y no se asumió**. |
+| **Pendiente de revisión visual** | Lo aprobado o hecho necesita la revisión visual del propietario antes de darse por cerrado. |
+
+**Se conservan todas las decisiones anteriores que no se reabrieron expresamente** (D-01 a D-93, los inventarios y las políticas por etapas).
+
+| ID | Decisión | Estado | Dónde |
+|---|---|---|---|
+| D-94 | **Balance:** se muestran la fecha de inicio (al crear el grupo, no editable) y la de cierre de cada grupo | Decidido (en el prototipo) | `balance/REQUERIMIENTOS-BALANCE.md` BL-26 |
+| D-95 | **Balance:** los miembros registran y gestionan sus propios gastos, también en la Gestión de gastos, limitados a los suyos; la administración conserva sus facultades | Decidido (en el prototipo) | BL-18; `balance/ROLES-Y-PERMISOS.md` |
+| D-96 | **Balance:** se mantienen las 40 monedas del inventario; no se inventa una 41.ª | Decidido | `balance/INVENTARIO-BALANCE.md` (nota), §10 de los requerimientos |
+| D-97 | **Balance:** se mantienen la cuenta obligatoria (D3) y la página de invitación como mitigación | Decidido | BL-13 |
+| D-98 | **Balance:** se mantiene el reparto en partes iguales, sin excepciones (D6) | Decidido | §10 de los requerimientos |
+| D-99 | **Balance:** «Copiar monto» y el aviso de verificar el pago antes de darlo por recibido | Decidido (en el prototipo) | BL-14, BL-25 |
+| D-100 | **Balance:** los enlaces de invitación no vencen inicialmente (se reevaluará con el uso) | Decidido | BL-04 |
+| D-101 | **Balance:** el resumen compartible por WhatsApp queda para una fase posterior | Decidido | BL-28 |
+| D-102 | **Balance:** sin notificaciones cuando alguien registra un gasto en el MVP | Decidido | BL-27 |
+| D-103 | **Brisa:** se conserva la tipografía actual | Decidido | `brisa/REQUERIMIENTOS-BRISA.md` §14 |
+| D-104 | **Brisa:** no se agrega el indicador de días acumulados | Decidido | §10 de los requerimientos |
+| D-105 | **Brisa:** el contraste oscuro de las tarjetas se resuelve con la mezcla al 28 % y los tokens existentes, sin token nuevo ni CCR. Medido: el texto secundario general solo llega a 3,85:1 a esa mezcla, así que la fecha límite usa el texto general | Decidido (en el prototipo); su apariencia queda **pendiente de revisión visual** | §0 y §11 de los requerimientos; `prototype-tests/contrast.py` |
+| D-106 | **Brisa:** «Deshacer» tras marcar/reabrir o eliminar, con reversión segura (estado exacto, solo los campos de la acción, rechazo si la tarea cambió, un solo uso) | Decidido (en el prototipo; la producción se implementa con el módulo) | BR-19 |
+| D-107 | **Brisa:** se mantiene el banner único de bienvenida; no se agrega el tour de tres pasos | Decidido | BR-15 |
+| D-108 | **Ágora:** se mantiene el trato de usted como voz predeterminada | Decidido | AG-TXT-01 |
+| D-109 | **Ágora:** el resumen semanal por correo queda para F2, siempre opcional y con consentimiento | Decidido | AG-CAL-02 |
+| D-110 | **Ágora:** la cantidad de revisores iniciales es configurable, sin número fijo; se conservan la separación de funciones y la prohibición de verificar la propia pieza | Decidido | AG-VER-02 |
+| D-111 | **Ágora:** se publica una política de correcciones antes del lanzamiento | Decidido (condición de lanzamiento; su **texto** sigue pendiente de redactar) | AG-COR-01 |
+| D-112 | **Ágora:** se mantiene la dirección de paleta propuesta | Decidido (la dirección); la **revisión visual final** del propietario sigue **pendiente de revisión visual** | §11 de los requerimientos |
+| D-113 | **Cosecha:** el modelo de pago y la política de reclamos se mantienen como decisiones iniciales (confirman D-63 y D-64) | Decidido; sus parámetros siguen **pendientes de validación externa** y de ratificación en asamblea según corresponda | `cosecha/MODELO-DE-PAGO.md`, `cosecha/POLITICA-DE-RECLAMOS.md` |
+| D-114 | **Cosecha:** se mantiene `Campaign → Season` (confirma D-05) | Aprobado, pendiente de ejecución (el código y la ficha aún dicen `Campaign`) | `cosecha/REQUERIMIENTOS-COSECHA.md` §21 |
+| D-115 | **Huella:** sigue siendo exclusiva del Owner; no se reabre. Se retiró la fase de invitados y la vista «Invitada (F3)» del prototipo | Decidido | `huella/REQUERIMIENTOS-HUELLA.md` §3 y §16 |
+| D-116 | **Typst, fuentes autoalojadas y `Pastel.Documents`** siguen aprobados (confirman D-03 y D-06). Solicitud de cambio preparada como **CCR-2** (numeración provisional), distinta de CCR-1 | Aprobado, pendiente de ejecución (CCR-2 por autorizar) | [`../requests/CCR-2-motor-documental-typst.md`](../requests/CCR-2-motor-documental-typst.md) |
+| D-117 | **CCR-1** se reaplica durante el proceso de integración, adaptado a las reglas actuales: se leyeron ambas versiones de los documentos protegidos y no hay fusión ciega ni se recuperan reglas obsoletas | Aprobado, pendiente de ejecución | [`../requests/CCR-1-reaplicacion-adaptada.md`](../requests/CCR-1-reaplicacion-adaptada.md) |
+| D-118 | La **Etapa 2** de QA profundo comienza cuando las cinco aplicaciones estén funcionales | Decidido (condición de inicio) | `docs/TESTING.md`, fichas de módulo |
+| D-119 | **La fusión a `dev` no está autorizada.** Se espera a que termine `refactor/modular-foundation`, se revisan sus cambios y se repiten los ensayos de integración | Decidido (restricción vigente) | [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md) |
+| D-120 | Tras una integración exitosa y verificada se retiran `research/brisa-balance-prototypes`, `docs/brisa-inventory` y `docs/balance-inventory`. **No se toca** `backup/refactor-modular-foundation-2026-10-25` | Aprobado, pendiente de ejecución (condicionado a D-119) | §7 |
 
 ---
 
@@ -177,22 +222,54 @@ Se sumaron las dos apps que **ya existen** y se migran a Pastel, partiendo de la
 - **Ágora como vitrina de historias reales** del origen de la fruta (serie "De la finca"): contenido para el kit comercial y el sello de la asociación. *Opcional, a decidir.*
 
 ## 7. Estado de las decisiones pendientes
-| # | Tema | Estado |
+
+Actualizado el 2026-11-13. Las decisiones tomadas están en §0c (y D-01 a D-93); aquí solo lo que **todavía no está cerrado**, clasificado según los estados de §0c.
+
+### Aprobado, pendiente de ejecución
+| Tema | Qué falta | Condición |
 |---|---|---|
-| 1 | Dirección visual de cada app | **En revisión con sus capturas** (v2 incorpora el diseño nuevo; falta su visto bueno sobre la v2) |
-| 2 | **CCR** para Typst + fuentes en el host y `Pastel.Documents` | ✅ **Aprobado** por el propietario (2026-10-24). Pendiente: redactar la solicitud de cambio |
-| 3 | `Campaign → Season` | ✅ **Aprobado** |
-| 4 | Huella solo Owner o invitados (F3) | Abierta (la v2 incluye la vista «Invitada (F3)» para decidir con algo concreto) |
-| 5 | **Política de reclamos** | ✅ **Decidida con investigación** (valores iniciales a validar): [`cosecha/POLITICA-DE-RECLAMOS.md`](cosecha/POLITICA-DE-RECLAMOS.md) |
-| 6 | **Modelo de pago a productores** | ✅ **Decidido con investigación** (porcentajes a validar con productores y ratificar en asamblea): [`cosecha/MODELO-DE-PAGO.md`](cosecha/MODELO-DE-PAGO.md) |
-| 7 | Dominio de correo para secuencias | Abierta |
-| 8 | Resumen semanal de Ágora en F1 | Abierta |
-| 9 | Socio exportador candidato | Abierta |
-| 10 | **Balance:** ¿41 o 40 monedas? (la tabla del inventario trae 40) | Abierta |
-| 11 | **Balance:** cuenta obligatoria (D3) y fricción de invitar; partes iguales sin excepción (D6) | Abierta (se miden con el uso; ver `balance/REQUERIMIENTOS-BALANCE.md` §15) |
-| 12 | **Balance:** «Copiar monto», aviso de verificar el pago, vencimiento del enlace, texto para WhatsApp | Propuestas sin aprobar |
-| 13 | **Brisa:** tipografía, indicador de días acumulados, contraste oscuro de tarjetas (token o 28 %) | Abierta (`brisa/REQUERIMIENTOS-BRISA.md` §14) |
-| 14 | **Fusión a `dev`** (orden, CCR-1, fichas de módulo) | Plan listo, **espera autorización expresa**: [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md) |
+| **CCR-2** (Typst, fuentes autoalojadas, `Pastel.Documents`) | Autorización expresa y aplicación de la solicitud ya redactada: [`../requests/CCR-2-motor-documental-typst.md`](../requests/CCR-2-motor-documental-typst.md) | Autorización del propietario; verificar versión y licencias (CCR-2, «Datos por verificar») |
+| **CCR-1 reaplicado y adaptado** | Aplicarlo a `AGENTS.md`, `docs/DESIGN_SYSTEM.md`, `docs/ARCHITECTURE.md` y la ficha de Brisa, según [`../requests/CCR-1-reaplicacion-adaptada.md`](../requests/CCR-1-reaplicacion-adaptada.md) | Durante la integración a `dev` (D-119) |
+| `Campaign → Season` | Renombrar en el código y en `docs/modules/COSECHA.md` | Al implementar Cosecha |
+| **Integración a `dev`** | Esperar que termine `refactor/modular-foundation`, revisar sus cambios y repetir los ensayos de integración | Autorización expresa (hoy **no** autorizada) |
+| **Retiro de ramas sustituidas** | Retirar `research/brisa-balance-prototypes`, `docs/brisa-inventory` y `docs/balance-inventory`. **No tocar** `backup/refactor-modular-foundation-2026-10-25` | Solo después de una integración exitosa y verificada |
+| **Etapa 2 de QA profundo** | Planificarla y ejecutarla | Cuando las cinco aplicaciones estén funcionales |
+
+### Pendiente de validación externa (no son decisiones; no se asumió ningún valor)
+| Tema | Con quién o cómo se valida |
+|---|---|
+| Parámetros del modelo de pago (anticipo, fondo, gestión, adelanto, día de pago) | Productores reales (`MODELO-DE-PAGO.md` §9) y ratificación en asamblea |
+| Parámetros de la política de reclamos (ventana, fotos, tolerancias, fondo) | Técnico poscosecha, compradores reales, abogado y productores (`POLITICA-DE-RECLAMOS.md` §10); asamblea según corresponda |
+| **Personería jurídica** de la asociación y **registros** que ya posee (SFE y otros) | Investigar y verificar; hasta entonces todo lo normativo queda marcado «verificar» |
+| **Socio exportador** | Identificar candidatos reales; hoy no hay ninguno |
+| **Cuarto frío** propio o alquilado | Disponibilidad y costos reales; no se decidió |
+| **Dominio de correo** para las secuencias | Confirmar su disponibilidad |
+| Admisibilidad, factura electrónica, datos personales, marco editorial y validez de cláusulas | SFE/PROCOMER, contador y abogado (D-08) |
+| Envío de correos desde la plataforma (resumen semanal de Ágora, F2) | Definición técnica de la plataforma; no se asume |
+| Preselección de la casilla de Balance al registrarse (inventario §12.11, P23) | Agente de Identity/plataforma |
+| Versión y licencia de Typst y licencias de las familias tipográficas | Verificación previa a CCR-2 |
+
+### Pendiente de revisión visual
+| Tema | Nota |
+|---|---|
+| **Revisión visual del propietario de los cinco prototipos** (D-73) | Es la verificación que las pruebas automáticas no sustituyen; incluye los cambios del 2026-11-13 |
+| **Ágora: paleta** | La dirección está aprobada (D-112); la revisión visual final **no se ha hecho** |
+| **Brisa:** tarjetas oscuras al 28 % y aviso con «Deshacer» | Aplicados en el prototipo; falta verlos |
+| **Brisa: acento claro** | Los documentos aprobados citan `#315B4A` (inventario §13.7) y el prototipo y los tokens provisionales usan `#48775b`/`#416b52`. No se cambió: se resuelve con la revisión visual y la reaplicación de CCR-1 |
+| **Balance:** tipografía real, cifras tabulares, hoja de miembros y fechas | La tipografía viene de Google Fonts; sin Internet se vio la del sistema |
+
+### Preguntas abiertas para el propietario (ninguna respuesta se asumió)
+| # | Tema | Pregunta |
+|---|---|---|
+| 1 | Balance | ¿Columnas adicionales (categoría, notas) o importar un CSV en la hoja? |
+| 2 | Balance | ¿Se muestra «Su parte será ₡…» al registrar un gasto? |
+| 3 | Balance | «Marcarlo como recibido»: hoy el aviso es solo informativo (Balance no registra pagos, D6). ¿Se quiere una marca de «recibido»? Eso reabriría D6 |
+| 4 | Balance | Fechas: al reabrir, ¿se borra la fecha de cierre (supuesto del prototipo) o se conserva? ¿El inicio por defecto es «hoy» en la zona del grupo? |
+| 5 | Brisa | ¿La reversión segura del «Deshacer» pasa a prueba esencial de la Etapa 1? ¿Basta la ventana de 8 s? |
+| 6 | Brisa | La prueba esencial 3 de `docs/modules/BRISA.md` (idempotencia con `Guid` de cliente) contradice el §3 de la misma ficha, que deja ese mecanismo para la sincronización. ¿Se ajusta la prueba? |
+| 7 | Ágora | ¿Quién redacta, decide y difunde el texto de la política de correcciones? ¿Hay un mínimo de revisores por tema? ¿Se paga la revisión? ¿Edad mínima? ¿Apelación? |
+| 8 | Huella | ¿Idiomas del CV desde F1 solo ES/EN? ¿Varios «enfoques» visibles en el perfil público? |
+| 9 | Cosecha | Capital para el tope de caja o financiamiento puente; SINPE como medio único y productores sin cuenta |
 
 ## 8. Limitaciones y cosas no verificadas (honestidad)
 - **Repositorio:** el nombre indicado (`pastel-workspace`) no existe con ese nombre para el token; se trabaja en **`leandro-mc/pastel-admin-platform`** (rama base `refactor/modular-foundation`).
@@ -208,6 +285,6 @@ Se sumaron las dos apps que **ya existen** y se migran a Pastel, partiendo de la
 - **v3 · revisión visual:** esta vez **sí** se abrieron Brisa y Balance en un navegador sin cabeza (escritorio y móvil, claro y oscuro) y se corrigieron un desborde móvil y un botón duplicado; **no** sustituye su revisión. La tipografía de Balance viene de Google Fonts: sin Internet se vio la del sistema, así que **su efecto real queda por revisar** (incluida la función de cifras tabulares).
 - **v3 · fuentes sin verificar:** Masicampo y Baumeister (2011) y el artículo de Verhoeff (2004) **no se leyeron completos**; la URL que devolvió el buscador para Gollwitzer y Sheeran (2006) no coincidía con el título; la **Ley 8968** no se evaluó. Las comparativas de apps son comerciales (C) y sus cifras cambian.
 - **v3 · alcance del prototipo de Balance:** datos en memoria, sin servidor, sin concurrencia (409), sin correo de invitación y con token de demostración (no criptográfico). **No** prueba SINPE Móvil.
-- **v3 · pruebas de CV:** en el entorno de esta iteración no estaban `typst` ni `python-docx`, por lo que **no se volvieron a correr** las 4 suites de CV de Huella (ajenas a esta iteración). Las demás, sí: 408 comprobaciones, 215/215 pares de contraste.
-- **v3 · una sola rama:** todo (Brisa, Balance, la política de pruebas por etapas y la investigación) vive en `research/requirements-and-prototypes`. La rama intermedia `research/brisa-balance-prototypes` se reunió aquí (9 commits, sin conflictos) y puede retirarse con autorización. `dev`, `main`, `refactor/*` y `docs/*` no se tocaron.
+- **v3 · pruebas de CV:** en el entorno de esta iteración no estaban `typst` ni `python-docx`, por lo que **no se volvieron a correr** las 4 suites de CV de Huella (ajenas a esta iteración). Las demás, sí. *(Cifras vigentes tras el 2026-11-13: 428 comprobaciones y 217/217 pares de contraste; las suites de CV siguen sin ejecutarse en este entorno.)*
+- **v3 · una sola rama:** todo (Brisa, Balance, la política de pruebas por etapas y la investigación) vive en `research/requirements-and-prototypes`. La rama intermedia `research/brisa-balance-prototypes` se reunió aquí (9 commits, sin conflictos); su retiro está aprobado pero **solo después de una integración exitosa y verificada** (ver §7). `dev`, `main`, `refactor/*` y `docs/*` no se tocaron.
 - **Seguridad:** el token de GitHub compartido en la conversación (otra vez en la v3) debe considerarse expuesto: **revóquelo**. Se usó solo en memoria del entorno y **no está en el repositorio** (verificado en archivos e historial).

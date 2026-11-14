@@ -1,6 +1,6 @@
 # Balance · roles y permisos
 
-> Complementa `REQUERIMIENTOS-BALANCE.md`. Lo descrito aquí **está implementado** en `prototype/rules.js` y **verificado** por `prototype/rules.test.js` (26 comprobaciones) y por `prototype-tests/t-balance.js` (40, por rol en la interfaz). Se conserva la decisión del inventario (§12.3, **D3**): autenticación obligatoria, cuenta siempre necesaria, pertenencia al grupo, administración y ciclo de vida (§12.7, **D7**). En producción **todo se aplica en el servidor** (denegar por defecto); la interfaz solo oculta lo que no corresponde.
+> Complementa `REQUERIMIENTOS-BALANCE.md`. Lo descrito aquí **está implementado** en `prototype/rules.js` y **verificado** por `prototype/rules.test.js` (32 comprobaciones) y por `prototype-tests/t-balance.js` (78, por rol en la interfaz). Se conserva la decisión del inventario (§12.3, **D3**): autenticación obligatoria, cuenta siempre necesaria, pertenencia al grupo, administración y ciclo de vida (§12.7, **D7**). En producción **todo se aplica en el servidor** (denegar por defecto); la interfaz solo oculta lo que no corresponde.
 
 ## 1. Principios
 

@@ -32,8 +32,8 @@ cd docs/requirements/prototype-tests && npm install && npm test
 ```
 | Qué | Resultado |
 |---|---|
-| Interfaz y lógica de los **7** prototipos con jsdom (por rol, incluyendo lo que **no** debe ver cada rol) + algoritmo de reparto de Cosecha + motor de dinero y reglas de Balance (casos dorados G01–G41) + lógica de fechas de Brisa (V1–V10, AC1–AC7) | 408 comprobaciones (202 + 66 de Brisa + 140 de Balance) |
-| Contraste WCAG de las paletas en claro y oscuro (incluye componentes: bordes, barras, foco) | 215/215 pares |
+| Interfaz y lógica de los **7** prototipos con jsdom (por rol, incluyendo lo que **no** debe ver cada rol) + algoritmo de reparto de Cosecha + motor de dinero y reglas de Balance (casos dorados G01–G41) + lógica de fechas de Brisa (V1–V10, AC1–AC7) | 428 comprobaciones (200 + 76 de Brisa + 152 de Balance) |
+| Contraste WCAG de las paletas en claro y oscuro (incluye componentes: bordes, barras, foco) | 217/217 pares |
 | Reglas duras de diseño: sin morado ni símbolos de IA | 32 archivos de prototipo |
 | Cada «captura» de las guías abre en su rol y estado | 25/25 |
 | CV: auditoría ATS del PDF compilado · Word leído de vuelta · límites por nivel y papel · estrés al máximo | 14/14 · 9/9 · 6/6 · 6/6 |
@@ -41,4 +41,4 @@ cd docs/requirements/prototype-tests && npm install && npm test
 **Lo que NO cubre:** apariencia real en dispositivos. En la v3 sí hubo una **revisión visual propia** de Brisa y Balance con un navegador sin cabeza (escritorio y móvil, claro y oscuro; corrigió un desborde móvil y un botón duplicado), pero **no sustituye** la revisión del propietario: envíe capturas de la v3. Las fuentes de Balance vienen de Google Fonts; sin Internet se ve la del sistema.
 
 ## Qué NO está hecho (a propósito)
-No se tocó el código de la aplicación ni la base de datos; no hay backend, IA real, envío de correos ni WhatsApp. Esto es la **especificación y la validación funcional/visual** previas a implementar. Pendiente: solicitud de **CCR** (Typst, fuentes y `Pastel.Documents`, ya aprobado en principio).
+No se tocó el código de la aplicación ni la base de datos; no hay backend, IA real, envío de correos ni WhatsApp. Esto es la **especificación y la validación funcional/visual** previas a implementar. Pendientes: autorizar y aplicar la solicitud **CCR-2** (Typst, fuentes autoalojadas y `Pastel.Documents`, aprobado y ya redactada en [`../requests/CCR-2-motor-documental-typst.md`](../requests/CCR-2-motor-documental-typst.md)) y reaplicar **CCR-1** adaptado durante la integración ([`../requests/CCR-1-reaplicacion-adaptada.md`](../requests/CCR-1-reaplicacion-adaptada.md)). Las decisiones del propietario del 2026-11-13 y el estado de cada pendiente están en [`DECISIONES-Y-HALLAZGOS.md`](DECISIONES-Y-HALLAZGOS.md) §0c y §7.

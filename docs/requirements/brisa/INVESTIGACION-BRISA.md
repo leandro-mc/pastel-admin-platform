@@ -63,7 +63,7 @@ Recibe la petición «necesito Brisa». → el estado 403 dice **a quién** pedi
 
 ## 7. Riesgos
 
-- Que la regla derivada **oculte** el patrón de postergación (una tarea viaja semanas). Propuesta sin aprobar en `REQUERIMIENTOS-BRISA.md` §14.
+- Que la regla derivada **oculte** el patrón de postergación (una tarea viaja semanas). **Decidido el 2026-11-13:** no se agrega el indicador de días acumulados (`REQUERIMIENTOS-BRISA.md` §14).
 - Que el tono sin culpa se vuelva **ignorable**: validar si «Vencidas» se resuelve o solo se evita.
 - Que se importe o escriba una fecha límite **ya vencida**: se rechaza si el día es posterior al límite (BR-03).
 
