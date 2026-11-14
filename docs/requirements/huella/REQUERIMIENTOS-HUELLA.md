@@ -1,6 +1,6 @@
 # Huella — Requerimientos v2 (levantamiento profundo)
 
-> **Estado:** propuesta para validación del propietario · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-10-23
+> **Estado:** propuesta para validación del propietario, con las **decisiones del propietario del 2026-11-13 ya incorporadas** (resumen en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) §0c; estado de cada tema en §16) · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-10-23 (actualizado 2026-11-13)
 > **Prototipos:** [`prototype-perfil/`](prototype-perfil/index.html) (página pública) · [`prototype-estudio/`](prototype-estudio/index.html) (banco + generador de CV)
 > **Verificaciones ejecutables:** [`cv-spec/`](cv-spec/) (límites, plantilla, auditoría ATS, prueba de estrés)
 > Este documento **amplía** `docs/modules/HUELLA.md`. Lo que no se contradice aquí, sigue vigente (token por enlace, snapshot inmutable, `noindex`, contacto oculto por defecto).
@@ -9,7 +9,7 @@
 > - **Banco = cuaderno privado en texto largo** (relatos por experiencia, «habilidades y por qué», proyectos, + secciones estructuradas, filtros privados y «Mi voz»); la IA **deriva** los logros (XYZ) y pregunta por las cifras que faltan. Ver [`INVESTIGACION-HUELLA.md`](INVESTIGACION-HUELLA.md).
 > - **Filtros duros** (requisitos eliminatorios) comparados con datos privados **antes** de generar.
 > - **Plantilla de CV v2** (Source Sans 3, un acento sobrio, defecto de Educación corregido) y **exportación a Word (.docx) en F1**. Junior pasa a **3 líneas de perfil**. Detalle en `cv-spec/README.md`.
-> - **Estudio en una sola pantalla** (Banco → Crear CV con vista previa viva), **tema claro/oscuro** y **selector de rol de desarrollo** (propietaria · primera vez · invitada). La página pública tiene vistas **reclutadora · propietaria · enlace revocado · lectura de máquina (ATS)**.
+> - **Estudio en una sola pantalla** (Banco → Crear CV con vista previa viva), **tema claro/oscuro** y **selector de rol de desarrollo** (propietaria · primera vez). La página pública tiene vistas **reclutadora · propietaria · enlace revocado · lectura de máquina (ATS)**.
 > - Decisión aprobada: **Typst + fuentes en el host (CCR)**.
 
 ---
@@ -77,7 +77,7 @@ Decisiones centrales (detalle y alternativas descartadas en [`../DECISIONES-Y-HA
 
 **El proveedor de IA (actor externo, no confiable).** Procesa datos personales en servidores de terceros, con términos distintos según plan. Se trata como *encargado del tratamiento*: recibe lo mínimo.
 
-**Invitados (Fase 3, requiere decisión).** Si el propietario quisiera ceder Huella a un par de personas cercanas, el modelo ya lo soportaría (todo cuelga de `OwnerUserId`). El MVP sigue siendo "solo Owner".
+**Huella es exclusiva del Owner** (decisión firme del propietario, 2026-10-23, reafirmada el 2026-11-13: **no se reabre**). No se contemplan invitados, ni cuota compartida de IA, ni ninguna fase para abrirla a otras personas; todo cuelga de `OwnerUserId`.
 
 ---
 
@@ -88,7 +88,7 @@ Decisiones centrales (detalle y alternativas descartadas en [`../DECISIONES-Y-HA
 | **F0 — Validación** (esta entrega) | Prototipos + límites verificados + este documento | El propietario valida la dirección de arte y el flujo del Estudio |
 | **F1 — Núcleo** | Banco de evidencia · Estudio modo *enfocado* y *desde oferta* con IA (Gemini + modo manual) · plantilla Typst ES/EN · reporte ATS · versiones de CV · perfil público v2 con snapshot | De un banco cargado se genera un CV Mid de 2 págs. en < 60 s, sin desbordes, con reporte ATS |
 | **F2 — Cierre del ciclo** | OpenAI y Anthropic · tracker de postulaciones · aviso de apertura del enlace · export `.tex` · escudo PII configurable · comparación de versiones | Se mide qué "enfoque" recibe más respuestas |
-| **F3 — Ampliación** | Invitados · segundo idioma de perfil público · carta de presentación por oferta · preparación de entrevista desde la oferta | — |
+| **F3 — Ampliación** | Segundo idioma de perfil público · carta de presentación por oferta · preparación de entrevista desde la oferta | — |
 
 ---
 
@@ -386,13 +386,21 @@ Tiempo "banco cargado → primer CV" (< 15 min la primera vez, < 2 min después)
 
 ## 15. Qué demuestran (y qué no) los prototipos
 - **`prototype-perfil/`** (v2): dirección de arte, huella generativa, resaltador, línea de tiempo, impresión, tema claro/oscuro y **vistas por rol** (reclutadora, propietaria con control del enlace, enlace revocado, lectura de máquina). Datos **ficticios**.
-- **`prototype-estudio/`** (v2): **banco-cuaderno en texto largo** con derivación de logros en vivo, mapa de evidencia, **filtros duros**, creación del CV en una sola pantalla con **vista previa**, escalera de ajuste, guardián de verdad y reporte ATS; roles propietaria · primera vez · invitada. **La IA está simulada** (reglas + motor verificado): no hay red ni claves.
+- **`prototype-estudio/`** (v2): **banco-cuaderno en texto largo** con derivación de logros en vivo, mapa de evidencia, **filtros duros**, creación del CV en una sola pantalla con **vista previa**, escalera de ajuste, guardián de verdad y reporte ATS; roles propietaria · primera vez. **La IA está simulada** (reglas + motor verificado): no hay red ni claves.
 
-## 16. Preguntas abiertas
-1. ¿Se mantiene Huella solo para el Owner o se abre a invitados (F3)?
-2. ¿Idiomas del CV desde F1: solo ES/EN?
-3. ¿Se acepta añadir Typst + fuentes a la imagen del host (CCR)?
-4. ¿El perfil público debe poder tener varios "enfoques" visibles (QA / Fullstack) o uno solo?
+## 16. Decisiones y preguntas abiertas
+
+Las decisiones del 2026-11-13 están en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) (§0c y §7); aquí solo su efecto en este documento.
+
+| Tema | Estado | Detalle |
+|---|---|---|
+| Huella solo para el Owner (sin invitados) | **Decidido** (firme; no se reabre) | §3; se retiró del prototipo la vista «Invitada (F3)» |
+| Typst + fuentes autoalojadas + `Pastel.Documents` | **Aprobado, pendiente de ejecución** | Requiere solicitud de cambio de zonas compartidas: [`../../requests/CCR-2-motor-documental-typst.md`](../../requests/CCR-2-motor-documental-typst.md) (distinta de CCR-1) |
+
+**Siguen abiertas:**
+
+1. ¿Idiomas del CV desde F1: solo ES/EN?
+2. ¿El perfil público debe poder tener varios "enfoques" visibles (QA / Fullstack) o uno solo?
 
 ---
 

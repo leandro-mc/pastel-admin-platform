@@ -1,6 +1,6 @@
 # Cosecha — Requerimientos v2 (levantamiento profundo)
 
-> **Estado:** propuesta para validación del propietario · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-10-23
+> **Estado:** propuesta para validación del propietario, con las **decisiones del propietario del 2026-11-13 ya incorporadas** (resumen en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) §0c; estado de cada tema en §21) · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-10-23 (actualizado 2026-11-13)
 > **Prototipo:** [`prototype/`](prototype/index.html) (app única por roles: Hoy · Mercado · Envíos · Recepción · Entregas · Reclamos · Dinero · Productores · Equipo · portal del comprador · enlace de zona · WhatsApp del productor)
 > Amplía `docs/modules/COSECHA.md`. El MVP actual resuelve muy bien **una parte** de la cadena (operar un envío). Este documento recorre **toda** la cadena, desde "no conozco a ningún comprador" hasta "cerré la temporada y sé qué hacer mejor el próximo año".
 
@@ -9,7 +9,7 @@
 > - **Decisiones tomadas con investigación:** [`MODELO-DE-PAGO.md`](MODELO-DE-PAGO.md) (anticipo con calendario fijo + liquidación por *pool* + adelanto acotado + tope de capital de trabajo) y [`POLITICA-DE-RECLAMOS.md`](POLITICA-DE-RECLAMOS.md) (ventana de 8 h, 3 fotos, tolerancias, fondo de reclamos que protege al productor).
 > - **Investigación por actor** (psicología, tecnología, entrevistas simuladas y guía real): [`INVESTIGACION-COSECHA.md`](INVESTIGACION-COSECHA.md). **Guías de uso por rol con pantallas reales:** [`manuales/`](manuales/README.md).
 > - Nuevos módulos/roles: **Entregas** (prueba de entrega, reloj de espera, pago del transportista), **Reclamos**, **Productores** con canal de contacto por persona, **Equipo y permisos** con «Ver como», **portal del comprador** y **enlace de zona**.
-> - Aprobado: **`Campaign → Season`**; **Typst + fuentes en el host (CCR)**.
+> - Aprobado (se mantiene, 2026-11-13): **`Campaign → Season`** (**aprobado, pendiente de ejecución**: aún no se renombra en el código ni en la ficha); **Typst + fuentes autoalojadas + `Pastel.Documents`** (**aprobado**; su solicitud de cambio de zonas compartidas está por preparar: `../../requests/CCR-2-motor-documental-typst.md`, distinta de CCR-1).
 
 ---
 
@@ -54,7 +54,7 @@
 | Sin modo sin conexión | La recepción ocurre en fincas con cobertura inestable |
 | Temporada tratada como estática | Hoy (23 oct) la temporada **está terminando**; lo valioso ahora es cerrar y prospectar 2027 |
 
-**Cambio de nombre propuesto:** el `Campaign` del MVP (campaña = temporada) pasa a **`Season`/"Temporada"**, para no chocar con las *campañas de contacto* (que se llamarán **Secuencias**).
+**Cambio de nombre aprobado (se mantiene, 2026-11-13; pendiente de ejecución):** el `Campaign` del MVP (campaña = temporada) pasa a **`Season`/"Temporada"**, para no chocar con las *campañas de contacto* (que se llamarán **Secuencias**).
 
 ---
 
@@ -252,7 +252,7 @@ Por envío, comprador, canal y temporada, contra lo planeado.
 ## 10. Cumplimiento y documentos
 
 - **Bóveda** (asociación, fincas, envío, comprador) con vencimientos y alertas. Datos personales sensibles del productor, solo los mínimos.
-- **Checklists por peldaño/mercado**, sembrados con el contenido que sabemos (registros SFE, certificado fitosanitario, admisibilidad vigente, factura, lista de empaque, documento de transporte) y marcados **"verificar con SFE/PROCOMER"**. El propietario edita y marca cumplido.
+- **Checklists por peldaño/mercado**, sembrados con el contenido que sabemos (registros SFE, certificado fitosanitario, admisibilidad vigente, factura, lista de empaque, documento de transporte) y marcados **"verificar con SFE/PROCOMER"**. El propietario edita y marca cumplido. **La personería jurídica de la asociación y los registros que ya posee (SFE y otros) son datos por investigar y verificar, no decisiones: la app no los da por ciertos.**
 - **Trazabilidad:** productor → lote → envío → comprador; **simulación de retiro**: "¿a quién le llegó fruta del lote RB-261023-P07?".
 - *(F3)* Cuaderno de aplicaciones de agroquímicos con intervalos previos a la cosecha (exigido por muchos compradores).
 
@@ -371,5 +371,18 @@ Prospectos → respuestas → muestras → cotizaciones → pedidos (conversión
 ## 20. Qué demuestran (y qué no) los prototipos
 - **`prototype/`** (v2): app única por roles. **Envíos** con el algoritmo real de reparto (proporcional, topes, mayor resto, equidad; probado en Node); cola de convocatoria **por canal**; **Recepción** en modo campo sin precios para Acopio, reloj de frescura y sin conexión; **Entregas** con prueba y espera pagable; **Reclamos** con la política aplicada; **Dinero** con el modelo de pago; **Mercado** con ruta de arranque, seguimiento, puntuación de encaje y guardas que **bloquean**; **portal del comprador**; **enlace de zona**; vista de lo que recibe el **productor** por WhatsApp. **Datos ficticios; no envía nada.**
 
-## 21. Preguntas abiertas
-1. ¿La asociación tiene personería jurídica y qué registros ya posee (SFE, etc.)? 2. ¿Quién será el "socio exportador" candidato? 3. ¿Se acepta la regla por defecto de que la asociación absorbe los reclamos? 4. ¿Dominio de correo propio disponible para secuencias? 5. ¿Se aprueba el cambio `Campaign → Season`? 6. ¿Hay cuarto frío propio o se alquila? 7. ¿Qué modelo de pago a productores se prefiere (a X días / al cobrar)?
+## 21. Decisiones y preguntas abiertas
+
+Las decisiones del 2026-11-13 están en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) (§0c y §7). Aquí solo su efecto en este documento. **Ningún dato desconocido se convirtió en decisión.**
+
+| Tema | Estado | Detalle |
+|---|---|---|
+| Modelo de pago (anticipo con calendario fijo + liquidación por *pool* + adelanto acotado + tope de caja) | **Decisión inicial** (se mantiene) | [`MODELO-DE-PAGO.md`](MODELO-DE-PAGO.md). Los parámetros siguen **pendientes de validación con productores** (§9 del modelo) y de **ratificación en asamblea** (los porcentajes, §8 del modelo) |
+| Política de reclamos (ventana de 8 h, 3 fotos, tolerancias, fondo de reclamos; la asociación absorbe los reclamos por defecto) | **Decisión inicial** (se mantiene) | [`POLITICA-DE-RECLAMOS.md`](POLITICA-DE-RECLAMOS.md). Los valores siguen **pendientes de validación** con un técnico poscosecha, compradores reales y un abogado (§10 de la política) y de ratificación en asamblea **según corresponda** |
+| `Campaign → Season` | **Aprobado, pendiente de ejecución** | Se mantiene; el código y la ficha aún usan `Campaign` |
+| Cuarto frío propio o alquilado | **No decidido** | Depende de la disponibilidad y de los costos reales; no se asume ninguno |
+| Socio exportador | **Pendiente:** sin candidato | Se elegirá cuando se identifiquen candidatos reales; no se inventa ninguno |
+| Dominio de correo propio para las secuencias | **Pendiente de validación externa** | Falta confirmar su disponibilidad; las secuencias de correo no pueden arrancar sin dominio autenticado (§7) |
+| Personería jurídica y registros (SFE y otros) | **Pendiente de validación externa** | Son datos por investigar y verificar, no decisiones; hasta entonces todo lo normativo queda marcado «verificar» |
+
+**Siguen abiertas** (de los documentos de pago): capital para el tope de caja o financiamiento puente; factura electrónica (a verificar con el contador); SINPE como medio único y qué pasa con productores sin cuenta (ver `MODELO-DE-PAGO.md` §10).

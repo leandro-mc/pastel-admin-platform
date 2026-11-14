@@ -77,4 +77,4 @@ Tiempo «banco cargado → primer CV» (< 15 min la primera vez; < 2 min despué
 **Prueba técnica:** pasar el PDF/Word por **parsers y ATS de prueba** (planes gratuitos) y comparar la extracción.
 
 ## 11. Preguntas abiertas
-¿Idiomas del CV desde F1 (ES/EN)? ¿Se abre Huella a invitados (F3)? ¿Qué ATS usan las empresas objetivo (para probar con ellos)? ¿Se agrega **carta de presentación** por oferta?
+¿Idiomas del CV desde F1 (ES/EN)? *(La apertura a invitados quedó **descartada**: Huella es exclusiva del Owner, decisión firme.)* ¿Qué ATS usan las empresas objetivo (para probar con ellos)? ¿Se agrega **carta de presentación** por oferta?

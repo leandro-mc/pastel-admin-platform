@@ -1,6 +1,6 @@
 # Política de reclamos de calidad · decisión
 
-> **Estado:** decidida para implementar, **con valores iniciales a validar** con un técnico poscosecha y con los primeros compradores (§10). **Fecha:** 2026-10-24.
+> **Estado:** **decisión inicial** (confirmada como tal por el propietario el 2026-11-13), **con valores iniciales pendientes de validación** con un técnico poscosecha y con los primeros compradores (§10) y de **ratificación en asamblea según corresponda**. **Fecha:** 2026-10-24 (actualizado 2026-11-13).
 > **No es asesoría legal:** las condiciones se incluyen en cotizaciones y pedidos; su validez debe **verificarse con un abogado**. Prototipo: `prototype/` → módulo **Reclamos** (`ops.js`) y **portal del comprador** (`people.js`). Evidencia: [`../research/NOTAS-COSECHA-AGORA-V2.md`](../research/NOTAS-COSECHA-AGORA-V2.md).
 
 ## 1. El problema

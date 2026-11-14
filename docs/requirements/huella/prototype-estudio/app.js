@@ -6,7 +6,7 @@ const clone = (o) => JSON.parse(JSON.stringify(o)), words = (t) => (t || "").tri
 const SEED = window.HUELLA_SEED, GUIDES = window.HUELLA_GUIDES;
 const EMPTY = () => ({ contacto: { name: "", headline: "", city: "", email: "", phone: "", linkedin: "", github: "" }, historia: "", exps: [], skills: [], projects: [], edu: [], certs: [], langs: [], otros: [], privado: { ubicacion: "", modalidad: "", disponibilidad: "", autorizacion: "", pretension: "", evitar: "" }, voz: "" });
 let B = clone(SEED), BANK = null;
-const S = { tab: "banco", sec: "exps", role: "owner", paper: "letter", level: "mid", mode: "oferta", focus: "Enfocado a QA y automatización; destaco CI/CD y pruebas de API.", offer: window.HUELLA_OFFER, prov: "gemini", tier: "fast", pii: true, over: true, map: null, hard: null, steps: [], res: null, ed: null, edErr: "", pv: "page", cvs: 0, saved: "" };
+const S = { tab: "banco", sec: "exps", role: "owner", paper: "letter", level: "mid", mode: "oferta", focus: "Enfocado a QA y automatización; destaco CI/CD y pruebas de API.", offer: window.HUELLA_OFFER, prov: "gemini", tier: "fast", pii: true, over: true, map: null, hard: null, steps: [], res: null, ed: null, edErr: "", pv: "page", saved: "" };
 const NOW = 2026;
 
 // ── Derivación: del relato largo a logros (XYZ) — simulada con reglas; en producción la hace la IA con el mismo contrato ──
@@ -88,7 +88,7 @@ const EDIT = {
   voz: () => `<h1 id="eh">Mi voz</h1><p class="mut">Cómo escribe usted. El sistema debe sonar como usted, no como un robot.</p>${T("voz", "Cómo escribo y qué palabras evito")}<div class="guide">Frases que el sistema nunca usará: <b>profesional apasionado, orientado a resultados, proactivo, responsable de, dinámico</b>.</div>`,
   contacto: () => `<h1 id="eh">Datos del encabezado</h1><div class="grid2">${F("contacto.name", "Nombre completo")}${F("contacto.headline", "Titular (rol de mercado)")}${F("contacto.city", "Ciudad y país")}${F("contacto.email", "Correo")}${F("contacto.phone", "Teléfono")}${F("contacto.linkedin", "LinkedIn")}${F("contacto.github", "GitHub u otro enlace")}</div><p class="mut">Sin foto, sin cédula, sin estado civil ni edad: no ayudan al ATS y pueden sesgar.</p>`,
 };
-const ROLEMSG = { owner: "Todo lo que escriba aquí es <b>privado</b>: nunca se publica ni se envía. La IA lo lee solo cuando usted pide un CV.", primera: "<b>Bienvenida.</b> Empiece contando su historia y su experiencia más reciente con sus propias palabras. No tiene que ordenarlo ni acortarlo: eso lo hace el sistema.", invitada: "<b>Modo invitada (F3).</b> Su banco es solo suyo: ni la propietaria ni nadie más puede leerlo. La IA usa una cuota compartida de <b>3 CV por semana</b>." };
+const ROLEMSG = { owner: "Todo lo que escriba aquí es <b>privado</b>: nunca se publica ni se envía. La IA lo lee solo cuando usted pide un CV.", primera: "<b>Bienvenida.</b> Empiece contando su historia y su experiencia más reciente con sus propias palabras. No tiene que ordenarlo ni acortarlo: eso lo hace el sistema." };
 const viewBanco = () => `<div class="banner">${ROLEMSG[S.role]}</div><div class="bank"><nav class="snav" id="snav" aria-label="Secciones del banco">${snav()}</nav><section id="editor" aria-labelledby="eh">${EDIT[S.sec]()}<p class="saved" id="saved" role="status">${S.saved}</p></section></div>`;
 
 // ── Crear CV ──
@@ -104,7 +104,7 @@ function paper(cv) {
   <div class="sec">Certificaciones e idiomas</div>${cv.extras.map((x) => `<div>${esc(x)}</div>`).join("")}</div>`;
 }
 function viewCrear() {
-  const L = lim(), P = PROV[S.prov], ready = BANK.exps.some((e) => e.ach.length), sug = suggest(), calls = 4 + Math.min(L.entries, 3), limit = S.role === "invitada" && S.cvs >= 3;
+  const L = lim(), P = PROV[S.prov], ready = BANK.exps.some((e) => e.ach.length), sug = suggest(), calls = 4 + Math.min(L.entries, 3);
   if (!ready) return `<div class="banner">${ROLEMSG[S.role]}</div><div class="empty"><b>Todavía no hay material para armar un CV.</b><br>Necesita al menos una experiencia con logros (frases que empiecen con un verbo en pasado). Es el único paso previo.<p><button class="btn go" data-a="tab" data-id="banco">Ir al Banco y empezar a contar</button></p></div>`;
   const contact = S.pii ? "{{EMAIL}} | {{PHONE}} | {{CITY}}" : [...BANK.contact_l1, ...BANK.contact_l2].join(" | "), payload = JSON.stringify({ tarea: "experience_bullets", contacto: contact, logros: ACH().slice(0, 2).map((a) => ({ id: a.id, texto: a.short })) }, null, 1), leaks = /[\w.+-]+@[\w-]+\.[\w.]+|\+?\d[\d\s-]{7,}/.test(payload);
   const r = S.res, tot = r ? total(r.cv, r.L) : 0, lu = r ? luOf(r.cv, r.L) : {}, scale = r ? Math.max(r.L.cap, tot) : 1, ck = r ? checks(r.cv, r.L, S.map) : [], txt = r ? atsText(r.cv) : "";
@@ -116,15 +116,15 @@ function viewCrear() {
   ${S.mode === "oferta" ? `<label class="f">Texto de la oferta (se trata como dato, nunca como instrucciones)<textarea data-k="offer" style="min-height:9rem">${esc(S.offer)}</textarea></label>` : `<label class="f">Mini-prompt de enfoque (máx. 200)<textarea data-k="focus" maxlength="200" style="min-height:4rem">${esc(S.focus)}</textarea></label>${cnt(S.focus.length, 200)}`}
   <div class="grid2"><label class="f">Nivel <select data-k="level">${Object.entries(BASE).map(([k, b]) => `<option value="${k}" ${S.level === k ? "selected" : ""}>${b.label}${k === sug ? " · sugerido" : ""}</option>`).join("")}</select></label><label class="f">Papel <select data-k="paper"><option value="letter" ${S.paper === "letter" ? "selected" : ""}>Carta</option><option value="a4" ${S.paper === "a4" ? "selected" : ""}>A4</option></select></label></div>
   <p class="mut">Con ${yearsPro()} años de experiencia profesional se sugiere <b>${BASE[sug].label}</b>. Cupo: ${L.pages} pág. · ${L.cap} LU · viñeta máx. ${L.bmax}.</p>
-  <details class="box"><summary><b>Conexión de IA</b> · ${S.role === "invitada" ? "cuota compartida" : P.n}</summary>${S.role === "invitada" ? '<p class="mut">Usa la cuota compartida del Estudio. No necesita claves.</p>' : `<label class="f">Proveedor<select data-k="prov">${Object.entries(PROV).map(([k, p]) => `<option value="${k}" ${S.prov === k ? "selected" : ""}>${p.n}</option>`).join("")}</select></label><label class="f">Nivel de modelo<select data-k="tier">${[["fast", "Rápido"], ["bal", "Equilibrado"], ["best", "Máximo"]].map(([k, t]) => `<option value="${k}" ${P.m[k] ? "" : "disabled"} ${S.tier === k ? "selected" : ""}>${t} · ${P.m[k] || "no disponible en el plan gratuito"}</option>`).join("")}</select></label>
+  <details class="box"><summary><b>Conexión de IA</b> · ${P.n}</summary>${`<label class="f">Proveedor<select data-k="prov">${Object.entries(PROV).map(([k, p]) => `<option value="${k}" ${S.prov === k ? "selected" : ""}>${p.n}</option>`).join("")}</select></label><label class="f">Nivel de modelo<select data-k="tier">${[["fast", "Rápido"], ["bal", "Equilibrado"], ["best", "Máximo"]].map(([k, t]) => `<option value="${k}" ${P.m[k] ? "" : "disabled"} ${S.tier === k ? "selected" : ""}>${t} · ${P.m[k] || "no disponible en el plan gratuito"}</option>`).join("")}</select></label>
     <label style="display:flex;gap:.5rem"><input type="checkbox" data-k="pii" ${S.pii || P.free ? "checked" : ""} ${P.free ? "disabled" : ""}> Escudo de datos personales${P.free ? " (obligatorio en el plan gratuito de Gemini)" : ""}</label>`}
-    <p class="mut">≈ ${calls} llamadas${P.rpm && S.role !== "invitada" ? ` · ≈ ${calls * Math.ceil(60 / P.rpm)} s con el límite gratuito` : ""}. Lo que se enviaría: ${leaks ? "⚠ incluye datos personales" : "✓ sin correo ni teléfono"}.</p><pre>${esc(payload)}</pre></details>
+    <p class="mut">≈ ${calls} llamadas${P.rpm ? ` · ≈ ${calls * Math.ceil(60 / P.rpm)} s con el límite gratuito` : ""}. Lo que se enviaría: ${leaks ? "⚠ incluye datos personales" : "✓ sin correo ni teléfono"}.</p><pre>${esc(payload)}</pre></details>
   <label style="display:flex;gap:.5rem;margin:.6rem 0"><input type="checkbox" data-k="over" ${S.over ? "checked" : ""}> Simular un borrador que se pasa de largo (para ver la escalera de ajuste)</label>
   <p><button class="btn" data-a="map">Analizar y mapear evidencia</button></p>
   ${S.map ? `<h1 style="margin-top:1.2rem"><span class="stepn">2</span>Evidencia y filtros duros</h1><p class="mut">Cobertura honesta de partida: <b class="num">${S.map.cov} %</b>. Lo que no tiene respaldo se muestra como brecha; nunca se inventa.</p>${chipRow(S.map)}
     <h3>Filtros duros (requisitos eliminatorios)</h3>${S.hard.length ? `<table class="hard"><tr><th></th><th>La oferta pide</th><th>Usted tiene</th></tr>${S.hard.map(([q, m, st, adv]) => `<tr><td class="${st}">${{ ok: "✓", no: "✕", wn: "!" }[st]}</td><td>${esc(q)}</td><td>${esc(m)}<br><span class="mut">${esc(adv)}</span></td></tr>`).join("")}</table>` : '<p class="mut">No se detectaron requisitos eliminatorios en el texto.</p>'}
     ${S.hard.some((h) => h[2] === "no") ? '<div class="banner">Hay requisitos eliminatorios que no cumple. Puede generar el CV igual, pero decida con honestidad si conviene postular.</div>' : ""}
-    <p><button class="btn go" data-a="gen" ${limit ? "disabled" : ""}>Generar CV</button>${limit ? ' <span class="err">Llegó al límite de 3 CV esta semana (modo invitada).</span>' : ""}</p>` : ""}
+    <p><button class="btn go" data-a="gen">Generar CV</button></p>` : ""}
   ${S.steps.length ? `<h3>Proceso</h3>${S.steps.map((s) => `<div class="st2 ${s[1] ? "done" : ""}"><b>${s[1] ? "✓" : "…"}</b><span>${esc(s[0])}</span></div>`).join("")}` : ""}
   ${r ? `<h1 style="margin-top:1.2rem"><span class="stepn">3</span>Resultado · ${r.L.label}</h1><div class="box"><b>Presupuesto de la página:</b> <span class="num">${tot}</span> de <span class="num">${r.L.cap}</span> LU · ${Math.ceil(tot / (r.L.cap / r.L.pages))} de ${r.L.pages} página(s)
     <div class="m" role="img" aria-label="Uso de la página por sección">${Object.entries(lu).filter(([, v]) => v).map(([k, v]) => `<i style="width:${(v / scale) * 100}%" title="${k}: ${v} LU">${k} ${v}</i>`).join("")}<span class="cap" style="left:calc(${(r.L.cap / scale) * 100}% - 2px)" title="Cupo"></span></div></div>
@@ -153,9 +153,9 @@ const mapIt = () => { const m = analyze(S.mode === "oferta" ? S.offer : S.focus,
 async function gen() {
   const L = lim(), names = ["Analizar la oferta (llamada 1)", "Mapear evidencia: cubierto, parcial, brecha", "Planificar el presupuesto de líneas por sección", "Redactar por sección (simulado): perfil, habilidades, cada experiencia, proyectos", "Validar con el guardián de verdad", "Escalera de ajuste a la página", "Renderizar y extraer texto con dos motores"];
   S.steps = []; S.res = null; for (const n of names) { S.steps.push([n, false]); render(); await tick(); S.steps[S.steps.length - 1][1] = true; }
-  const cv = draft(L, S.map.terms, S.over), log = ladder(cv, L); S.res = { cv, L, log }; S.cvs++; S.pv = "page"; render();
+  const cv = draft(L, S.map.terms, S.over), log = ladder(cv, L); S.res = { cv, L, log }; S.pv = "page"; render();
 }
-function applyRole(id) { S.role = id; B = id === "primera" ? EMPTY() : clone(SEED); if (id === "invitada") B.contacto.name = "Persona invitada (ejemplo)"; S.tab = "banco"; S.sec = id === "primera" ? "historia" : "exps"; S.map = S.res = S.hard = null; S.steps = []; S.cvs = 0; render(); }
+function applyRole(id) { S.role = id; B = id === "primera" ? EMPTY() : clone(SEED); S.tab = "banco"; S.sec = id === "primera" ? "historia" : "exps"; S.map = S.res = S.hard = null; S.steps = []; render(); }
 
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-a]"); if (!t) return; const a = t.dataset.a, id = t.dataset.id, k = t.dataset.k, i = +t.dataset.i;
@@ -185,5 +185,4 @@ document.addEventListener("change", (e) => {
 });
 DevKit.init({ app: "huella-estudio", roles: [
   { id: "owner", label: "Propietaria (banco completo)", desc: "Su banco privado completo, filtros y conexión de IA propia (Gemini gratuito)." },
-  { id: "primera", label: "Primera vez (banco vacío)", desc: "Lo que ve alguien que acaba de empezar: guía para contar, sin material aún." },
-  { id: "invitada", label: "Invitada (F3)", desc: "Persona a quien la propietaria cede el Estudio: su banco es solo suyo; cuota compartida de IA." } ], role: "owner", onRole: applyRole });
+  { id: "primera", label: "Primera vez (banco vacío)", desc: "Lo que ve alguien que acaba de empezar: guía para contar, sin material aún." } ], role: "owner", onRole: applyRole });

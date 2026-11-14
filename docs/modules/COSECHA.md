@@ -32,7 +32,7 @@ Identificadores `Guid` v7; fechas UTC; dinero `numeric(18,2)` en colones (`CRC`)
 
 | Entidad | Campos principales |
 |---|---|
-| `Campaign` (Campaña) | nombre ("Rambután 2026"), producto, inicio, fin, estado (Activa/Cerrada), `defaultProducerPricePerKg` |
+| `Campaign` (Campaña; **su renombre a `Season`/«Temporada» está aprobado y pendiente de ejecución**, 2026-11-13) | nombre ("Rambután 2026"), producto, inicio, fin, estado (Activa/Cerrada), `defaultProducerPricePerKg` |
 | `Product` | nombre, unidad (kg), activo |
 | `Producer` | nombre, teléfono(s), finca o punto de recolección (texto), ubicación opcional (lat/lng + enlace de mapa), `estimatedCapacityKg` por campaña, activo, notas, `UserId?` |
 | `Buyer` | nombre/razón social, contactos (nombre, teléfono, cargo), dirección (texto), cantón/zona, ubicación opcional (lat/lng), condiciones de entrega (horario, acceso), activo, notas, `UserId?` |

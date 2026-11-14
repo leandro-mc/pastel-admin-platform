@@ -11,7 +11,7 @@ module.exports = async ({ w, d, $, $$, click, type, text, t, wait }) => {
   const sec = (id) => click(`[data-a="sec"][data-id="${id}"]`);
 
   // ── Propietaria: el banco es un cuaderno de texto largo ──
-  t("Barra de desarrollo con 3 roles; arranca como propietaria y el banco avisa que es privado", () => { assert.equal($("#dk-role").options.length, 3); assert.equal($("#dk-role").value, "owner"); assert.match($(".banner").textContent, /privado.*nunca se publica ni se envía/); });
+  t("Barra de desarrollo con 2 roles (propietaria y primera vez; Huella es exclusiva de la propietaria); arranca como propietaria y el banco avisa que es privado", () => { assert.equal($("#dk-role").options.length, 2); assert.ok(![...$("#dk-role").options].some((o) => /invitad/i.test(o.textContent + o.value))); assert.equal($("#dk-role").value, "owner"); assert.match($(".banner").textContent, /privado.*nunca se publica ni se envía/); });
   t("Banco: 11 secciones con su estado (historia, experiencia, habilidades y por qué, proyectos, educación, certificados, idiomas, otros, privado, voz, encabezado)", () => { assert.equal($$("#snav button").length, 11); const n = $("#snav").textContent; ["Mi historia", "Experiencia", "Habilidades y por qué", "Proyectos", "Educación", "Certificados", "Idiomas", "Privado: filtros y preferencias", "Mi voz"].forEach((x) => assert.ok(n.includes(x), x)); });
   t("Experiencia: cada entrada tiene un área de texto GRANDE con el relato (no viñetas sueltas)", () => { const tas = $$("textarea.big"); assert.equal(tas.length, 3); assert.ok(tas[0].value.split(/\s+/).length > 100, "relato corto"); assert.match(tas[0].value, /Entré a Empresa Ejemplo/); });
   t("El sistema deriva logros del relato: 7 logros, 6 con cifra y 1 sin cifra con la pregunta que hará", () => { const dv = $("#d-exps-0").textContent; assert.match(dv, /7 logros · 6 con cifra/); assert.match(dv, /1 sin cifra/); assert.match(dv, /El sistema le preguntará/); });
@@ -61,14 +61,6 @@ module.exports = async ({ w, d, $, $$, click, type, text, t, wait }) => {
   const t0 = $('textarea[data-p="exps.0.text"]'); t0.value = "Entré como ayudante. Automaticé el cierre de caja y reduje 2 horas diarias de trabajo."; t0.dispatchEvent(new w.Event("input", { bubbles: true }));
   t("Primera vez: al contar un logro, el sistema lo entiende y lo muestra", () => assert.match($("#d-exps-0").textContent, /1 logros? · 1 con cifra/));
   click('[data-a="tab"][data-id="crear"]'); t("Con un logro ya se habilita el flujo de creación", () => assert.match($("#view").textContent, /¿Para qué puesto\?/));
-
-  // ── Invitada (F3) ──
-  await asRole("invitada");
-  t("Invitada: su banco es solo suyo y tiene cuota compartida", () => { assert.match($(".banner").textContent, /Modo invitada/); assert.match($(".banner").textContent, /ni la propietaria ni nadie más/); });
-  click('[data-a="tab"][data-id="crear"]');
-  t("Invitada: no maneja claves de IA, usa la cuota compartida", () => assert.match($("details.box").textContent, /cuota compartida/));
-  await run(); sel("level", "mid"); await run(); sel("level", "mid"); await run();
-  t("Invitada: tras 3 CV en la semana se bloquea el cuarto con el motivo", () => { assert.ok($('[data-a="gen"]').disabled); assert.match($("#view").textContent, /límite de 3 CV esta semana/); });
 
   click('#devbar [data-t="light"]'); t("Tema claro", () => assert.equal(d.documentElement.dataset.theme, "light"));
   click('#devbar [data-t="dark"]'); t("Tema oscuro", () => assert.equal(d.documentElement.dataset.theme, "dark"));

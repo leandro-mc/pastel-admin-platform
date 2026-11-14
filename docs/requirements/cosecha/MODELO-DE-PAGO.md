@@ -1,6 +1,6 @@
 # Modelo de pago a productores · decisión
 
-> **Estado:** decidido para implementar, **con parámetros iniciales a validar con productores reales** (§9). **Fecha:** 2026-10-24.
+> **Estado:** **decisión inicial** (confirmada como tal por el propietario el 2026-11-13), **con parámetros iniciales pendientes de validación con productores reales** (§9) **y de ratificación en asamblea** (§8). **Fecha:** 2026-10-24 (actualizado 2026-11-13).
 > **Quién decide qué:** la *estructura* (anticipo + liquidación por pool + calendario fijo) está decidida aquí con evidencia. Los *porcentajes* (anticipo, fondo, gestión, adelanto) los define y ratifica la **asamblea** de la asociación; el sistema los guarda como configuración.
 > Prototipo: `prototype/` → módulo **Dinero** (`money.js`). Evidencia completa: [`../research/NOTAS-COSECHA-AGORA-V2.md`](../research/NOTAS-COSECHA-AGORA-V2.md).
 
