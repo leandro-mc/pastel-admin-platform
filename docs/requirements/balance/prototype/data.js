@@ -3,7 +3,7 @@
 (function () {
   const people = { ana: "Ana", beto: "Beto", carla: "Carla", diego: "Diego", elena: "Elena", marcos: "Marcos" };
   const make = () => [
-    { id: "g1", name: "Paseo a Manuel Antonio", description: "Fin de semana largo con la gente del trabajo.", currency: "CRC", tz: "America/Costa_Rica", closed: false,
+    { id: "g1", name: "Paseo a Manuel Antonio", description: "Fin de semana largo con la gente del trabajo.", currency: "CRC", tz: "America/Costa_Rica", startDate: "2026-10-30", endDate: null, closed: false,
       members: [{ id: "ana", role: "admin" }, { id: "diego", role: "admin" }, { id: "beto", role: "member" }, { id: "carla", role: "member" }, { id: "elena", role: "member" }],
       expenses: [
         { id: "e1", description: "Alquiler de la casa", payerId: "ana", amount: "180000.00", date: "2026-10-30" },
@@ -13,11 +13,11 @@
         { id: "e5", description: "Entradas al parque", payerId: "ana", amount: "27000.25", date: "2026-11-01" },
       ],
       join: { token: "paseo-7k3m9xq2", code: "4821" }, audit: [{ at: "2026-10-30 08:12", who: "Ana", what: "Creó el grupo" }] },
-    { id: "g2", name: "Casa de Heredia", description: "Servicios de octubre. Ya se saldó.", currency: "CRC", tz: "America/Costa_Rica", closed: true,
+    { id: "g2", name: "Casa de Heredia", description: "Servicios de octubre. Ya se saldó.", currency: "CRC", tz: "America/Costa_Rica", startDate: "2026-10-10", endDate: "2026-10-31", closed: true,
       members: [{ id: "ana", role: "admin" }, { id: "beto", role: "member" }],
       expenses: [{ id: "e6", description: "Recibo de electricidad", payerId: "ana", amount: "31500.00", date: "2026-10-12" }, { id: "e7", description: "Internet y agua", payerId: "beto", amount: "24990.99", date: "2026-10-14" }],
       join: { token: "casa-q4w8e5r1", code: "7730" }, audit: [{ at: "2026-10-31 19:40", who: "Ana", what: "Cerró el grupo" }] },
-    { id: "g3", name: "Viaje a Japón", description: "Gastos compartidos en yenes (la moneda no tiene decimales).", currency: "JPY", tz: "Asia/Tokyo", closed: false,
+    { id: "g3", name: "Viaje a Japón", description: "Gastos compartidos en yenes (la moneda no tiene decimales).", currency: "JPY", tz: "Asia/Tokyo", startDate: "2026-09-18", endDate: null, closed: false,
       members: [{ id: "beto", role: "admin" }, { id: "ana", role: "member" }, { id: "carla", role: "member" }],
       expenses: [{ id: "e8", description: "Tren bala a Kioto", payerId: "beto", amount: "1001", date: "2026-09-20" }, { id: "e9", description: "Cena de ramen", payerId: "ana", amount: "2", date: "2026-09-20" }],
       join: { token: "japon-m2n6b4v8", code: "1093" }, audit: [{ at: "2026-09-18 10:00", who: "Beto", what: "Creó el grupo" }] },

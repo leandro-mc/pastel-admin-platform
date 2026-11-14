@@ -37,4 +37,41 @@ t("Ingreso: código correcto entra; enlace o código incorrectos dan el MISMO er
 t("Ingreso: 5 fallos por cuenta y enlace → bloqueo de 15 min (429 con Retry-After); pasado el tiempo vuelve a permitirse; un ingreso correcto reinicia el contador", () => { let now = 0; const guard = R.createJoinGuard(() => now); const groups = [mk()]; const bad = () => guard.attempt({ accountId: "u", groups, token: "tok", code: "9999" }); for (let i = 0; i < 4; i++) assert.equal(bad().status, 400); assert.equal(guard.attempt({ accountId: "u", groups, token: "tok", code: "1234" }).ok, true); for (let i = 0; i < 5; i++) assert.equal(bad().status, 400); const lock = guard.attempt({ accountId: "u", groups, token: "tok", code: "1234" }); assert.equal(lock.status, 429); assert.equal(lock.retryAfterSec, 900); now = 899000; assert.equal(guard.attempt({ accountId: "u", groups, token: "tok", code: "1234" }).status, 429); now = 901000; assert.equal(guard.attempt({ accountId: "u", groups, token: "tok", code: "1234" }).ok, true); });
 t("Ingreso: regenerar el enlace deja de servir el anterior", () => { const guard = R.createJoinGuard(() => 0); const g = mk(); assert.equal(guard.attempt({ accountId: "u", groups: [g], token: "tok", code: "1234" }).ok, true); g.join = { token: "nuevo", code: "4321" }; assert.equal(guard.attempt({ accountId: "u", groups: [g], token: "tok", code: "1234" }).status, 400); });
 t("Token y código de demostración: 27 caracteres sin ambiguos y 4 dígitos con ceros a la izquierda", () => { assert.match(R.randomToken(), /^[abcdefghjkmnpqrstvwxyz23456789]{27}$/); assert.match(R.randomCode(() => 0.0007), /^0007$/); });
+// ── Gestión de gastos (hoja) · decisión del propietario 2026-11-13: el miembro la usa, limitada a sus propios gastos ──
+const sheetGroup = () => { const g = mk(); g.expenses = [{ id: "e1", payerId: "beto", description: "Taxi al hotel", amount: "10.00", date: "2026-11-01" }, { id: "e2", payerId: "ana", description: "Cena del sábado", amount: "50.00", date: "2026-11-01" }]; return g; };
+const rowOf = (e, x) => Object.assign({ id: e.id, payerId: e.payerId, description: e.description, amount: e.amount, date: e.date }, x || {});
+t("Hoja · el administrador ve todos los gastos; un miembro, solo los que pagó; quien no es miembro, ninguno", () => {
+  const g = sheetGroup(); assert.equal(R.sheetExpenses(g, "ana").length, 2); assert.deepEqual(R.sheetExpenses(g, "beto").map((e) => e.id), ["e1"]);
+  assert.equal(R.sheetExpenses(g, "carla").length, 0); assert.equal(R.sheetExpenses(g, "extraño").length, 0);
+});
+t("Hoja · un miembro puede agregar, corregir y quitar SUS gastos al guardar el borrador", () => {
+  const g = sheetGroup(), c = as("beto", {}, g);
+  assert.equal(R.checkSheet(c, [rowOf(g.expenses[0])]).allowed, true, "sin cambios");
+  assert.equal(R.checkSheet(c, [rowOf(g.expenses[0], { amount: "12.00" })]).allowed, true, "corregir el monto propio");
+  assert.equal(R.checkSheet(c, [rowOf(g.expenses[0]), { id: null, payerId: "beto", description: "Peaje nuevo", amount: "3.00", date: "2026-11-02" }]).allowed, true, "agregar uno propio");
+  assert.equal(R.checkSheet(c, []).allowed, true, "quitar el propio");
+});
+t("Hoja · un miembro NO puede registrar a nombre de otra persona, cambiar el pagador ni tocar gastos ajenos (403, todo o nada)", () => {
+  const g = sheetGroup(), c = as("beto", {}, g);
+  let r = R.checkSheet(c, [rowOf(g.expenses[0]), { id: null, payerId: "ana", description: "A nombre de Ana", amount: "3.00", date: "2026-11-02" }]); assert.equal(r.allowed, false); assert.equal(r.status, 403); assert.ok(r.reason.length > 10 && r.who.length > 5);
+  r = R.checkSheet(c, [rowOf(g.expenses[0], { payerId: "ana" })]); assert.equal(r.status, 403, "cambiar el pagador de su gasto");
+  r = R.checkSheet(c, [rowOf(g.expenses[0]), rowOf(g.expenses[1], { amount: "1.00" })]); assert.equal(r.status, 403, "editar el gasto de Ana");
+});
+t("Hoja · el administrador conserva todas sus facultades (editar ajenos, cambiar pagador, agregar a nombre de cualquiera, quitar)", () => {
+  const g = sheetGroup(), c = as("ana", {}, g);
+  assert.equal(R.checkSheet(c, [rowOf(g.expenses[0], { payerId: "carla", amount: "11.00" }), rowOf(g.expenses[1]), { id: null, payerId: "beto", description: "A nombre de Beto", amount: "3.00", date: "2026-11-02" }]).allowed, true);
+  assert.equal(R.checkSheet(c, [rowOf(g.expenses[1])]).allowed, true, "quitar el gasto de Beto");
+});
+t("Hoja · grupo cerrado: guardar cualquier cambio → 409 (también para el administrador); sin cambios no escribe", () => {
+  const g = sheetGroup(); g.closed = true;
+  assert.equal(R.checkSheet(as("beto", {}, g), [rowOf(g.expenses[0], { amount: "12.00" })]).status, 409);
+  assert.equal(R.checkSheet(as("ana", {}, g), []).status, 409);
+  assert.equal(R.checkSheet(as("ana", {}, g), g.expenses.map((e) => rowOf(e))).allowed, true, "sin cambios no hay escritura");
+});
+t("Hoja · sin sesión → 401; sin acceso a Balance → 403; persona ajena al grupo → 404", () => {
+  const g = sheetGroup();
+  assert.equal(R.checkSheet({ session: false, hasAccess: false, group: g, actorId: "beto" }, []).status, 401);
+  assert.equal(R.checkSheet({ session: true, hasAccess: false, group: g, actorId: "beto" }, []).status, 403);
+  assert.equal(R.checkSheet({ session: true, hasAccess: true, group: g, actorId: "extraño" }, []).status, 404);
+});
 console.log("\n" + ok + " pruebas en verde, " + bad + " con fallas."); process.exit(bad ? 1 : 0);

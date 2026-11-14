@@ -1,6 +1,6 @@
 # Balance — Requerimientos v3 (rediseño sobre las decisiones D1–D9)
 
-> **Estado:** propuesta para validación del propietario · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-11-09
+> **Estado:** propuesta para validación del propietario, con las **decisiones del propietario del 2026-11-13 ya incorporadas** (resumen en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) §0c; estado de cada tema en §15) · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-11-09 (actualizado 2026-11-13)
 > **Prototipo:** [`prototype/`](prototype/index.html) — diseño **nuevo** (no una copia de SaldApp), 6 roles, 3 grupos de ejemplo (colones con centavos sobrantes, grupo cerrado, yenes). Datos **ficticios**, en memoria.
 > **Fuente funcional:** [`INVENTARIO-BALANCE.md`](INVENTARIO-BALANCE.md) (SaldApp tal como es + decisiones D1–D9 en su §12, que **prevalecen**). Quién puede qué: [`ROLES-Y-PERMISOS.md`](ROLES-Y-PERMISOS.md). Por qué se diseñó así: [`INVESTIGACION-BALANCE.md`](INVESTIGACION-BALANCE.md).
 
@@ -15,7 +15,7 @@
 **Ideas del rediseño**
 1. **La situación personal primero.** Al abrir un grupo, lo primero es *su* situación («Le deben ₡136 404,10» / «Usted debe ₡25 365,65» / «Está al día»), con el total del grupo, su parte y lo que pagó. SaldApp mostraba una tabla de todos.
 2. **Las cuentas se leen en voz humana.** Cada saldo lleva signo **y palabras** («Le deben», «Debe»), nunca solo color. La deuda **no es un error**: no hay rojo/verde moralizante; el que debe se muestra en **ámbar**, el que recibe en **verde azulado**.
-3. **La liquidación es un recibo.** «Liquidar» presenta la lista como una cinta de recibo: *quién paga a quién y cuánto*, con **los pagos de la persona destacados** y «Copiar monto» (sin registrar pagos, D6).
+3. **La liquidación es un recibo.** «Liquidar» presenta la lista como una cinta de recibo: *quién paga a quién y cuánto*, con **los pagos de la persona destacados** y «Copiar monto» y el aviso de verificar el pago (sin registrar pagos, D6).
 4. **Cada grupo, un lugar propio.** «Sus grupos» con estado en texto (Abierto/Cerrado), moneda y su situación; ya no hay que recordar un número de grupo (problema 10.3.1 de SaldApp).
 5. **El ingreso es una conversación, no un trámite.** Enlace + código de 4 dígitos, con una página que explica qué hacer a quien **no tiene cuenta** (el obstáculo principal de adopción en esta categoría; ver investigación §3).
 6. **Mobile primero.** Los gastos se registran en la calle: pestañas inferiores, botón flotante «Registrar gasto», cifras grandes y táctiles.
@@ -23,10 +23,10 @@
 7. **Todo lo útil del prototipo original se conserva** (§12b): resumen por participante, **gestión de gastos con borrador y guardado atómico** (la hoja tipo Excel), totales «Cuadra», «Por qué queda saldado», grupos con filtros y ayuda. El diseño nuevo cambia la presentación; **no** se pierde funcionalidad.
 
 **Hallazgos de la v3 (detalle en `../DECISIONES-Y-HALLAZGOS.md`):**
-- **El inventario dice «41 códigos ISO» pero su tabla trae 40.** Se implementaron los 40; falta confirmar si se omitió uno.
+- **El inventario dice «41 códigos ISO» pero su tabla trae 40.** Se implementaron los 40. **Decidido (2026-11-13):** se mantienen las 40; no se inventa una moneda para llegar a 41.
 - **El motor de dinero reproduce exactamente los resultados esperados** de G01–G41, incluido G26 (20 integrantes, 19 pagos) y las propiedades en 6 000 escenarios aleatorios (partes y saldos exactos, a lo sumo *n−1* pagos, independiente del orden).
-- **Tensión de diseño D3 ↔ adopción:** exigir cuenta de Pastel con Balance es decisión del propietario; la competencia que no la exige (Tricount, Splid) lo usa como ventaja. Se mitiga con la página de invitación, no se cambia la decisión (ver §10 y preguntas abiertas).
-- **Tensión D6 ↔ equidad percibida:** el reparto en partes iguales sin participación parcial es simple, pero la evidencia muestra que repartir igual **no siempre se siente justo** (investigación §2). Se deja como riesgo y pregunta, no se cambia D6.
+- **Tensión de diseño D3 ↔ adopción:** exigir cuenta de Pastel con Balance es decisión del propietario; la competencia que no la exige (Tricount, Splid) lo usa como ventaja. Se mitiga con la página de invitación. **Decidido (2026-11-13):** se mantienen la cuenta obligatoria y esa página (ver §10).
+- **Tensión D6 ↔ equidad percibida:** el reparto en partes iguales sin participación parcial es simple, pero la evidencia muestra que repartir igual **no siempre se siente justo** (investigación §2). **Decidido (2026-11-13):** se mantienen las partes iguales, sin excepciones (ver §10).
 
 ---
 
@@ -69,7 +69,7 @@ Seis situaciones (rol de la barra de desarrollo). Personas simuladas y entrevist
 | Rol | Persona | Qué ve | Qué NO ve |
 |---|---|---|---|
 | **Ana · administra el paseo** | Organizadora | Todo del grupo, **enlace y código**, ajustes, cerrar/reabrir, nombrar administradores | — |
-| **Beto · miembro** | Participante | Todo lo del grupo (gastos, saldos, liquidación, personas); registra y edita **solo sus** gastos | Enlace, código y ajustes del grupo |
+| **Beto · miembro** | Participante | Todo lo del grupo (gastos, saldos, liquidación, personas); registra, edita y elimina **solo sus** gastos, también en la **Gestión de gastos** (hoja limitada a lo suyo) | Enlace, código y ajustes del grupo; en la hoja, los gastos ajenos |
 | **Marcos · con acceso, sin grupos** | Persona nueva | «Todavía no está en ningún grupo» + crear o abrir enlace | Grupos ajenos (por URL: «No encontramos ese grupo») |
 | **Invitada sin cuenta** | Quien recibe un enlace | Página informativa: registrarse, marcar Balance, volver con el código | Datos de cualquier grupo; **la misma página** para enlaces válidos e inválidos |
 | **Con sesión, sin acceso a Balance** | Cuenta sin el módulo | Por qué no entra y a quién pedirlo (403) | Todo |
@@ -94,10 +94,10 @@ Seis situaciones (rol de la barra de desarrollo). Personas simuladas y entrevist
 > **Fuentes del diseño:** la investigación de este proyecto (situación personal primero, saldos en palabras, recibo, sin juicio) **y** el prototipo original de Balance (`referencia/balance-prototipo-original.html`), del que se rescataron todas las funciones útiles (tabla de paridad en §12b). La identidad visual es la de esta investigación; la funcionalidad incluye lo del original.
 
 ### 5.1 Estructura
-**Escritorio:** barra lateral «Sus grupos» con «Nuevo grupo», «Tengo un enlace» y «Cómo funciona»; encabezado de grupo con chips (Abierto/Cerrado, `CRC · ₡`, zona horaria, personas, su rol) y la tarjeta **«Su situación»**; pestañas **Resumen · Gastos · Saldos · Liquidar · Personas · Gestión de gastos · Ajustes** (las dos últimas, solo administración; se recorren con las flechas). **Móvil:** cinco pestañas inferiores (Resumen, Gastos, Saldos, Liquidar, Personas), botón flotante «Registrar gasto» y, para administración, accesos a «Gestión de gastos» y «Ajustes» en el encabezado.
+**Escritorio:** barra lateral «Sus grupos» con «Nuevo grupo», «Tengo un enlace» y «Cómo funciona»; encabezado de grupo con chips (Abierto/Cerrado, `CRC · ₡`, zona horaria, **Inicio** y, si está cerrado, **Cierre**, personas, su rol) y la tarjeta **«Su situación»**; pestañas **Resumen · Gastos · Saldos · Liquidar · Personas · Gestión de gastos · Ajustes** (la **Gestión de gastos** la ven todas las personas del grupo, con alcance según su rol; **Ajustes**, solo administración; se recorren con las flechas). **Móvil:** cinco pestañas inferiores (Resumen, Gastos, Saldos, Liquidar, Personas), botón flotante «Registrar gasto» y accesos a «Gestión de gastos» (todas las personas) y «Ajustes» (administración) en el encabezado.
 
 ### 5.2 Sus grupos
-Resumen («3 grupos · 2 abiertos · 1 cerrado»), filtros **Todos / Abiertos / Cerrados** con conteos y **búsqueda** por nombre o descripción. Cada tarjeta: estado (icono **y** texto), moneda, **total de gastos**, cantidad, participantes (iniciales) y **su situación**. Estado vacío con dos caminos (crear o abrir un enlace) y acceso a «Cómo funciona».
+Resumen («3 grupos · 2 abiertos · 1 cerrado»), filtros **Todos / Abiertos / Cerrados** con conteos y **búsqueda** por nombre o descripción. Cada tarjeta: estado (icono **y** texto), **fecha de inicio** (y de cierre, si está cerrado), moneda, **total de gastos**, cantidad, participantes (iniciales) y **su situación**. Estado vacío con dos caminos (crear o abrir un enlace) y acceso a «Cómo funciona».
 
 ### 5.3 Resumen (por participante)
 Una vista de conjunto: **«Gastos y saldos por participante»** con un acordeón por persona (total pagado, parte asignada y saldo **en palabras y cifra**); al abrirlo se ven **solo sus gastos**, con «Editar/Eliminar» según el rol y «Ver en Gastos». A su lado, la **vista previa de la liquidación** (las 3 primeras transferencias, «y N más») con enlaces a Gastos, Saldos y Liquidar. Es el «Detalles» del original.
@@ -107,8 +107,9 @@ Una vista de conjunto: **«Gastos y saldos por participante»** con un acordeón
 
 **Registrar/editar un gasto (diálogo):** descripción (4–500), **monto** con sufijo de moneda y teclado numérico/decimal, **pagador** (administración elige a cualquiera; un miembro solo se tiene a sí mismo, bloqueado y explicado) y **fecha** (hoy en la zona del grupo, editable, D7). Errores junto al campo, con icono y texto. Los diálogos atrapan el foco y se cierran con Esc.
 
-### 5.5 Gestión de gastos (solo administración): hoja con borrador y guardado atómico
+### 5.5 Gestión de gastos: hoja con borrador y guardado atómico (administración: todos los gastos; miembros: solo los suyos)
 Vista tipo hoja de cálculo para **cargar, corregir y eliminar muchos gastos sin abrir un formulario por cada uno**. Sigue el modelo del prototipo original, porque protege la integridad de los datos:
+- **Alcance por rol (decisión del propietario, 2026-11-13):** la administración conserva sus facultades (todos los gastos, cualquier pagador). Un **miembro** usa la misma hoja pero **solo ve y edita los gastos que pagó**: el pagador queda fijado en él, no puede agregar ni pegar filas a nombre de otra persona ni tocar o quitar las ajenas. Se revisa el borrador completo y, si incluye algo no permitido, **no se guarda nada** (403); el servidor vuelve a comprobar cada fila (ver [`ROLES-Y-PERMISOS.md`](ROLES-Y-PERMISOS.md) §3).
 - **Borrador:** nada cambia en los saldos hasta pulsar **«Guardar cambios»**; hasta entonces se ve «Hay cambios sin guardar» y el total de la tabla se recalcula al instante.
 - **Guardado atómico:** al guardar se validan **todas** las filas; si una celda es inválida **no se guarda nada**, se marcan las celdas con su mensaje y se avisa. «Descartar» recupera lo guardado.
 - **Filas:** «Agregar fila» (arriba, con la fecha de hoy y quien paga por defecto, foco en la descripción), papelera por fila y **selección múltiple**; quitar una fila es parte del borrador (con «Deshacer»).
@@ -121,16 +122,16 @@ Vista tipo hoja de cálculo para **cargar, corregir y eliminar muchos gastos sin
 Franja **Total de gastos · Por recibir · Por pagar**; una fila por persona con inicial, nombre, «#n en el orden de ingreso · pagó X · su parte Y», **saldo en palabras y cifra**, **barra con eje central** (decorativa, `aria-hidden`) y «Ver sus gastos»; **fila de totales** (total pagado, parte asignada y saldo neto) con la comprobación **«Cuadra»** (el saldo neto es cero). Si el reparto deja unidades mínimas sobrantes, un aviso explica que se asignan por orden de ingreso y que las partes suman exacto.
 
 ### 5.7 Liquidar
-**Recibo**: «Liquidación sugerida» (o «Liquidación (grupo cerrado)», D7), número de pagos, cada pago como «Elena le paga a usted ₡70 596,15» con **los de la persona resaltados**, «Copiar monto» en los propios y «Total que se mueve» con código de moneda. Junto al recibo, **«Por qué queda saldado»**: una explicación por persona (pagó X, su parte era Y, debe recibir o le falta aportar Z, con sus transferencias, su total y la marca **«Cubierto»**) que permite comprobar el número (nacida del original). Debajo: *Balance no registra pagos; la lista se recalcula con cada cambio y es la misma para todas las personas.* Estados: sin gastos y cuentas claras.
+**Recibo**: «Liquidación sugerida» (o «Liquidación (grupo cerrado)», D7), número de pagos, cada pago como «Elena le paga a usted ₡70 596,15» con **los de la persona resaltados**, «Copiar monto» en los propios, el aviso **«Verifique el pago antes de darlo por recibido»** (confirmar en la propia cuenta; los comprobantes enviados por chat pueden ser falsos) y «Total que se mueve» con código de moneda. Junto al recibo, **«Por qué queda saldado»**: una explicación por persona (pagó X, su parte era Y, debe recibir o le falta aportar Z, con sus transferencias, su total y la marca **«Cubierto»**) que permite comprobar el número (nacida del original). Debajo: *Balance no registra pagos; la lista se recalcula con cada cambio y es la misma para todas las personas.* Estados: sin gastos y cuentas claras.
 
 ### 5.8 Personas
 Lista en **orden de ingreso** (decide los centavos sobrantes; el primero se marca «se unió primero») con rol y «Ver gastos». Administración ve las acciones (nombrar/quitar administrador, quitar) y el **cuadro de invitación**: enlace y código, **«Copiar enlace y código»** (mensaje listo para compartir), solo el enlace, solo el código y «Regenerar» con confirmación. Quien **no** administra ve «¿Necesita invitar a alguien?» con los nombres de quienes pueden hacerlo. Todas las personas ven «Salir del grupo». Las acciones bloqueadas por invariantes **se intentan y se explican** (tiene gastos, última administración).
 
 ### 5.9 Ajustes (solo administración)
-Nombre, descripción, **zona horaria** (D9), **moneda** (cambio sin conversión con aviso y bloqueo por decimales incompatibles, D8), cerrar/reabrir, borrar (solo sin gastos) e **historial**. Quien no administra y llega por URL ve «Sin permiso» con el motivo y los nombres de quienes administran.
+Nombre, descripción, **fecha de inicio** (solo lectura: no se cambia) y, si el grupo está cerrado, la de cierre; **zona horaria** (D9), **moneda** (cambio sin conversión con aviso y bloqueo por decimales incompatibles, D8), cerrar/reabrir, borrar (solo sin gastos) e **historial**. Quien no administra y llega por URL ve «Sin permiso» con el motivo y los nombres de quienes administran.
 
 ### 5.10 Crear grupo y entrar a uno
-**Crear:** nombre obligatorio, descripción, moneda (15 más usadas primero, luego todas, con código · símbolo · nombre), zona horaria; la persona queda como administradora y se abre «Personas» con su enlace y código. **Entrar:** enlace + código de 4 dígitos (teclado numérico); **error genérico** idéntico para enlace o código inválidos o regenerados; **5 fallos → pausa de 15 minutos** con mensaje; éxito → miembro, al final del orden de ingreso.
+**Crear:** nombre obligatorio, descripción, moneda (15 más usadas primero, luego las 40 del catálogo, con código · símbolo · nombre), **fecha de inicio** obligatoria (hoy por defecto; no se cambia después), zona horaria; la persona queda como administradora y se abre «Personas» con su enlace y código. **Entrar:** enlace + código de 4 dígitos (teclado numérico); **error genérico** idéntico para enlace o código inválidos o regenerados; **5 fallos → pausa de 15 minutos** con mensaje; éxito → miembro, al final del orden de ingreso.
 
 ### 5.11 Cómo funciona
 Página corta (`#/ayuda`, también desde «Sus grupos») con **4 pasos** (crear el grupo, registrar gastos, revisar saldos, consultar la liquidación) y los **principios importantes**: la suma siempre coincide, los grupos son privados y cerrar no elimina.
@@ -147,7 +148,7 @@ Sin sesión, sin acceso, no encontrado (404 para no miembros), sin permiso, erro
 | **BL-01** | Reparto en partes iguales con **centavos sobrantes por orden de alta**; partes suman el total; saldos suman 0 | D1 | Obligatorio | `money.test.js`: G02, G03, G10–G13, G23, G26 + 6 000 escenarios |
 | **BL-02** | **Liquidación determinista** (mayor monto primero, empate por orden de alta; reordena tras cada pago); a lo sumo *n−1* pagos; falla si los saldos no suman 0 | D2 | Obligatorio | G04, G05, G23, G24, G26, G30–G33 |
 | **BL-03** | Autenticación obligatoria; **pertenencia**; roles administración/miembro; matriz de permisos | D3 | Obligatorio | `rules.test.js` (26) + `t-balance.js` |
-| **BL-04** | **Ingreso por enlace y código de 4 dígitos**; error genérico; 5 fallos → 15 min; regenerar invalida el anterior | D3 | Obligatorio | `rules.test.js`; UI |
+| **BL-04** | **Ingreso por enlace y código de 4 dígitos**; error genérico; 5 fallos → 15 min; regenerar invalida el anterior; **el enlace y el código no vencen** (decisión inicial, 2026-11-13) | D3 | Obligatorio | `rules.test.js`; UI |
 | **BL-05** | Campo de monto: coma o punto, decimales según moneda, mayor que cero, hasta `numeric(18,2)`; mensajes en español | D4 | Obligatorio | G28, G38; UI |
 | **BL-06** | Balance inicia **desde cero** | D5 | Decidido | — |
 | **BL-07** | Reparto **retroactivo**, sin participación parcial; transferencias **sugeridas**, sin registrar pagos | D6 | Decidido | G18, G19; texto de Liquidar |
@@ -157,10 +158,10 @@ Sin sesión, sin acceso, no encontrado (404 para no miembros), sin permiso, erro
 | **BL-11** | **Sus grupos**, **su situación** en cada grupo, lista de **todos** los gastos | §10.3 (1, 8) | Obligatorio | UI |
 | **BL-12** | **Sin permiso explica** el porqué y a quién pedirlo; lo que no corresponde no se muestra | Método | Obligatorio | UI por rol |
 | **BL-13** | Página para **quien no tiene cuenta** (registrarse, marcar Balance, volver); idéntica para cualquier enlace | D3, investigación | Nuevo en v3 | UI |
-| **BL-14** | «**Copiar monto**» en los pagos propios (sin registrar pagos) | Investigación (SINPE) | **Propuesta v3** (no aprobada) | UI |
+| **BL-14** | «**Copiar monto**» en los pagos propios (sin registrar pagos) | Investigación (SINPE) · decisión 2026-11-13 | **Aprobado** (MVP) | UI |
 | **BL-15** | Historial de cambios del grupo (quién y qué) | D7 (auditoría) | Obligatorio | UI |
 | **BL-16** | Edición simultánea → 409 por versión | §3.2 / ficha | Obligatorio en producción | **No prototipado** |
-| **BL-18** | **Gestión de gastos** (administración): hoja con **borrador y guardado atómico**, validación de todas las filas, descartar, aviso de cambios sin guardar, total de la tabla y «Deshacer» el guardado; más teclado, selección múltiple y **pegar desde Excel (todo o nada)** | Prototipo original («Gestión integral de gastos») + revisión del propietario | Obligatorio | `t-balance.js` (borrador, errores, guardado, descarte, aviso, pegado, grupo cerrado) |
+| **BL-18** | **Gestión de gastos**: administración sobre **todos** los gastos y **miembros sobre solo los suyos** (decisión 2026-11-13); hoja con **borrador y guardado atómico**, validación de todas las filas, descartar, aviso de cambios sin guardar, total de la tabla y «Deshacer» el guardado; más teclado, selección múltiple y **pegar desde Excel (todo o nada)** | Prototipo original («Gestión integral de gastos») + revisión del propietario + decisión 2026-11-13 | Obligatorio | `t-balance.js` (borrador, errores, guardado, descarte, aviso, pegado, grupo cerrado, alcance del miembro) y `rules.test.js` (hoja) |
 | **BL-19** | **Filtros de gastos**: texto, quién pagó (incluye «pagados por mí/otras personas»), fechas, orden (fecha, monto, A–Z) y **vista de los gastos de una sola persona** desde Resumen, Saldos y Personas | Prototipo original + revisión del propietario | Obligatorio | `t-balance.js` |
 | **BL-17** | Accesibilidad: diálogos con rol y foco, Esc, texto ampliable, nunca solo color, 320 px | `AGENTS.md` | Obligatorio | UI; contraste |
 | **BL-20** | **Resumen por participante** (acordeón con sus gastos y su saldo) y vista previa de la liquidación | Prototipo original | Obligatorio | `t-balance.js` |
@@ -168,6 +169,10 @@ Sin sesión, sin acceso, no encontrado (404 para no miembros), sin permiso, erro
 | **BL-22** | **«Por qué queda saldado»**: explicación por persona en Liquidar | Prototipo original | Obligatorio | `t-balance.js` |
 | **BL-23** | **Sus grupos** con resumen, filtros Todos/Abiertos/Cerrados y búsqueda; tarjetas con total, cantidad y participantes | Prototipo original | Obligatorio | `t-balance.js` |
 | **BL-24** | **Cómo funciona** (ayuda) y, para quien no administra, cómo invitar; «Copiar enlace y código» | Prototipo original | Obligatorio | `t-balance.js` |
+| **BL-25** | Aviso **«Verifique el pago antes de darlo por recibido»** en Liquidar | Investigación (SINPE) · decisión 2026-11-13 | Obligatorio (MVP) | `t-balance.js` |
+| **BL-26** | **Fechas del grupo:** inicio al crearlo (obligatoria, no editable) y cierre al cerrarlo; se muestran en tarjetas, encabezado y Ajustes. *Supuesto del prototipo, por confirmar:* reabrir quita la fecha de cierre y el historial conserva ambos eventos | SaldApp (inventario: `startDate`, `endDate`) · decisión 2026-11-13 | Obligatorio (MVP) | `t-balance.js` |
+| **BL-27** | **Sin notificaciones** cuando alguien registra un gasto | Decisión 2026-11-13 | **Fuera del MVP** | — |
+| **BL-28** | **Resumen compartible por WhatsApp** | Decisión 2026-11-13 | **Fase posterior** | — |
 
 ---
 
@@ -201,11 +206,11 @@ Sin cambios de esquema. El prototipo usa: `Group{name, description, currency, tz
 
 | Riesgo | Mitigación / estado |
 |---|---|
-| **Fricción de la cuenta obligatoria (D3)**: a quien le llega un enlace por WhatsApp y no tiene cuenta puede abandonar | Página de invitación con pasos y regreso; «Preselección de Balance al registrarse» sigue pendiente (inventario §12.11); medir abandono antes del código |
-| **Partes iguales que no se sienten justas (D6)** | Decidido por el propietario. Alternativa mínima sin romper D6: crear dos grupos; si la evidencia de uso lo pide, evaluar «excluir de un gasto» (cambia D1/D6) |
-| **Pago fuera de la app (SINPE)**: nada confirma que se pagó; comprobantes falsos | Texto de apoyo («verifique en su cuenta»); registrar pagos es D6 no aprobado |
-| **Discrepancia de 41 vs 40 monedas** en el inventario | Pendiente de confirmar con el propietario |
-| **Tokens en enlaces** pueden filtrarse | Regenerar invalida; límite de intentos; no vencen por decisión (se podría proponer vencimiento) |
+| **Fricción de la cuenta obligatoria (D3)**: a quien le llega un enlace por WhatsApp y no tiene cuenta puede abandonar | Se mantiene la cuenta obligatoria (decisión 2026-11-13). Página de invitación con pasos y regreso; «Preselección de Balance al registrarse» sigue por evaluar (inventario §12.11); medir abandono antes del código |
+| **Partes iguales que no se sienten justas (D6)** | Decidido por el propietario y **reafirmado el 2026-11-13: partes iguales, sin excepciones**. Alternativa mínima sin romper D6: crear dos grupos; si la evidencia de uso lo pide, evaluar «excluir de un gasto» (cambia D1/D6) |
+| **Pago fuera de la app (SINPE)**: nada confirma que se pagó; comprobantes falsos | Aviso «Verifique el pago antes de darlo por recibido» (aprobado 2026-11-13); Balance no registra pagos (D6) |
+| **Discrepancia de 41 vs 40 monedas** en el inventario | **Resuelto (2026-11-13):** se conservan las 40 del inventario; no se agrega ninguna |
+| **Tokens en enlaces** pueden filtrarse | Regenerar invalida; límite de intentos; no vencen por decisión inicial (2026-11-13); se reevaluará con la experiencia de uso |
 | **Concurrencia** | BL-16; no probado en el prototipo |
 
 ---
@@ -239,7 +244,7 @@ Cruce hecho con el archivo `referencia/balance-prototipo-original.html` (el prot
 | Saldos: franja, tabla con totales y «Cuadra», nota de unidades sobrantes | Igual (§5.6) + barra con eje | **Recuperado y ampliado** |
 | Liquidación: transferencias, total y **«Por qué queda saldado»** por persona | Igual (§5.7) + pagos propios resaltados y «Copiar monto» | **Recuperado y ampliado** |
 | Participantes: roles, cambio de rol, invitación con copiar y regenerar, ayuda a quien no administra | Igual (§5.8) + quitar participantes y salir | **Recuperado y ampliado** |
-| **Gestión integral de gastos** (hoja con borrador, guardado atómico y aviso de cambios sin guardar) | Gestión de gastos (§5.5) | **Recuperado y ampliado** (teclado, pegar desde Excel, selección múltiple, deshacer) |
+| **Gestión integral de gastos** (hoja con borrador, guardado atómico y aviso de cambios sin guardar) | Gestión de gastos (§5.5) | **Recuperado y ampliado** (teclado, pegar desde Excel, selección múltiple, deshacer; ahora también para miembros, limitada a lo suyo) |
 | Configuración: nombre, descripción, moneda, zona horaria, cerrar/reabrir, borrar sin gastos | Ajustes (§5.9) + historial | Hecho |
 | Cómo funciona (ayuda) | §5.11 | **Recuperado** |
 | Crear grupo (modal) | Página con validación (§5.10) | Hecho |
@@ -248,38 +253,52 @@ Cruce hecho con el archivo `referencia/balance-prototipo-original.html` (el prot
 | Icono de categoría según la descripción del gasto | No se rescata: es decorativo y «juzga» el gasto | Descartado |
 | Avisos «datos de demostración» y pie con texto de reparto | Reemplazados por la barra de desarrollo | No aplica |
 
-**Del SaldApp real (inventario), por confirmar:** la **fecha de inicio** del grupo al crearlo y la **fecha de cierre** en el detalle (el prototipo original no las tiene; SaldApp sí).
+**Del SaldApp real (inventario):** la **fecha de inicio** del grupo al crearlo y la **fecha de cierre** en el detalle (el prototipo original no las tiene; SaldApp sí). **Decidido (2026-11-13):** se muestran (BL-26).
 
 ## 13. Qué demuestra el prototipo (y qué no)
 
-**Demuestra:** el diseño nuevo en escritorio y móvil, claro y oscuro; qué ve cada rol; las reglas D1–D9 funcionando sobre datos de ejemplo, incluido el recálculo retroactivo al entrar una persona; el bloqueo por intentos; el cambio de moneda con rechazo por decimales; el ciclo cerrar/reabrir; el historial.
+**Demuestra:** el diseño nuevo en escritorio y móvil, claro y oscuro; qué ve cada rol; las reglas D1–D9 funcionando sobre datos de ejemplo, incluido el recálculo retroactivo al entrar una persona; el bloqueo por intentos; el cambio de moneda con rechazo por decimales; el ciclo cerrar/reabrir con sus fechas de inicio y cierre; el historial; la hoja de gestión limitada a lo propio para miembros; el aviso de verificar el pago.
 **No demuestra:** persistencia ni servidor (los datos viven en la página), concurrencia, el correo de invitación, ni la apariencia en dispositivos reales (revisión visual del propietario). La tipografía se carga de Google Fonts (sin Internet se usa la del sistema).
 
 ---
 
-## 14. Mejoras propuestas por esta investigación (no aprobadas)
+## 14. Mejoras propuestas por esta investigación y su estado
 
-Se suman a las de la §12.11 del inventario. **Decide el propietario.**
+Se suman a las de la §12.11 del inventario. Estado según las decisiones del propietario del 2026-11-13.
 
-| Propuesta | Por qué | Costo |
-|---|---|---|
-| «Copiar monto» en pagos propios (**ya está en el prototipo**) | SINPE exige teclear el monto; evita errores de digitación | Bajo |
-| Aviso «verifique el pago en su cuenta antes de darlo por recibido» | Comprobantes falsos | Bajo |
-| Vencimiento opcional del enlace/código (p. ej. 7 días) | Reduce filtraciones | Medio |
-| Resumen en texto para **compartir por WhatsApp** («Paseo: Elena paga a Ana ₡70 596,15…») | La conversación ocurre en el chat | Medio |
-| «Excluir de un gasto» (participación parcial) | Equidad percibida | **Alto: cambia D1/D6** |
-| Mostrar la **cuota de la persona** al registrar un gasto («Su parte será ₡…») | Previene sorpresas | Bajo |
+| Propuesta | Por qué | Costo | Estado |
+|---|---|---|---|
+| «Copiar monto» en pagos propios | SINPE exige teclear el monto; evita errores de digitación | Bajo | **Aprobada** (BL-14); ya está en el prototipo |
+| Aviso «verifique el pago en su cuenta antes de darlo por recibido» | Comprobantes falsos | Bajo | **Aprobada** (BL-25); ya está en el prototipo |
+| Vencimiento opcional del enlace/código (p. ej. 7 días) | Reduce filtraciones | Medio | **No por ahora:** los enlaces no vencen inicialmente; se reevaluará con el uso |
+| Resumen en texto para **compartir por WhatsApp** («Paseo: Elena paga a Ana ₡70 596,15…») | La conversación ocurre en el chat | Medio | **Fase posterior** (BL-28) |
+| «Excluir de un gasto» (participación parcial) | Equidad percibida | **Alto: cambia D1/D6** | **No:** se mantienen las partes iguales, sin excepciones |
+| Mostrar la **cuota de la persona** al registrar un gasto («Su parte será ₡…») | Previene sorpresas | Bajo | **Pendiente de decisión** (§15) |
+| Avisar cuando alguien registra un gasto en el grupo | Que el grupo se entere | Medio | **Fuera del MVP** (BL-27) |
 
 ---
 
-## 15. Preguntas abiertas
+## 15. Decisiones y preguntas abiertas
 
-0. **Fecha de inicio y de cierre del grupo** (existían en el SaldApp real, no en el prototipo original): ¿se muestran?
-0b. **Gestión de gastos para miembros:** hoy solo administración (es lo que describe el original). ¿Debe existir también para miembros, limitada a sus propios gastos? ¿Hacen falta más columnas (categoría, notas) o importar un CSV?
-1. **¿41 o 40 monedas?** ¿Qué código falta en la tabla de la §12.8?
-2. **Cuenta obligatoria (D3):** ¿se acepta la fricción medida con la página de invitación, o se evalúa un acceso «solo lectura» por enlace?
-3. **Equidad (D6):** ¿se mantiene «partes iguales sin excepción» en el MVP y se mide si los grupos se parten en dos?
-4. **«Copiar monto» y el aviso de verificación:** ¿entran al MVP?
-5. **Vencimiento del enlace:** ¿sí o no (hoy: no vence)?
-6. **Texto compartible por WhatsApp:** ¿fase posterior?
-7. **Notificaciones:** hoy ninguna; ¿se avisa cuando alguien registra un gasto en el grupo?
+Las decisiones del 2026-11-13 están en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) (§0c y §7); aquí solo su efecto en este documento.
+
+| Tema | Estado | Dónde |
+|---|---|---|
+| Mostrar las fechas de inicio y cierre de cada grupo | **Decidido** | BL-26, §5.1, §5.2, §5.9, §5.10 |
+| Gestión de gastos también para miembros, limitada a sus propios gastos; la administración conserva sus facultades | **Decidido** | BL-18, §5.5, `ROLES-Y-PERMISOS.md` |
+| 40 monedas (no inventar una 41.ª) | **Decidido** | §0, §10; inventario §12.8 |
+| Cuenta obligatoria (D3) con la página de invitación como mitigación | **Decidido** | BL-13, §10 |
+| Partes iguales sin excepciones (D6) | **Decidido** | §10 |
+| «Copiar monto» y aviso de verificar el pago | **Decidido** (MVP) | BL-14, BL-25 |
+| Enlaces de invitación sin vencimiento inicial | **Decidido** (se reevaluará) | BL-04 |
+| Resumen compartible por WhatsApp | **Decidido:** fase posterior | BL-28 |
+| Notificaciones al registrar un gasto | **Decidido:** no en el MVP | BL-27 |
+
+**Siguen abiertas** (no se asumió ninguna respuesta):
+
+1. **Columnas adicionales (categoría, notas) o importar un CSV** en la hoja: el propietario no se pronunció; hoy la hoja solo tiene pagador, gasto, monto y fecha.
+2. **«Su parte será ₡…»** al registrar un gasto (§14): ¿entra?
+3. **«Marcarlo como recibido»:** el aviso de verificar el pago está aprobado como **texto informativo**, porque Balance no registra pagos (D6). Si se quiere una marca de «recibido» por persona, habría que **reabrir D6**: ¿es eso lo que se pide?
+4. **Fechas del grupo (BL-26):** al reabrir, ¿se borra la fecha de cierre (supuesto del prototipo) o se conserva con el historial? ¿La fecha de inicio por defecto es «hoy» en la zona del grupo?
+5. **Preselección de la casilla de Balance al registrarse** (inventario §12.11, P23): la evalúa el agente de Identity/plataforma.
+6. Preguntas de roles y permisos: ver [`ROLES-Y-PERMISOS.md`](ROLES-Y-PERMISOS.md) §7.

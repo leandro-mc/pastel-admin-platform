@@ -62,7 +62,7 @@ Quiere que el estado «sin acceso» sea claro y **no genere soporte**. → 403 c
 | **«Su situación» arriba** | Responde la pregunta que todos traen: «¿cuánto me toca?» | Para quien está al día se dice «Está al día», no «0» |
 | **Saldo en palabras + barra con eje** | Entiende de un vistazo quién da y quién recibe | La barra es decorativa; el texto lleva el significado |
 | **Liquidación como recibo** | Objeto conocido; pasos concretos | No registra pagos (D6) |
-| **Copiar monto** | Evita errores al teclear en SINPE | Propuesta no aprobada; no guarda datos bancarios |
+| **Copiar monto** | Evita errores al teclear en SINPE | **Aprobado** (2026-11-13); no guarda datos bancarios |
 | **Centavos con explicación** | «Sobran N unidades mínimas… las partes suman exacto» | Solo aparece si sobran |
 | **Gestión de gastos con borrador** | Carga y corrige muchos gastos en una hoja; nada cambia hasta «Guardar» y, si una celda es inválida, no se guarda nada | Es para pantallas grandes y administración; el diálogo individual sigue para el día a día |
 | **«Por qué queda saldado»** | Cada persona comprueba su número (pagó, parte, recibe o aporta) | Es una explicación, no una confirmación de pagos (D6) |
@@ -93,4 +93,4 @@ Ver `REQUERIMIENTOS-BALANCE.md` §12: tiempo al primer gasto, embudo de invitaci
 
 ## 10. Preguntas abiertas
 
-Las de `REQUERIMIENTOS-BALANCE.md` §15 (41 vs 40 monedas, cuenta obligatoria, equidad, «Copiar monto», vencimiento del enlace, texto para WhatsApp, notificaciones), más: **¿cuántas personas tiene un grupo típico?** (el diseño asume 3–20; G26 prueba 20).
+Las que siguen abiertas están en `REQUERIMIENTOS-BALANCE.md` §15 (la 41.ª moneda, la cuenta obligatoria, la equidad, «Copiar monto», el vencimiento del enlace, el resumen para WhatsApp y las notificaciones **ya se decidieron el 2026-11-13**). Se mantiene esta pregunta de investigación: **¿cuántas personas tiene un grupo típico?** (el diseño asume 3–20; G26 prueba 20).

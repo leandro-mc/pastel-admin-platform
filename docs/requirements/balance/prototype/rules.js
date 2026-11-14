@@ -77,6 +77,30 @@
     }
   }
 
+  /** Gestión de gastos (hoja con borrador). Decisión del propietario 2026-11-13: quien administra ve y edita TODOS los gastos;
+      un miembro usa la misma hoja, limitada a los gastos que él pagó. */
+  function sheetExpenses(group, actorId) {
+    const me = memberOf(group, actorId); if (!me) return [];
+    return me.role === "admin" ? group.expenses.slice() : group.expenses.filter((e) => e.payerId === actorId);
+  }
+  /** Revisa el borrador completo de la hoja contra can() ANTES de guardar (todo o nada). rows = filas finales { id|null, payerId, description, amount, date }.
+      Devuelve { allowed:true } o la primera denegación. Un miembro no puede incluir gastos ajenos, ni registrar a nombre de otra persona, ni quitar gastos ajenos. */
+  function checkSheet(ctx, rows) {
+    const g = ctx.group, scope = sheetExpenses(g, ctx.actorId), scopeIds = new Set(scope.map((e) => e.id));
+    const first = can("view_expenses", ctx); if (!first.allowed) return first;
+    for (const row of rows) {
+      if (row.id == null) { const r = can("add_expense", Object.assign({}, ctx, { payerId: row.payerId })); if (!r.allowed) return r; continue; }
+      const prev = g.expenses.find((e) => e.id === row.id);
+      if (!prev || !scopeIds.has(prev.id)) return deny(403, "balance.forbidden", "Solo puede modificar o eliminar los gastos que usted pagó.", "Pídaselo a quien lo registró o a quien administra el grupo.");
+      const changed = prev.description !== row.description || prev.amount !== row.amount || prev.date !== row.date || prev.payerId !== row.payerId;
+      if (changed) { const r = can("edit_expense", Object.assign({}, ctx, { expense: prev })); if (!r.allowed) return r; }
+      if (prev.payerId !== row.payerId) { const r = can("change_payer", ctx); if (!r.allowed) return r; }
+    }
+    const kept = new Set(rows.filter((r) => r.id != null).map((r) => r.id));
+    for (const e of scope) if (!kept.has(e.id)) { const r = can("delete_expense", Object.assign({}, ctx, { expense: e })); if (!r.allowed) return r; }
+    return ok();
+  }
+
   /** Ingreso por enlace y código (§12.3.5): 5 fallos por cuenta y grupo → bloqueo de 15 min (429 con Retry-After); un ingreso correcto reinicia el contador;
       token inválido, código incorrecto o enlace regenerado dan el MISMO error genérico (no revela si el grupo existe). */
   function createJoinGuard(clock) {
@@ -96,6 +120,6 @@
   const randomCode = (rnd) => String(Math.floor((rnd || Math.random)() * 10000)).padStart(4, "0");
   const randomToken = (rnd) => { const r = rnd || Math.random; let s = ""; for (let i = 0; i < 27; i++) s += "abcdefghjkmnpqrstvwxyz23456789"[Math.floor(r() * 30)]; return s; };
 
-  const api = { can, createJoinGuard, randomCode, randomToken, adminCount, ADMIN_ONLY, WRITES };
+  const api = { can, sheetExpenses, checkSheet, createJoinGuard, randomCode, randomToken, adminCount, ADMIN_ONLY, WRITES };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.BalanceRules = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -3,7 +3,7 @@
 > **Procedencia (migración 2026-11-09).** Inventario original de la rama `docs/balance-inventory` **sin cambios en el contenido**, movido a la convención de `docs/requirements/`. Las decisiones D1–D9 de la §12 y los resultados de la §9.3 prevalecen sobre lo que SaldApp hace hoy. Qué se hará: [`REQUERIMIENTOS-BALANCE.md`](REQUERIMIENTOS-BALANCE.md) · por qué: [`INVESTIGACION-BALANCE.md`](INVESTIGACION-BALANCE.md) · quién puede qué: [`ROLES-Y-PERMISOS.md`](ROLES-Y-PERMISOS.md) · prototipo: [`prototype/index.html`](prototype/index.html).
 >
 > **Dos observaciones de la migración (no se corrigió el texto original):**
-> 1. La §12.8 habla de «los 41 códigos de la lista», pero su tabla trae **40** (contados por programa). El prototipo implementa los 40; falta confirmar con el propietario si se omitió uno.
+> 1. La §12.8 habla de «los 41 códigos de la lista», pero su tabla trae **40** (contados por programa). El prototipo implementa los 40. **Resuelto el 2026-11-13: el propietario decidió mantener las 40; no se inventa una moneda para llegar a 41** (anotación posterior a la migración; el texto de la §12.8 no se modificó).
 > 2. Los resultados de la §9.3 se convirtieron en **pruebas ejecutables** (`prototype/money.test.js`): G26, el caso de 20 integrantes, reproduce los 19 pagos esperados.
 
 > **Rol:** investigación. **Estado:** borrador para revisión del propietario.
