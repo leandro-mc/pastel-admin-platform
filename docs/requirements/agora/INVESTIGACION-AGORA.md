@@ -67,7 +67,7 @@ Quiere control sin concentrar poder. → AG2-16 **matriz de permisos**, **audito
 | **Perspectivas** | Dónde coinciden/difieren/qué evidencia cambiaría la conversación | Simetría falsa entre posiciones desiguales en evidencia | **Hechos antes**; las perspectivas solo en *análisis/opinión* |
 | **Escucha ciudadana** | Voto de afirmaciones sin responder + acuerdos entre grupos | Autoselección; afirmaciones vagas; brigadas | Aviso de no representatividad; moderación de afirmaciones; **un voto por cuenta**; límites de ritmo |
 | **Pregunte al especialista** | Preguntas curadas que se responden con revisión | Cuello de botella | Cola corta; respuestas reutilizables |
-| **Modo calma / finito** | Oculta actualidad dura 24 h; sin infinito | Perder alcance | Resumen semanal opcional |
+| **Modo calma / finito** | Oculta actualidad dura 24 h; sin infinito | Perder alcance | Resumen semanal opcional (F2, con consentimiento) |
 | **Antes de compartir** | «Leí la pieza» | Fricción molesta | Solo al compartir, 1 clic |
 | **Neutralidad electoral** | Guías para comparar propuestas, no recomendaciones | Percepción de sesgo | Acta de equilibrio; criterios públicos |
 

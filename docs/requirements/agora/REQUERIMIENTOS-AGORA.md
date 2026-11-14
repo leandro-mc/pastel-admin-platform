@@ -1,6 +1,6 @@
 # Ágora — Requerimientos v2 (levantamiento profundo)
 
-> **Estado:** propuesta para validación del propietario · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-10-23
+> **Estado:** propuesta para validación del propietario, con las **decisiones del propietario del 2026-11-13 ya incorporadas** (resumen en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) §0c; estado de cada tema en §14) · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-10-23 (actualizado 2026-11-13)
 > **Prototipo:** [`prototype/`](prototype/index.html) — inicio, pieza, panel editorial (datos de **ejemplo**; contenido evergreen, sin afirmaciones sobre noticias reales)
 > Amplía `docs/modules/AGORA.md`. Se conserva todo su núcleo de confianza (sello "Verificado", fuentes, tipo de contenido, correcciones, sin comentarios abiertos en el MVP).
 
@@ -32,7 +32,7 @@
 2. **Contexto antes que opinión:** cada tarjeta lleva *Qué debe saber en 20 segundos*, tipo de contenido, estado de verificación y número de fuentes **visibles sin abrir la pieza**.
 3. **WhatsApp primero para compartir:** es donde ya circula la información (y la desinformación). Tarjeta compartible con **sello y fuente incluidos**.
 4. **Interacción sin hostilidad:** reacciones constructivas (*Me ayudó a entender · Quiero más fuentes · Guardar*), **preguntas al especialista** curadas y "Señalar un error", en lugar de comentarios abiertos.
-5. **Respeto del ritmo:** *Modo calma* (oculta actualidad dura 24 h/7 días), resumen semanal opcional, cero insignias rojas.
+5. **Respeto del ritmo:** *Modo calma* (oculta actualidad dura 24 h/7 días), resumen semanal opcional **(F2)**, cero insignias rojas.
 
 ---
 
@@ -94,7 +94,7 @@
 2. **Fila de Series** (círculos como "historias").
 3. **Bloque "Hoy en 5 minutos"**: de 3 a 5 piezas elegidas por el equipo editorial, con tiempo de lectura total.
 4. Tarjetas cronológicas por tema seguido.
-5. **Marca de fin: "Está al día. Vuelva mañana o active el resumen semanal."**
+5. **Marca de fin: "Está al día. Vuelva mañana."** (en F2, cuando exista el resumen semanal, se le añade «o active el resumen semanal»).
 Sin ranking algorítmico: **orden = decisión editorial + fecha**.
 
 ### 5.3 Tarjeta de pieza
@@ -104,7 +104,7 @@ Autor y rol · fecha y **tiempo de lectura** · **chip de tipo** (Hechos documen
 Titular y resumen de 20 s · **Se sabe / No se sabe / Por qué importa** (bloques fijos) · cuerpo · **términos del glosario subrayados** (toque = definición) · video · **Fuentes** con tipo y nota de contexto · **"Cómo sabemos esto"** (alcance de la verificación) · **Correcciones** con fecha · **"¿Qué entendí?"** (2–3 preguntas, solo en el navegador, sin puntaje almacenado) · **Pregunte al especialista** · **Señalar un error** · compartir (tarjeta de WhatsApp).
 
 ### 5.5 Otras
-**Explorar** (categorías, series, etiquetas, búsqueda por título) · **Actualidad** (noticias enlazadas con contexto propio, nunca copia) · **Videos** · **Guardados** · **Cuenta/preferencias** (tema, tamaño de texto, Modo calma, resumen semanal) · **Estándares editoriales** y **Quiénes verifican** (perfiles de revisores con credenciales).
+**Explorar** (categorías, series, etiquetas, búsqueda por título) · **Actualidad** (noticias enlazadas con contexto propio, nunca copia) · **Videos** · **Guardados** · **Cuenta/preferencias** (tema, tamaño de texto, Modo calma; resumen semanal en F2) · **Estándares editoriales** y **Quiénes verifican** (perfiles de revisores con credenciales).
 
 ### 5.6 Editorial
 Compositor guiado (campos y límites en §7), vista previa idéntica a la pública, **lista de control de publicación**, cola de revisión (solo piezas sin verificar o modificadas), gestión de series, glosario, enlaces de actualidad y bandeja de "errores señalados" y "preguntas".
@@ -125,10 +125,14 @@ Compositor guiado (campos y límites en §7), vista previa idéntica a la públi
 | AG-CON-02 | Reacciones constructivas y guardar | M | Sin contadores públicos de vanidad (solo propios) |
 | AG-CON-03 | Pregunte al especialista (curado) | S | Solo se publica lo que el editor aprueba |
 | AG-CON-04 | Señalar un error / fuente faltante | M | Llega a la bandeja editorial; acuse al lector |
-| AG-CAL-01 | **Modo calma** y resumen semanal opcional (correo) | S | Oculta actualidad 24 h/7 días; sin notificaciones por defecto |
+| AG-CAL-01 | **Modo calma** | S (F1) | Oculta actualidad 24 h/7 días; sin notificaciones por defecto |
+| AG-CAL-02 | **Resumen semanal por correo:** **F2**, siempre **opcional y con consentimiento** (`DigestSubscription`); nadie queda suscrito por defecto; depende de que la plataforma pueda enviar correos (ver pendientes) | S (F2) | Sin suscripción no se envía nada; el consentimiento queda registrado y se puede retirar |
 | AG-ACC-01 | Tamaño de texto A / A+ / A++ y modo lectura | M | Hasta 200 % sin romper el diseño |
 | AG-ACC-02 | Lectura en voz alta (síntesis del navegador) | C | F2 |
 | AG-VER-01 | Sello y flujo de revisión del MVP | M | Autor no puede verificar lo propio |
+| AG-VER-02 | **Cantidad de revisores iniciales configurable:** el diseño no impone un número fijo; se conservan la **separación de funciones** (quien redacta, quien revisa y quien modera son funciones distintas) y la prohibición de que una persona verifique **su propia pieza** | M | Agregar o quitar revisoras no requiere cambios de código; con cualquier cantidad, la verificación de la propia pieza → 403 (`agora.verification.self`) |
+| AG-COR-01 | **Política de correcciones publicada antes del lanzamiento** (en «Estándares editoriales»): qué es una corrección, cómo se muestra (fecha e historial visibles en la pieza, estado «Modificada tras la verificación» cuando aplique) y cómo señalar un error | M (condición de lanzamiento) | No se lanza al público sin la política publicada; su texto lo redacta y aprueba el propietario (pendiente, §14) |
+| AG-TXT-01 | **Voz de la interfaz: trato de usted por defecto**; el voseo solo si el propietario lo pide (`AGENTS.md`) | M | `t-agora.js`: sin voseo ni tuteo en el inicio y el fin del inicio sin resumen semanal (F2) |
 | AG-EDI-01 | Compositor guiado + lista de control de publicación | M | No se marca "Listo" sin ≥ 2 fuentes, tipo y resumen |
 | AG-EDI-02 | Panel de autor con métricas útiles (lecturas completas, guardados, "me ayudó", compartidos) | S | Sin métricas de vanidad |
 | AG-SEO-01 | `title`/`description`/`og:*` y JSON-LD `Article` en la respuesta inicial | M | Mismo método que Huella (ADR conjunto) |
@@ -160,7 +164,7 @@ Compositor guiado (campos y límites en §7), vista previa idéntica a la públi
 ---
 
 ## 8. Modelo de datos (delta)
-`Topic` (tema/hilo), `GlossaryTerm`, `QuizQuestion`, `ExpertQuestion {estado: recibida/publicada/descartada}`, `ErrorReport {pieza, texto, estado}`, `Reaction {pieza, usuario, tipo}` (tipos limitados), `ReaderPreference` (servidor; el anónimo guarda en el navegador), `DigestSubscription` (correo, consentimiento), `ReviewerProfile` (credenciales visibles), `ShareCard` (metadatos de la imagen para WhatsApp). Imagen compartible generada con el mismo motor de documentos (PNG desde Typst) para no añadir un servidor de imágenes.
+`Topic` (tema/hilo), `GlossaryTerm`, `QuizQuestion`, `ExpertQuestion {estado: recibida/publicada/descartada}`, `ErrorReport {pieza, texto, estado}`, `Reaction {pieza, usuario, tipo}` (tipos limitados), `ReaderPreference` (servidor; el anónimo guarda en el navegador), `DigestSubscription` (correo, consentimiento; **F2**), `ReviewerProfile` (credenciales visibles), `ShareCard` (metadatos de la imagen para WhatsApp). Imagen compartible generada con el mismo motor de documentos (PNG desde Typst) para no añadir un servidor de imágenes.
 
 ## 9. No funcionales
 **Rendimiento:** LCP < 2,5 s en 4G con teléfono de gama media; JS inicial acotado; imágenes con dimensiones y `loading="lazy"`; fachada de video. **Accesibilidad:** WCAG 2.2 AA; contraste verificado por script en las paletas del prototipo (`../prototype-tests/contrast.py`, claro y oscuro) y a repetir en el CSS definitivo; teclado; 320 px; texto "Muy grande"; el sello no depende del color. **SEO/compartir:** sin ejecutar JS. **Privacidad:** sin trackers de terceros; YouTube `nocookie`; correo solo con consentimiento. **Seguridad:** sanitización estricta; límites de tasa; CSP (requiere CCR para `frame-src`/imágenes).
@@ -175,7 +179,7 @@ Compositor guiado (campos y límites en §7), vista previa idéntica a la públi
 | Spam en preguntas | Sesión obligatoria, 280 caracteres, curado |
 | Apariencia genérica | Dirección visual propia (§11) |
 
-## 11. Dirección visual (propuesta)
+## 11. Dirección visual (dirección de paleta aprobada; revisión visual final del propietario pendiente)
 - **Familiaridad sin copia:** fondo gris azulado suave, tarjetas blancas, azul "plaza" de marca; **verde** = verificado, **ámbar** = pendiente, **verde azulado** = corregida (siempre con icono y texto). Sin morado.
 - **Tipografía:** *Source Sans 3* para interfaz; *Source Serif 4* para titulares de pieza (identidad editorial).
 - **Marca:** columna/pórtico simple (la plaza pública), sin símbolos de "IA mágica".
@@ -186,7 +190,24 @@ Compositor guiado (campos y límites en §7), vista previa idéntica a la públi
 Lectura completa por pieza · "Me ayudó a entender" por 100 lecturas · guardados · compartidos por WhatsApp · retorno semanal · % de piezas con verificación vigente · tiempo de respuesta a errores señalados · tasa de abandono en el onboarding. **No** se optimiza tiempo en pantalla.
 
 ## 13. Qué demuestra el prototipo
-Inicio finito con "Está al día", fila de Series, tarjetas con sello/fuentes/tiempo de lectura, pieza con *Se sabe/No se sabe*, glosario en línea, mini-comprobación, compartir por WhatsApp, tamaño de texto, tema claro/oscuro, Modo calma, y compositor guiado con lista de control. **No** hay servidor: las acciones se guardan en el navegador.
+Inicio finito con "Está al día" (sin el resumen semanal, que es de F2), fila de Series, tarjetas con sello/fuentes/tiempo de lectura, pieza con *Se sabe/No se sabe*, glosario en línea, mini-comprobación, compartir por WhatsApp, tamaño de texto, tema claro/oscuro, Modo calma, y compositor guiado con lista de control. **No** hay servidor: las acciones se guardan en el navegador.
 
-## 14. Preguntas abiertas
-1. ¿Voz del texto de interfaz: *usted* (por defecto) o voseo (permitido si lo solicita)? 2. ¿Resumen semanal por correo desde F1? 3. ¿Cuántos revisores se espera tener al inicio? 4. ¿Se publica una política de correcciones antes del lanzamiento? 5. ¿Se aprueba el cambio de paleta frente al azul grisáceo del repositorio?
+## 14. Decisiones y preguntas abiertas
+
+Las decisiones del 2026-11-13 están en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) (§0c y §7); aquí solo su efecto en este documento. **Ojo con dos cosas que no son lo mismo:** el propietario aprobó la *dirección* de la paleta, pero **su revisión visual final sigue pendiente**.
+
+| Tema | Estado | Dónde |
+|---|---|---|
+| Voz de la interfaz: usted por defecto | **Decidido** | AG-TXT-01 |
+| Resumen semanal por correo: F2, opcional y con consentimiento | **Decidido** (no entra en F1) | AG-CAL-02, §5.2 |
+| Cantidad de revisores iniciales: configurable, sin número fijo; se conservan la separación de funciones y la prohibición de verificar lo propio | **Decidido** | AG-VER-02 |
+| Política de correcciones publicada antes del lanzamiento | **Decidido** (condición de lanzamiento) | AG-COR-01 |
+| Dirección de paleta propuesta (frente al azul grisáceo del repositorio) | **Decidido** (dirección aprobada) | §11 |
+
+**Siguen pendientes:**
+
+1. **Revisión visual final del propietario** del prototipo y de la paleta: **pendiente de revisión visual** hasta que se realice; no se da por hecha con la aprobación de la dirección.
+2. **Texto de la política de correcciones** y quién la decide y difunde (`ROLES-Y-PERMISOS.md` §9): el propietario aprobó que se publique, no su contenido.
+3. **Envío de correos:** el resumen semanal (F2) depende de que la plataforma pueda enviar correos; hoy no se ha definido y no se asume.
+4. ¿Se exige un **mínimo de revisores por pieza o por tema**? No se fijó ninguno; si se quiere, entra como configuración (AG-VER-02), no como constante.
+5. Las preguntas de roles (pago de la revisión, edad mínima, apelación): ver `ROLES-Y-PERMISOS.md` §9.

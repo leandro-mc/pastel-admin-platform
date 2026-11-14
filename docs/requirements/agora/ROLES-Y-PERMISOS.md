@@ -5,7 +5,7 @@
 
 ## 1. Principios
 1. **Mínimo privilegio:** cada rol ve y hace solo lo que necesita.
-2. **Separación de funciones:** *quien escribe no verifica; quien cura no verifica; quien modera no edita; quien administra cuentas no publica ni verifica.* Así ningún sello, destaque o moderación depende de una sola persona.
+2. **Separación de funciones:** *quien escribe no verifica; quien cura no verifica; quien modera no edita; quien administra cuentas no publica ni verifica.* Así ningún sello, destaque o moderación depende de una sola persona. **La cantidad de revisores iniciales es configurable** (decisión del propietario, 2026-11-13): no hay un número fijo en el diseño, pero la separación de funciones y la prohibición de verificar la propia pieza se mantienen con cualquier cantidad.
 3. **Lo que no corresponde no se muestra**, y si alguien llega por enlace directo recibe un **«Sin permiso» que explica por qué** y a qué rol corresponde (no un error críptico).
 4. **Todo lo sensible se audita** (sellos, roles, curaduría, resolución de errores, cambios de ajustes), también las acciones del propietario.
 5. **Acceso temporal y revocable:** los accesos de equipo pueden **vencer** y se **revocan al instante**.
@@ -63,4 +63,6 @@ Mensaje que dice **para quién es la sección**, **por qué** existe esa regla (
 - **Datos personales:** el sistema guarda lo mínimo (correo, preferencias); el anónimo guarda sus preferencias **solo en su navegador**.
 
 ## 9. Preguntas abiertas
-¿Cuántas revisoras tendrá el equipo al inicio (y cuántas por tema)? ¿Se pagará la revisión o es voluntaria? ¿Quién decide la **política de correcciones** y su difusión? ¿A qué edad se permite crear cuenta propia? ¿Qué proceso de **apelación** existe para una propuesta rechazada por moderación?
+**Resueltas el 2026-11-13:** la cantidad de revisoras iniciales es **configurable** (sin número fijo) y la política de correcciones **se publica antes del lanzamiento** (AG-COR-01).
+
+**Siguen abiertas:** ¿cuántas revisoras por tema se desean como mínimo, si se desea alguna? ¿Se pagará la revisión o es voluntaria? ¿Quién redacta, decide y difunde el **texto** de la política de correcciones? ¿A qué edad se permite crear cuenta propia? ¿Qué proceso de **apelación** existe para una propuesta rechazada por moderación?

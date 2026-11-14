@@ -68,7 +68,7 @@
       <div class="stories" role="group" aria-label="Series">${order.map(([n]) => `<button class="story" data-a="serie" data-s="${esc(n)}" aria-pressed="${S.serie === n}"><span>${ic(SERIE_ICO[n] || "book")}</span>${esc(n)}</button>`).join("")}</div>
       ${today.length ? `<section class="card brief" aria-labelledby="b"><h2 id="b">Hoy en 5 minutos</h2><p class="mut">${today.length} piezas · ${mins} min de lectura en total</p>${today.map((p) => `<div class="src"><a href="#/p/${p.id}"><b>${esc(p.title)}</b></a><span class="mut">${p.min} min · <span class="chip t-${p.type}">${TYPES[p.type]}</span> · ${sealTxt(p)}</span></div>`).join("")}</section>` : ""}
       ${S.serie ? `<p class="mut">Serie: ${esc(S.serie)} · <button class="btn alt" data-a="serie" data-s="">Quitar filtro</button></p>` : ""}
-      ${feed.map(card).join("") || '<div class="card">No hay piezas para este filtro todavía.</div>'}<div class="end" role="status"><b>Está al día</b>No hay más por hoy. Vuelva mañana o active el resumen semanal.</div>`;
+      ${feed.map(card).join("") || '<div class="card">No hay piezas para este filtro todavía.</div>'}<div class="end" role="status"><b>Está al día</b>No hay más por hoy. Vuelva mañana.</div>`;
     },
     guardados() { const l = PIECES.filter((p) => mk(p.id, "guardar")); return H1("Guardados") + (l.map(card).join("") || '<div class="card">Aún no guardó nada. Use «Guardar» en cualquier pieza.</div>'); },
     p(id) {

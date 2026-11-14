@@ -47,6 +47,8 @@ Permisos: `agora.access` (solo para el panel editorial), `agora.content.manage` 
 - **Búsqueda:** MVP con filtro por título/etiqueta; búsqueda de texto completo en etapa posterior.
 - **Endpoints públicos:** anónimos, con límite de tasa y caché corta; nunca devuelven borradores ni piezas archivadas.
 - Auditoría: publicar, archivar, verificar, retirar verificación, correcciones.
+- **Revisores:** la cantidad de revisores iniciales es **configurable** (decisión del propietario, 2026-11-13); no se fija un número en el diseño. Se mantienen la separación de funciones y la prohibición de verificar la propia pieza.
+- **Voz de la interfaz:** trato de **usted** por defecto. **Resumen semanal por correo:** fase F2, siempre opcional y con consentimiento; no entra en la primera versión.
 
 ## 6. Fuera del MVP
 Foros, comentarios, reportes y moderación; flujo formal de aprobación previa; reputación; líneas de tiempo y relaciones entre temas; historial completo de versiones; panel analítico; búsqueda avanzada; cobertura internacional estructurada.
@@ -69,6 +71,9 @@ Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, inte
 4. Markdown malicioso (`<script>`, `<img onerror>`, `[x](javascript:…)`, HTML crudo, iframes) → sanitizado; el contenido legítimo se conserva.
 5. Video: solo se acepta un identificador de YouTube válido; una URL arbitraria o un identificador manipulado → rechazado.
 6. Anónimo que intenta guardar → 401 (y el frontend lo lleva a iniciar sesión conservando la acción).
+
+### Condición previa al lanzamiento (no es una prueba automática)
+- La **política de correcciones** está publicada en «Estándares editoriales» (decisión del propietario, 2026-11-13). Su texto lo redacta y aprueba el propietario. Detalle: `docs/requirements/agora/REQUERIMIENTOS-AGORA.md` AG-COR-01.
 
 ### Diferido a QA — Etapa 2 (no bloquea la entrega de la primera versión)
 
