@@ -81,10 +81,12 @@ def brisa_balance_pairs():
                 (nm, "éxito sobre fondo suave", k["ok"], k["ok_soft"], T), (nm, "información sobre fondo suave", k["info"], k["info_soft"], T)]
     for c in CARDS:
         out.append(("Brisa claro", "texto sobre tarjeta " + c, "#26342e", c, T))
-        # Hallazgo de la v3: con el texto general (#e9eae7) 7 de 10 tarjetas oscuras quedaban entre 4,34 y 4,49:1 y el secundario (#c0c6cc) bajaba de 4,5:1.
-        # Corrección: dentro de la tarjeta oscura el texto es #f7f8f5 y el secundario #eceff1 (la mezcla al 36 % de Android se conserva).
-        out.append(("Brisa oscuro", "texto sobre tarjeta " + c + " (mezcla 36 %)", "#f7f8f5", mix(c, D["s"], .36), T))
-        out.append(("Brisa oscuro", "texto secundario («Límite…») sobre tarjeta " + c, "#eceff1", mix(c, D["s"], .36), T))
+        # Decisión del propietario (2026-11-13): tarjetas oscuras con la mezcla al 28 % y los tokens existentes, sin token nuevo.
+        # Con el texto general (#e9eae7) el peor caso es 5,49:1; el secundario (#c0c6cc) solo llega a 3,85:1, por eso la fecha límite («.task-due») usa el texto general en la tarjeta oscura.
+        out.append(("Brisa oscuro", "texto sobre tarjeta " + c + " (mezcla 28 %)", D["ink"], mix(c, D["s"], .28), T))
+        out.append(("Brisa oscuro", "fecha límite («Límite…») sobre tarjeta " + c + " (usa el texto general)", D["ink"], mix(c, D["s"], .28), T))
+    out.append(("Brisa claro", "acción «Deshacer» del aviso (acento sobre superficie elevada)", L["acc"], L["s"], T))
+    out.append(("Brisa oscuro", "acción «Deshacer» del aviso (acento sobre superficie elevada)", D["acc"], D["raised"], T))
     # Balance (tokens de prototype/styles.css)
     BL = dict(bg="#eef1f3", s="#ffffff", s2="#f4f6f7", ink="#14212b", mut="#4a5b69", brand="#0b6a6f", bink="#ffffff", bsoft="#dcf0ef", owe="#8a4a00", osoft="#fdebd0", bad="#a32d1f", bsoftbad="#fbe3df", warn="#7a5200", wsoft="#fbf0d4")
     BD = dict(bg="#0e151a", s="#16202a", s2="#1c2933", ink="#e7eef3", mut="#a9b8c4", brand="#5cc3c6", bink="#05191b", bsoft="#12383b", owe="#f2b866", osoft="#3a2a11", bad="#ff9d90", bsoftbad="#43201b", warn="#f0c070", wsoft="#3a2d12")

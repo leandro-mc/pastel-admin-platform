@@ -1,6 +1,6 @@
 # Brisa — Requerimientos v3 (migración de la app Android a Pastel)
 
-> **Estado:** propuesta para validación del propietario · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-11-09
+> **Estado:** propuesta para validación del propietario, con las **decisiones del propietario del 2026-11-13 ya incorporadas** (resumen en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) §0c; estado de cada tema en §14) · **Rama:** `research/requirements-and-prototypes` · **Fecha:** 2026-11-09 (actualizado 2026-11-13)
 > **Prototipo:** [`prototype/`](prototype/index.html) — el carrusel de 7 días que el propietario aprobó, con roles, tema Auto/Claro/Oscuro, reloj simulado y estados (datos de **ejemplo**).
 > **Fuente funcional:** [`INVENTARIO-BRISA.md`](INVENTARIO-BRISA.md) (app Android actual + decisiones del propietario en su §13, que **prevalecen**). Este documento no las reabre: las ordena en requerimientos con identificador y dice cómo se prueba cada una. Investigación: [`INVESTIGACION-BRISA.md`](INVESTIGACION-BRISA.md).
 
@@ -16,11 +16,11 @@
 1. **Barra de desarrollo con 5 roles/situaciones:** persona con acceso (datos de ejemplo), persona nueva (sin tareas), con sesión pero **sin acceso a Brisa** (403), **sin sesión** (401) y **error de carga**. Cada estado explica qué pasó y qué hacer; ninguno muestra tareas ajenas.
 2. **Reloj simulado** (‹ Día · Hoy real · Día ›): permite ver, sin esperar a medianoche, cómo una tarea con fecha límite vigente **avanza sola** y cómo se vuelve «Vencida» el día siguiente a su límite.
 3. **Tema Auto / Claro / Oscuro:** sin elección, sigue al sistema; la elección se recuerda (§13.6 y §13.7 del inventario).
-4. **Lógica de fechas separada y probada** ([`prototype/logic.js`](prototype/logic.js)): los vectores V1–V10 y los criterios AC1–AC7 del inventario se ejecutan como pruebas (39 comprobaciones) y la interfaz se prueba por rol (27).
+4. **Lógica de fechas separada y probada** ([`prototype/logic.js`](prototype/logic.js)): los vectores V1–V10 y los criterios AC1–AC7 del inventario se ejecutan como pruebas (46 comprobaciones, con las del «Deshacer») y la interfaz se prueba por rol (30).
 5. **Primera vez con un solo paso** («Empieza con una sola tarea»), coherente con el principio de alta rápida.
 
 **Hallazgos de la v3 (detalle en `../DECISIONES-Y-HALLAZGOS.md`):**
-- **Contraste real:** en el tema oscuro, 7 de las 10 tarjetas pastel quedaban entre **4,34 y 4,49:1** con el texto general y el texto secundario bajaba de 4,5:1. Se corrigió **solo dentro de la tarjeta** (texto `#f7f8f5`, secundario `#eceff1`) conservando la mezcla al 36 % de Android. Para producción requiere un token (CCR) o bajar la mezcla al 28 %.
+- **Contraste real:** en el tema oscuro, 7 de las 10 tarjetas pastel quedaban entre **4,34 y 4,49:1** con el texto general y el texto secundario bajaba de 4,5:1 con la mezcla al 36 % de Android. **Decidido (2026-11-13):** se resuelve con la mezcla al **28 %** y los tokens existentes, **sin token nuevo ni CCR** (el texto general queda en 5,49:1 o más). Medido: a esa mezcla el token de texto secundario solo llega a 3,85:1, por lo que en la tarjeta oscura la fecha límite («Límite…») usa el texto general. Se retiraron los colores locales `#f7f8f5` y `#eceff1` del prototipo.
 - **Singular pendiente:** el contador decía «1 hechas»; ahora «1 hecha» (§13.8, Q23).
 - **Un defecto de arranque encontrado al probar:** si «hoy» no existe cuando se cargan las tareas de ejemplo, las fechas salen inválidas. Quedó cubierto por una prueba (el orden de arranque importa).
 
@@ -32,7 +32,7 @@
 
 **Se corrige** (inventario §10.2 y §13.6; el número «U» es el del inventario): marcar hecha en un toque (U1), botón flotante que crea para hoy (U2), confirmar al cerrar solo si hay texto (U3), foco en el título y «Enter» guarda (U4), pestaña y día enfocado sobreviven a recargar (U5), tema persistente (U6), dos criterios de «Vencida» explícitos (U7), accesibilidad y nombres legibles (U10), singular correcto (U11).
 
-**No aprobado / aplazado por el propietario:** deshacer, recordatorios y notificaciones. No se prototipan.
+**Aprobado el 2026-11-13:** **deshacer** tras marcar o eliminar, con reversión segura (BR-19); se prototipa. **No aprobado / aplazado por el propietario:** recordatorios y notificaciones; no se prototipan.
 
 ---
 
@@ -81,7 +81,7 @@ Los permisos reales (`brisa.access`, `brisa.items.manage`) y que cada persona so
 Cabecera de Pastel (Aplicaciones › Brisa, búsqueda, tema, configuración) + barra lateral (Semana, Mes, Vencidas con contador, Fechas límite · Importar tareas, Configuración); en móvil, navegación inferior. Botón «Nueva tarea».
 
 ### 5.2 Semana (carrusel de 7 días)
-Siete columnas con **HOY** marcado y el día enfocado resaltado; cada día muestra **abiertas** y, aparte, **HECHAS**. «+» en el encabezado de cada día crea para ese día. Chips «N por hacer · M hechas · K en total». Se recorre con rueda, flechas, arrastre o teclado.
+Siete columnas con **HOY** marcado y el día enfocado resaltado; cada día muestra **abiertas** y, aparte, **HECHAS**. «+» en el encabezado de cada día crea para ese día. Chips «N por hacer · M hechas · K en total». Se recorre con rueda, flechas, arrastre o teclado. Al marcar, reabrir o eliminar, un aviso con acción **«Deshacer»** queda visible 8 s (BR-19).
 
 ### 5.3 Mes · Vencidas · Fechas límite
 **Mes:** cuadrícula L M X J V S D con conteo por día. **Vencidas** («Pendientes atrasados»): orden por (fecha límite o día efectivo) y prioridad; cada tarjeta dice «PROGRAMADA PARA». **Fechas límite:** abiertas antes que hechas, por vencimiento; «VENCIDA» solo si lo está.
@@ -119,6 +119,7 @@ Primera vez, sin sesión, sin acceso, error de carga (ver §3). Todos con una ac
 | **BR-16** | **Singular correcto** («1 hecha», «1 pendiente») | §13.8 (Q23) | Obligatorio | N24; UI |
 | **BR-17** | **Trato de tú, tono cálido y sin culpa** también en textos nuevos | §13.8 (Q14, CCR-1) | Obligatorio | UI: sin «usted» |
 | **BR-18** | Reloj de desarrollo (solo prototipo; **no es del producto**) | Método | Solo prototipo | — |
+| **BR-19** | **Deshacer tras marcar/reabrir o eliminar**, con **reversión segura:** restaura el estado exacto anterior (`CompletedAt` incluido, sin recalcularlo) tocando solo los campos de la acción (no pisa ediciones de título, notas, fechas ni prioridad); se **rechaza** (409 en producción, por `UpdatedAt`) si la tarea cambió después de esa acción; es de **un solo paso y un solo uso** (no se deshace lo deshecho); la tarea eliminada se restaura (eliminación lógica) solo si sigue siendo de la persona. La importación conserva su propia reversión de lote (BR-14) | Decisión 2026-11-13 (el inventario §13.6 lo dejaba «no aprobado») | Obligatorio | `logic.test.js` (7); `t-brisa.js` (3) |
 
 ---
 
@@ -142,14 +143,14 @@ Frontera de zona (C26): 23:30 del 18 en Costa Rica es 05:30 UTC del 19; «hoy» 
 
 ## 8. Modelo de datos (delta)
 
-Sin cambios respecto al inventario §4 y §13: `ScheduledDate` y `DueDate` son `date` sin zona; `CreatedAt`, `CompletedAt`, `UpdatedAt` son `timestamptz` UTC; `TimeZoneId` por persona; títulos y notas con los límites de §13.4. **Nada se persiste para el día efectivo** (se calcula). No se agregó ningún campo en esta iteración.
+Sin cambios respecto al inventario §4 y §13: `ScheduledDate` y `DueDate` son `date` sin zona; `CreatedAt`, `CompletedAt`, `UpdatedAt` son `timestamptz` UTC; `TimeZoneId` por persona; títulos y notas con los límites de §13.4. **Nada se persiste para el día efectivo** (se calcula). No se agregó ningún campo en esta iteración. El «Deshacer» (BR-19) usa `UpdatedAt`, que ya existe, como control de concurrencia: si la tarea cambió después de la acción, el servidor responde 409 y no revierte.
 
 ---
 
 ## 9. No funcionales
 
 - **Rendimiento:** el día efectivo se calcula en memoria al renderizar; sin tareas programadas ni escrituras nocturnas.
-- **Accesibilidad:** AA en claro y oscuro (medido: `prototype-tests/contrast.py`, 215 pares en total, 121 de Brisa y Balance); objetivos de 44 px; foco visible; nombres accesibles legibles.
+- **Accesibilidad:** AA en claro y oscuro (medido: `prototype-tests/contrast.py`, 217 pares en total, incluida la mezcla al 28 % de las tarjetas oscuras y el botón «Deshacer»); objetivos de 44 px; foco visible; nombres accesibles legibles.
 - **Datos:** cada persona solo accede a lo suyo; sin datos personales en la URL.
 - **Sin conexión / sincronización:** diseño propuesto en el inventario §7.3 (no se prototipa).
 - **Textos:** español de Costa Rica, tuteo cálido (excepción del propietario).
@@ -160,17 +161,18 @@ Sin cambios respecto al inventario §4 y §13: `ScheduledDate` y `DueDate` son `
 
 | Riesgo | Mitigación / estado |
 |---|---|
-| **Contraste de tarjetas oscuras** (hallazgo v3) | Corregido en el prototipo dentro de la tarjeta; en producción: token nuevo vía CCR o mezcla al 28 % |
-| **Tareas que «viajan» semanas sin avisar** pueden normalizar la postergación | Es regla aprobada (§13.1). Hay una **propuesta sin aprobar** en §14 (indicador discreto de días acumulados); la evidencia es débil (C) y puede aumentar la culpa: decide el propietario |
+| **Contraste de tarjetas oscuras** (hallazgo v3) | **Resuelto** (2026-11-13): mezcla al 28 % con tokens existentes, sin CCR; medido en `contrast.py`. La apariencia final queda para la revisión visual del propietario |
+| **Tareas que «viajan» semanas sin avisar** pueden normalizar la postergación | Es regla aprobada (§13.1). **No se agrega el indicador de días acumulados** (decisión 2026-11-13): la evidencia era débil (C) y podía aumentar la culpa |
 | **Arranque dependiente del orden** (fechas inválidas si «hoy» no existe) | Cubierto por prueba; en el producto «hoy» viene del servidor/zona de la persona |
-| **Tipografía:** el prototipo usa la pila del sistema (Inter si está instalada) | Se conserva por ser parte de lo aprobado; la regla anti-genérico del método sugiere revisarla (§14) |
+| **Tipografía:** el prototipo usa la pila del sistema (Inter si está instalada) | **Decidido** (2026-11-13): se conserva la actual |
+| **«Deshacer» mal hecho** podría pisar cambios o resucitar algo que cambió | Reversión segura (BR-19): estado exacto, solo los campos de la acción, rechazo si la tarea cambió, un solo uso |
 | **Medianoche con la app abierta** | La vista se recalcula cada 30 s; el reloj simulado lo demuestra |
 
 ---
 
 ## 11. Dirección visual
 
-**Se conserva la aprobada.** Fondo `#F7F6F0`, superficie `#FFFEFA`, acento salvia `#315B4A`, texto `#26342E`; 10 colores de tarjeta; claro idéntico a Android (salvo dos oscurecidos para AA: texto secundario `#57605A`, error `#904B3C`); oscuro con los tokens de Pastel. Todo detallado en el inventario §13.7. Cambios de v3: `light-dark` no se usó (se conservó el esquema por `data-theme`), se añadió el espejo **Auto** por `prefers-color-scheme` y el ajuste del texto de las tarjetas oscuras.
+**Se conserva la aprobada.** Fondo `#F7F6F0`, superficie `#FFFEFA`, acento salvia `#315B4A`, texto `#26342E`; 10 colores de tarjeta; claro idéntico a Android (salvo dos oscurecidos para AA: texto secundario `#57605A`, error `#904B3C`); oscuro con los tokens de Pastel. Todo detallado en el inventario §13.7. Cambios de v3: `light-dark` no se usó (se conservó el esquema por `data-theme`), se añadió el espejo **Auto** por `prefers-color-scheme` y, en las tarjetas oscuras, la mezcla al 28 % con los tokens existentes (sin colores nuevos).
 
 ---
 
@@ -182,15 +184,25 @@ Tareas creadas con solo el título (≥ 80 %); tiempo desde abrir hasta crear la
 
 ## 13. Qué demuestra el prototipo (y qué no)
 
-**Demuestra:** el carrusel aprobado funcionando; la regla de reprogramación con reloj simulado; las validaciones y mensajes; búsqueda, tema, importación; los 5 estados por situación.
+**Demuestra:** el carrusel aprobado funcionando; la regla de reprogramación con reloj simulado; las validaciones y mensajes; búsqueda, tema, importación; los 5 estados por situación; el «Deshacer» seguro de marcar y eliminar.
 **No demuestra:** persistencia real, sincronización, zona horaria con horario de verano en navegador real, ni apariencia en dispositivos (revisión visual del propietario).
 
 ---
 
-## 14. Preguntas abiertas
+## 14. Decisiones y preguntas abiertas
 
-1. **Tipografía:** ¿se mantiene la pila actual (conserva lo aprobado) o se elige una con más identidad? Efecto: bajo.
-2. **Días acumulados:** ¿un indicador discreto «aquí desde el 15 oct» en tarjetas que ya avanzaron varios días? Ayuda a ver patrones; puede sumar culpa.
-3. **Contraste oscuro de tarjetas:** ¿token nuevo (CCR) o mezcla al 28 %?
-4. **Deshacer** tras marcar o eliminar: no aprobado; ¿se pide?
-5. **Primera vez:** ¿se ofrece un tour de 3 pasos o el banner único es suficiente?
+Las decisiones del 2026-11-13 están en [`../DECISIONES-Y-HALLAZGOS.md`](../DECISIONES-Y-HALLAZGOS.md) (§0c y §7); aquí solo su efecto en este documento.
+
+| Tema | Estado | Dónde |
+|---|---|---|
+| Tipografía: conservar la actual | **Decidido** | §10, §11 |
+| Indicador de días acumulados: no se agrega | **Decidido** | §10 |
+| Contraste oscuro de tarjetas: mezcla al 28 %, sin token nuevo (sin CCR) | **Decidido** y aplicado en el prototipo | §0, §10, §11 |
+| Deshacer tras marcar o eliminar, con reversión segura | **Decidido** (se incorpora) | BR-19, §5.2, §8 |
+| Primera vez: banner único; no se agrega el tour de tres pasos | **Decidido** | BR-15, §0 |
+
+**Siguen pendientes:**
+
+1. **Revisión visual del propietario** del prototipo (incluida la apariencia de las tarjetas oscuras al 28 % y del aviso con «Deshacer»): sigue pendiente hasta que se realice.
+2. **Duración del aviso con «Deshacer»:** el prototipo usa 8 s; a validar con el uso (no hay historial de deshacer más allá del último paso).
+3. **Producción:** el rechazo del «Deshacer» obsoleto (409 por `UpdatedAt`) debe confirmarse en el contrato de la API cuando se implemente el módulo.

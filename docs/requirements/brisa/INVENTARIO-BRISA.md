@@ -496,7 +496,7 @@ Todo el texto está fijo en Kotlin, en español, con tono **cálido, calmado y s
 7. Singular correcto en los contadores — §13.8.
 8. Importación — §13.9.
 
-**No aprobado / aplazado:** deshacer, recordatorios y notificaciones.
+**No aprobado / aplazado:** recordatorios y notificaciones. *(Actualizado el 2026-11-13: **deshacer queda aprobado**; ver `REQUERIMIENTOS-BRISA.md` BR-19.)*
 
 ### 13.1 Reprogramación diaria (requisito obligatorio)
 **Qué hace la app hoy y debe seguir haciendo.** Las tareas se muestran en un carrusel de días.
@@ -582,7 +582,7 @@ Título: **máximo 150 caracteres**. Notas: **máximo 2000**. Se cuentan tras `t
 | **Estado de pantalla** (Q18, U5) | La pestaña/vista y el día enfocado sobreviven a una recarga (mecanismo a elección de Dev; sin datos personales en la URL). |
 | **Tema** (U6) | Claro y oscuro; la elección persiste; primera visita según `prefers-color-scheme` (`DESIGN_SYSTEM.md`). |
 | **Accesibilidad** (U10) | Tamaños y objetivos táctiles según `DESIGN_SYSTEM.md`; nombres accesibles legibles (p. ej. «Crear tarea para el domingo 18 de octubre» en lugar de la fecha ISO); el icono de cierre del editor deja de ser un calendario. |
-| **Deshacer** | **No aprobado.** La app Android no lo tiene: el término salió de mi lista de defectos (U13, «ausencias») y no de una función existente. Si desea algo como un aviso breve «Deshacer» tras marcar o eliminar, hay que pedirlo y definirlo aparte. |
+| **Deshacer** | **No aprobado.** La app Android no lo tiene: el término salió de mi lista de defectos (U13, «ausencias») y no de una función existente. Si desea algo como un aviso breve «Deshacer» tras marcar o eliminar, hay que pedirlo y definirlo aparte. **Actualizado el 2026-11-13: el propietario lo aprobó**, con reversión segura; se define en `REQUERIMIENTOS-BRISA.md` BR-19. |
 | **Recordatorios** | Aplazados (`BRISA.md` §5). |
 
 ### 13.7 Tema y colores
@@ -602,7 +602,7 @@ Título: **máximo 150 caracteres**. Notas: **máximo 2000**. Se cuentan tras `t
 
 Paleta de tarjetas (10, sin cambios): Salvia `#DDE8D5`, Cielo `#DCEAF4`, Mantequilla `#F5E9B9`, Durazno `#F6DDCE`, Menta `#D4E9E1`, Arena `#E9E2D2`, Agua `#D1E7E5`, Coral suave `#F3D5C8`, Pistacho `#E5EDC8`, Azul bruma `#D7E4F0`. En claro la tarjeta usa el color tal cual.
 
-**Tema oscuro: el de Pastel, no el de Android** (se descarta el fondo verdoso `#121815`/`#1B231F`). Fondo, superficies, texto y bordes salen de los tokens neutros de `DESIGN_SYSTEM.md` §2.1 (`--app-bg #191b20`, `--surface #22262d`, `--surface-raised #2b313a`, `--text #e9eae7`, `--text-secondary #c0c6cc`, `--muted #a2a9b1`, `--border #3b424e`) y el acento del módulo Brisa en oscuro (§2.2: `--accent #8daa98`, `--accent-soft #2a3636`, `--on-accent #14181c`). Lo que Pastel no define se conserva como en Android y se reserva para el diseño detallado: tarjetas de tarea (mezcla del color pastel al 36 % sobre `--surface`, regla `BrisaColors.TaskCard`) y chips/puntos de prioridad. **Confirmado por el propietario (Q24):** tarjetas y chips conservan la regla de Android sobre la superficie neutra de Pastel.
+**Tema oscuro: el de Pastel, no el de Android** (se descarta el fondo verdoso `#121815`/`#1B231F`). Fondo, superficies, texto y bordes salen de los tokens neutros de `DESIGN_SYSTEM.md` §2.1 (`--app-bg #191b20`, `--surface #22262d`, `--surface-raised #2b313a`, `--text #e9eae7`, `--text-secondary #c0c6cc`, `--muted #a2a9b1`, `--border #3b424e`) y el acento del módulo Brisa en oscuro (§2.2: `--accent #8daa98`, `--accent-soft #2a3636`, `--on-accent #14181c`). Lo que Pastel no define se conserva como en Android y se reserva para el diseño detallado: tarjetas de tarea (mezcla del color pastel al 36 % sobre `--surface`, regla `BrisaColors.TaskCard`; **actualizado el 2026-11-13: en el tema oscuro la mezcla pasa al 28 %, con los tokens existentes y sin token nuevo**) y chips/puntos de prioridad. **Confirmado por el propietario (Q24):** tarjetas y chips conservan la regla de Android sobre la superficie neutra de Pastel.
 
 **Contraste (Q19):** el tema claro es exacto salvo dos valores que se oscurecieron lo mínimo para cumplir WCAG 2.2 AA (4,5:1) sobre fondos, superficies y las 10 tarjetas: texto secundario `#57605A` (4,7:1 en el peor caso) y rojo de error `#904B3C` (4,65:1). La prioridad nunca depende solo del color (punto + texto). **Reglas de Pastel (Q20):** los colores salen de tokens; los valores de este apartado se registran como tokens de `data-module="brisa"` (`module-themes.css`) y quedan documentados en `docs/modules/BRISA.md`. Las reglas de diseño del frontend del módulo prevalecen sobre las generales (`CCR-1`), solo en eso. Todos los colores citados quedan fuera del rango prohibido de morado (235°–345°).
 

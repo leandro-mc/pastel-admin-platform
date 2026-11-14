@@ -52,9 +52,24 @@
   /** Búsqueda (§13.6): título y notas, sin distinguir mayúsculas ni tildes, solo tareas propias no eliminadas (abiertas y hechas). */
   const norm = (s) => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
   function search(tasks, q) { const n = norm(q); return n ? tasks.filter((t) => !t.deletedAt && norm(t.title + " " + (t.details || "")).includes(n)) : []; }
+  /** Deshacer «marcar/reabrir» y «eliminar» (aprobado por el propietario el 2026-11-13). Reversión SEGURA:
+      1) restaura el estado exacto guardado ANTES de la acción (nunca lo recalcula: CompletedAt y el día efectivo vuelven idénticos);
+      2) toca solo los tres campos de la acción (hecha, instante de cierre, eliminación lógica): no pisa ediciones de título, notas, fechas ni prioridad;
+      3) se rechaza (`brisa.undo.stale`) si la tarea ya cambió después de esa acción: en producción, la versión/ETag distinta responde 409;
+      4) un solo paso y de un solo uso: deshacer no se puede deshacer ni repetir; 5) la tarea eliminada se restaura (eliminación lógica) solo si sigue siendo de la persona. */
+  const STATE = (t) => ({ completed: !!t.completed, completedAt: t.completedAt || null, deletedAt: t.deletedAt || null });
+  const sameState = (a, b) => a.completed === b.completed && a.completedAt === b.completedAt && a.deletedAt === b.deletedAt;
+  function applyWithUndo(task, mutate, kind) { const before = STATE(task); mutate(task); return { id: task.id, kind: kind || "change", before, after: STATE(task), used: false }; }
+  function undo(task, token) {
+    if (!token || token.used) return { ok: false, code: "brisa.undo.used", message: "Ese cambio ya se deshizo." };
+    if (!task || task.id !== token.id) return { ok: false, code: "brisa.undo.not_found", message: "La tarea ya no está disponible." };
+    if (!sameState(STATE(task), token.after)) return { ok: false, code: "brisa.undo.stale", message: "No se pudo deshacer porque la tarea cambió después. Revisa su estado y repite el cambio si lo necesitas." };
+    task.completed = token.before.completed; task.completedAt = token.before.completedAt; task.deletedAt = token.before.deletedAt; token.used = true;
+    return { ok: true };
+  }
   /** Singular correcto (U11, Q23). */
   const plural = (n, one, many) => n + " " + (n === 1 ? one : many);
 
-  const api = { todayInZone, addDays, isoDateValid, dateFromInstant, effectiveDate, isOverdue, overdue, deadlines, validateTask, search, plural, MSG_ORDER };
+  const api = { applyWithUndo, undo, todayInZone, addDays, isoDateValid, dateFromInstant, effectiveDate, isOverdue, overdue, deadlines, validateTask, search, plural, MSG_ORDER };
   if (typeof module !== "undefined" && module.exports) module.exports = api; else root.BrisaLogic = api;
 })(typeof window !== "undefined" ? window : globalThis);

@@ -81,4 +81,4 @@ Ver `REQUERIMIENTOS-BRISA.md` §12. Principal: proporción de «Vencidas» que s
 
 ## 10. Preguntas abiertas
 
-Las mismas de `REQUERIMIENTOS-BRISA.md` §14: tipografía, días acumulados, contraste de tarjetas oscuras, deshacer y primera vez.
+Las que siguen pendientes están en `REQUERIMIENTOS-BRISA.md` §14. La tipografía, los días acumulados, el contraste de tarjetas oscuras, el deshacer y la primera vez **se decidieron el 2026-11-13**.

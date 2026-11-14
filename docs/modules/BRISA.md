@@ -19,6 +19,7 @@ Inicial: `brisa.access` (usar el módulo) y `brisa.items.manage` (sobre **sus pr
 3. **Datos del usuario:** estrategia de importación desde la base o exportación de la app Android (formato a definir en el inventario), con respaldo, validación de integridad y reversión.
 4. **Interfaz:** adopta el sistema de diseño de Pastel (color Brisa, componentes del kit); respeta los patrones de uso rápido que la app actual ya ofrece (alta veloz de pendientes, marcar como hecho, filtros del día).
 5. **Pruebas de regresión** sobre los flujos esenciales antes de dar la migración por terminada.
+6. **Cambios aprobados por el propietario (2026-11-13):** **deshacer** tras marcar/reabrir o eliminar, con reversión segura (restaura el estado exacto, toca solo los campos de la acción, se rechaza con 409 si el pendiente cambió después y es de un solo uso; detalle en `docs/requirements/brisa/REQUERIMIENTOS-BRISA.md` BR-19); **tipografía actual** sin cambios; **sin indicador de días acumulados**; **banner único de primera vez**, sin tour; tarjetas oscuras con la mezcla al 28 % y los tokens existentes (sin token nuevo).
 
 ## 4. Pasos de la migración
 1. Leer el inventario (pantallas, flujos, entidades, reglas, recordatorios/notificaciones, almacenamiento, permisos).
@@ -57,3 +58,4 @@ Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md
 - Flujo de uso rápido (alta veloz, marcar como hecho, filtros del día) en 360 px, teclado y texto "Muy grande".
 - Accesibilidad y recorrido a 320 px y claro/oscuro de los flujos principales.
 - Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.
+- **Deshacer seguro** (BR-19): deshacer «marcar» restaura `CompletedAt` exacto; deshacer «eliminar» restaura el pendiente; si el pendiente cambió después → 409 y no se revierte; no pisa ediciones ni se puede repetir. Hoy lo cubren las 7 pruebas de lógica y 3 de interfaz del prototipo; **pendiente de decisión del propietario** si pasa a prueba esencial de la Etapa 1.
