@@ -5,7 +5,7 @@
 ## 1. Resumen
 **Etapa actual: construir las cinco aplicaciones funcionales** (Ágora, Brisa, Balance, Cosecha y Huella). Se prueba solo lo esencial (seguridad, autorización, aislamiento, integridad de datos, reglas de negocio críticas y secretos); las pruebas exhaustivas, la automatización adicional, el QA profundo y las revisiones visuales sistemáticas son de la **Etapa 2**, que empieza con la primera versión funcional de las cinco (`docs/TESTING.md`). Lo diferido no bloquea entregas.
 
-**La Fase 0 está cerrada** (base modular, Identity, infraestructura y validación). El propietario aceptó los requisitos diferidos, que ya no son obligatorios y quedan como backlog (§5). **El 2026-11-15 se integró en `dev`** (merge normal de `research/requirements-and-prototypes`, que ya contenía `refactor/modular-foundation` hasta `a28da7b`), con autorización del propietario. `main` no cambia. Cada aplicación se desarrolla ahora en su propia rama corta desde `dev`.
+**La Fase 0 está cerrada** (base modular, Identity, infraestructura y validación). El propietario aceptó los requisitos diferidos, que ya no son obligatorios y quedan como backlog (§5). **El 2026-11-15 se integró en `dev`** (merge normal de `research/requirements-and-prototypes`, que ya contenía `refactor/modular-foundation` hasta `a28da7b`), con autorización del propietario. `main` no cambia. Cada aplicación se desarrolla ahora en su propia rama corta desde `dev` (`AGENTS.md` §3).
 
 ## 2. Qué existe
 - **Backend:** host .NET 10, `Pastel.SharedKernel` y `Pastel.Platform`, y un proyecto por módulo (Identity, Ágora, Brisa, Balance, Cosecha, Huella) con esquema y migración inicial propios. **Solo Identity tiene lógica de negocio**; los otros cinco son esqueletos con permisos, roles, manifiesto y fichas.

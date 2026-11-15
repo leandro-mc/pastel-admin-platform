@@ -25,7 +25,7 @@ Todos los agentes trabajan igual: **commits lógicos por unidad de trabajo** (se
 2. Trabaja y valida en local; haz commit **cuando la unidad esté completa**.
 3. Entrega: PR hacia `dev` con resumen, validación realizada y lo no verificado.
 4. El propietario aprueba; **el CI básico corre al aprobar** (sección 6) y el propietario integra. Nadie integra en `dev` ni `main` ni abre/fusiona PR sin autorización expresa; `main` solo por promoción del propietario.
-5. Para la fase actual la rama de trabajo es la que indique el propietario (hoy `refactor/modular-foundation`).
+5. Base de trabajo: `dev` (desde el 2026-11-15). Cada aplicación se desarrolla en su propia rama corta `feat/<modulo>-<tema>` creada desde `dev`, con un solo agente por rama.
 
 ## 4. Commits (resumen; reglas completas y motivos en `docs/GIT_WORKFLOW.md`)
 - **Un commit = una unidad completa y coherente** (funcionalidad, arreglo con su prueba, cambio de documentación) que un revisor entienda y pueda revertir sola. Código, prueba y documentación de esa unidad van **juntos**.
