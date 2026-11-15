@@ -34,7 +34,8 @@ internal sealed class HuellaModule : IPastelModule
         services.AddHuellaHandlers();
 
         // Límite de tasa de las rutas públicas, por IP (la IP real la fija el middleware de cabeceras reenviadas de la plataforma).
-        services.AddRateLimiter(options => options.AddPolicy(HuellaEndpoints.PublicRateLimit, context =>
+        // La plataforma ya registra el limitador y su respuesta 429; aquí solo se añade la política del módulo.
+        services.Configure<RateLimiterOptions>(options => options.AddPolicy(HuellaEndpoints.PublicRateLimit, context =>
             RateLimitPartition.GetFixedWindowLimiter(
                 context.Connection.RemoteIpAddress?.ToString() ?? "unknown",
                 _ => new FixedWindowRateLimiterOptions { PermitLimit = 30, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 })));

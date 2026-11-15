@@ -186,7 +186,13 @@ internal static partial class OfferAnalyzer
 
     private static readonly IReadOnlyDictionary<string, int> Cefr = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase)
     {
-        ["A1"] = 1, ["A2"] = 2, ["B1"] = 3, ["B2"] = 4, ["C1"] = 5, ["C2"] = 6, ["Nativo"] = 7,
+        ["A1"] = 1,
+        ["A2"] = 2,
+        ["B1"] = 3,
+        ["B2"] = 4,
+        ["C1"] = 5,
+        ["C2"] = 6,
+        ["Nativo"] = 7,
     };
 
     /// <summary>Requisitos eliminatorios comparados con los datos privados, antes de generar (§7.2 y prototipo).</summary>
