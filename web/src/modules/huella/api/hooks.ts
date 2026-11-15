@@ -10,6 +10,7 @@ import {
   aiApplySchema,
   aiPackageSchema,
   bankSchema,
+  cvDocumentSchema,
   derivationSchema,
   offerSchema,
   offerSummarySchema,
@@ -112,6 +113,22 @@ export const usePublicProfile = (token: string) =>
     staleTime: Infinity,
     queryFn: ({ signal }) =>
       api.get(`${base}/public/profile`, publicViewSchema, {
+        signal,
+        headers: { "X-Huella-Token": token },
+        retries: 0,
+        skipRefresh: true,
+      }),
+  });
+
+/** CV público: solo se pide cuando la persona lo abre. */
+export const usePublicCv = (token: string, enabled: boolean) =>
+  useQuery({
+    queryKey: ["huella", "public-cv", token],
+    enabled,
+    retry: false,
+    staleTime: Infinity,
+    queryFn: ({ signal }) =>
+      api.get(`${base}/public/cv`, cvDocumentSchema, {
         signal,
         headers: { "X-Huella-Token": token },
         retries: 0,

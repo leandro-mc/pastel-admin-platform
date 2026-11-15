@@ -420,15 +420,15 @@ export const strings = {
     description:
       "Esta función se suma al banco que ya tiene: reutilizará sus logros, sus ofertas y sus versiones de CV sin pedirle nada de nuevo.",
     items: {
-      recommendation: {
+      recomendacion: {
         title: "Carta de recomendación",
         text: "Pida una carta a alguien que trabajó con usted y arme un texto con los logros que esa persona puede respaldar.",
       },
-      applications: {
+      postulaciones: {
         title: "Historial de postulaciones",
         text: "Registre a qué ofertas aplicó, con qué versión del CV y cómo avanzó cada proceso.",
       },
-      interview: {
+      entrevistas: {
         title: "Preparación de entrevistas",
         text: "Practique con preguntas sobre sus propios logros y sobre la oferta a la que aplica.",
       },
