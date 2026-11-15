@@ -34,7 +34,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 - **Publicación:** `PublishedSnapshot` congelado (se conservan 5); lo editado después no aparece hasta publicar de nuevo. `ContentHash` detecta cambios sin publicar. La semilla de la huella son 8 bytes del hash.
 - **Perfil público:** lista blanca (`PublicProfileBuilder`); solo logros `public|both`; sin notas privadas, ofertas ni versiones no públicas.
 - **CV:** la IA solo produce JSON. `CvGuardian` rechaza líneas sin `sourceIds` del banco, con cifras que el banco no tiene, frases prohibidas o sobre el tope. `CvLayout.Fit` ajusta por escalera sin llamar a la IA. `ICvRenderer` → `UnavailableCvRenderer` hasta CCR-2.
-- **Entradas:** límites de longitud, etiquetas HTML y esquemas peligrosos neutralizados (`InputSafety`).
+- **Entradas:** límites de longitud, etiquetas HTML y esquemas peligrosos neutralizados (`TextInput`, `LinkPolicy`, `ContactRules`).
 - **Auditoría:** `huella.profile.published`, `huella.profile.unpublished`, `huella.link.regenerated` (sin token).
 
 ## Datos (esquema `huella`)
