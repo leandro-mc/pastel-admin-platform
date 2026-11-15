@@ -154,8 +154,11 @@ internal static class CvAiResult
 
             var entry = entries[index];
             var replacement = new List<CvBullet>();
+            var position = -1;
+            var fresh = 0;
             foreach (var bullet in bullets.EnumerateArray())
             {
+                position++;
                 var text = bullet.ValueKind == JsonValueKind.Object && bullet.TryGetProperty("text", out var t) && t.ValueKind == JsonValueKind.String
                     ? TextInput.CleanLine(t.GetString())
                     : string.Empty;
@@ -174,6 +177,13 @@ internal static class CvAiResult
                 if (CvGuardian.ValidateBullet(text, ids, bank, limits) is { } reason)
                 {
                     rejected.Add($"{entry.Subtitle} {entry.Title}: {reason}".Trim());
+
+                    // Una línea rechazada no borra contenido: se conserva la viñeta original de esa posición.
+                    if (position < entry.Bullets.Count && !replacement.Contains(entry.Bullets[position]))
+                    {
+                        replacement.Add(entry.Bullets[position]);
+                    }
+
                     continue;
                 }
 
@@ -185,12 +195,13 @@ internal static class CvAiResult
                     ShortText = byId[ids[0]].ShortText,
                     Score = previous?.Score ?? byId[ids[0]].Strength * 0.5,
                 });
+                fresh++;
             }
 
-            if (replacement.Count > 0)
+            if (fresh > 0)
             {
                 entry.Bullets = replacement;
-                accepted += replacement.Count;
+                accepted += fresh;
             }
         }
 
