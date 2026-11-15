@@ -1,0 +1,314 @@
+using System.Net;
+using System.Text;
+using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using Pastel.Modules.Huella.Domain;
+using Pastel.Modules.Huella.Persistence;
+using Pastel.Modules.Identity.Persistence;
+using Xunit;
+
+namespace Pastel.IntegrationTests.QA;
+
+/// <summary>
+/// Pruebas esenciales de Etapa 1 de Huella (<c>docs/modules/HUELLA.md</c>, sección 7): acceso público por token,
+/// borrador frente a publicado, autorización, aislamiento del propietario, entradas hostiles y secreto del token.
+/// Usan la cuenta Owner sembrada y datos propios; requieren la base aislada pastel_integration_tests.
+/// </summary>
+[Collection(IdentityApiCollection.Name)]
+public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposable
+{
+    private const string OwnerEmail = "test.owner@pastel.local";
+    private const string OwnerPassword = "Local-Only-Test-Owner-2026!";
+    private const string AdminEmail = "test.admin@pastel.local";
+    private const string AdminPassword = "Local-Only-Test-Admin-2026!";
+    private const string MemberEmail = "test.member@pastel.local";
+    private const string MemberPassword = "Local-Only-Test-Member-2026!";
+    private const string TokenHeader = "X-Huella-Token";
+
+    private readonly IdentityApiFactory _factory;
+    private readonly List<HttpClient> _clients = [];
+
+    public HuellaApiTests(IdentityApiFactory factory) => _factory = factory;
+
+    public void Dispose()
+    {
+        foreach (var client in _clients)
+        {
+            client.Dispose();
+        }
+    }
+
+    // Criterios 1, 2 y 5: un anónimo ve la última publicación (no el borrador) y el correo oculto no viaja.
+    [Trait("RequirementId", "HUELLA-E1-1")]
+    [RequiresPostgresFact]
+    public async Task Anonymous_visitor_sees_only_the_last_publication_and_no_hidden_contact()
+    {
+        var owner = await OwnerAsync();
+        await SaveProfileAsync(owner, headline: "QA Engineer publicado", email: "marta.oculta@correo.test", showEmail: false);
+        var token = await NewLinkAsync(owner);
+        await PostAsync(owner, "/api/huella/publication/publish");
+
+        var anonymous = NewAnonymous();
+        using var first = await PublicGetAsync(anonymous, token);
+        var body = await first.Content.ReadAsStringAsync();
+        Assert.Equal(HttpStatusCode.OK, first.StatusCode);
+        Assert.Contains("QA Engineer publicado", body, StringComparison.Ordinal);
+        Assert.DoesNotContain("marta.oculta@correo.test", body, StringComparison.Ordinal);
+        Assert.Contains("noindex", string.Join(",", first.Headers.GetValues("X-Robots-Tag")), StringComparison.Ordinal);
+
+        await SaveProfileAsync(owner, headline: "Borrador sin publicar", email: "marta.oculta@correo.test", showEmail: false);
+        using var after = await PublicGetAsync(anonymous, token);
+        var afterBody = await after.Content.ReadAsStringAsync();
+        Assert.Contains("QA Engineer publicado", afterBody, StringComparison.Ordinal);
+        Assert.DoesNotContain("Borrador sin publicar", afterBody, StringComparison.Ordinal);
+    }
+
+    // Criterios 3, 4 y 8: despublicado, ausente, mal formado, desconocido o regenerado responden igual, sin filtrar nada.
+    [Trait("RequirementId", "HUELLA-E1-2")]
+    [RequiresPostgresFact]
+    public async Task Unpublished_missing_malformed_and_regenerated_tokens_get_the_same_404()
+    {
+        var owner = await OwnerAsync();
+        await SaveProfileAsync(owner, headline: "QA Engineer", email: null, showEmail: false);
+        var tokenA = await NewLinkAsync(owner);
+        await PostAsync(owner, "/api/huella/publication/publish");
+        var anonymous = NewAnonymous();
+
+        using (var live = await PublicGetAsync(anonymous, tokenA))
+        {
+            Assert.Equal(HttpStatusCode.OK, live.StatusCode);
+        }
+
+        await PostAsync(owner, "/api/huella/publication/unpublish");
+        var codes = new List<string?>
+        {
+            await NotFoundCodeAsync(anonymous, tokenA),
+            await NotFoundCodeAsync(anonymous, null),
+            await NotFoundCodeAsync(anonymous, "abc"),
+            await NotFoundCodeAsync(anonymous, new string('x', 43)),
+        };
+
+        await PostAsync(owner, "/api/huella/publication/publish");
+        var tokenB = await NewLinkAsync(owner);
+        codes.Add(await NotFoundCodeAsync(anonymous, tokenA));
+        using (var renewed = await PublicGetAsync(anonymous, tokenB))
+        {
+            Assert.Equal(HttpStatusCode.OK, renewed.StatusCode);
+        }
+
+        Assert.All(codes, code => Assert.Equal("huella.public.not_found", code));
+    }
+
+    // Criterio 6 (parte 1): anónimo en el panel → 401; sin el permiso (Administrator y Member) → 403.
+    [Trait("RequirementId", "HUELLA-E1-3")]
+    [RequiresPostgresFact]
+    public async Task Panel_requires_a_session_and_the_owner_only_permission()
+    {
+        var anonymous = NewAnonymous();
+        using (var response = await QaSupport.SendAsync(anonymous, HttpMethod.Get, "/api/huella/profile"))
+        {
+            await QaSupport.AssertProblemAsync(response, HttpStatusCode.Unauthorized);
+        }
+
+        foreach (var (email, password) in new[] { (AdminEmail, AdminPassword), (MemberEmail, MemberPassword) })
+        {
+            var client = NewAnonymous();
+            await QaSupport.LoginAsync(client, email, password);
+            using var read = await QaSupport.SendAsync(client, HttpMethod.Get, "/api/huella/bank");
+            await QaSupport.AssertProblemAsync(read, HttpStatusCode.Forbidden);
+            using var write = await QaSupport.SendAsync(client, HttpMethod.Post, "/api/huella/publication/publish");
+            await QaSupport.AssertProblemAsync(write, HttpStatusCode.Forbidden);
+        }
+    }
+
+    // Criterio 6 (parte 2): con identificadores de otro perfil el Owner recibe 404 y la fila ajena no cambia.
+    [Trait("RequirementId", "HUELLA-E1-4")]
+    [RequiresPostgresFact]
+    public async Task Owner_cannot_read_or_change_rows_of_another_profile()
+    {
+        var foreign = await InsertForeignProfileAsync();
+        var owner = await OwnerAsync();
+
+        using (var bank = await QaSupport.SendAsync(owner, HttpMethod.Get, "/api/huella/bank"))
+        {
+            Assert.DoesNotContain("EmpresaAjena", await bank.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        }
+
+        var edits = new (HttpMethod Method, string Path, object? Body)[]
+        {
+            (HttpMethod.Put, "/api/huella/bank/experiences", new { items = new[] { new { id = foreign.ExperienceId, role = "Intruso", company = "Intruso", start = "2020-01" } } }),
+            (HttpMethod.Put, $"/api/huella/bank/experiences/{foreign.ExperienceId}/achievements", new { items = Array.Empty<object>() }),
+            (HttpMethod.Post, $"/api/huella/bank/experiences/{foreign.ExperienceId}/derive", null),
+            (HttpMethod.Get, $"/api/huella/studio/offers/{foreign.OfferId}", null),
+            (HttpMethod.Delete, $"/api/huella/studio/offers/{foreign.OfferId}", null),
+            (HttpMethod.Get, $"/api/huella/studio/versions/{foreign.VersionId}", null),
+            (HttpMethod.Put, $"/api/huella/studio/versions/{foreign.VersionId}/public?isPublic=true", null),
+            (HttpMethod.Delete, $"/api/huella/studio/versions/{foreign.VersionId}", null),
+        };
+        foreach (var (method, path, body) in edits)
+        {
+            using var response = await QaSupport.SendAsync(owner, method, path, body);
+            await QaSupport.AssertProblemAsync(response, HttpStatusCode.NotFound);
+        }
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<HuellaDbContext>();
+        Assert.Equal("EmpresaAjena", (await db.Experiences.AsNoTracking().SingleAsync(e => e.Id == foreign.ExperienceId)).Company);
+        Assert.True(await db.JobOffers.AnyAsync(o => o.Id == foreign.OfferId));
+        Assert.False((await db.CvVersions.AsNoTracking().SingleAsync(v => v.Id == foreign.VersionId)).IsPublic);
+    }
+
+    // Criterio 7: script y enlaces inseguros se neutralizan o se rechazan en el servidor.
+    [Trait("RequirementId", "HUELLA-E1-5")]
+    [RequiresPostgresFact]
+    public async Task Hostile_input_is_neutralized_or_rejected_by_the_api()
+    {
+        var owner = await OwnerAsync();
+        using (var saved = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/profile", ProfileBody(headline: "QA <script>alert(1)</script> Engineer")))
+        {
+            var text = await saved.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+            Assert.DoesNotContain("<script", text, StringComparison.OrdinalIgnoreCase);
+        }
+
+        foreach (var url in new[] { "http://ejemplo.com/perfil", "javascript:alert(1)", "https://usuario:clave@ejemplo.com" })
+        {
+            var body = ProfileBody(headline: "QA Engineer", links: [new { kind = "website", label = "Sitio", url, isPublic = true }]);
+            using var response = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/profile", body);
+            await QaSupport.AssertProblemAsync(response, HttpStatusCode.BadRequest);
+        }
+    }
+
+    // Criterio 8: el token no se guarda en claro ni llega a la auditoría; regenerar queda auditado.
+    [Trait("RequirementId", "HUELLA-E1-6")]
+    [RequiresPostgresFact]
+    public async Task Link_token_is_stored_only_as_a_hash_and_never_audited()
+    {
+        var owner = await OwnerAsync();
+        var token = await NewLinkAsync(owner);
+
+        using (var status = await QaSupport.SendAsync(owner, HttpMethod.Get, "/api/huella/publication"))
+        {
+            Assert.DoesNotContain(token, await status.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        }
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var huella = scope.ServiceProvider.GetRequiredService<HuellaDbContext>();
+        var hashes = await huella.Profiles.AsNoTracking().Where(p => p.PublicTokenHash != null).Select(p => p.PublicTokenHash!).ToListAsync();
+        Assert.NotEmpty(hashes);
+        Assert.All(hashes, hash => Assert.Equal(32, hash.Length));
+        Assert.DoesNotContain(hashes, hash => hash.SequenceEqual(Encoding.UTF8.GetBytes(token)));
+
+        var identity = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
+        var audit = await identity.AuditLogs.AsNoTracking().Where(a => a.Module == "huella").ToListAsync();
+        Assert.Contains(audit, a => a.Action == "huella.link.regenerated");
+        Assert.All(audit, a =>
+        {
+            Assert.DoesNotContain(token, a.DetailsJson ?? string.Empty, StringComparison.Ordinal);
+            Assert.DoesNotContain(token, a.Target ?? string.Empty, StringComparison.Ordinal);
+        });
+    }
+
+    // ---------------------------------------------------------------- apoyo
+
+    private HttpClient NewAnonymous()
+    {
+        var client = QaSupport.NewClient(_factory);
+        _clients.Add(client);
+        return client;
+    }
+
+    private async Task<HttpClient> OwnerAsync()
+    {
+        var client = NewAnonymous();
+        await QaSupport.LoginAsync(client, OwnerEmail, OwnerPassword);
+        return client;
+    }
+
+    private static object ProfileBody(string headline, string? email = null, bool showEmail = false, object[]? links = null) => new
+    {
+        displayName = "Marta Prueba",
+        headline,
+        summary = "Perfil de prueba.",
+        contactEmail = email,
+        showContactEmail = showEmail,
+        links = links ?? [],
+    };
+
+    private static async Task SaveProfileAsync(HttpClient owner, string headline, string? email, bool showEmail)
+    {
+        using var response = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/profile", ProfileBody(headline, email, showEmail));
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    private static async Task PostAsync(HttpClient owner, string path)
+    {
+        using var response = await QaSupport.SendAsync(owner, HttpMethod.Post, path);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    /// <summary>Crea un enlace nuevo y devuelve el token en claro, que la API entrega una sola vez.</summary>
+    private static async Task<string> NewLinkAsync(HttpClient owner)
+    {
+        using var response = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/publication/link");
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        using var json = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return json.RootElement.GetProperty("token").GetString()!;
+    }
+
+    private static async Task<HttpResponseMessage> PublicGetAsync(HttpClient client, string? token)
+    {
+        using var request = new HttpRequestMessage(HttpMethod.Get, "/api/huella/public/profile");
+        if (token is not null)
+        {
+            request.Headers.Add(TokenHeader, token);
+        }
+
+        return await client.SendAsync(request);
+    }
+
+    private static async Task<string?> NotFoundCodeAsync(HttpClient client, string? token)
+    {
+        using var response = await PublicGetAsync(client, token);
+        var problem = await QaSupport.AssertProblemAsync(response, HttpStatusCode.NotFound);
+        return problem.GetProperty("code").GetString();
+    }
+
+    private sealed record ForeignIds(Guid ExperienceId, Guid OfferId, Guid VersionId);
+
+    /// <summary>Inserta directamente en la base un perfil de otra persona con experiencia, oferta y versión de CV.</summary>
+    private async Task<ForeignIds> InsertForeignProfileAsync()
+    {
+        var now = DateTimeOffset.UtcNow;
+        var profile = new Profile { Id = Guid.CreateVersion7(), OwnerUserId = Guid.NewGuid(), DisplayName = "Ajeno Secreto", Headline = "Titular ajeno", CreatedAt = now, UpdatedAt = now };
+        var experience = new Experience { Id = Guid.CreateVersion7(), ProfileId = profile.Id, Role = "Rol ajeno", Company = "EmpresaAjena", StartDate = new DateOnly(2021, 1, 1), CreatedAt = now, UpdatedAt = now };
+        var offer = new JobOffer { Id = Guid.CreateVersion7(), ProfileId = profile.Id, Title = "Oferta ajena", RawText = "Texto de oferta ajena de prueba.", TextHash = new byte[32], CreatedAt = now, UpdatedAt = now };
+        var version = new CvVersion
+        {
+            Id = Guid.CreateVersion7(),
+            ProfileId = profile.Id,
+            Name = "CV ajeno",
+            Level = "mid",
+            Paper = "letter",
+            Language = "es",
+            Mode = "general",
+            Source = "rules",
+            ContentJson = "{}",
+            Pages = 1,
+            LinesUsed = 1,
+            LineBudget = 97,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+
+        await using var scope = _factory.Services.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<HuellaDbContext>();
+        db.Profiles.Add(profile);
+        db.Experiences.Add(experience);
+        db.JobOffers.Add(offer);
+        db.CvVersions.Add(version);
+        await db.SaveChangesAsync();
+        return new ForeignIds(experience.Id, offer.Id, version.Id);
+    }
+}
