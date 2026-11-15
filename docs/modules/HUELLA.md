@@ -16,7 +16,9 @@ Perfil profesional web **del Owner/Superuser de Pastel**, editable en privado y 
 Permisos: `huella.access` (entrar al panel), `huella.profile.manage` (editar y publicar el perfil del Owner). Solo el rol de sistema `Owner/Superuser` recibe esos permisos en la sincronización del catálogo; no se crean roles de Huella personalizados ni se permiten excepciones directas `huella.*` (lo declara `HuellaPermissions` con `PermissionGrantPolicy.OwnerAccountOnly`). Las rutas públicas son anónimas, pero necesitan el token de enlace vigente. El filtro de servidor exige el identificador Owner configurado en el perfil.
 
 ## 3. Modelo (esquema `huella`)
-`Profile` (un único registro ligado al `OwnerUserId`, `PublicTokenHash` único, nombre público, titular, resumen, ubicación general opcional, estado de publicación), `ContactPreference` (qué datos de contacto se muestran: correo, teléfono, enlaces; todo **oculto por defecto**), `Experience`, `Education`, `Certification`, `Skill` (con categoría y nivel opcional), `Language`, `Project` (descripción, tecnologías, aporte, resultados, enlaces), `ExternalLink`, `Section` (orden y visibilidad de secciones), `PublishedSnapshot` (versión publicada inmutable, JSON, número de versión, fecha), `CvPreference`.
+`Profile` (un único registro ligado al `OwnerUserId`, `PublicTokenHash` único, nombre, titular, resumen, ubicación y disponibilidad opcionales, interruptores de contacto **todos apagados por defecto**), `ProfileLink`, `PrivateNote`, `Experience`, `Project`, `Skill`, `Education`, `Certification`, `LanguageSkill`, **`Achievement`** (la unidad del banco: versión corta y larga, cifra, fuerza, visibilidad `cv|public|both|never`, habilidades que demuestra), `JobOffer`, `CvVersion` (contenido JSON del CV) y `PublishedSnapshot` (versión publicada inmutable: perfil + CV público, número de versión, `ContentHash`, semilla).
+
+Los logros son la capa que reutilizarán las futuras funciones (carta de recomendación, historial de postulaciones, preparación de entrevistas) sin cambiar el modelo: cada una referencia `Achievement`, `JobOffer` y `CvVersion`.
 
 - **Borrador vs publicado:** el propietario edita el borrador. **Publicar** crea un `PublishedSnapshot`; la página pública lee siempre el último snapshot, nunca el borrador. "Despublicar" retira el perfil público. Vista previa del borrador solo para el propietario.
 - **Token de enlace público:** generar al menos 32 bytes criptográficamente aleatorios y codificar con Base64URL. Almacenar solo el hash del token; nunca guardar ni derivar el token de un nombre, correo, slug o ID. La URL pública será `/huella/p/:token`. El token es una capacidad de lectura: cualquier persona que lo posea puede acceder a la última publicación sin login.
@@ -26,14 +28,16 @@ Permisos: `huella.access` (entrar al panel), `huella.profile.manage` (editar y p
 
 | Ruta | Pantalla | Notas |
 |---|---|---|
-| `/huella/p/:token` | **Perfil público mediante enlace secreto** | Móvil y escritorio, solo versión publicada; enlaces externos con `rel="noopener noreferrer"`; botón "Descargar CV"; token válido obligatorio y sin login |
-| `/huella` | Entrada | Con sesión y permiso: panel del propietario; sin sesión: explicación breve y "Ingresar" |
-| `/huella/panel` | Editor | Navegación por secciones, guardado explícito con indicador "Guardado/Sin guardar", vista previa lado a lado en escritorio |
-| `/huella/panel/publicar` | Publicación | Resumen de cambios desde la última versión, botón Publicar, enlace público para copiar |
+| `/huella/p/:token` | **Perfil público mediante enlace secreto** | Móvil y escritorio, solo versión publicada; enlaces externos con `rel="noopener noreferrer"`; resaltador de evidencia, impresión y «Ver CV» si la publicación lo incluye; token válido obligatorio y sin login |
+| `/huella` | Entrada | Lleva al banco |
+| `/huella/banco` | Banco de información | Notas privadas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas; logros por experiencia/proyecto (por reglas, a mano o con IA manual) |
+| `/huella/cv` | Crear CV | Oferta → mapa de evidencia y filtros duros → generar → versiones → edición validada, reporte, texto ATS, marcar CV público |
+| `/huella/perfil` | Perfil público | Datos, enlaces, interruptores de contacto, vista previa, publicar/despublicar, enlace (se muestra una vez) |
+| `/huella/pronto/:item` | En preparación | Carta de recomendación, historial de postulaciones, preparación de entrevistas |
 
 ## 5. Reglas y detalles
 - **Privacidad:** control de qué se muestra; correo y teléfono ocultos salvo elección explícita; validar enlaces (solo `https`, sin credenciales en la URL); no exponer datos internos.
-- **CV en PDF (MVP):** hoja de estilos de impresión + botón "Guardar como PDF" (impresión del navegador). Un PDF generado en el servidor queda para una etapa posterior.
+- **CV:** se compone desde el banco; la IA, cuando se use, devuelve **solo JSON** (nunca Typst/LaTeX) y cada línea se valida contra el banco (fuentes citadas, sin cifras nuevas, frases prohibidas, tope de líneas). Hoy la IA es manual (paquete para copiar + JSON pegado y validado). El **PDF depende de CCR-2** y está detrás de `ICvRenderer`: responde 503 `huella.cv.renderer_unavailable` hasta entonces; mientras tanto el texto ATS se copia y el perfil público se imprime desde el navegador.
 - **Vista previa al compartir (importante para reclutadores):** las plataformas de mensajería leen metadatos sin ejecutar JavaScript. El agente debe proponer y registrar en `docs/DECISIONS.md` el método más simple para entregar `title`, `description` y `og:*` del perfil publicado en `/huella/p/:token` (p. ej. el servidor devuelve el HTML de la aplicación con metadatos inyectados), sin añadir un servidor Node. Si requiere cambios en `nginx` o en zonas protegidas, pedir autorización del propietario (zonas compartidas, `AGENTS.md` §8).
 - **Público:** endpoints anónimos con límite de tasa y caché; sin cookies de sesión; sin datos del borrador. Requerir token vigente en la ruta, almacenar solo su hash, y mantener el token fuera de logs/referrers.
 - **No indexación:** el HTML inicial contiene `<meta name="robots" content="noindex,nofollow,noarchive">` y la respuesta HTML lleva `X-Robots-Tag: noindex, nofollow, noarchive`. No depender solo de `robots.txt`; este documento noindex aplica al perfil público, no a toda la plataforma.
