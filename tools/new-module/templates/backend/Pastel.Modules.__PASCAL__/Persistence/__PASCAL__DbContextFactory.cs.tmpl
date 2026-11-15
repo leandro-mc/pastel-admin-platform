@@ -1,0 +1,23 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Design;
+
+namespace Pastel.Modules.__PASCAL__.Persistence;
+
+/// <summary>
+/// Permite a las herramientas de EF generar migraciones sin ejecutar el host. Las genera Build con
+/// <c>dotnet ef migrations add InitialSchema --project src/Modules/__PASCAL__/Pastel.Modules.__PASCAL__ --startup-project src/Modules/__PASCAL__/Pastel.Modules.__PASCAL__ --context __PASCAL__DbContext --output-dir Persistence/Migrations</c>.
+/// </summary>
+internal sealed class __PASCAL__DbContextFactory : IDesignTimeDbContextFactory<__PASCAL__DbContext>
+{
+    public __PASCAL__DbContext CreateDbContext(string[] args)
+    {
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__Default")
+            ?? throw new InvalidOperationException("Defina ConnectionStrings__Default antes de ejecutar comandos de migración de EF.");
+
+        var options = new DbContextOptionsBuilder<__PASCAL__DbContext>()
+            .UseNpgsql(connectionString, npgsql => npgsql.MigrationsHistoryTable("__EFMigrationsHistory", __PASCAL__DbContext.Schema))
+            .Options;
+
+        return new __PASCAL__DbContext(options);
+    }
+}

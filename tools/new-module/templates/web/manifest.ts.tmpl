@@ -1,0 +1,15 @@
+import { __ICON__ } from "lucide-react";
+import type { ModuleManifest } from "@/core/modules/types";
+import { strings } from "./strings";
+
+export default {
+  code: "__CODE__",
+  name: strings.name,
+  tagline: strings.tagline,
+  icon: __ICON__,
+  basePath: "/__CODE__",
+  access: "__ACCESS__",
+  requiredPermission: "__CODE__.access",
+  nav: [],
+  routes: [{ index: true, lazy: () => import("./pages/HomePage") }],
+} satisfies ModuleManifest;

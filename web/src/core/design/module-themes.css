@@ -1,0 +1,85 @@
+/*
+ * Color de cada subaplicación (docs/DESIGN_SYSTEM.md 2.2). Cada módulo activa su identidad con data-module="<codigo>"
+ * en su contenedor raíz; los componentes solo usan --accent*, nunca hexadecimales.
+ *   --accent         decorativo e iconos grandes (no texto)
+ *   --accent-strong  texto y botones con texto
+ *   --accent-soft    fondos suaves
+ *   --on-accent      texto sobre un botón de acento
+ * En modo oscuro --accent-strong es igual a --accent. WP8 importa este archivo desde el CSS de entrada y deriva
+ * --focus y --accent-subtle. Un módulo nuevo se agrega aquí (CCR).
+ */
+
+[data-module="brisa"] {
+  --accent: #48775b;
+  --accent-strong: #416b52;
+  --accent-soft: #e3f0e7;
+  --on-accent: #ffffff;
+}
+
+[data-theme="dark"] [data-module="brisa"],
+[data-theme="dark"][data-module="brisa"] {
+  --accent: #8daa98;
+  --accent-strong: #8daa98;
+  --accent-soft: #2a3636;
+  --on-accent: #14181c;
+}
+
+[data-module="balance"] {
+  --accent: #367c78;
+  --accent-strong: #2e6966;
+  --accent-soft: #e3f1ef;
+  --on-accent: #ffffff;
+}
+
+[data-theme="dark"] [data-module="balance"],
+[data-theme="dark"][data-module="balance"] {
+  --accent: #81adab;
+  --accent-strong: #81adab;
+  --accent-soft: #26373c;
+  --on-accent: #14181c;
+}
+
+[data-module="agora"] {
+  --accent: #4d7898;
+  --accent-strong: #416681;
+  --accent-soft: #e2eef7;
+  --on-accent: #ffffff;
+}
+
+[data-theme="dark"] [data-module="agora"],
+[data-theme="dark"][data-module="agora"] {
+  --accent: #8ba7bc;
+  --accent-strong: #8ba7bc;
+  --accent-soft: #2b3642;
+  --on-accent: #14181c;
+}
+
+[data-module="cosecha"] {
+  --accent: #927b3c;
+  --accent-strong: #6e5c2d;
+  --accent-soft: #f6efd8;
+  --on-accent: #ffffff;
+}
+
+[data-theme="dark"] [data-module="cosecha"],
+[data-theme="dark"][data-module="cosecha"] {
+  --accent: #b3a376;
+  --accent-strong: #b3a376;
+  --accent-soft: #383730;
+  --on-accent: #14181c;
+}
+
+[data-module="huella"] {
+  --accent: #a96c4a;
+  --accent-strong: #87563b;
+  --accent-soft: #f8e7de;
+  --on-accent: #ffffff;
+}
+
+[data-theme="dark"] [data-module="huella"],
+[data-theme="dark"][data-module="huella"] {
+  --accent: #c59c85;
+  --accent-strong: #c59c85;
+  --accent-soft: #3d3433;
+  --on-accent: #14181c;
+}

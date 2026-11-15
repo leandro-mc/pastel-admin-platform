@@ -1,0 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+
+namespace Pastel.Modules.__PASCAL__.Persistence;
+
+/// <summary>Contexto de __NAME__. Esquema <c>__CODE__</c>; sin claves foráneas hacia otros esquemas.</summary>
+internal sealed class __PASCAL__DbContext(DbContextOptions<__PASCAL__DbContext> options) : DbContext(options)
+{
+    public const string Schema = "__CODE__";
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        base.OnModelCreating(modelBuilder);
+        modelBuilder.HasDefaultSchema(Schema);
+    }
+}

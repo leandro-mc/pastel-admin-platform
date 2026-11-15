@@ -1,0 +1,15 @@
+/* DevKit · estilos de la barra de desarrollo y andamiaje de tema.
+   Cada app define sus colores con light-dark(claro, oscuro); estas reglas hacen que el interruptor Auto/Claro/Oscuro funcione. */
+:root{color-scheme:light dark}
+:root[data-theme=light]{color-scheme:light}
+:root[data-theme=dark]{color-scheme:dark}
+#devbar{position:sticky;top:0;z-index:1000;display:flex;flex-wrap:wrap;gap:.4rem .9rem;align-items:center;padding:.3rem .8rem;font:600 12.5px/1.3 system-ui,sans-serif;
+  background:repeating-linear-gradient(135deg,light-dark(#fff3bf,#3b3410) 0 10px,light-dark(#fff9db,#2f2a0d) 10px 20px);color:light-dark(#4a3b00,#f6e7a0);border-bottom:1px solid light-dark(#e0c84a,#6d5f1a)}
+#devbar .dk-tag{background:light-dark(#4a3b00,#f6e7a0);color:light-dark(#fff3bf,#2f2a0d);padding:.1rem .5rem;border-radius:4px;font-weight:700}
+#devbar select{font:inherit;color:inherit;background:light-dark(#fff,#1d1a08);border:1px solid currentColor;border-radius:6px;padding:.15rem .4rem;margin-left:.3rem}
+#devbar .dk-desc{opacity:.85;font-weight:400;flex:1;min-width:12rem}
+#devbar .dk-grp{display:inline-flex}#devbar .dk-grp button{font:inherit;color:inherit;background:transparent;border:1px solid currentColor;padding:.15rem .6rem;margin-left:-1px;cursor:pointer}
+#devbar .dk-grp button:first-child{border-radius:6px 0 0 6px}#devbar .dk-grp button:last-child{border-radius:0 6px 6px 0}
+#devbar .dk-grp button[aria-pressed=true]{background:light-dark(#4a3b00,#f6e7a0);color:light-dark(#fff3bf,#2f2a0d)}
+#devbar :focus-visible{outline:2px solid currentColor;outline-offset:2px}
+@media print{#devbar{display:none}}

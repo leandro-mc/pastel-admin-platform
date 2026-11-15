@@ -1,180 +1,116 @@
-# Sistema de diseño y guía de experiencia de usuario
+# Sistema de diseño y experiencia de usuario
 
-La experiencia de usuario es la prioridad número uno. Muchas personas distintas usarán Pastel, incluidas personas mayores y con poca práctica tecnológica. Ante una duda entre "más bonito" y "más claro", gana lo más claro.
+Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **todavía no está definida**: se determinará con la investigación y los prototipos en curso, y este documento se ampliará entonces.
 
-## 1. Principios
+**Qué obliga y qué orienta:** solo la sección 1 (reglas duras) **bloquea**, además de la sección 9 para quien toque el shell compartido (zona compartida, con autorización expresa del propietario; ver `AGENTS.md` §8). El resto son **guías** para construir pantallas coherentes y accesibles sin burocracia: se siguen por criterio, no se verifican pantalla por pantalla en la Etapa 1, y su revisión sistemática es de la Etapa 2 (`docs/TESTING.md`).
 
-1. **Claridad antes que decoración.** Una acción principal por pantalla, lenguaje simple, jerarquía visible.
-2. **El sistema habla como una persona.** Mensajes en español de Costa Rica, tono cálido y directo; nunca culpar a quien usa la aplicación.
-3. **Nada depende solo del color.** Siempre texto o icono además del color.
-4. **Primero móvil.** Se diseña desde 360 px de ancho; el escritorio es una ampliación.
-5. **Reversible y predecible.** Confirmar lo destructivo, ofrecer deshacer, no perder lo escrito.
-6. **Accesible por defecto.** WCAG 2.2 nivel AA como mínimo.
+**Jerarquía de reglas:** las reglas de **diseño del frontend** de cada módulo (su ficha en `docs/modules/` y su `MODULE.md`) prevalecen sobre las guías de este documento; las de aquí aplican en lo que el módulo no regula. Solo el diseño del frontend: lo demás se rige por las reglas generales. No se relaja la sección 1 (ver `AGENTS.md` §7, «Jerarquía de reglas»).
 
-## 2. Color
+## 1. Reglas duras (no negociables)
+- **No usar morado ni sus derivados**, ni nada de lo habitual del diseño generado por IA: colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA.
+- `scripts/check-design.mjs` (parte de `test-frontend.ps1`) verifica solo estas dos reglas: morado (en cualquier archivo) e iconos o emojis de IA.
+- No hay otras restricciones de paleta, acento ni identidad por subaplicación. No inventar ni fijar paletas por módulo mientras la investigación no las defina.
 
-### 2.1 Neutros de la plataforma (shell, hub, cuenta, configuración)
+## 2. Principios
+1. **Claro y predecible**: una acción primaria por vista, jerarquía visible, mismo patrón para lo mismo.
+2. **Seguro y comprensible para personas con poca práctica tecnológica**: frases cortas, sin tecnicismos, confirmaciones en acciones destructivas, deshacer cuando sea posible.
+3. **Accesible por defecto**: WCAG 2.2 nivel AA como mínimo (sección 5).
+4. **Responsive**: móvil primero; se diseña para funcionar desde 320 px (su revisión sistemática es de la Etapa 2).
+5. **Coherente sin uniformar**: se comparten comportamiento y componentes (`@/core/ui`), no pantallas de negocio.
 
-| Token | Claro | Oscuro | Uso |
-|---|---|---|---|
-| `--app-bg` | `#f7f6f0` | `#191b20` | Fondo de página |
-| `--surface` | `#fffefa` | `#22262d` | Tarjetas, paneles |
-| `--surface-raised` | `#fffefa` | `#2b313a` | Menús, diálogos |
-| `--text` | `#26313a` | `#e9eae7` | Texto principal (contraste 12,2:1 en claro) |
-| `--text-secondary` | `#445059` | `#c0c6cc` | Texto secundario |
-| `--muted` | `#5b6670` | `#a2a9b1` | Ayudas, metadatos (5,4:1 mínimo) |
-| `--border` | `#e2e6de` | `#3b424e` | Bordes suaves |
-| `--border-strong` | `#c9d0c6` | `#56606d` | Bordes de campos |
-| `--ink` (acento de plataforma) | `#26313a` | `#e9eae7` | Botón primario del shell |
+## 3. Tipografía y espacio (guía)
+- **Fuente:** hoy se usa la pila de fuentes del sistema; no hay fuente propia. La política de seguridad solo permite fuentes del propio sitio, así que cualquier tipografía que se adopte (por ejemplo tras la investigación de identidad visual) debe **autoalojarse**.
+- Referencia: base 16 px y texto de lectura sin bajar de 16 px; escala 12/14/16/18/20/24/30/36; interlineado 1,5 en párrafos y 1,25 en títulos; ancho de lectura ≈ 70 caracteres; espaciado en múltiplos de 4 px. Una aplicación puede apartarse si su identidad visual lo pide.
 
-El shell es **neutro a propósito**: el color pertenece a cada subaplicación y aparece al entrar en ella. El verde anterior de la plataforma pasa a ser el color de Brisa.
+## 4. Estructura y componentes (guía)
+- **Navegación:** sidebar visible con texto en escritorio y barra inferior visible en móvil (§9). La app actual se distingue con icono, texto y `aria-current="page"`, no solo con color. No arrastrar acciones de un módulo a otro.
+- **Tablas:** en móvil conviene convertirlas en listas de tarjetas o priorizar los campos clave.
+- Los componentes compartidos viven en `web/src/core/ui` con variantes explícitas; se prefieren a armar a mano un `div` con `role="dialog"`. Si una pantalla necesita algo que el kit no ofrece, constrúyala y, si se repite, súbalo al kit.
 
-### 2.2 Color de cada subaplicación
-
-Un módulo activa su identidad con `data-module="<codigo>"` en su contenedor raíz. Los componentes solo usan `--accent*`, nunca hexadecimales.
-
-| Módulo | `--accent` (decorativo/íconos) | `--accent-strong` (texto y botones) | `--accent-soft` (fondos) |
-|---|---|---|---|
-| Brisa | `#48775b` | `#416b52` | `#e3f0e7` |
-| Balance | `#367c78` | `#2e6966` | `#e3f1ef` |
-| Ágora | `#4d7898` | `#416681` | `#e2eef7` |
-| Cosecha | `#927b3c` | `#6e5c2d` | `#f6efd8` |
-| Huella | `#a96c4a` | `#87563b` | `#f8e7de` |
-
-Modo oscuro (mismos módulos):
-
-| Módulo | `--accent` | `--accent-soft` | Texto sobre botón (`--on-accent`) |
-|---|---|---|---|
-| Brisa | `#8daa98` | `#2a3636` | `#14181c` |
-| Balance | `#81adab` | `#26373c` | `#14181c` |
-| Ágora | `#8ba7bc` | `#2b3642` | `#14181c` |
-| Cosecha | `#b3a376` | `#383730` | `#14181c` |
-| Huella | `#c59c85` | `#3d3433` | `#14181c` |
-
-En modo oscuro `--accent-strong` es igual a `--accent`.
-
-**Contrastes verificados** (calculados con la fórmula WCAG): blanco sobre `--accent-strong` entre 6,1:1 y 6,5:1; `--accent-strong` sobre `--accent-soft` entre 5,1:1 y 5,7:1; en oscuro, `--accent` sobre `--surface` ≥ 6,0:1 y texto `--on-accent` sobre el acento ≥ 7,0:1.
-
-**Regla de uso:** los acentos de Cosecha, Huella, Ágora y Balance sin oscurecer no alcanzan 4,5:1 sobre sus fondos suaves. Por eso `--accent` solo se usa en elementos gráficos (iconos grandes, bordes, indicadores ≥ 3:1) y **todo texto o botón con texto usa `--accent-strong`**.
-
-Otros tokens por módulo derivados: `--focus` (anillo de foco = `--accent-strong` al 45 % de opacidad más contorno de 3 px) y `--accent-subtle` (fondo de filas seleccionadas).
-
-### 2.3 Estados
-
-| Estado | Texto (claro) | Icono obligatorio |
-|---|---|---|
-| Error | `#9b2f2f` (7,3:1) | `CircleAlert` |
-| Advertencia | `#7a5200` (6,9:1) | `TriangleAlert` |
-| Éxito | `#2f6b3f` (6,3:1) | `CircleCheck` |
-| Información | `#2f5f86` (6,7:1) | `Info` |
-
-Los estados siempre llevan icono y texto; el verde de éxito nunca sustituye al color del módulo.
-
-### 2.4 Prohibiciones
-
-- **Morado y derivados** (violeta, púrpura, índigo, lila, magenta, fucsia, degradados que los incluyan): tono HSL entre **235° y 345°** con saturación > 10 % queda prohibido en cualquier archivo de CSS, TS/TSX, SVG o imagen propia. Aplica también al modo oscuro, ilustraciones, gráficas y estados.
-- **Símbolos de IA:** iconos `Sparkles`, `Sparkle`, `Stars`, `Wand`, `Wand2`, `WandSparkles`, `Bot`, `Brain`, `BrainCircuit`, `Cpu`; emojis ✨ 🤖 🪄 🔮 🧠; estrellas decorativas; textos como "asistente mágico" o "con IA". Marca de plataforma: `Flower2`.
-- **Excepción documentada:** el logotipo oficial "G" del botón de Google es multicolor por requisito de marca de Google; se usa tal cual, solo en ese botón.
-- `scripts/check-design.mjs` falla el CI ante cualquier incumplimiento.
-
-### 2.5 Identidad por módulo
-
-| Módulo | Icono (Lucide; verificar que exista en la versión instalada) | Tono |
-|---|---|---|
-| Brisa | `ListChecks` | Ligero, calmado |
-| Balance | `Scale` | Preciso, justo |
-| Ágora | `Landmark` | Editorial, sobrio |
-| Cosecha | `Sprout` | Práctico, operativo |
-| Huella | `Footprints` | Profesional, personal |
-
-## 3. Tipografía y espacio
-
-- Fuente: **Inter variable autoalojada** (`@fontsource-variable/inter`); la política de seguridad solo permite fuentes del propio sitio. Alternativas del sistema como respaldo.
-- Base **16 px**; texto de lectura nunca menor de 16 px; etiquetas de formulario de 14–16 px en negrita media.
-- Escala: 12 / 14 / 16 / 18 / 20 / 24 / 30 / 36. Interlineado 1,5 en párrafos, 1,25 en títulos.
-- **Tamaño de texto ajustable** (Normal 100 %, Grande 115 %, Muy grande 130 %) en el menú de cuenta; se aplica con `font-size` del elemento raíz y toda la interfaz usa `rem`. Se guarda como preferencia no sensible.
-- Espaciado en múltiplos de 4 px. Contenido de lectura con ancho máximo de ~70 caracteres.
-- Radios 8–12 px. Sombras suaves; los bordes comunican la estructura, no solo la sombra.
-
-## 4. Estructura de pantallas
-
-- **Shell:** barra superior con marca, selector de módulos, ayuda, preferencias y menú de cuenta. Migas de pan en pantallas de segundo nivel.
-- **Navegación del módulo:** barra inferior de pestañas en móvil (máximo 5 elementos con icono y etiqueta) y barra lateral en escritorio. Siempre se ve dónde se está (`aria-current="page"`) y cómo volver al hub.
-- **Cada página:** título claro (h1 único), descripción corta opcional, acción principal visible, contenido. Sin desplazamiento horizontal a 320 px.
-- **Tablas:** en móvil se convierten en listas de tarjetas con los campos clave; las acciones por fila caben en un menú con nombre accesible.
-- **Diálogos:** solo para tareas breves; las tareas largas son páginas completas (como el editor de accesos actual).
-- **Tema claro/oscuro** y respeto a `prefers-color-scheme` en la primera visita.
-
-## 5. Componentes y patrones (resumen normativo)
-
-| Elemento | Regla |
+| Patrón | Guía |
 |---|---|
-| Botones | Una acción primaria por vista. Etiquetas con verbo ("Guardar pedido"). Área táctil ≥ 44×44 px. Estado "cargando" sin cambiar el tamaño. |
-| Campos | Etiqueta visible siempre (no solo *placeholder*), ayuda debajo, `autocomplete` correcto, `inputmode` numérico o telefónico donde aplique. Marcar lo opcional, no lo obligatorio. |
-| Validación | Al salir del campo y al enviar; mensaje junto al campo y resumen enfocable arriba; nunca borrar lo escrito; el mensaje dice cómo corregir ("Escriba 8 dígitos, por ejemplo 8888 1234"). |
-| Selectores | Para pocas opciones, botones de opción visibles; para muchas, combo con búsqueda accesible. |
-| Fechas | Selector que acepte escritura (`dd/mm/aaaa`) y teclado; mostrar el día de la semana ("jueves 22 de octubre"). |
-| Números | Aceptar coma o punto como decimal; mostrar con formato `es-CR`; unidades visibles ("kg", "₡"). |
-| Diálogos | Solo tareas breves. `Escape` cierra, el foco queda atrapado dentro y vuelve al elemento que abrió el diálogo; título accesible. Se usa el componente del kit, nunca un `div` con `role="dialog"` a mano. |
+| Botones | Una acción primaria por vista; etiquetas con verbo («Guardar pedido»); área táctil ≥ 44×44 px; estado «cargando» sin cambiar el tamaño. |
+| Fechas | Selector que acepte escritura (`dd/mm/aaaa`) y teclado; mostrar el día de la semana. |
+| Diálogos | Solo tareas breves; `Escape` cierra, el foco queda atrapado y vuelve a quien abrió; título accesible. |
 | Notificaciones | `aria-live="polite"`, mínimo 6 s y descartables; los errores permanecen hasta cerrarlos. |
-| Confirmaciones | Para acciones destructivas: botón con verbo y consecuencia ("Eliminar productor"), texto que explica qué ocurre; preferir **Deshacer** durante 10 s cuando sea posible. |
 | Vacíos | Explicar qué es, por qué está vacío y ofrecer la acción primaria. |
-| Carga | Esqueletos tras 300 ms; sin saltos de diseño; texto "Cargando…" para lectores de pantalla. |
-| Errores | Lenguaje humano + qué hacer + botón "Reintentar". Página 403/404/500 con salida clara al hub. |
-| Sin conexión | Mensaje visible, conservar datos del formulario, reintento automático cuando vuelva la red. |
-| Listas largas | Búsqueda, filtros y orden con estado en la URL (se puede compartir y volver con "atrás"). |
+| Carga | Esqueletos tras 300 ms sin saltos de diseño; «Cargando…» para lectores de pantalla. |
+| Errores | Lenguaje humano, qué hacer y botón «Reintentar»; páginas 403/404/500 con salida clara. |
+| Sin conexión | Mensaje visible, conservar los datos del formulario y reintentar al volver la red. |
 
-## 6. Heurísticas aplicadas (checklist de revisión)
+## 5. Accesibilidad (objetivo de calidad)
+**Desde el principio, a bajo costo** (se logra usando los componentes de `@/core/ui` y buen HTML):
+- Todo operable con teclado, con orden de foco lógico y **foco visible**; etiquetas en los controles y `aria-describedby` para ayudas y errores.
+- El estado nunca se comunica solo con color; imágenes con texto alternativo e iconos decorativos con `aria-hidden`.
+- Contraste de texto ≥ 4,5:1 (3:1 en texto grande) como meta al elegir colores.
 
-1. **Visibilidad del estado:** carga, guardado, errores y éxito siempre visibles; indicar el paso en flujos largos ("Paso 2 de 4").
-2. **Lenguaje del usuario:** términos del oficio (envío, pedido, productor), no de base de datos.
-3. **Control y libertad:** cancelar, deshacer, volver; nada de callejones sin salida.
-4. **Consistencia:** mismos patrones, mismas etiquetas y mismas posiciones en todos los módulos.
-5. **Prevención de errores:** valores por defecto sensatos, validación temprana, confirmaciones, límites de entrada.
-6. **Reconocer antes que recordar:** datos visibles, buscadores con sugerencias, historial reciente.
-7. **Flexibilidad:** atajos para quien usa mucho (teclado, acciones masivas) sin estorbar a quien empieza.
-8. **Diseño minimalista:** ocultar lo avanzado tras "Más opciones"; sin ruido decorativo.
-9. **Recuperación de errores:** mensajes que explican y ofrecen solución.
-10. **Ayuda:** ayuda contextual breve y enlace "¿Cómo funciona?" por módulo; sin manuales largos.
+**Revisión sistemática: Etapa 2** (no bloquea la Etapa 1): zoom al 200 % y ancho de 320 px, lector de pantalla, `prefers-reduced-motion`, enlace «Saltar al contenido», foco al `h1` al cambiar de ruta, objetivos táctiles ≥ 44 px, impresión y ambos temas pantalla por pantalla.
 
-## 7. Accesibilidad (WCAG 2.2 AA, mínimos obligatorios)
+## 6. Contenido y tono (español de Costa Rica)
+- Por defecto, formulaciones impersonales o de usted («Ingrese su correo», «Revise los datos», «No se pudo guardar. Intente de nuevo»). El **voseo y otras voces se permiten cuando el propietario lo pida**, para toda la plataforma o un módulo; es una preferencia, no un criterio de bloqueo.
+- Frases cortas y palabras comunes («no se pudo conectar», no «error de red 502»).
+- Los textos de un módulo se mantienen preferiblemente en `strings.ts` y no dispersos en el JSX (facilita revisar el tono y traducir).
 
-- Todo operable con teclado; orden de foco lógico; **foco visible** de ≥ 3 px y contraste ≥ 3:1; enlace "Saltar al contenido".
-- Al cambiar de ruta: mover el foco al `h1` y anunciar el título de la página.
-- Objetivos táctiles ≥ 44 px (el mínimo AA es 24 px; aquí se exige más).
-- Contraste: texto 4,5:1; texto grande y componentes gráficos 3:1.
-- Etiquetas, `aria-describedby` para ayudas y errores, `role="alert"` solo en errores críticos.
-- Zoom al 200 % y ancho de 320 px sin pérdida de contenido; respetar `prefers-reduced-motion` (sin animaciones esenciales).
-- **Autenticación accesible:** sin pruebas cognitivas (Google y contraseñas con pegado permitido).
-- Imágenes con texto alternativo; iconos decorativos con `aria-hidden`.
+## 7. Implementación: Tailwind CSS 4 y CSS gobernado
+- **Tailwind 4** para utilidades en JSX (layout, espaciado, breakpoints, tipografía, estados simples), con clases ordenadas por `prettier-plugin-tailwindcss`.
+- **Tokens CSS** (`web/src/core/design/tokens.css` y `module-themes.css`, expuestos con `@theme inline`): se recomienda declarar colores, superficies, sombras, foco y tema una sola vez como tokens (sin comprobación automática: no hay restricción sobre colores literales). **Los valores actuales de los tokens, incluidos los de `module-themes.css`, son provisionales** y cambiarán con la definición de identidad visual; el mecanismo (`data-module`) se conserva.
+- CSS de componentes acotado en `core/design/components/*.css` para composiciones que no se describen bien con utilidades; usa tokens cuando existan. Se prefieren componentes a `@apply`, sin restricción automática. Evite estilos inline arbitrarios y selectores globales que reemplacen la composición de componentes.
+- `scripts/tailwind-audit.mjs` solo **informa** métricas de mantenimiento; no bloquea nada.
 
-## 8. Contenido y tono (español de Costa Rica)
+## 8. Verificación
+- **Etapa 1 (ahora):** `check-design` (reglas duras) y lo que ya existe (axe en las pruebas de componentes, Prettier/ESLint). **No** se exige un recorrido manual por cada pantalla nueva.
+- **Etapa 2:** revisión visual y de accesibilidad sistemática (solo teclado, 320 px, zoom 200 %, modo oscuro, lector de pantalla en los flujos principales) y pruebas visuales automatizadas si el propietario las pide.
+- Shell (solo si se toca; manual y opcional en la Etapa 1): `node scripts/shell-visual.mjs audit` (axe del shell, contraste por app y tema, desbordes) y `gallery` (capturas); resultados y límites en `docs/design/SHELL_VALIDATION.md`.
 
-- **Trato predeterminado:** formulaciones impersonales o de usted; sin voseo ni tuteo. Ejemplos: "Ingrese su correo", "Revise los datos", "No se pudo guardar. Intente de nuevo". **Excepción por módulo:** se permite el voseo u otra voz más personal cuando la ficha de producto o las instrucciones específicas del módulo lo autoricen o lo soliciten expresamente. Esa excepción aplica solo al módulo indicado; no cambia el tono global de la plataforma.
-- Títulos y botones preferiblemente nominales o infinitivos: "Nuevo pedido", "Guardar cambios".
-- Frases cortas, palabras comunes, sin tecnicismos ("no se pudo conectar", no "error de red 502").
-- Formatos: fecha `22/10/2026` (y larga "jueves 22 de octubre"), hora de 24 h o 12 h con a. m./p. m. de forma consistente, moneda `₡12 500` (`Intl.NumberFormat("es-CR", { style: "currency", currency: "CRC" })`), teléfonos `8888 1234` (+506), pesos en kg.
-- Todos los textos de un módulo viven en `strings.ts` (no dispersos en el JSX).
+## 9. Shell compartido (sidebar, barra superior y navegación móvil)
 
-## 9. Para personas con poca práctica tecnológica
+Código: `web/src/app/shell` y `web/src/core/design/components/shell*.css`. Justificación y fuentes: `docs/design/SHELL_RESEARCH.md`. Verificación: `docs/design/SHELL_VALIDATION.md`. Es una zona compartida: cambiarla exige autorización expresa del propietario (`AGENTS.md` §8). **El shell es un marco, no una función: el contenido es el producto.**
 
-- Texto grande por defecto en pantallas de operación; botones grandes y etiquetados; iconos siempre con texto.
-- Flujos guiados paso a paso con un resumen antes de confirmar.
-- Sin gestos ocultos (deslizar, mantener presionado) como único camino.
-- Sin cierre de sesión ni expiración que haga perder lo escrito sin aviso.
-- Acciones de contacto directas: "Llamar" (`tel:`) y "Escribir por WhatsApp" (`wa.me`) en cada contacto.
+### 9.1 Estructura
+| Región | Escritorio (≥ 64 rem) | Pantallas estrechas (< 64 rem) |
+|---|---|---|
+| Marca | Arriba de la sidebar, a la altura de la barra superior; vuelve al inicio de la app activa | Se omite (el control de app ocupa su lugar) |
+| Control de app | Un solo control en la sidebar: icono, nombre y descripción de la app, con menú de aplicaciones | Mismo control, compacto, en el extremo inicial de la barra superior |
+| Navegación de la app | Sidebar de 16 rem (riel de 4,5 rem si se pliega; se recuerda), con el botón de plegar **arriba**, junto a la marca (plegada, justo debajo de ella). Un renglón de 44 px por destino | Barra inferior fija con etiqueta: hasta 5 destinos visibles; con más, 4 y «Más». Con menos de 2 no hay barra |
+| Barra superior | Migas reales, selector «Ver como» (solo modo desarrollador), Ayuda, cuenta | Selector «Ver como» (icono), Ayuda (icono) y cuenta (avatar) |
+| Pie | Una línea | Una línea |
 
-## 10. Verificación
+La barra superior contiene **solo acciones globales entre aplicaciones** (patrón de Atlassian: lo global arriba, lo propio de la app al lado). Las acciones de una página van en el encabezado de la propia página, nunca en el shell. El tema y el tamaño de texto se fijan una vez, por eso viven en el panel de cuenta (o en «Preferencias» para quien no ha iniciado sesión) y **son controles de icono, no listas de texto**: el tema es un único botón luna/sol, igual que en el inicio de sesión, y el tamaño es una fila de cuatro «A» de tamaño creciente con la elegida marcada. Cada botón muestra su nombre (Pequeño, Normal, Grande, Muy grande) al pasar el cursor o enfocarlo. El cierre de sesión es el último elemento del panel, separado y de ancho completo, con icono y texto.
 
-- Automática: `scripts/check-design.mjs` (morado, símbolos de IA, hexadecimales fuera de tokens), ESLint (`jsx-a11y`), `vitest-axe` en las pantallas principales.
-- Manual por módulo antes de entregar: recorrido solo con teclado, 320 px y 200 % de zoom, modo oscuro, lector de pantalla en un flujo clave, texto "Muy grande".
-- Cada entrega de UI incluye capturas (claro, oscuro, móvil) para validación visual del propietario.
+### 9.2 Qué hereda toda app y qué personaliza
+| Hereda (no se rediseña por app) | Personaliza cada app |
+|---|---|
+| Estructura, geometría, puntos de ruptura, plegado, barra inferior y menús | **Tokens de tema** claro y oscuro (`module-themes.css` o el archivo de la app), incluidos fondo, superficies, bordes y acentos |
+| Landmarks, enlace «Saltar al contenido», foco al `h1`, orden de teclado | Nombre, descripción corta, icono y orden en el manifiesto |
+| Control de app, ayuda, preferencias, cuenta, migas y modo desarrollador | Ítems de navegación: etiquetas, iconos, permisos y, si hay muchos, `group` |
+| Aviso de vista previa y pie | Composición y contenido de sus páginas; tipografía autoalojada; radios mediante `--shell-radius` |
 
-## 11. Tailwind: cómo se aplica el diseño en el código
+### 9.3 Tokens y geometría
+- El shell **solo lee** tokens semánticos: `--app-bg`, `--surface`, `--surface-raised`, `--sidebar-bg`, `--text`, `--text-secondary`, `--muted`, `--border`, `--border-strong`, `--accent`, `--accent-strong`, `--accent-soft`, `--on-accent`. No define ni impone ningún color: la identidad llega por `data-module` y `data-theme`. Una app puede redefinir cualquiera (incluidos `--app-bg` y `--sidebar-bg`) sin tocar el shell.
+- Geometría como variables con especificidad cero: `--shell-sidebar-width` (16 rem), `--shell-sidebar-rail-width` (4,5 rem), `--shell-topbar-height` (3,5 rem), `--shell-bottomnav-height` (4 rem), `--shell-radius` (0,5 rem). Se redefinen con el selector de la app (`[data-module="brisa"] { --shell-radius: … }`).
+- Los menús y descripciones emergentes se dibujan en un portal fuera del shell: reciben `data-module` con `useShell().moduleCode` para repetir el tema. Cualquier menú nuevo del shell debe hacerlo.
+- Sin degradados, vidrio ni sombras decorativas; la elevación es solo para superficies flotantes (menús, descripciones).
 
-- **Utilidades en el JSX**; lo compartido son componentes de `@/core/ui` con variantes (`cva`), no clases con `@apply`. Prohibido `@apply` fuera de `core/design/base.css` (máximo 60 líneas en total).
-- Los colores salen de **tokens** expuestos con `@theme inline` (`bg-surface`, `text-fg`, `border-line`, `bg-accent`, `text-accent-strong`, `bg-accent-soft`). Nunca hexadecimales ni valores arbitrarios de color (`bg-[#…]`).
-- El color del módulo lo da `data-module`; no se escriben variantes por módulo en los componentes.
-- Modo oscuro por variables; `dark:` solo si un caso no se resuelve con tokens.
-- Orden de clases con `prettier-plugin-tailwindcss`. Un componente no debería superar ~200 líneas.
-- `scripts/tailwind-audit.mjs` y `scripts/check-design.mjs` vigilan estas reglas en CI.
+### 9.4 Comportamiento obligatorio
+1. **Navegación visible y con texto** (NN/g). El riel de iconos es una opción recordada, con nombre accesible y descripción emergente; no es el estado por defecto. Nunca una hamburguesa para lo principal.
+2. **Un renglón por destino**: icono y texto, objetivo ≥ 44 px, texto ≥ 12 px. Sin subtítulos, sin mayúsculas espaciadas, sin tarjetas.
+3. **Activo = `aria-current="page"`** más barra de acento, peso y fondo suave; nunca solo color. El ítem activo es el de coincidencia más específica; la raíz del módulo (`to: ""`) coincide exacta. Las pantallas de detalle se declaran en el manifiesto con `alsoActiveOn`; **el shell no inspecciona rutas ni textos de un módulo**.
+4. **Nombre accesible desde el contenido visible** (WCAG 2.5.3): no sobrescribir con `aria-label` un botón que muestra texto; si el texto se oculta en pantallas estrechas, ocultarlo solo visualmente (`sr-only`).
+5. **Foco visible** de 3 px sólidos con `--accent-strong`, ≥ 3:1 sobre los fondos contiguos. `scroll-padding` superior e inferior para que la barra fija no tape el elemento enfocado (WCAG 2.4.11).
+6. **Landmarks**: `aside` con nombre para la sidebar, `nav` con nombre por app, `header`, `main#contenido`, `footer`. Solo una navegación (sidebar o barra inferior) está en el árbol de accesibilidad a la vez.
+7. **Controles de preferencias con icono y nombre emergente**: el nombre accesible sale del propio botón (la «A» es un dibujo, no texto) y la opción elegida no depende solo del color (fondo, contorno y trazo más grueso). **Ayuda siempre en la misma posición** (WCAG 3.2.6). Sin indicadores de estado que no provengan de un dato real consultado.
+8. **El documento se desplaza** (no un contenedor interno); el pie queda al final del contenido.
+9. **Migas** solo con jerarquía real (`handle.crumb`); sin repetir el nombre de la app; en móvil se omiten.
+
+### 9.5 Prueba de eliminación (antes de añadir algo al shell)
+Responda por escrito: ¿qué pregunta de la persona contesta (dónde estoy, a dónde voy, qué puedo hacer globalmente)?, ¿ya existe en otro lugar de la pantalla?, ¿se basa en un dato real?, ¿sigue funcionando sin color? Sin respuesta a la primera, no entra. No sustituya una plantilla genérica por otra: el shell no impone paleta ni tipografía.
+
+### 9.6 Modo desarrollador (vista previa por rol)
+- Permiso `platform.developer.mode`: automático para `Administrator` y `Owner/Superuser`; asignable a cuentas concretas desde Configuración › Usuarios › Accesos; nunca por rol personalizado. Detalle en `docs/SECURITY.md`.
+- Solo **cambia lo que se muestra**: `core/devmode` reemplaza la porción de permisos de la app activa y la entrega por `useAuth()`. Los módulos lo heredan sin conocerlo: **no importan `@/core/devmode`** (lo verifica `check-module-boundaries`), no leen `sessionStorage` ni deciden nada según estar en vista previa.
+- El cliente **nunca envía el rol simulado**; el servidor autoriza con la sesión real. Mientras se simula, las acciones que la cuenta real sí puede ejecutar se ejecutan de verdad (el aviso lo indica). Los datos de la API son los de la cuenta real.
+- Aviso permanente con el rol y salida con un clic; selector «Ver como» en la barra superior solo con el permiso; la elección se guarda por pestaña y por cuenta (solo el nombre del rol).
+
+### 9.7 Cómo adapta una app el shell
+1. Definir sus tokens claros y oscuros (§9.3). 2. Declarar nombre, descripción, icono, `basePath` y `nav` en el manifiesto (`alsoActiveOn` y `group` son opcionales). 3. Nada más: no hay ranuras, ni componentes del shell que reemplazar. Si una app necesita algo que el shell no ofrece, se plantea al propietario; no se bifurca el shell por app.
+

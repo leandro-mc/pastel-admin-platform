@@ -1,0 +1,105 @@
+server_tokens off;
+limit_req_zone $binary_remote_addr zone=authlimit:10m rate=10r/m;
+limit_req_zone $binary_remote_addr zone=googlelimit:10m rate=20r/m;
+
+# Solo se confía en el CIDR configurado por quien administra el proxy frontal.
+set_real_ip_from ${NGINX_TRUSTED_PROXY_CIDR};
+real_ip_header X-Forwarded-For;
+real_ip_recursive on;
+
+gzip on;
+gzip_vary on;
+gzip_min_length 1024;
+gzip_proxied any;
+gzip_types
+    application/javascript
+    application/json
+    application/manifest+json
+    application/xml
+    image/svg+xml
+    text/css
+    text/plain
+    text/javascript;
+
+server {
+    listen 8080;
+    server_name _;
+    root /usr/share/nginx/html;
+    index index.html;
+    client_max_body_size 1m;
+
+    include /etc/nginx/snippets/security-headers.conf;
+
+    # El API ya agrega estas cabeceras; se descartan las del upstream para que cada una salga una sola vez
+    # (la copia vigente es la de security-headers.conf). Aplica a todos los locations que usan proxy_pass.
+    proxy_hide_header X-Content-Type-Options;
+    proxy_hide_header X-Frame-Options;
+    proxy_hide_header Referrer-Policy;
+    proxy_hide_header Permissions-Policy;
+    proxy_hide_header Cross-Origin-Opener-Policy;
+    proxy_hide_header Content-Security-Policy;
+
+    location = /health/web {
+        access_log off;
+        default_type text/plain;
+        add_header Cache-Control "no-store" always;
+        include /etc/nginx/snippets/security-headers.conf;
+        return 200 "ok\n";
+    }
+
+    location ~ ^/api/auth/(login|register|refresh)$ {
+        limit_req zone=authlimit burst=4 nodelay;
+        proxy_pass http://api:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+    }
+
+    # Ingreso con Google: Host con puerto preserva el redirect_uri registrado.
+    location ~ ^/api/auth/google/(start|complete|callback)$ {
+        limit_req zone=googlelimit burst=6 nodelay;
+        proxy_pass http://api:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+    }
+
+    location /api/ {
+        proxy_pass http://api:8080;
+        proxy_http_version 1.1;
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_connect_timeout 5s;
+        proxy_read_timeout 30s;
+    }
+
+    # Solo los archivos de assets con hash se pueden cachear a largo plazo.
+    location ~* "^/assets/.+-[A-Za-z0-9_-]{8,}\.(?:css|js|mjs|svg|png|jpe?g|webp|woff2?)$" {
+        try_files $uri =404;
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
+    }
+
+    location = /index.html {
+        include /etc/nginx/snippets/security-headers.conf;
+        add_header Cache-Control "no-cache, no-store, must-revalidate" always;
+        try_files $uri =404;
+    }
+
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+}

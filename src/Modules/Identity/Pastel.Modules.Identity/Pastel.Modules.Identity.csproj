@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Pastel.Modules.Identity</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../../../BuildingBlocks/Pastel.SharedKernel/Pastel.SharedKernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Pastel.Platform/Pastel.Platform.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.Google" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="System.IdentityModel.Tokens.Jwt" />
+    <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Pastel.Modules.Identity.Tests" />
+    <InternalsVisibleTo Include="Pastel.IntegrationTests" />
+    <InternalsVisibleTo Include="Pastel.ArchitectureTests" />
+  </ItemGroup>
+</Project>

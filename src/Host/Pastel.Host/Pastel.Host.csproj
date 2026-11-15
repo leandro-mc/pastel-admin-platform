@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <RootNamespace>Pastel.Host</RootNamespace>
+    <UserSecretsId>pastel-admin-api-local</UserSecretsId>
+    <!--
+      Módulos incluidos en la compilación. "*" (por defecto) incluye todos los que existan en src/Modules.
+      Lista separada por ";" o ",", con el nombre de carpeta respetando su capitalización:
+        dotnet build -p:PastelModules=Brisa;Balance
+      Identity siempre se incluye. Ver docs/OPERATIONS.md.
+    -->
+    <PastelModules Condition="'$(PastelModules)' == ''">*</PastelModules>
+    <PastelModulesList>$([System.String]::Copy('$(PastelModules)').Replace(',', ';'))</PastelModulesList>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../BuildingBlocks/Pastel.Platform/Pastel.Platform.csproj" />
+    <ProjectReference Include="../../Modules/Identity/Pastel.Modules.Identity/Pastel.Modules.Identity.csproj" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+  </ItemGroup>
+
+  <!-- Todos los módulos (excepto Identity, pruebas y contratos). -->
+  <ItemGroup Condition="'$(PastelModules)' == '*'">
+    <PastelModuleProject Include="../../Modules/*/Pastel.Modules.*/Pastel.Modules.*.csproj"
+                         Exclude="../../Modules/Identity/**;../../Modules/*/Pastel.Modules.*.Tests/**;../../Modules/*/Pastel.Modules.*.Contracts/**" />
+  </ItemGroup>
+
+  <!-- Subconjunto: un nombre de carpeta por elemento. -->
+  <ItemGroup Condition="'$(PastelModules)' != '*'">
+    <PastelModuleName Include="$(PastelModulesList)" Exclude="Identity" />
+    <PastelModuleProject Include="@(PastelModuleName->'../../Modules/%(Identity)/Pastel.Modules.%(Identity)/Pastel.Modules.%(Identity).csproj')" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="@(PastelModuleProject)" />
+  </ItemGroup>
+</Project>

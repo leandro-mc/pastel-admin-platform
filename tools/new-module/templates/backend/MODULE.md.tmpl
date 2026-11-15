@@ -1,0 +1,38 @@
+# __NAME__ — ficha técnica (backend)
+
+Estado: **marcador** (esqueleto generado por `tools/new-module`). Sin funcionalidad de producto todavía.
+
+- Código: `__CODE__` · esquema de base de datos `__CODE__` · API `/api/__CODE__` · proyecto `Pastel.Modules.__PASCAL__`.
+- Ficha de producto: `docs/modules/__UPPER__.md`. Frontend: `web/src/modules/__CODE__/MODULE.md`.
+
+## Permisos
+
+| Código | Qué permite |
+|---|---|
+| `__CODE__.access` | Entrar al módulo (hub y router) |
+
+Roles sugeridos (se crean una sola vez si no existen; nunca se sobrescriben): `__NAME__ — Usuario`.
+
+## Endpoints
+
+| Método y ruta | Permiso | Nota |
+|---|---|---|
+| `GET /api/__CODE__/ping` | `__CODE__.access` | Comprobación del esqueleto |
+
+## Datos
+
+Esquema `__CODE__`, sin tablas. La migración inicial la genera Build con `dotnet ef` (ver `__PASCAL__DbContextFactory`).
+
+## Códigos de error
+
+| Código | Estado | Cuándo |
+|---|---|---|
+| `__CODE__.resource.not_found` | 404 | El recurso pedido no existe |
+
+## Eventos de log
+
+Rango de `EventId` reservado: ver `docs/ERROR_HANDLING_AND_LOGGING.md` §4.2.
+
+## Pendiente
+
+Todo lo funcional de la ficha de producto.

@@ -1,6 +1,6 @@
 # Ágora — ficha de producto y MVP
 
-Color `data-module="agora"` (azul grisáceo) · icono `Landmark` · esquema `agora` · ruta `/agora` · API `/api/agora`.
+Identidad visual por definir (investigación en curso); icono `Landmark` provisional · esquema `agora` · ruta `/agora` · API `/api/agora`.
 
 ## 1. Propósito y principio editorial
 Divulgación humanística y de actualidad, centrada en Costa Rica, para ayudar a comprender hechos, procesos y decisiones públicas. **Facilitar la comprensión y el criterio propio**, no decir qué pensar. La confianza se construye mostrando **fuentes, contexto y estado de verificación**.
@@ -39,36 +39,51 @@ Permisos: `agora.access` (solo para el panel editorial), `agora.content.manage` 
 | `/agora/editorial/actualidad` | Noticias enlazadas | Alta/edición de enlaces |
 
 ## 5. Reglas y detalles
-- **Videos de YouTube:** se incrustan desde `youtube-nocookie.com` mediante **fachada** (miniatura + botón; el iframe se carga al pulsar), con `loading="lazy"` y título accesible. Validar el id; no alojar videos. La CSP de `nginx` hoy bloquea marcos externos: solicitar por CCR el `frame-src https://www.youtube-nocookie.com` y la política de imágenes necesaria para las miniaturas.
+- **Videos de YouTube:** se incrustan desde `youtube-nocookie.com` mediante **fachada** (miniatura + botón; el iframe se carga al pulsar), con `loading="lazy"` y título accesible. Validar el id; no alojar videos. La CSP de `nginx` hoy bloquea marcos externos: pedir autorización del propietario (zona compartida) para el `frame-src https://www.youtube-nocookie.com` y la política de imágenes necesaria para las miniaturas.
 - **Contenido Markdown:** renderizado con sanitización estricta (sin HTML crudo, sin scripts); enlaces externos con `rel="noopener noreferrer"`.
 - **Noticias:** solo se enlazan (medio, titular, fecha, URL y contexto propio); no se copia el texto ajeno.
 - **Distinción de tipo de contenido:** campo "Tipo" (Hechos documentados · Análisis/interpretación · Opinión) visible en cada pieza.
-- **SEO y vista previa al compartir:** las páginas públicas necesitan `title`, `description` y `og:*` sin ejecutar JavaScript; documentar en un ADR el método más simple (mismo enfoque que Huella; coordinar por CCR, no duplicar trabajo).
+- **SEO y vista previa al compartir:** las páginas públicas necesitan `title`, `description` y `og:*` sin ejecutar JavaScript; registrar en `docs/DECISIONS.md` el método más simple (mismo enfoque que Huella; coordinar con el propietario, no duplicar trabajo).
 - **Búsqueda:** MVP con filtro por título/etiqueta; búsqueda de texto completo en etapa posterior.
 - **Endpoints públicos:** anónimos, con límite de tasa y caché corta; nunca devuelven borradores ni piezas archivadas.
 - Auditoría: publicar, archivar, verificar, retirar verificación, correcciones.
+- **Revisores:** la cantidad de revisores iniciales es **configurable** (decisión del propietario, 2026-11-13); no se fija un número en el diseño. Se mantienen la separación de funciones y la prohibición de verificar la propia pieza.
+- **Voz de la interfaz:** trato de **usted** por defecto. **Resumen semanal por correo:** fase F2, siempre opcional y con consentimiento; no entra en la primera versión.
 
 ## 6. Fuera del MVP
 Foros, comentarios, reportes y moderación; flujo formal de aprobación previa; reputación; líneas de tiempo y relaciones entre temas; historial completo de versiones; panel analítico; búsqueda avanzada; cobertura internacional estructurada.
 
 ## 7. Criterios de aceptación
+
+### Etapa 1 — app funcional (obligatorio ahora)
 - Un autor crea una pieza con fuentes y video, la publica y un visitante anónimo la lee en `/agora/p/:slug`; sin sello aparece "Pendiente de verificación".
 - Un revisor verifica la pieza y el sello aparece con su nombre y fecha; al editar el contenido sustantivo el sello pasa a "Modificada tras la verificación".
 - Un autor no puede verificar su propia pieza; un registrado puede guardar y ver sus guardados; un anónimo no ve borradores.
-- Pruebas de integración por rol, sanitización de Markdown, validación de id de YouTube, estados públicos.
-- Accesibilidad y 320 px; `MODULE.md` actualizados; compila y pasa pruebas aislado (`PASTEL_MODULES=agora`).
+- Las **pruebas esenciales** de abajo en verde; `MODULE.md` (backend y frontend) actualizados; el módulo compila y respeta las fronteras entre módulos (pruebas de arquitectura).
 
-## Plan de pruebas — mínimos obligatorios (independiente de la implementación)
+### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-QA escribe `docs/testing/plans/AGORA-TEST-PLAN.md` a partir de esta ficha e **incluye al menos** lo siguiente, y lo ejecuta y amplía (`docs/TESTING_STRATEGY.md`). Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
-1. Matriz por rol (anónimo, registrado, autor, revisor, administrador) sobre cada acción de la sección 2; **un autor no puede verificar su propia pieza** (403 `agora.verification.self`).
+1. **Autorización por rol en las acciones sensibles** (publicar, verificar, administrar): quien no tiene el permiso recibe 401/403; **un autor no puede verificar su propia pieza** (403 `agora.verification.self`).
 2. Borradores y piezas archivadas nunca aparecen en listados, búsqueda, página de pieza ni respuestas públicas.
-3. Sello: una pieza sin verificación muestra "Pendiente de verificación"; tras verificar, "Verificado por <nombre> el <fecha>"; tras editar contenido sustantivo, "Modificada tras la verificación"; el revisor puede retirar o renovar.
+3. Sello (regla central del módulo): sin verificación → "Pendiente de verificación"; tras verificar → "Verificado por <nombre> el <fecha>"; tras editar contenido sustantivo → "Modificada tras la verificación".
 4. Markdown malicioso (`<script>`, `<img onerror>`, `[x](javascript:…)`, HTML crudo, iframes) → sanitizado; el contenido legítimo se conserva.
-5. Video: solo se acepta un identificador de YouTube válido; una URL arbitraria o un identificador manipulado → rechazado; la fachada no carga el iframe hasta pulsar; el iframe usa `youtube-nocookie.com`.
-6. Fuentes: cada pieza muestra sus fuentes con enlace externo seguro; una pieza sin fuentes se marca de forma visible para el autor (aviso, no bloqueo).
-7. Registrado guarda y quita guardados; anónimo que intenta guardar → 401 y el frontend lo lleva a iniciar sesión conservando la acción.
-8. Noticias enlazadas: solo metadatos y enlace; URL inválida rechazada.
-9. Endpoints públicos: límite de tasa, caché corta y sin datos privados; metadatos de vista previa en la respuesta inicial.
-10. Accesibilidad de lectura: estructura de encabezados, contraste, teclado, 320 px, texto "Muy grande"; el sello no depende solo del color.
+5. Video: solo se acepta un identificador de YouTube válido; una URL arbitraria o un identificador manipulado → rechazado.
+6. Anónimo que intenta guardar → 401 (y el frontend lo lleva a iniciar sesión conservando la acción).
+
+### Condición previa al lanzamiento (no es una prueba automática)
+- La **política de correcciones** está publicada en «Estándares editoriales» (decisión del propietario, 2026-11-13). Su texto lo redacta y aprueba el propietario. Detalle: `docs/requirements/agora/REQUERIMIENTOS-AGORA.md` AG-COR-01.
+
+### Diferido a QA — Etapa 2 (no bloquea la entrega de la primera versión)
+
+Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md`, `docs/PROGRESS.md` §5):
+
+- Matriz completa por rol (anónimo, registrado, autor, revisor, administrador) sobre cada acción de la sección 2.
+- Fuentes: cada pieza muestra sus fuentes con enlace externo seguro; una pieza sin fuentes se marca de forma visible para el autor (aviso, no bloqueo).
+- Noticias enlazadas: solo metadatos y enlace; URL inválida rechazada.
+- Endpoints públicos: límite de tasa, caché corta y sin datos privados; metadatos de vista previa en la respuesta inicial.
+- Accesibilidad de lectura: estructura de encabezados, contraste, teclado, 320 px, texto "Muy grande"; el sello no depende solo del color.
+- Video: la fachada no carga el iframe hasta pulsar y el iframe usa `youtube-nocookie.com`.
+- Accesibilidad y recorrido a 320 px, claro/oscuro y texto «Muy grande» de los flujos principales.
+- Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.

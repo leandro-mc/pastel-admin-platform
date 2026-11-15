@@ -1,0 +1,62 @@
+/*
+ * Base global: solo reseteos de elementos y accesibilidad transversal. Sin `@apply`: CSS plano con los tokens.
+ * Todo lo demás son utilidades en el JSX o componentes de `core/ui`. Tailwind (preflight) ya normaliza márgenes,
+ * `box-sizing` y la herencia de fuente en controles de formulario.
+ */
+@layer base {
+  :root {
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+
+  body {
+    min-width: 320px;
+    background: var(--app-bg);
+    color: var(--text);
+    transition:
+      background 0.2s ease,
+      color 0.2s ease;
+  }
+
+  svg {
+    flex-shrink: 0;
+  }
+
+  button,
+  a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Foco visible de 3 px en controles nativos (WCAG 2.2 AA); los componentes lo refuerzan con `focus-visible:ring-*`. */
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 3px solid var(--focus);
+    outline-offset: 2px;
+  }
+
+  button:disabled {
+    cursor: not-allowed;
+    opacity: 0.62;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+}

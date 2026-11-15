@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Pastel.Modules.Balance</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../../../BuildingBlocks/Pastel.SharedKernel/Pastel.SharedKernel.csproj" />
+    <ProjectReference Include="../../../BuildingBlocks/Pastel.Platform/Pastel.Platform.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Pastel.Modules.Balance.Tests" />
+    <InternalsVisibleTo Include="Pastel.IntegrationTests" />
+    <InternalsVisibleTo Include="Pastel.ArchitectureTests" />
+  </ItemGroup>
+</Project>

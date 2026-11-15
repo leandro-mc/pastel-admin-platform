@@ -1,6 +1,6 @@
 # Arquitectura de Pastel (v2) — Monolito modular con vertical slices
 
-Reemplaza a la versión por capas (`Domain / Application / Infrastructure / Api`). Esta versión es la decisión final del orquestador y está autorizada por el propietario del producto.
+Reemplaza a la versión por capas (`Domain / Application / Infrastructure / Api`) y es la arquitectura vigente, autorizada por el propietario del producto.
 
 ## 1. Decisiones finales
 
@@ -15,9 +15,9 @@ Reemplaza a la versión por capas (`Domain / Application / Infrastructure / Api`
 | D7 | **Autenticación con Google (OAuth 2.0 / OIDC, código + PKCE)**, sesión propia en cookies `HttpOnly` | Una sola identidad para todos los módulos; no se tocan los tokens de Google |
 | D8 | **Un `DbContext`, un esquema y un historial de migraciones por módulo** | Propiedad de datos explícita; extraíble a otra base |
 | D9 | **Compilación por subconjunto de módulos** (`PASTEL_MODULES`) | Desplegar un "Pastel" por proyecto sin reescribir nada |
-| D10 | **Tailwind: utilidades en JSX**; patrones compartidos = componentes React; `@apply` solo en `base.css` | Co-ubicación estilo/markup y hojas pequeñas (el análisis de `dev` halló 0 utilidades y 2 209 líneas de CSS) |
+| D10 | **Tailwind: utilidades en JSX**; patrones compartidos = componentes React (se prefieren a `@apply`) | Co-ubicación estilo/markup y hojas pequeñas (el análisis de `dev` halló 0 utilidades y 2 209 líneas de CSS) |
 | D11 | **Errores y logs estandarizados** (`Result` + `problem+json` + `traceId`; Serilog JSON; auditoría aparte) | Diagnóstico fiable y mensajes humanos en todos los módulos |
-| D12 | **Desarrollo y pruebas por agentes distintos** (Dev escribe el código; Build compila, corrige y escribe pruebas unitarias; QA planifica, ejecuta y reporta) | Verificación independiente; sin autocertificación |
+| D12 | **Roles de agentes por etapa** (Etapa 1: Dev escribe el código; Build/QA compila, corrige y escribe las pocas pruebas esenciales y reporta con evidencia; Etapa 2: QA profundo, automatización y E2E planificados aparte) | Verificación esencial sin frenar el desarrollo funcional; sin autocertificación |
 
 Descartado: microservicios (operación excesiva), Clean Architecture por módulo (ceremonial para módulos CRUD), Next.js/Remix (ver 9.1), capas horizontales (cada cambio toca cuatro proyectos).
 
@@ -27,7 +27,7 @@ Descartado: microservicios (operación excesiva), Clean Architecture por módulo
 2. Los tipos son `internal` por defecto. Lo público de un módulo vive en su `*.Contracts`.
 3. Un esquema por módulo (`identity`, `brisa`, `balance`, `agora`, `cosecha`, `huella`). **Sin claves foráneas ni joins entre esquemas**; se referencia por ID.
 4. `Pastel.Platform` y `Pastel.SharedKernel` **no referencian módulos**. `Pastel.Host` no contiene reglas de negocio.
-5. Todo permiso empieza con el código del módulo: `cosecha.orders.manage`.
+5. Todo permiso funcional de una aplicación empieza con el código del módulo: `cosecha.orders.manage`. Identity puede declarar permisos transversales de plataforma bajo el grupo `platform` y el prefijo `platform.*`; esos permisos son reservados y no se conceden desde la administración de roles de una aplicación.
 6. Frontend: `web/src/modules/<m>` solo importa de `@/core/*`. `core` y `app` solo conocen los módulos por el manifiesto generado.
 7. Quitar un módulo = borrar sus carpetas. El resto debe compilar y pasar sus pruebas.
 
@@ -41,14 +41,12 @@ pastel/
 ├── global.json
 ├── Pastel.slnx
 ├── compose.yaml
-├── .github/workflows/ci.yml            # solo uso local/CI; sin despliegue por ahora
+├── .github/workflows/ci.yml            # CI manual/por aprobación de PR hacia dev (ver GIT_WORKFLOW.md)
 ├── docs/
-│   ├── ARCHITECTURE.md  DESIGN_SYSTEM.md  SECURITY.md  AI_WORKFLOW.md  SPLIT_GUIDE.md
-│   ├── ERROR_HANDLING_AND_LOGGING.md  TESTING_STRATEGY.md
-│   ├── testing/                        # plantillas, plans/ (los escribe QA) y reports/ (los escribe QA)
-│   ├── adr/                            # decisiones breves (~15 líneas c/u)
-│   ├── modules/                        # fichas de producto: HUELLA.md, COSECHA.md, ...
-│   └── requests/                       # CCR: solicitudes de cambio a zonas protegidas
+│   ├── ARCHITECTURE.md  SECURITY.md  DESIGN_SYSTEM.md  ERROR_HANDLING_AND_LOGGING.md
+│   ├── PROGRESS.md  GIT_WORKFLOW.md  TESTING.md  OPERATIONS.md  DECISIONS.md
+│   ├── product/                        # visión de producto y modelo de aplicaciones
+│   └── modules/                        # fichas de producto: HUELLA.md, COSECHA.md, ...
 ├── src/
 │   ├── Host/Pastel.Host/               # Program.cs, middleware, Dockerfile
 │   ├── BuildingBlocks/
@@ -59,7 +57,7 @@ pastel/
 ├── tests/
 │   ├── Pastel.ArchitectureTests/       # fronteras, permisos, estructura de módulos
 │   ├── Pastel.IntegrationTests/        # Foundation/ (Build, Fase 0) y QA/<M>/ (QA); PostgreSQL real
-│   └── e2e/                            # Playwright (lo escribe QA)
+│   └── e2e/                            # Playwright (smoke de /ingresar; ampliación en la Etapa 2)
 ├── tools/new-module/                   # plantilla para crear módulos
 ├── scripts/                            # check-design.mjs, tailwind-audit.mjs
 └── web/
@@ -108,7 +106,7 @@ public interface IPastelModule
 ```
 
 - **Descubrimiento:** `Pastel.Host` referencia por *glob* de MSBuild los proyectos `src/Modules/*/Pastel.Modules.*.csproj` (excluyendo `.Tests` y `.Contracts`), filtrados por `PastelModules` (por defecto todos; `Identity` siempre). Al arrancar carga los ensamblados `Pastel.Modules.*.dll` y lee `[assembly: PastelModule(...)]`. Agregar un módulo no edita `Program.cs`.
-- **Permisos y roles:** al arrancar, el catálogo declarado por cada módulo se sincroniza de forma idempotente en las tablas de Identity (`Modules`, `Permissions`). Los `SuggestedRoles` se crean solo si no existen; **nunca** se sobrescribe lo que un administrador haya editado. El rol `Administrator` recibe todos los permisos.
+- **Permisos y roles:** al arrancar, el catálogo declarado por cada módulo se sincroniza de forma idempotente en las tablas de Identity (`Modules`, `Permissions`). Los `SuggestedRoles` se crean solo si no existen; **nunca** se sobrescribe lo que un administrador haya editado. El rol `Administrator` recibe solo los permisos generales (panel, `settings.*`, Workspace y modo desarrollador); `Owner/Superuser` recibe todos. Si el producto reserva los permisos de un módulo al propietario, el módulo lo declara con `PermissionGroup.GrantPolicy` (`OwnerGrantsOnly` u `OwnerAccountOnly`) y Identity lo aplica sin nombrar módulos (`SECURITY.md`).
 - **Acceso al módulo:** cada módulo privado declara `<code>.access`; el hub y el router lo usan para mostrar u ocultar el módulo. Los módulos con partes públicas marcan esos endpoints con `.AllowAnonymous()` de forma explícita.
 - **Abstracciones transversales (en `Pastel.Platform`, implementadas por Identity):** `ICurrentUser` (id, nombre, `HasPermission`), `IPermissionEvaluator` (permisos efectivos con caché por petición), `IAuditTrail` (escritura de auditoría con el módulo de origen).
 
@@ -118,7 +116,9 @@ public interface IPastelModule
 - Cada `DbContext`: `HasDefaultSchema("<code>")` y `MigrationsHistoryTable("__EFMigrationsHistory", "<code>")`. Migraciones dentro del proyecto del módulo:
   `dotnet ef migrations add Nombre --project src/Modules/<M>/Pastel.Modules.<M> --startup-project src/Host/Pastel.Host --context <M>DbContext`
 - El host migra en el orden de `IPastelModule.Order`. Se conserva `Database:ApplyMigrationsAtStartup` (con un solo nodo es correcto; con réplicas habría que pasar a un trabajo de migración aparte).
-- Identificadores: `Guid` v7 generados en el cliente o servidor (permite crear offline y sincronizar). Fechas en UTC (`timestamptz`). Dinero en `numeric(18,2)` con moneda explícita.
+- Identificadores: las claves de entidad son `Guid` v7 que asigna el servidor con `Guid.CreateVersion7()` en la propiedad `Id` de la entidad (el orden por tiempo mantiene compactos los índices de PostgreSQL). Lo secreto o impredecible (refresh tokens, token CSRF, contraseñas temporales con `RandomNumberGenerator`; el `jti` del JWT con `Guid.NewGuid()`) no es una clave y sigue siendo aleatorio. Un v7 deja ver su fecha de creación: nunca se usa como secreto ni como credencial, y la autorización no depende de que un identificador sea inadivinable.
+- Identificadores desde el cliente: **hoy no existen**; ningún endpoint acepta un `Id` propuesto por el cliente ni hay generador de GUID en el frontend. Si un módulo lo necesita (p. ej. Brisa al sincronizar sin conexión), lo diseña y documenta en su `MODULE.md` o en `DECISIONS.md`.
+- Fechas en UTC (`timestamptz`). Dinero en `numeric(18,2)` con moneda explícita.
 - Datos con vocación de sincronización móvil (Brisa): `UpdatedAt`, borrado lógico (`DeletedAt`) y token de concurrencia en cada entidad editable.
 
 ## 6. Comunicación entre módulos
@@ -132,7 +132,7 @@ public interface IPastelModule
 - Rutas: `/api/<modulo>/<recurso>`. Plataforma: `/api/auth/*`, `/api/admin/*`.
 - Errores: `application/problem+json` con `title`, `detail` (en español, accionable) y, para validaciones, `errors` por campo. Sin filtrar excepciones internas.
 - Listas: paginación (`page`, `pageSize`, máximo 100) y orden explícito.
-- Escrituras que puedan repetirse (móvil/offline) aceptan un identificador de cliente y son idempotentes.
+- Escrituras que puedan repetirse (móvil/offline): criterio de diseño para cuando un módulo las necesite (identificador de cliente e idempotencia). Hoy ningún endpoint lo implementa; ver §5.
 - Cada endpoint tiene permiso o `.AllowAnonymous()` explícito; las rutas públicas llevan límite de tasa.
 - Zona horaria de presentación: `America/Costa_Rica`. Formatos `es-CR` (ver `DESIGN_SYSTEM.md`).
 
@@ -142,7 +142,7 @@ public interface IPastelModule
 - La sesión sigue siendo propia: JWT de acceso y refresh con rotación en cookies `HttpOnly; Secure; SameSite=Strict`, más CSRF de doble envío. No cambia.
 - La cuenta local con contraseña se conserva para el administrador de arranque y cuentas creadas por administración; el autorregistro con contraseña queda desactivado por defecto.
 - Autorización siempre en el backend (denegar por defecto). El frontend solo adapta la navegación.
-- **Jerarquía de privilegios:** quien administra solo concede lo que posee y no actúa sobre cuentas Administrator ni sobre sí mismo salvo que sea Administrator (detalle en `docs/phase0/FASE-0-REFACTOR-BASE.md` WP4 y `SECURITY.md`).
+- **Jerarquía de privilegios:** quien administra solo concede lo que posee y no actúa sobre cuentas Administrator ni sobre sí mismo salvo que sea Administrator (detalle en `SECURITY.md`).
 
 ## 9. Frontend
 
@@ -153,7 +153,7 @@ Se mantiene **React + Vite** y se añade **React Router v7 en modo datos** (`cre
 - Las únicas páginas con valor de SEO/vista previa son públicas y acotadas (perfil de Huella, contenido de Ágora): se resuelven en su módulo con metadatos inyectados por el servidor o prerenderizado, sin cambiar el framework.
 - React Router v7 permite subir a modo framework más adelante sin reescribir las rutas.
 
-Bibliotecas aprobadas (instaladas por Fase 0; cualquier otra requiere CCR): `react-router`, `@tanstack/react-query` (estado del servidor), `react-hook-form` + `zod` + `@hookform/resolvers` (formularios), `react-aria-components` (primitivas accesibles; verificar versión vigente antes de instalar), `react-markdown` + `rehype-sanitize` + `remark-gfm` (contenido), `@fontsource-variable/inter`, `lucide-react`, para estilos `class-variance-authority`, `clsx`, `tailwind-merge` y `prettier-plugin-tailwindcss`, y para pruebas `vitest`, `@testing-library/react`, `@testing-library/user-event`, `vitest-axe`, `@playwright/test` y `@axe-core/playwright` (E2E, los usa QA). Backend: `Serilog.AspNetCore` y, para pruebas, `Testcontainers.PostgreSql` y `NetArchTest.Rules`.
+Bibliotecas aprobadas (instaladas por Fase 0; cualquier otra requiere autorización del propietario): `react-router`, `@tanstack/react-query` (estado del servidor), `react-hook-form` + `zod` + `@hookform/resolvers` (formularios), `react-aria-components` (primitivas accesibles; verificar versión vigente antes de instalar), `react-markdown` + `rehype-sanitize` + `remark-gfm` (contenido), `@fontsource-variable/inter`, `lucide-react`, para estilos `class-variance-authority`, `clsx`, `tailwind-merge` y `prettier-plugin-tailwindcss`, y para pruebas `vitest`, `@testing-library/react`, `@testing-library/user-event`, `vitest-axe`, `@playwright/test` y `@axe-core/playwright` (E2E, los usa QA). Backend: `Serilog.AspNetCore` y, para pruebas, `Testcontainers.PostgreSql` y `NetArchTest.Rules`.
 
 ### 9.2 URLs
 
@@ -179,12 +179,14 @@ export default {
   basePath: "/cosecha",
   access: "permission",                 // "public" | "authenticated" | "permission"
   requiredPermission: "cosecha.access",
-  nav: [{ label: "Hoy", to: "", icon: CalendarDays }, ...],
+  nav: [{ label: "Hoy", to: "", icon: CalendarDays }, ...],   // opcionales por ítem: requiredPermission, alsoActiveOn, group
   routes: [{ index: true, lazy: () => import("./pages/TodayPage") }, ...],
 } satisfies ModuleManifest;
 ```
 
 Un plugin de Vite genera el módulo virtual `virtual:pastel-modules` recorriendo `src/modules/*/manifest.ts` y filtrando por `PASTEL_MODULES`. El shell nunca importa un módulo directamente. Con un solo módulo habilitado, `/` redirige a ese módulo y el shell adopta su marca.
+
+**Shell y vista previa por rol.** `web/src/app/shell` dibuja el marco común (sidebar, barra superior, barra inferior en móvil) leyendo el manifiesto y los tokens de la app (`data-module`); no inspecciona el interior de un módulo (las pantallas de detalle se declaran con `alsoActiveOn`). `RootLayout` envuelve todas las rutas con `core/devmode`, que, solo para cuentas con `platform.developer.mode`, sustituye por `useAuth()` los permisos de la app activa para dibujar la interfaz como la vería otro rol. Los módulos no importan `core/devmode`; la autorización sigue en el servidor. Reglas: `DESIGN_SYSTEM.md` §9 y `SECURITY.md`.
 
 ### 9.4 Estructura de un módulo web
 
@@ -201,13 +203,13 @@ Reglas: páginas finas, estado del servidor en TanStack Query, formularios con r
 
 ### 9.5 Estilos con Tailwind (regla única)
 - **Utilidades en el JSX.** Lo compartido son **componentes** de `core/ui` con variantes (`cva` + `cn()`), no clases semánticas con `@apply`.
-- Tokens en `core/design/tokens.css` y expuestos con `@theme inline` (`bg-surface`, `text-fg`, `bg-accent`, `text-accent-strong`…). `data-module` cambia las variables, así que `bg-accent` ya es el color del módulo; `dark:` solo cuando sea imprescindible.
-- `@apply` únicamente en `core/design/base.css` (reseteos, Markdown, selectores complejos): máximo 60 líneas. Ningún CSS por módulo; ningún archivo CSS de más de 400 líneas.
-- `scripts/tailwind-audit.mjs` mide y el CI vigila estas metas. Orden de clases con `prettier-plugin-tailwindcss`.
+- Tokens en `core/design/tokens.css` y `module-themes.css`, expuestos con `@theme inline` (`bg-surface`, `text-fg`, `bg-accent`, `text-accent-strong`…). `data-module` cambia las variables del módulo. **Los valores actuales son provisionales** hasta que se defina la identidad visual (`DESIGN_SYSTEM.md`); `dark:` solo cuando sea imprescindible.
+- Se prefieren componentes a `@apply`; no hay comprobación automática. El CSS propio se mantiene pequeño y compartido en `core/design` (`tailwind-audit` informa los archivos de más de 400 líneas).
+- `scripts/tailwind-audit.mjs` mide estas metas como información; no bloquea. Orden de clases con `prettier-plugin-tailwindcss`.
 
 ## 10. Despliegue por subconjunto de módulos
 
-`PASTEL_MODULES=cosecha` (también `Identity` implícito) controla **backend** (qué proyectos referencia el Host) y **frontend** (qué manifiestos entran al bundle). Con eso, un despliegue contiene Identity + un solo módulo, con su propia base de datos. La guía de separación vive en `docs/SPLIT_GUIDE.md` y CI comprueba cada módulo de forma aislada (borrando los demás). El despliegue en servidor y CI/CD **no** forman parte de esta etapa.
+`PASTEL_MODULES=cosecha` (también `Identity` implícito) controla **backend** (qué proyectos referencia el Host) y **frontend** (qué manifiestos entran al bundle). Con eso, un despliegue contiene Identity + un solo módulo, con su propia base de datos. La guía de separación vive en `docs/OPERATIONS.md` y CI comprueba cada módulo de forma aislada (borrando los demás). El despliegue en servidor y CI/CD **no** forman parte de esta etapa.
 
 ## 11. Pruebas y guardas automáticas
 
@@ -216,37 +218,35 @@ Reglas: páginas finas, estado del servidor en TanStack Query, formularios con r
 | Unitarias | Reglas de dominio y casos de uso | xUnit |
 | Integración por módulo | Endpoints + PostgreSQL real | `WebApplicationFactory` + Testcontainers |
 | Arquitectura | Fronteras, `internal`, prefijos de permiso, que cada módulo tenga `MODULE.md` | NetArchTest o ArchUnitNET |
-| Frontend | Componentes, flujos y accesibilidad (axe) | Vitest + Testing Library + `vitest-axe` |
-| Diseño | Sin morado, sin iconos/símbolos de IA, sin colores sueltos | `scripts/check-design.mjs` + ESLint |
-| Aislamiento | Cada módulo compila y pasa pruebas solo | Matriz de CI que borra los demás módulos |
-| Integración independiente y E2E | Flujos por rol, permisos, aislamiento de datos, errores, logs, accesibilidad | Pruebas de QA (Playwright, `WebApplicationFactory` + PostgreSQL) |
+| Frontend | Componentes y accesibilidad básica (axe); lo existente se conserva y se amplía en la Etapa 2 | Vitest + Testing Library + `vitest-axe` |
+| Diseño | Sin morado y sin iconos/símbolos de IA | `scripts/check-design.mjs` + ESLint |
+| Aislamiento (etapa 2 / `ci:completo`) | Cada módulo compila y pasa pruebas solo; en la Etapa 1 lo garantizan las pruebas de arquitectura y `check-module-boundaries` | Matriz de CI que borra los demás módulos |
+| Integración independiente y E2E (etapa 2) | Flujos completos por rol, permisos, errores, logs, accesibilidad | Pruebas de QA (Playwright, `WebApplicationFactory` + PostgreSQL) |
 
-## 12. Eficiencia con agentes
+## 12. Trabajo con agentes
 
-- `AGENTS.md` raíz ≤ 80 líneas; `MODULE.md` por módulo ≤ 120 líneas (backend y frontend).
-- Una funcionalidad = una carpeta; archivos pequeños; nombres previsibles.
-- Zonas de escritura exclusivas por agente; cambios a zonas protegidas mediante CCR.
+- Reglas de proceso, zonas compartidas, commits, pruebas y CI en `AGENTS.md` y `docs/GIT_WORKFLOW.md`; aquí solo la arquitectura.
 - Comandos con alcance de módulo: `dotnet test src/Modules/<M>`, `npm test -- src/modules/<m>`.
-- Las fronteras las impone el compilador y CI, no instrucciones en prosa.
+- Las fronteras las imponen el compilador y las pruebas de arquitectura, no instrucciones en prosa.
 
 ## 13. Cómo agregar un módulo (checklist)
 
 1. `tools/new-module` con el código (genera backend, pruebas, frontend, `MODULE.md`, esquema y migración vacía).
 2. Ficha de producto en `docs/modules/<MODULO>.md` (alcance, roles, reglas).
 3. Declarar permisos y roles sugeridos en `<M>Module.cs`.
-4. Color y tokens del módulo en `web/src/core/design/module-themes.css` (CCR si es nuevo).
-5. Implementar por slices (Dev); pruebas unitarias (Build) e integración (QA).
+4. Tokens del módulo en `web/src/core/design/module-themes.css` cuando su identidad visual esté definida (hoy provisionales). El módulo puede definir paleta, neutros y tono propios en su ficha: prevalecen sobre las guías generales de diseño del frontend (`AGENTS.md` §7, «Jerarquía de reglas»); lo demás sigue las reglas generales.
+5. Implementar por slices con las pruebas esenciales (`docs/TESTING.md`).
 6. Completar `MODULE.md` (backend y frontend).
-7. Verificar: guardas de arquitectura y diseño, compilación aislada del módulo.
+7. Verificar (Etapa 1): guardas de arquitectura y de diseño. La compilación aislada del módulo (`PASTEL_MODULES`) se hace con `ci:completo` o antes de desplegar.
 
 ## 14. Errores y logs
 
 Estándar único en `docs/ERROR_HANDLING_AND_LOGGING.md`. Resumen: los fallos esperables son `Result` y se traducen en un solo lugar a `application/problem+json` con `code` estable y `traceId`; nunca se devuelve `ex.Message`; los errores técnicos (único, concurrencia, serialización) tienen traducción y reintento definidos; los logs son JSON estructurado (Serilog), sin secretos ni datos personales; la **auditoría** (quién, qué, antes→después) es independiente del log técnico; `/health/ready` comprueba base de datos y migraciones.
 
-## 15. Desarrollo y pruebas separados
+## 15. Pruebas
 
-Estándar en `docs/TESTING_STRATEGY.md`. Dev implementa el código y, si su entorno lo permite, compila y ejecuta validaciones; si no puede, declara lo no ejecutado y entrega código sin compilar para el agente con entorno. Build/QA debe tener entorno de compilación y ejecución; en esta etapa se permite combinar ambas responsabilidades para ahorrar sesiones. Un módulo o fase solo se integra a `dev` tras validar el SHA propuesto y recibir autorización explícita del propietario.
+Política de pruebas esenciales, comandos y evidencia en `docs/TESTING.md`. Un módulo o fase solo se integra a `dev` tras validar el SHA que se integra, con cero fallos y cero omitidas.
 
 ## 16. Decisiones registradas
 
-Cada decisión de esta página se archiva como ADR breve en `docs/adr/` (0001 monolito modular, 0002 stack y router, 0003 Google OAuth, 0004 esquemas y migraciones por módulo, 0005 paleta y tokens, 0006 compilación por subconjunto, 0007 Tailwind, 0008 errores y logs).
+El porqué de las decisiones de esta página (monolito modular, stack y router, esquemas y migraciones por módulo, compilación por subconjunto, Tailwind, errores y logs, Google, ventana de gracia del refresh) está en `docs/DECISIONS.md`.

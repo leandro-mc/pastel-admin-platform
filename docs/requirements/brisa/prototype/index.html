@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es-CR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="color-scheme" content="light dark">
+<title>Brisa · prototipo</title>
+<link rel="stylesheet" href="../../_shared/devkit.css">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div class="app" id="appRoot">
+  <header class="topbar">
+    <button class="icon-button mobile-menu" id="mobileMenu" aria-label="Abrir navegación" title="Navegación"><span class="icon" data-icon="menu"></span></button>
+    <div class="topbrand"><div class="brandmark"><span class="icon" data-icon="list-checks"></span></div><div class="brandcopy"><strong>PASTEL</strong><span>Tu espacio de trabajo</span></div></div>
+    <div class="top-divider"></div>
+    <div class="breadcrumb"><span>Aplicaciones</span><span class="icon" data-icon="chevron-right" style="width:14px;height:14px"></span><strong>Brisa</strong></div>
+    <div class="top-actions">
+      <button class="icon-button" id="openSearch" aria-label="Buscar tareas" title="Buscar tareas"><span class="icon" data-icon="search"></span></button>
+      <button class="icon-button" id="themeToggle" aria-label="Activar modo oscuro" title="Cambiar tema"><span class="icon" data-icon="moon"></span></button>
+      <button class="icon-button" id="openSettingsTop" aria-label="Configuración" title="Configuración"><span class="icon" data-icon="settings"></span></button>
+      <button class="avatar-button" id="profileMenu" aria-label="Preferencias de usuario"><span class="avatar">LM</span><span class="avatar-meta"><strong>Mi espacio</strong><small>Preferencias</small></span><span class="icon" data-icon="chevron-down" style="width:15px;height:15px;color:var(--muted)"></span></button>
+    </div>
+  </header>
+  <div class="shell">
+    <aside class="sidebar" id="sidebar">
+      <div><div class="side-label">Tu espacio</div><nav class="side-nav" aria-label="Navegación de Brisa">
+        <button class="nav-item active" data-view="week"><span class="icon" data-icon="calendar-days"></span>Semana</button>
+        <button class="nav-item" data-view="month"><span class="icon" data-icon="calendar"></span>Mes</button>
+        <button class="nav-item" data-view="overdue"><span class="icon" data-icon="calendar-clock"></span>Vencidas<span class="nav-count" id="overdueNavCount">0</span></button>
+        <button class="nav-item" data-view="deadlines"><span class="icon" data-icon="flag"></span>Fechas límite</button>
+      </nav></div>
+      <div><div class="side-label">Herramientas</div><nav class="side-nav" aria-label="Herramientas">
+        <button class="nav-item" data-view="import"><span class="icon" data-icon="file-up"></span>Importar tareas</button>
+        <button class="nav-item" data-view="settings"><span class="icon" data-icon="settings"></span>Configuración</button>
+      </nav></div>
+      <div class="sidebar-spacer"></div>
+      <div class="sidebar-note"><div class="note-mark"><span class="icon" data-icon="sprout"></span></div><strong>Tus días, con calma.</strong><p>Un pendiente a la vez. Lo importante también puede ir a su ritmo.</p></div>
+      <div class="sidebar-bottom"><span>Brisa · Prototipo</span><span class="icon" data-icon="leaf" style="width:16px;height:16px"></span></div>
+    </aside>
+    <main class="main" id="mainContent" tabindex="-1"></main>
+  </div>
+  <nav class="bottom-nav" aria-label="Navegación móvil">
+    <button data-view="week" class="active"><span class="icon" data-icon="calendar-days"></span><span>Semana</span></button>
+    <button data-view="month"><span class="icon" data-icon="calendar"></span><span>Mes</span></button>
+    <button data-view="overdue"><span class="icon" data-icon="calendar-clock"></span><span>Vencidas</span></button>
+    <button data-view="deadlines"><span class="icon" data-icon="flag"></span><span>Límites</span></button>
+  </nav>
+</div>
+<div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="false"></div>
+<div id="modalRoot"></div>
+<script src="../../_shared/devkit.js"></script>
+<script src="logic.js"></script>
+<script src="data.js"></script>
+<script src="app.js"></script>
+<noscript>Este prototipo necesita JavaScript.</noscript>
+</body>
+</html>

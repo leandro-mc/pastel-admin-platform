@@ -4,5 +4,8 @@
   "trailingComma": "all",
   "printWidth": 80,
   "tabWidth": 2,
-  "bracketSameLine": false
+  "bracketSameLine": false,
+  "plugins": ["prettier-plugin-tailwindcss"],
+  "tailwindStylesheet": "./src/core/design/tailwind.css",
+  "tailwindFunctions": ["cn", "clsx", "cva"]
 }
