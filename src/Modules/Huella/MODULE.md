@@ -1,6 +1,6 @@
 # Huella — ficha técnica (backend)
 
-Estado: **MVP de Etapa 1 implementado** (banco, estudio de CV, perfil público). PDF pendiente de CCR-2.
+Estado: **MVP de Etapa 1 implementado** (banco, estudio de CV con PDF, IA automática y externa, perfil público).
 
 - Código `huella` · esquema `huella` · API `/api/huella` · proyecto `Pastel.Modules.Huella`.
 - Producto: `docs/modules/HUELLA.md`. Frontend: `web/src/modules/huella/MODULE.md`.
@@ -17,12 +17,13 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 | `GET/PUT /profile` | Perfil y enlaces (máx. 8; solo `https`); contacto, ubicación y disponibilidad con interruptor, ocultos por defecto |
 | `GET /bank` · `PUT /bank/{notes\|experiences\|projects\|skills\|education\|certifications\|languages}` | Banco completo / reemplazo de una sección |
 | `PUT /bank/{experiences\|projects}/{id}/achievements` | Logros de una experiencia o proyecto |
-| `POST …/{id}/derive` · `…/ai-package` · `…/ai-result` | Logros por reglas, paquete para IA manual, validación del JSON pegado |
+| `POST …/{id}/derive` · `…/ai-package` · `…/ai-run` · `…/ai-result` | Logros por reglas; prompt para una IA externa; propuestas del proveedor configurado; validación del JSON importado |
 | `GET/POST /studio/offers` · `GET/DELETE …/{id}` | Ofertas (texto = dato no confiable; máx. 50) con mapa de evidencia y filtros duros |
 | `GET/POST /studio/versions` · `GET/DELETE …/{id}` | Versiones de CV (máx. 60) |
 | `PUT …/{id}/name` · `/line` · `/public?isPublic=` | Renombrar, editar una línea (pasa por el guardián), marcar CV público |
-| `POST …/{id}/ai-package` · `/ai-result` | Redacción con IA manual: JSON validado, nunca Typst |
-| `GET …/{id}/pdf` | `503 huella.cv.renderer_unavailable` hasta CCR-2 |
+| `POST …/{id}/ai-package` · `/ai-run` · `/ai-result` | Redacción con IA: prompt para una IA externa, ejecución con el proveedor configurado o importación del JSON; todo pasa por el guardián, nunca Typst |
+| `GET …/{id}/pdf` | PDF del CV con Typst (`Pastel.Documents`); `503 huella.cv.renderer_unavailable` si el motor no está instalado |
+| `GET /ai/settings` · `PUT/DELETE /ai/settings/{gemini\|openai\|anthropic}` · `POST …/{provider}/models` | IA automática: proveedor, modelo y clave (escritura; la clave nunca se devuelve) |
 | `GET /publication` · `/publication/preview` | Estado y vista previa del borrador |
 | `POST /publication/publish` · `/unpublish` · `/link` | Publicar, retirar, regenerar enlace (el token solo viaja en esa respuesta) |
 | `GET /public/profile` · `/public/cv` | **Anónimas**; token en la cabecera `X-Huella-Token` |
@@ -33,14 +34,15 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 - **404 uniforme** `huella.public.not_found` (ausente, mal formado, despublicado, revocado) con `X-Robots-Tag: noindex, nofollow, noarchive` y `Referrer-Policy: no-referrer`. Límite `huella-public`: 30/min por IP.
 - **Publicación:** `PublishedSnapshot` congelado (se conservan 5); lo editado después no aparece hasta publicar de nuevo. `ContentHash` detecta cambios sin publicar. La semilla de la huella son 8 bytes del hash.
 - **Perfil público:** lista blanca (`PublicProfileBuilder`); solo logros `public|both`; sin notas privadas, ofertas ni versiones no públicas.
-- **CV:** la IA solo produce JSON. `CvGuardian` rechaza líneas sin `sourceIds` del banco, con cifras que el banco no tiene, frases prohibidas o sobre el tope. `CvLayout.Fit` ajusta por escalera sin llamar a la IA. `ICvRenderer` → `UnavailableCvRenderer` hasta CCR-2.
+- **CV:** la IA solo produce JSON. `CvGuardian` rechaza líneas sin `sourceIds` del banco, con cifras que el banco no tiene, frases prohibidas o sobre el tope. `CvLayout.Fit` ajusta por escalera sin llamar a la IA. Una línea rechazada conserva la viñeta original. `TypstCvRenderer` pasa el CV como `data.json` a la plantilla fija `Cv/Templates/cv.typ` (recurso incrustado): los textos se imprimen como texto, nunca se evalúan.
+- **IA automática:** el prompt es **idéntico** al que se descarga para una IA externa (`AiPackages`). Proveedores con URL fija y clave en cabecera (`Ai/AiProviders.cs`); el cuerpo de error del proveedor no se reenvía ni se registra. La clave se cifra con AES-256-GCM (`AiKeyProtector`, clave derivada de `Jwt:SigningKey` con separación de dominio y datos asociados perfil+proveedor); solo se muestran sus 4 últimos caracteres. Si el secreto rota, la clave deja de leerse (`huella.ai.key_unreadable`) y se pide de nuevo. El paquete no incluye nombre, correo, teléfono ni enlaces. Tiempo máximo 120 s (nginx da 150 s a `…/ai-run`).
 - **Entradas:** límites de longitud, etiquetas HTML y esquemas peligrosos neutralizados (`TextInput`, `LinkPolicy`, `ContactRules`).
 - **Auditoría:** `huella.profile.published`, `huella.profile.unpublished`, `huella.link.regenerated` (sin token).
 
 ## Datos (esquema `huella`)
 
-`Profile` (único por `OwnerUserId`, `PublicTokenHash` único) · `ProfileLink` · `PrivateNote` · `Experience` · `Project` · `Skill` · `Education` · `Certification` · `LanguageSkill` · `Achievement` + `AchievementSkill` (el logro es la unidad: de ahí salen CV, perfil y futuras funciones) · `JobOffer` · `CvVersion` · `PublishedSnapshot`.
-Migraciones: `InitialHuellaSchema` y `AddHuellaProfileModel`. **Escritas desde un generador, sin `dotnet ef`:** ejecutar `dotnet ef migrations has-pending-model-changes` antes de integrar.
+`Profile` (único por `OwnerUserId`, `PublicTokenHash` único) · `ProfileLink` · `PrivateNote` · `Experience` · `Project` · `Skill` · `Education` · `Certification` · `LanguageSkill` · `Achievement` + `AchievementSkill` (el logro es la unidad: de ahí salen CV, perfil y futuras funciones) · `JobOffer` · `CvVersion` · `PublishedSnapshot` · `AiCredential` (una fila por proveedor; clave cifrada, `KeyHint`, `IsActive`).
+Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel` y `AddHuellaAiCredentials` (esta con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
 
 ## Códigos de error
 
@@ -55,7 +57,13 @@ Migraciones: `InitialHuellaSchema` y `AddHuellaProfileModel`. **Escritas desde u
 | `huella.cv.line_rejected` | 400 | El guardián rechazó la línea |
 | `huella.cv.not_public` | 404 | La publicación no incluye CV |
 | `huella.ai.invalid_json` | 400 | El JSON pegado no es válido |
-| `huella.cv.renderer_unavailable` | 503 | PDF no disponible (CCR-2) |
+| `huella.cv.renderer_unavailable` | 503 | El motor de PDF (Typst) no está instalado en el servidor |
+| `huella.ai.not_configured` | 409 | Se pidió IA automática sin proveedor configurado |
+| `huella.ai.key_unreadable` | 409 | La clave guardada ya no se puede descifrar (cambió el secreto) |
+| `huella.ai.key_rejected` · `huella.ai.key_or_model_rejected` · `huella.ai.model_not_found` · `huella.ai.request_rejected` | 400 | El proveedor rechazó la clave, el modelo o la solicitud |
+| `huella.ai.quota` | 429 | Límite de uso o saldo de la cuenta del proveedor |
+| `huella.ai.unreachable` · `huella.ai.timeout` · `huella.ai.bad_response` · `huella.ai.empty_response` | 503 | Proveedor caído, lento, con respuesta ilegible o vacía |
+| `huella.ai.provider_invalid_json` | 400 | La IA respondió algo que no es el JSON esperado (no se cambió nada) |
 
 ## Cómo extender (cartas, postulaciones, entrevistas)
 
@@ -63,4 +71,4 @@ Cuelgan de `Achievement`, `JobOffer` y `CvVersion` sin tocar su forma: una carta
 
 ## Pendiente / no verificado
 
-IA automática (Gemini) y su política de datos; PDF (CCR-2); metadatos `og:*` en servidor; compilación net10 real, migración y pruebas de integración con PostgreSQL no ejecutadas en el entorno de desarrollo (ver PR).
+Llamada real a OpenAI y Anthropic y respuesta real de Gemini con una clave válida (con clave falsa, Gemini respondió 400 y se tradujo bien); metadatos `og:*` en servidor.

@@ -5,14 +5,15 @@ Backend: `src/Modules/Huella/MODULE.md`. Producto: `docs/modules/HUELLA.md`.
 
 ## Rutas
 
-| Ruta | Página | Acceso |
-|---|---|---|
-| `/huella` | Redirige a `banco` | Owner con permiso |
-| `/huella/banco` | Banco de información: notas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas y logros | Owner |
-| `/huella/cv` | Crear CV: ofertas, mapa de evidencia, generación, versiones, edición validada, reporte, texto ATS, IA manual | Owner |
-| `/huella/perfil` | Datos del perfil, enlaces, vista previa, publicar/despublicar, enlace | Owner |
-| `/huella/pronto/:item` | «En preparación»: carta de recomendación, postulaciones, entrevistas (sin acciones falsas) | Owner |
-| `/huella/p/:token` | **Perfil público** (`platformRoutes`, `session: false`) | Quien tenga el enlace vigente |
+| Ruta                   | Página                                                                                                         | Acceso                        |
+| ---------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------- |
+| `/huella`              | Redirige a `banco`                                                                                             | Owner con permiso             |
+| `/huella/banco`        | Banco de información: notas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas y logros | Owner                         |
+| `/huella/cv`           | Crear CV: ofertas, mapa de evidencia, generación, versiones, edición validada, reporte, texto ATS, IA y PDF    | Owner                         |
+| `/huella/perfil`       | Datos del perfil, enlaces, vista previa, publicar/despublicar, enlace                                          | Owner                         |
+| `/huella/ia`           | Configurar IA: proveedor (Gemini, OpenAI, Anthropic), clave y modelo cargado desde el proveedor                | Owner                         |
+| `/huella/pronto/:item` | «En preparación»: carta de recomendación, postulaciones, entrevistas (sin acciones falsas)                     | Owner                         |
+| `/huella/p/:token`     | **Perfil público** (`platformRoutes`, `session: false`)                                                        | Quien tenga el enlace vigente |
 
 ## Estructura
 
@@ -25,7 +26,9 @@ Backend: `src/Modules/Huella/MODULE.md`. Producto: `docs/modules/HUELLA.md`.
 - La página pública añade `robots: noindex, nofollow, noarchive` y `referrer: no-referrer`; los enlaces externos usan `rel="noopener noreferrer"` y solo `http(s)`.
 - Las guardas se hacen en el servidor; la UI solo oculta lo que no corresponde.
 - **CSS propio:** `components/public-profile.css` es la única excepción a «sin CSS propio». El perfil público es una identidad de lectura (papel, tinta, marcador amarillo; sin morado ni degradados) que las utilidades del sistema no expresan; se limita a `.hp` y no afecta al resto del panel.
-- Mientras `pdfAvailable` sea falso, la UI ofrece el texto ATS y explica que el PDF aún no está disponible.
+- **PDF:** se descarga con `api.blob` (misma sesión y refresco que el resto de la API), no con un enlace directo. Si `pdfAvailable` es falso, la UI ofrece el texto ATS y explica que el PDF no está disponible en ese servidor.
+- **IA (`components/AiWorkbench.tsx`):** tres caminos con las mismas reglas: (1) «Mejorar con …» usa el proveedor activo; (2) «Descargar .md/.txt» o «Copiar» entrega el **mismo prompt** que recibe el proveedor, para pegarlo en una IA externa; (3) importar la respuesta desde un archivo (`.json`, `.txt`, `.md`, máx. 60 000 caracteres) o pegada. El servidor valida todo; lo rechazado se lista. Sin iconografía de IA.
+- **Clave de IA:** el campo es de contraseña, no se guarda en el navegador y la API nunca la devuelve (solo sus 4 últimos caracteres). Las llamadas `ai-run` usan un tiempo máximo de 150 s (`timeoutMs`).
 
 ## Pruebas
 
@@ -33,4 +36,4 @@ Backend: `src/Modules/Huella/MODULE.md`. Producto: `docs/modules/HUELLA.md`.
 
 ## Pendiente
 
-Tema propio de Huella en `module-themes.css` (zona compartida: propuesta en el PR), metadatos `og:*` (servidor/nginx), PDF (CCR-2), revisión visual en navegador real (320 px, claro/oscuro, impresión).
+Tema propio de Huella en `module-themes.css` (zona compartida: propuesta en el PR), metadatos `og:*` (servidor/nginx), revisión visual en navegador real (320 px, claro/oscuro, impresión).

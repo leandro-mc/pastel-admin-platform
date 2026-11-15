@@ -42,9 +42,10 @@ $env:PASTEL_MODULES = "*"      # volver al valor habitual
 ## 5. Proxy inverso y hosts
 `NGINX_TRUSTED_PROXY_CIDR` vale por defecto `192.0.2.0/24` (rango de documentación) para no confiar en un `X-Forwarded-For` suministrado por un cliente. Con un proxy inverso real, configure su CIDR junto con `REVERSE_PROXY_TRUSTED_NETWORKS` y `ALLOWED_HOSTS`, y mantenga HTTPS: las cookies de sesión usan el prefijo `__Host-` y necesitan HTTPS (salvo `localhost`).
 
-## 6. Motor documental (Typst)
+## 6. Motor documental y salida a proveedores de IA
 - La imagen de la API incluye Typst (`/usr/local/bin/typst`, `Documents__TypstPath`) y las fuentes Source Sans 3 (OFL) en `/app/Fonts`. Para subir de versión, cambie `TYPST_VERSION` y las dos sumas en `src/Host/Pastel.Host/Dockerfile` **y** en `scripts/test-backend.ps1`. Sin Typst la API arranca igual y el PDF responde `503 huella.cv.renderer_unavailable`.
 - Opcionales: `Documents__TimeoutSeconds` (20), `Documents__MemoryLimitMb` (512) y `Documents__MaxOutputBytes`.
+- La IA automática de Huella necesita salida HTTPS desde el contenedor `api` hacia `generativelanguage.googleapis.com`, `api.openai.com` y `api.anthropic.com`. Nginx da 150 s a las rutas `/api/huella/…/ai-run`; el cliente HTTP de la API corta a los 120 s.
 
 ## 7. Desarrollo sin Docker
 Requiere PostgreSQL y las variables `ConnectionStrings__Default`, `Jwt__SigningKey`, `Bootstrap__AdminEmail` y `Bootstrap__AdminPassword`.

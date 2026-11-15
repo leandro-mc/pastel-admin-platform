@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Pastel.Modules.Huella.Features.AiSettings;
 using Pastel.Modules.Huella.Features.Bank;
 using Pastel.Modules.Huella.Features.Common;
 using Pastel.Modules.Huella.Features.MyProfile;
@@ -33,7 +34,19 @@ internal static class HuellaEndpoints
         services.AddScoped<StudioHandler>();
         services.AddScoped<PublicationHandler>();
         services.AddScoped<PublicProfileHandler>();
-        services.AddSingleton<Cv.ICvRenderer, Cv.UnavailableCvRenderer>();
+        services.AddSingleton<Cv.ICvRenderer, Cv.TypstCvRenderer>();
+        services.AddScoped<AiSettingsHandler>();
+        services.AddScoped<Ai.AiAssistant>();
+        services.AddSingleton<Ai.AiKeyProtector>();
+        services.AddSingleton<Ai.IAiProvider, Ai.GeminiProvider>();
+        services.AddSingleton<Ai.IAiProvider, Ai.OpenAiProvider>();
+        services.AddSingleton<Ai.IAiProvider, Ai.AnthropicProvider>();
+        services.AddHttpClient(Ai.AiProviderCatalog.HttpClientName, client =>
+        {
+            // nginx da 150 s a las rutas ai-run; el cliente corta antes para responder con un error claro.
+            client.Timeout = TimeSpan.FromSeconds(120);
+            client.DefaultRequestHeaders.UserAgent.ParseAdd("Pastel-Huella/1.0");
+        }).RedactLoggedHeaders(_ => true);
         return services;
     }
 
@@ -65,6 +78,8 @@ internal static class HuellaEndpoints
             (await h.DeriveAsync(kind, parentId, ct)).ToResponse(http)).RequirePermission(write);
         parents.MapPost("/ai-package", async (string kind, Guid parentId, BankHandler h, HttpContext http, CancellationToken ct) =>
             (await h.AiPackageAsync(kind, parentId, ct)).ToResponse(http)).RequirePermission(write);
+        parents.MapPost("/ai-run", async (string kind, Guid parentId, BankHandler h, HttpContext http, CancellationToken ct) =>
+            (await h.RunAiAsync(kind, parentId, ct)).ToResponse(http)).RequirePermission(write);
         parents.MapPost("/ai-result", async (string kind, Guid parentId, AiResultInput i, BankHandler h, HttpContext http, CancellationToken ct) =>
             (await h.AiResultAsync(kind, parentId, i, ct)).ToResponse(http)).RequirePermission(write);
 
@@ -82,12 +97,20 @@ internal static class HuellaEndpoints
         studio.MapPut("/versions/{versionId:guid}/line", async (Guid versionId, EditLineInput i, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.EditLineAsync(versionId, i, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapPut("/versions/{versionId:guid}/public", async (Guid versionId, bool isPublic, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.SetPublicAsync(versionId, isPublic, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapPost("/versions/{versionId:guid}/ai-package", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.AiPackageAsync(versionId, ct)).ToResponse(http)).RequirePermission(write);
+        studio.MapPost("/versions/{versionId:guid}/ai-run", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.RunAiAsync(versionId, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapPost("/versions/{versionId:guid}/ai-result", async (Guid versionId, AiResultInput i, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.ApplyAiResultAsync(versionId, i, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapGet("/versions/{versionId:guid}/pdf", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) =>
         {
             var pdf = await h.RenderPdfAsync(versionId, ct);
             return pdf.IsFailure ? PastelProblem.From(pdf.Error, http) : Results.File(pdf.Value, "application/pdf", "cv.pdf");
         }).RequirePermission(read);
+
+        // IA automática: la clave entra una vez, se guarda cifrada y nunca se devuelve. Solo quien edita el perfil la gestiona.
+        var ai = api.MapGroup("/ai");
+        ai.MapGet("/settings", async (AiSettingsHandler h, HttpContext http, CancellationToken ct) => (await h.GetAsync(ct)).ToResponse(http)).RequirePermission(write);
+        ai.MapPut("/settings/{provider}", async (string provider, Ai.AiCredentialInput i, AiSettingsHandler h, HttpContext http, CancellationToken ct) => (await h.SaveAsync(provider, i, ct)).ToResponse(http)).RequirePermission(write);
+        ai.MapDelete("/settings/{provider}", async (string provider, AiSettingsHandler h, HttpContext http, CancellationToken ct) => (await h.DeleteAsync(provider, ct)).ToResponse(http)).RequirePermission(write);
+        ai.MapPost("/settings/{provider}/models", async (string provider, Ai.AiModelsInput i, AiSettingsHandler h, HttpContext http, CancellationToken ct) => (await h.ModelsAsync(provider, i, ct)).ToResponse(http)).RequirePermission(write);
 
         // Publicación
         var publication = api.MapGroup("/publication");

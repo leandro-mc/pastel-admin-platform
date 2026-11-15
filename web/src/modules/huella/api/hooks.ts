@@ -8,7 +8,9 @@ import { z } from "zod";
 import { api } from "@/core/api";
 import {
   aiApplySchema,
+  aiModelSchema,
   aiPackageSchema,
+  aiSettingsSchema,
   bankSchema,
   cvDocumentSchema,
   derivationSchema,
@@ -36,7 +38,11 @@ export const huellaKeys = {
   version: (id: string) => ["huella", "version", id] as const,
   status: ["huella", "publication"] as const,
   preview: ["huella", "preview"] as const,
+  ai: ["huella", "ai"] as const,
 };
+
+/** Las llamadas a un proveedor de IA pueden tardar; el servidor corta a los 120 s y nginx a los 150 s. */
+const AI_TIMEOUT_MS = 150_000;
 
 /** Cambiar el banco o el perfil altera la evidencia de las ofertas y lo que está sin publicar. */
 function refreshDerived(client: QueryClient) {
@@ -209,6 +215,17 @@ export const useAchievementAiPackage = (kind: ParentKind, parentId: string) =>
       api.post(`${base}/bank/${kind}/${parentId}/ai-package`, aiPackageSchema),
   });
 
+export const useAchievementAiRun = (kind: ParentKind, parentId: string) =>
+  useMutation({
+    mutationFn: () =>
+      api.post(
+        `${base}/bank/${kind}/${parentId}/ai-run`,
+        derivationSchema,
+        undefined,
+        { timeoutMs: AI_TIMEOUT_MS },
+      ),
+  });
+
 export const useAchievementAiResult = (kind: ParentKind, parentId: string) =>
   useMutation({
     mutationFn: (json: string) =>
@@ -303,13 +320,12 @@ export const useCvAiPackage = () =>
       api.post(`${base}/studio/versions/${id}/ai-package`, aiPackageSchema),
   });
 
-export function useCvAiResult() {
+function useCvAiMutation<TVars>(
+  request: (vars: TVars) => Promise<z.infer<typeof aiApplySchema>>,
+) {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, json }: { id: string; json: string }) =>
-      api.post(`${base}/studio/versions/${id}/ai-result`, aiApplySchema, {
-        json,
-      }),
+    mutationFn: request,
     onSuccess: (data) => {
       client.setQueryData(
         huellaKeys.version(data.version.summary.id),
@@ -320,6 +336,90 @@ export function useCvAiResult() {
     },
   });
 }
+
+export const useCvAiResult = () =>
+  useCvAiMutation(({ id, json }: { id: string; json: string }) =>
+    api.post(`${base}/studio/versions/${id}/ai-result`, aiApplySchema, {
+      json,
+    }),
+  );
+
+export const useCvAiRun = () =>
+  useCvAiMutation((id: string) =>
+    api.post(`${base}/studio/versions/${id}/ai-run`, aiApplySchema, undefined, {
+      timeoutMs: AI_TIMEOUT_MS,
+    }),
+  );
+
+/** Descarga el PDF de una versión con la sesión vigente y lo entrega al navegador como archivo. */
+export async function downloadCvPdf(id: string, fileName: string) {
+  const blob = await api.blob(`${base}/studio/versions/${id}/pdf`, {
+    retries: 0,
+  });
+  saveFile(blob, fileName);
+}
+
+/** Entrega un archivo generado en el navegador (PDF o el prompt para una IA externa). */
+export function saveFile(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+// ───────── IA automática ─────────
+export const useAiSettings = () =>
+  useQuery({
+    queryKey: huellaKeys.ai,
+    queryFn: ({ signal }) =>
+      api.get(`${base}/ai/settings`, aiSettingsSchema, { signal }),
+  });
+
+export function useSaveAiCredential() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      provider,
+      ...body
+    }: {
+      provider: string;
+      apiKey: string | null;
+      model: string;
+      makeActive: boolean;
+    }) => api.put(`${base}/ai/settings/${provider}`, aiSettingsSchema, body),
+    onSuccess: (data) => client.setQueryData(huellaKeys.ai, data),
+  });
+}
+
+export function useDeleteAiCredential() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (provider: string) =>
+      api.send("DELETE", `${base}/ai/settings/${provider}`),
+    onSuccess: () => void client.invalidateQueries({ queryKey: huellaKeys.ai }),
+  });
+}
+
+export const useAiModels = () =>
+  useMutation({
+    mutationFn: ({
+      provider,
+      apiKey,
+    }: {
+      provider: string;
+      apiKey: string | null;
+    }) =>
+      api.post(
+        `${base}/ai/settings/${provider}/models`,
+        z.array(aiModelSchema),
+        { apiKey },
+        { timeoutMs: 60_000 },
+      ),
+  });
 
 function usePublicationMutation(path: string) {
   const client = useQueryClient();

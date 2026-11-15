@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pastel.Modules.Huella.Ai;
 using Pastel.Modules.Huella.Cv;
 using Pastel.Modules.Huella.Domain;
 using Pastel.Modules.Huella.Features.Bank;
@@ -11,7 +12,7 @@ namespace Pastel.Modules.Huella.Features.Studio;
 /// Estudio de CV: ofertas, generación determinista desde el banco, edición validada por el guardián de verdad,
 /// versiones, y los paquetes de IA en modo manual. La IA solo devuelve JSON; nada de lo que llega se guarda sin validar.
 /// </summary>
-internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, IClock clock)
+internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, AiAssistant ai, IClock clock)
 {
     public const int MaxOffers = 50;
     public const int MaxVersions = 60;
@@ -374,15 +375,41 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             return loaded.Error;
         }
 
-        using var json = CvAiResult.TryParse(input.Json);
-        if (json is null)
+        var profile = await owners.GetOrCreateAsync(cancellationToken);
+        return await ApplyAsync(loaded.Value.Version, loaded.Value.Document, profile.Value, input.Json, HuellaErrors.AiResultInvalid, cancellationToken);
+    }
+
+    /// <summary>IA automática: arma el mismo paquete que el modo manual, lo envía al proveedor activo y aplica la respuesta validada.</summary>
+    public async Task<Result<AiApplyView>> RunAiAsync(Guid versionId, CancellationToken cancellationToken)
+    {
+        var package = await AiPackageAsync(versionId, cancellationToken);
+        if (package.IsFailure)
         {
-            return HuellaErrors.AiResultInvalid;
+            return package.Error;
         }
 
-        var (version, document) = loaded.Value;
         var profile = await owners.GetOrCreateAsync(cancellationToken);
-        var bank = await LoadBankAsync(profile.Value, cancellationToken);
+        var answer = await ai.RunAsync(profile.Value, package.Value.Prompt, cancellationToken);
+        if (answer.IsFailure)
+        {
+            return answer.Error;
+        }
+
+        var loaded = await LoadVersionAsync(versionId, cancellationToken);
+        return loaded.IsFailure
+            ? loaded.Error
+            : await ApplyAsync(loaded.Value.Version, loaded.Value.Document, profile.Value, answer.Value, HuellaErrors.AiProviderInvalidJson, cancellationToken);
+    }
+
+    private async Task<Result<AiApplyView>> ApplyAsync(CvVersion version, CvDocument document, Profile profile, string? raw, Error invalid, CancellationToken cancellationToken)
+    {
+        using var json = CvAiResult.TryParse(raw);
+        if (json is null)
+        {
+            return invalid;
+        }
+
+        var bank = await LoadBankAsync(profile, cancellationToken);
         var limits = CvLimits.For(version.Level, version.Paper);
         var outcome = CvAiResult.ApplyDraft(json, document, bank.Data, limits);
         if (outcome.Accepted == 0)

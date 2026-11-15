@@ -6,6 +6,7 @@ export const strings = {
     bank: "Banco",
     studio: "Crear CV",
     profile: "Perfil público",
+    ai: "Configurar IA",
     soon: "En preparación",
     recommendation: "Carta de recomendación",
     applications: "Postulaciones",
@@ -158,13 +159,9 @@ export const strings = {
       noProposals:
         "No encontramos logros en el relato. Revise que tenga frases con verbo de acción.",
       ai: {
-        title: "Con un asistente de IA (manual)",
+        title: "Proponer logros con IA",
         description:
-          "Copie el paquete en el asistente que prefiera, pida solo el JSON y pegue la respuesta. Se valida antes de usarse: no puede agregar cifras que no estén en su relato.",
-        getPackage: "Preparar paquete",
-        package: "Paquete para copiar",
-        paste: "Pegue aquí el JSON de la respuesta",
-        apply: "Validar respuesta",
+          "Use su proveedor configurado o una IA externa. Las propuestas se validan antes de mostrarse (no pueden agregar cifras que no estén en su relato) y usted decide cuáles acepta.",
         invalid: "No pudimos leer esa respuesta como JSON.",
       },
       visibilityOptions: {
@@ -281,12 +278,70 @@ export const strings = {
       fit: "Ajuste a la página",
     },
     ai: {
-      title: "Mejorar redacción con IA (manual)",
+      title: "Mejorar la redacción con IA",
       description:
-        "Copie el paquete en el asistente que prefiera y pegue el JSON. Cada viñeta debe citar logros de su banco y no puede traer cifras nuevas.",
+        "Use su proveedor configurado o cualquier asistente externo. Cada viñeta debe citar logros de su banco y no puede traer cifras nuevas: lo que no cumpla se descarta.",
       accepted: (n: number) =>
         `${n} línea${n === 1 ? "" : "s"} aplicada${n === 1 ? "" : "s"}.`,
+      savedPdf:
+        "La versión quedó guardada con los cambios. Ya puede descargar el PDF.",
     },
+  },
+  aiSettings: {
+    title: "Configurar IA",
+    description:
+      "Elija un proveedor, pegue su clave y escoja el modelo. Huella usará esa cuenta cuando pida «Mejorar con IA». La clave se guarda cifrada y nunca se vuelve a mostrar.",
+    privacy:
+      "Al usar la IA automática se envían al proveedor los logros de su banco, la oferta, su titular y «Mi voz»; nunca su nombre, correo, teléfono ni enlaces. El uso se cobra a su cuenta del proveedor.",
+    provider: "Proveedor",
+    getKey: "Obtener una clave",
+    apiKey: "Clave de API",
+    apiKeyNew: "Pegue la clave de su cuenta.",
+    apiKeyKept: (hint: string) =>
+      `Hay una clave guardada que termina en ${hint}. Déjelo vacío para conservarla.`,
+    loadModels: "Cargar modelos",
+    model: "Modelo",
+    modelHint:
+      "Cargue la lista para ver los modelos que su cuenta puede usar. Los modelos «flash» o «mini» son más rápidos y baratos.",
+    makeActive: "Usar este proveedor en «Mejorar con IA»",
+    save: "Guardar configuración",
+    saved: "Configuración guardada.",
+    remove: "Quitar clave",
+    removeConfirm: "¿Quitar la clave de este proveedor?",
+    removeDescription:
+      "Se borra la clave guardada. Podrá ingresarla de nuevo cuando quiera.",
+    removed: "Clave quitada.",
+    active: "En uso",
+    configured: "Configurado",
+    notConfigured: "Sin configurar",
+    unreadable:
+      "La clave guardada ya no se puede leer (cambió el secreto del servidor). Ingrésela de nuevo.",
+    modelsLoaded: (n: number) =>
+      `${n} modelo${n === 1 ? "" : "s"} disponible${n === 1 ? "" : "s"}.`,
+  },
+  aiWork: {
+    auto: "Con su proveedor",
+    run: (label: string, model: string) => `Mejorar con ${label} (${model})`,
+    running: "Esperando la respuesta del proveedor…",
+    notConfigured:
+      "Aún no ha configurado un proveedor. Puede hacerlo en «Configurar IA» o usar una IA externa.",
+    unreadable:
+      "La clave guardada ya no se puede leer. Ingrésela de nuevo en «Configurar IA».",
+    configure: "Configurar IA",
+    external: "Con una IA externa",
+    step1:
+      "1. Descargue las instrucciones y péguelas completas en el asistente que prefiera. Son las mismas que recibe el proveedor configurado.",
+    downloadMd: "Descargar .md",
+    downloadTxt: "Descargar .txt",
+    step2:
+      "2. El asistente debe responder solo con un bloque JSON. Cópielo o guárdelo en un archivo.",
+    step3: "3. Importe la respuesta: cárguela desde un archivo o péguela.",
+    file: "Archivo con la respuesta (.json, .txt o .md)",
+    fileTooLarge:
+      "El archivo es demasiado grande para ser una respuesta (máximo 60 000 caracteres).",
+    paste: "O pegue aquí el JSON de la respuesta",
+    import: "Importar y validar",
+    rejected: "Se descartó:",
   },
   publication: {
     title: "Perfil público",

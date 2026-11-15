@@ -15,6 +15,8 @@ export type RequestOptions = {
   skipRefresh?: boolean;
   /** Para reportes enviados mientras la página se cierra. */
   keepalive?: boolean;
+  /** Tiempo máximo de la petición. Por defecto 30 s; solo operaciones largas conocidas (p. ej. llamadas a una IA) lo amplían. */
+  timeoutMs?: number;
 };
 
 const TIMEOUT_MS = 30_000;
@@ -38,8 +40,11 @@ type Call = {
   body?: unknown;
 } & RequestOptions;
 
-function withTimeout(signal?: AbortSignal): AbortSignal {
-  const timeout = AbortSignal.timeout(TIMEOUT_MS);
+function withTimeout(
+  signal?: AbortSignal,
+  timeoutMs = TIMEOUT_MS,
+): AbortSignal {
+  const timeout = AbortSignal.timeout(timeoutMs);
   return signal ? AbortSignal.any([signal, timeout]) : timeout;
 }
 
@@ -60,7 +65,7 @@ async function attempt(call: Call): Promise<Response> {
       body: call.body === undefined ? undefined : JSON.stringify(call.body),
       credentials: "include",
       cache: "no-store",
-      signal: withTimeout(call.signal),
+      signal: withTimeout(call.signal, call.timeoutMs),
       keepalive: call.keepalive,
     });
   } catch (error) {
@@ -182,6 +187,12 @@ function invalidResponse(status: number, cause: unknown): ApiError {
   });
 }
 
+async function readBlob(call: Call): Promise<Blob> {
+  const response = await send(call);
+  if (!response.ok) throw await problemFromResponse(response);
+  return response.blob();
+}
+
 async function readNothing(call: Call): Promise<void> {
   const response = await send(call);
   if (!response.ok) throw await problemFromResponse(response);
@@ -212,6 +223,9 @@ export const api = {
     body?: unknown,
     options?: RequestOptions,
   ) => readJson({ method: "PATCH", path, body, ...options }, schema),
+  /** Descarga binaria (p. ej. un PDF) con la misma sesión, refresco y errores que el resto de la API. */
+  blob: (path: string, options?: RequestOptions) =>
+    readBlob({ method: "GET", path, ...options }),
   /** Operaciones sin cuerpo de respuesta (204). */
   send: (
     method: Exclude<HttpMethod, "GET">,

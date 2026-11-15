@@ -2,14 +2,17 @@ import { useState } from "react";
 import { useNotify } from "@/core/notifications";
 import { Badge, Button, Panel, TextField } from "@/core/ui";
 import {
+  downloadCvPdf,
   useCvAiPackage,
   useCvAiResult,
+  useCvAiRun,
   useEditLine,
   useRenameVersion,
   useSetPublicVersion,
 } from "../api/hooks";
 import type { CvDocument, CvVersion } from "../api/schemas";
 import { strings } from "../strings";
+import { AiWorkbench } from "./AiWorkbench";
 import { ErrorNotice, TextAreaField } from "./Form";
 import { EvidenceList } from "./OfferPanel";
 
@@ -342,17 +345,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
             >
               {summary.isPublic ? t.removePublic : t.makePublic}
             </Button>
-            {version.pdfAvailable ? (
-              <a
-                className="text-sm font-medium text-accent-strong underline"
-                href={`/api/huella/studio/versions/${summary.id}/pdf`}
-                download
-              >
-                {t.pdf}
-              </a>
-            ) : (
-              <p className="text-sm text-muted">{t.pdfUnavailable}</p>
-            )}
+            <PdfButton version={version} />
           </div>
           <p className="text-sm text-muted">{t.publicHint}</p>
           <ErrorNotice error={setPublic.error} />
@@ -403,100 +396,104 @@ export function CvEditor({ version }: { version: CvVersion }) {
         />
       </Panel>
 
-      <AiRewrite versionId={summary.id} />
+      <AiRewrite version={version} />
     </div>
   );
 }
 
-function AiRewrite({ versionId }: { versionId: string }) {
+/** Nombre de archivo legible a partir del nombre de la versión (sin caracteres que el sistema rechace). */
+function fileName(name: string) {
+  const safe = name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^A-Za-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 60);
+  return safe.length > 0 ? safe : "cv";
+}
+
+/** Descarga el PDF con la sesión vigente (no un enlace directo: el token de acceso puede haber vencido). */
+function PdfButton({ version }: { version: CvVersion }) {
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState<unknown>(null);
+  if (!version.pdfAvailable) {
+    return <p className="text-sm text-muted">{t.pdfUnavailable}</p>;
+  }
+  return (
+    <div className="flex flex-col gap-2">
+      <Button
+        variant="secondary"
+        type="button"
+        loading={pending}
+        onClick={() => {
+          setPending(true);
+          setError(null);
+          downloadCvPdf(
+            version.summary.id,
+            `${fileName(version.summary.name)}.pdf`,
+          )
+            .catch(setError)
+            .finally(() => setPending(false));
+        }}
+      >
+        {t.pdf}
+      </Button>
+      <ErrorNotice error={error} />
+    </div>
+  );
+}
+
+function AiRewrite({ version }: { version: CvVersion }) {
   const notify = useNotify();
+  const versionId = version.summary.id;
   const pack = useCvAiPackage();
+  const run = useCvAiRun();
   const apply = useCvAiResult();
-  const [pasted, setPasted] = useState("");
   const [rejected, setRejected] = useState<readonly string[]>([]);
-  const prompt = pack.data?.prompt;
+  const [applied, setApplied] = useState(false);
+  const onApplied = (result: { accepted: number; rejected: string[] }) => {
+    setRejected(result.rejected);
+    setApplied(result.accepted > 0);
+    notify(strings.studio.ai.accepted(result.accepted));
+  };
   return (
     <Panel
       title={strings.studio.ai.title}
       description={strings.studio.ai.description}
     >
-      <div className="flex flex-col gap-3">
-        <div>
-          <Button
-            variant="secondary"
-            type="button"
-            loading={pack.isPending}
-            onClick={() => pack.mutate(versionId)}
-          >
-            {strings.bank.achievements.ai.getPackage}
-          </Button>
-        </div>
-        {prompt ? (
-          <>
-            <TextAreaField
-              label={strings.bank.achievements.ai.package}
-              readOnly
-              rows={6}
-              value={prompt}
-            />
-            <div>
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() =>
-                  void navigator.clipboard
-                    .writeText(prompt)
-                    .then(() => notify(strings.common.copied))
-                }
-              >
-                {strings.common.copy}
-              </Button>
+      <AiWorkbench
+        fileBase={`huella-cv-${fileName(version.summary.name)}`}
+        getPackage={() => pack.mutateAsync(versionId)}
+        preparing={pack.isPending}
+        onRun={() => {
+          apply.reset();
+          run.mutate(versionId, { onSuccess: onApplied });
+        }}
+        running={run.isPending}
+        onImport={(json, done) => {
+          run.reset();
+          apply.mutate(
+            { id: versionId, json },
+            {
+              onSuccess: (result) => {
+                done();
+                onApplied(result);
+              },
+            },
+          );
+        }}
+        importing={apply.isPending}
+        error={run.error ?? apply.error ?? pack.error}
+        rejected={rejected}
+        after={
+          applied ? (
+            <div className="flex flex-col gap-2 rounded-lg border border-line p-3">
+              <p className="text-sm text-fg">{strings.studio.ai.savedPdf}</p>
+              <PdfButton version={version} />
             </div>
-          </>
-        ) : null}
-        <TextAreaField
-          label={strings.bank.achievements.ai.paste}
-          rows={5}
-          value={pasted}
-          onChange={(e) => setPasted(e.target.value)}
-        />
-        <div>
-          <Button
-            variant="secondary"
-            type="button"
-            disabled={pasted.trim() === ""}
-            loading={apply.isPending}
-            onClick={() =>
-              apply.mutate(
-                { id: versionId, json: pasted },
-                {
-                  onSuccess: (result) => {
-                    setPasted("");
-                    setRejected(result.rejected);
-                    notify(strings.studio.ai.accepted(result.accepted));
-                  },
-                },
-              )
-            }
-          >
-            {strings.bank.achievements.ai.apply}
-          </Button>
-        </div>
-        {rejected.length > 0 ? (
-          <div className="text-sm text-muted">
-            <p className="font-medium text-fg">{t.rejected}</p>
-            <ul className="list-disc pl-5">
-              {rejected.map((r) => (
-                <li key={r}>{r}</li>
-              ))}
-            </ul>
-          </div>
-        ) : null}
-        <ErrorNotice
-          error={pack.error ?? apply.error}
-          fallback={strings.bank.achievements.ai.invalid}
-        />
-      </div>
+          ) : null
+        }
+      />
     </Panel>
   );
 }

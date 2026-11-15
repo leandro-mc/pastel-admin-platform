@@ -40,6 +40,8 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
 
     public DbSet<AchievementSkill> AchievementSkills => Set<AchievementSkill>();
 
+    public DbSet<AiCredential> AiCredentials => Set<AiCredential>();
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);
@@ -254,6 +256,19 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.HasIndex(x => x.SkillId);
             e.HasOne<Achievement>().WithMany().HasForeignKey(x => x.AchievementId).OnDelete(DeleteBehavior.Cascade).IsRequired();
             e.HasOne<Skill>().WithMany().HasForeignKey(x => x.SkillId).OnDelete(DeleteBehavior.Cascade).IsRequired();
+        });
+
+        modelBuilder.Entity<AiCredential>(e =>
+        {
+            e.ToTable("ai_credentials");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Provider).HasMaxLength(16).IsRequired();
+            e.Property(x => x.Model).HasMaxLength(100).IsRequired();
+            e.Property(x => x.EncryptedApiKey).HasMaxLength(2048).IsRequired();
+            e.Property(x => x.KeyHint).HasMaxLength(8).IsRequired();
+            e.Property(x => x.Version).IsRowVersion();
+            e.HasIndex(x => new { x.ProfileId, x.Provider }).IsUnique();
+            e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();
         });
     }
 }

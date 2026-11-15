@@ -114,6 +114,7 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.ToTable("achievements", "huella", t =>
                         {
                             t.HasCheckConstraint("CK_achievements_one_parent", "(\"ExperienceId\" IS NULL) <> (\"ProjectId\" IS NULL)");
+
                             t.HasCheckConstraint("CK_achievements_strength", "\"Strength\" BETWEEN 1 AND 5");
                         });
                 });
@@ -131,6 +132,58 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.HasIndex("SkillId");
 
                     b.ToTable("achievement_skills", "huella");
+                });
+
+            modelBuilder.Entity("Pastel.Modules.Huella.Domain.AiCredential", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("EncryptedApiKey")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("KeyHint")
+                        .IsRequired()
+                        .HasMaxLength(8)
+                        .HasColumnType("character varying(8)");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Provider")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId", "Provider")
+                        .IsUnique();
+
+                    b.ToTable("ai_credentials", "huella");
                 });
 
             modelBuilder.Entity("Pastel.Modules.Huella.Domain.Certification", b =>
@@ -904,6 +957,15 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.HasOne("Pastel.Modules.Huella.Domain.Skill", null)
                         .WithMany()
                         .HasForeignKey("SkillId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pastel.Modules.Huella.Domain.AiCredential", b =>
+                {
+                    b.HasOne("Pastel.Modules.Huella.Domain.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
                 });

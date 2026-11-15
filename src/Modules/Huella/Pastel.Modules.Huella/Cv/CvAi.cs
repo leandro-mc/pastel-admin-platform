@@ -287,23 +287,3 @@ internal static class CvAiResult
     private static string Preview(string text) => text.Length > 60 ? text[..60] + "…" : text;
 }
 
-/// <summary>
-/// Motor de PDF del CV. Depende de CCR-2 (Typst, fuentes autoalojadas y <c>Pastel.Documents</c>), que está aprobado pero
-/// sin aplicar: mientras tanto se registra <see cref="UnavailableCvRenderer"/> y los endpoints de PDF responden 503 con
-/// <c>huella.cv.renderer_unavailable</c>. La implementación real recibirá el <see cref="CvDocument"/> como datos JSON y
-/// una plantilla fija; nunca código generado por la IA.
-/// </summary>
-internal interface ICvRenderer
-{
-    bool IsAvailable { get; }
-
-    Task<Result<byte[]>> RenderPdfAsync(CvDocument document, CvRequestOptions options, CancellationToken cancellationToken);
-}
-
-internal sealed class UnavailableCvRenderer : ICvRenderer
-{
-    public bool IsAvailable => false;
-
-    public Task<Result<byte[]>> RenderPdfAsync(CvDocument document, CvRequestOptions options, CancellationToken cancellationToken) =>
-        Task.FromResult(Result<byte[]>.Failure(HuellaErrors.RendererUnavailable));
-}

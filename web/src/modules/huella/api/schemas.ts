@@ -280,6 +280,26 @@ export const aiApplySchema = z.object({
   rejected: z.array(text),
 });
 
+// ── IA automática ──
+export const aiProviderSchema = z.object({
+  id: text,
+  label: text,
+  defaultModel: text,
+  configured: z.boolean(),
+  readable: z.boolean(),
+  isActive: z.boolean(),
+  model: maybe,
+  keyHint: maybe,
+  updatedAt: maybe,
+});
+
+export const aiSettingsSchema = z.object({
+  activeProvider: maybe,
+  providers: z.array(aiProviderSchema),
+});
+
+export const aiModelSchema = z.object({ id: text, label: text });
+
 // ── Publicación y vista pública ──
 export const publicProfileSchema = z.object({
   name: text,
@@ -390,6 +410,10 @@ export type LanguageSkill = z.infer<typeof languageSchema>;
 export type Achievement = z.infer<typeof achievementSchema>;
 export type Proposal = z.infer<typeof proposalSchema>;
 export type Derivation = z.infer<typeof derivationSchema>;
+export type AiPackage = z.infer<typeof aiPackageSchema>;
+export type AiSettings = z.infer<typeof aiSettingsSchema>;
+export type AiProvider = z.infer<typeof aiProviderSchema>;
+export type AiModel = z.infer<typeof aiModelSchema>;
 export type OfferSummary = z.infer<typeof offerSummarySchema>;
 export type Offer = z.infer<typeof offerSchema>;
 export type Evidence = z.infer<typeof evidenceSchema>;

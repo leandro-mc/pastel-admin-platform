@@ -10,13 +10,15 @@ import {
 import {
   useAchievementAiPackage,
   useAchievementAiResult,
+  useAchievementAiRun,
   useDerive,
   useSaveAchievements,
   type ParentKind,
 } from "../api/hooks";
 import type { Achievement, Derivation, Proposal, Skill } from "../api/schemas";
 import { strings } from "../strings";
-import { ErrorNotice, TextAreaField, fieldError } from "./Form";
+import { AiWorkbench } from "./AiWorkbench";
+import { ErrorNotice, fieldError } from "./Form";
 import { newKey } from "./SectionEditor";
 
 const text = strings.bank.achievements;
@@ -415,11 +417,9 @@ function AiManual({
   parentId: string;
   onResult: (d: Derivation) => void;
 }) {
-  const notify = useNotify();
   const packageMutation = useAchievementAiPackage(kind, parentId);
+  const runMutation = useAchievementAiRun(kind, parentId);
   const resultMutation = useAchievementAiResult(kind, parentId);
-  const [pasted, setPasted] = useState("");
-  const prompt = packageMutation.data?.prompt;
   return (
     <details className="rounded-lg border border-line p-3">
       <summary className="cursor-pointer text-sm font-medium text-fg">
@@ -427,66 +427,29 @@ function AiManual({
       </summary>
       <div className="mt-3 flex flex-col gap-3">
         <p className="text-sm text-muted">{text.ai.description}</p>
-        <div>
-          <Button
-            variant="secondary"
-            type="button"
-            loading={packageMutation.isPending}
-            onClick={() => packageMutation.mutate()}
-          >
-            {text.ai.getPackage}
-          </Button>
-        </div>
-        {prompt ? (
-          <div className="flex flex-col gap-2">
-            <TextAreaField
-              label={text.ai.package}
-              readOnly
-              rows={6}
-              value={prompt}
-            />
-            <div>
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() =>
-                  void navigator.clipboard
-                    .writeText(prompt)
-                    .then(() => notify(strings.common.copied))
-                }
-              >
-                {strings.common.copy}
-              </Button>
-            </div>
-          </div>
-        ) : null}
-        <TextAreaField
-          label={text.ai.paste}
-          rows={5}
-          value={pasted}
-          onChange={(e) => setPasted(e.target.value)}
-        />
-        <div>
-          <Button
-            variant="secondary"
-            type="button"
-            disabled={pasted.trim() === ""}
-            loading={resultMutation.isPending}
-            onClick={() =>
-              resultMutation.mutate(pasted, {
-                onSuccess: (d) => {
-                  onResult(d);
-                  setPasted("");
-                },
-              })
-            }
-          >
-            {text.ai.apply}
-          </Button>
-        </div>
-        <ErrorNotice
-          error={packageMutation.error ?? resultMutation.error}
-          fallback={text.ai.invalid}
+        <AiWorkbench
+          fileBase={`huella-logros-${kind === "projects" ? "proyecto" : "experiencia"}`}
+          getPackage={() => packageMutation.mutateAsync()}
+          preparing={packageMutation.isPending}
+          onRun={() => {
+            resultMutation.reset();
+            runMutation.mutate(undefined, { onSuccess: onResult });
+          }}
+          running={runMutation.isPending}
+          onImport={(json, done) => {
+            runMutation.reset();
+            resultMutation.mutate(json, {
+              onSuccess: (d) => {
+                onResult(d);
+                done();
+              },
+            });
+          }}
+          importing={resultMutation.isPending}
+          error={
+            runMutation.error ?? resultMutation.error ?? packageMutation.error
+          }
+          rejected={[]}
         />
       </div>
     </details>

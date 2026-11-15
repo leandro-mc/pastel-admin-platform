@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pastel.Modules.Huella.Ai;
 using Pastel.Modules.Huella.Cv;
 using Pastel.Modules.Huella.Domain;
 using Pastel.Modules.Huella.Persistence;
@@ -11,7 +12,7 @@ namespace Pastel.Modules.Huella.Features.Bank;
 /// faltan se borran y los nuevos se crean con un <c>Guid</c> v7 del servidor. Un <c>Id</c> que no pertenece al perfil de
 /// la sesión responde 404 sin tocar nada (aislamiento del propietario).
 /// </summary>
-internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, IClock clock)
+internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, AiAssistant ai, IClock clock)
 {
     public const int MaxExperiences = 40;
     public const int MaxProjects = 40;
@@ -538,18 +539,35 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
     public async Task<Result<DerivationView>> AiResultAsync(string kind, Guid parentId, AiResultInput input, CancellationToken cancellationToken)
     {
         var context = await DerivationContextAsync(kind, parentId, cancellationToken);
+        return context.IsFailure ? context.Error : ParseProposals(context.Value, input.Json, HuellaErrors.AiResultInvalid);
+    }
+
+    /// <summary>IA automática: mismo paquete que el modo manual, enviado al proveedor activo; las propuestas no se guardan solas.</summary>
+    public async Task<Result<DerivationView>> RunAiAsync(string kind, Guid parentId, CancellationToken cancellationToken)
+    {
+        var context = await DerivationContextAsync(kind, parentId, cancellationToken);
         if (context.IsFailure)
         {
             return context.Error;
         }
 
-        using var json = CvAiResult.TryParse(input.Json);
+        var (narrative, isProject, skills) = context.Value;
+        var names = skills.Select(s => s.Name).Concat(TermMatcher.Known.Select(k => k.Term)).Distinct().ToList();
+        var package = AiPackages.ForAchievements(narrative, isProject, names);
+        var profile = await owners.GetOrCreateAsync(cancellationToken);
+        var answer = await ai.RunAsync(profile.Value, package.Prompt, cancellationToken);
+        return answer.IsFailure ? answer.Error : ParseProposals(context.Value, answer.Value, HuellaErrors.AiProviderInvalidJson);
+    }
+
+    private static Result<DerivationView> ParseProposals((string Narrative, bool IsProject, List<Skill> Skills) context, string? raw, Error invalid)
+    {
+        using var json = CvAiResult.TryParse(raw);
         if (json is null)
         {
-            return HuellaErrors.AiResultInvalid;
+            return invalid;
         }
 
-        var (narrative, _, skills) = context.Value;
+        var (narrative, _, skills) = context;
         var names = skills.Select(s => s.Name).Concat(TermMatcher.Known.Select(k => k.Term)).Distinct().ToList();
         var (proposals, rejected) = CvAiResult.ParseAchievements(json, narrative, names);
         return new DerivationView("ai", proposals.Select(p => ToView(p, skills)).ToList(), rejected);

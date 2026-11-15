@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Pastel.Documents;
 using Pastel.Modules.Huella.Features;
 using Pastel.Modules.Huella.Persistence;
 using Pastel.Platform.Modules;
@@ -31,6 +32,7 @@ internal sealed class HuellaModule : IPastelModule
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
     {
         services.AddPastelDbContext<HuellaDbContext>(configuration, HuellaDbContext.Schema);
+        services.AddPastelDocuments(configuration);
         services.AddHuellaHandlers();
 
         // Límite de tasa de las rutas públicas, por IP (la IP real la fija el middleware de cabeceras reenviadas de la plataforma).

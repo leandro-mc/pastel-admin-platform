@@ -4,6 +4,7 @@ import {
   FileText,
   Footprints,
   Globe,
+  KeyRound,
   MessagesSquare,
   Quote,
 } from "lucide-react";
@@ -32,6 +33,7 @@ export default {
     },
     { label: strings.nav.studio, to: "cv", icon: FileText },
     { label: strings.nav.profile, to: "perfil", icon: Globe },
+    { label: strings.nav.ai, to: "ia", icon: KeyRound },
     {
       label: strings.nav.recommendation,
       to: "pronto/recomendacion",
@@ -67,6 +69,11 @@ export default {
       path: "perfil",
       crumb: strings.nav.profile,
       lazy: () => import("./pages/PublicationPage"),
+    },
+    {
+      path: "ia",
+      crumb: strings.nav.ai,
+      lazy: () => import("./pages/AiPage"),
     },
     {
       path: "pronto",

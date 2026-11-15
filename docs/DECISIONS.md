@@ -14,6 +14,7 @@ Decisiones vigentes de arquitectura y del propietario, en una línea cada una. E
 | **Ingreso con Google (OIDC)** | Google autentica la identidad; Pastel conserva su propia sesión y autorización. Vincula por correo verificado a una cuenta existente o registra como Member; tokens de Google no se guardan. |
 | **Refresh token con ventana de gracia** | La rotación de refresh tokens tolera peticiones concurrentes (varias pestañas) durante 10 s (`Auth:Refresh:ReuseGraceSeconds`) reemitiendo la misma sucesora; fuera de esa ventana un token reutilizado revoca todas las sesiones. |
 | **Motor documental compartido (CCR-2)** | `Pastel.Documents` invoca Typst (binario fijado con suma de control) con plantilla fija y datos JSON; fuentes autoalojadas dentro de la imagen. Un solo binario, PDF etiquetado, sin TeX ni navegador sin cabeza. Aplicado el 2026-11-15 con autorización del propietario. |
+| **Claves de IA cifradas con clave derivada** | Huella cifra las claves de IA con AES-GCM y una clave derivada de `Jwt:SigningKey` (el mismo patrón de la ventana de gracia de Identity) y no con Data Protection, que en el contenedor de solo lectura usa claves efímeras y perdería las claves en cada reinicio. Rotar el secreto obliga a ingresarlas de nuevo. |
 | **Slices verticales** | Casos de uso en `Features/<Caso>/` con endpoints mínimos (sin controladores): cada slice agrupa petición, validación, handler y ruta. |
 
 ## Producto y proceso (propietario)

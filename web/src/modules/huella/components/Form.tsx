@@ -59,7 +59,11 @@ export function ErrorNotice({
   fallback?: string;
 }) {
   if (!error) return null;
-  const known = isApiError(error) && error.status < 500 && !error.isNetwork;
+  // 503 es un fallo esperable con mensaje propio (motor de PDF o proveedor de IA no disponible).
+  const known =
+    isApiError(error) &&
+    (error.status < 500 || error.status === 503) &&
+    !error.isNetwork;
   const message =
     known && isApiError(error)
       ? error.detail

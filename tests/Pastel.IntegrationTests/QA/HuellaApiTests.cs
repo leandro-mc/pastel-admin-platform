@@ -2,7 +2,9 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
+using Pastel.Modules.Huella.Ai;
 using Pastel.Modules.Huella.Domain;
 using Pastel.Modules.Huella.Persistence;
 using Pastel.Modules.Identity.Persistence;
@@ -208,6 +210,91 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
             Assert.DoesNotContain(token, a.DetailsJson ?? string.Empty, StringComparison.Ordinal);
             Assert.DoesNotContain(token, a.Target ?? string.Empty, StringComparison.Ordinal);
         });
+    }
+
+    // IA automática: la clave se guarda cifrada y nunca vuelve por la API; lo que responde el proveedor pasa por las mismas
+    // reglas que el JSON pegado (una cifra que no está en el relato se rechaza). Proveedor falso: sin red ni costo.
+    [Trait("RequirementId", "HUELLA-E1-7")]
+    [RequiresPostgresFact]
+    public async Task Ai_key_is_stored_encrypted_never_returned_and_provider_output_is_validated()
+    {
+        const string apiKey = "AIzaFAKE-integration-key-0123456789wxyz";
+        var fake = new FakeGemini();
+        using var host = _factory.WithWebHostBuilder(builder => builder.ConfigureTestServices(services =>
+        {
+            var gemini = services.Single(d => d.ServiceType == typeof(IAiProvider) && d.ImplementationType == typeof(GeminiProvider));
+            services.Remove(gemini);
+            services.AddSingleton<IAiProvider>(fake);
+        }));
+        var owner = QaSupport.NewClient(host);
+        _clients.Add(owner);
+        await QaSupport.LoginAsync(owner, OwnerEmail, OwnerPassword);
+
+        using (var saved = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/ai/settings/gemini", new { apiKey, model = "gemini-falso", makeActive = true }))
+        {
+            var text = await saved.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+            Assert.DoesNotContain(apiKey, text, StringComparison.Ordinal);
+            Assert.Contains("wxyz", text, StringComparison.Ordinal);
+        }
+
+        using (var read = await QaSupport.SendAsync(owner, HttpMethod.Get, "/api/huella/ai/settings"))
+        {
+            Assert.DoesNotContain(apiKey, await read.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        }
+
+        await using (var scope = host.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<HuellaDbContext>();
+            var stored = await db.AiCredentials.AsNoTracking().Select(c => c.EncryptedApiKey).ToListAsync();
+            Assert.NotEmpty(stored);
+            Assert.All(stored, value => Assert.DoesNotContain(apiKey, value, StringComparison.Ordinal));
+        }
+
+        using var bank = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/bank/experiences", new
+        {
+            items = new[] { new { role = "QA Engineer", company = "Empresa IA", start = "2022-03", narrative = "Automaticé 140 pruebas con Playwright y bajé la regresión de 2 días a 3 horas." } },
+        });
+        Assert.Equal(HttpStatusCode.OK, bank.StatusCode);
+        using var bankJson = JsonDocument.Parse(await bank.Content.ReadAsStringAsync());
+        var experienceId = bankJson.RootElement.GetProperty("experiences").EnumerateArray()
+            .First(e => e.GetProperty("company").GetString() == "Empresa IA").GetProperty("id").GetString();
+
+        using var run = await QaSupport.SendAsync(owner, HttpMethod.Post, $"/api/huella/bank/experiences/{experienceId}/ai-run");
+        Assert.Equal(HttpStatusCode.OK, run.StatusCode);
+        Assert.Equal(apiKey, fake.LastKey);
+        using var runJson = JsonDocument.Parse(await run.Content.ReadAsStringAsync());
+        var proposals = runJson.RootElement.GetProperty("proposals").EnumerateArray().Select(p => p.GetProperty("longText").GetString()).ToList();
+        var rejected = runJson.RootElement.GetProperty("rejected").EnumerateArray().Select(r => r.GetString()).ToList();
+        Assert.Single(proposals);
+        Assert.Contains("140 pruebas", proposals[0], StringComparison.Ordinal);
+        Assert.Contains(rejected, r => r!.Contains("999", StringComparison.Ordinal));
+    }
+
+    private sealed class FakeGemini : IAiProvider
+    {
+        public string? LastKey { get; private set; }
+
+        public string Id => "gemini";
+
+        public string Label => "Gemini (prueba)";
+
+        public string DefaultModel => "gemini-falso";
+
+        public Task<Pastel.SharedKernel.Result<IReadOnlyList<AiModelInfo>>> ListModelsAsync(string apiKey, CancellationToken cancellationToken) =>
+            Task.FromResult<Pastel.SharedKernel.Result<IReadOnlyList<AiModelInfo>>>(new List<AiModelInfo> { new("gemini-falso", "Falso") });
+
+        public Task<Pastel.SharedKernel.Result<string>> GenerateJsonAsync(string apiKey, string model, string prompt, CancellationToken cancellationToken)
+        {
+            LastKey = apiKey;
+            const string json = """
+                {"achievements":[
+                  {"shortText":"Automaticé 140 pruebas con Playwright","longText":"Automaticé 140 pruebas con Playwright y bajé la regresión de 2 días a 3 horas","skills":["Playwright"],"strength":4,"impactType":"delivery"},
+                  {"shortText":"Aumenté la cobertura 999 %","longText":"Aumenté la cobertura de pruebas en 999 % en un trimestre","skills":[],"strength":5,"impactType":"quality"}
+                ]}
+                """;
+            return Task.FromResult<Pastel.SharedKernel.Result<string>>(json);
+        }
     }
 
     // ---------------------------------------------------------------- apoyo

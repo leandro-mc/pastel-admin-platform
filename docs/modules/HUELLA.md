@@ -30,14 +30,16 @@ Los logros son la capa que reutilizarán las futuras funciones (carta de recomen
 |---|---|---|
 | `/huella/p/:token` | **Perfil público mediante enlace secreto** | Móvil y escritorio, solo versión publicada; enlaces externos con `rel="noopener noreferrer"`; resaltador de evidencia, impresión y «Ver CV» si la publicación lo incluye; token válido obligatorio y sin login |
 | `/huella` | Entrada | Lleva al banco |
-| `/huella/banco` | Banco de información | Notas privadas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas; logros por experiencia/proyecto (por reglas, a mano o con IA manual) |
-| `/huella/cv` | Crear CV | Oferta → mapa de evidencia y filtros duros → generar → versiones → edición validada, reporte, texto ATS, marcar CV público |
+| `/huella/banco` | Banco de información | Notas privadas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas; logros por experiencia/proyecto (por reglas, a mano o con IA) |
+| `/huella/cv` | Crear CV | Oferta → mapa de evidencia y filtros duros → generar → versiones → edición validada, reporte, texto ATS, IA, PDF, marcar CV público |
+| `/huella/ia` | Configurar IA | Proveedor (Gemini, OpenAI o Anthropic), clave de la cuenta del propietario y modelo elegido de la lista real del proveedor |
 | `/huella/perfil` | Perfil público | Datos, enlaces, interruptores de contacto, vista previa, publicar/despublicar, enlace (se muestra una vez) |
 | `/huella/pronto/:item` | En preparación | Carta de recomendación, historial de postulaciones, preparación de entrevistas |
 
 ## 5. Reglas y detalles
 - **Privacidad:** control de qué se muestra; correo y teléfono ocultos salvo elección explícita; validar enlaces (solo `https`, sin credenciales en la URL); no exponer datos internos.
-- **CV:** se compone desde el banco; la IA, cuando se use, devuelve **solo JSON** (nunca Typst/LaTeX) y cada línea se valida contra el banco (fuentes citadas, sin cifras nuevas, frases prohibidas, tope de líneas). Hoy la IA es manual (paquete para copiar + JSON pegado y validado). El **PDF depende de CCR-2** y está detrás de `ICvRenderer`: responde 503 `huella.cv.renderer_unavailable` hasta entonces; mientras tanto el texto ATS se copia y el perfil público se imprime desde el navegador.
+- **CV:** se compone desde el banco; la IA devuelve **solo JSON** (nunca Typst/LaTeX) y cada línea se valida contra el banco (fuentes citadas, sin cifras nuevas, frases prohibidas, tope de líneas); una línea rechazada conserva la original. Tres caminos con el **mismo prompt**: (1) IA automática con la clave y el modelo que configuró el propietario (Gemini, OpenAI o Anthropic); (2) descargar el prompt en `.md` o `.txt` para una IA externa; (3) importar su respuesta (archivo o pegada). El **PDF** sale de una plantilla Typst fija (CCR-2, `Pastel.Documents`) con fuentes incrustadas y texto extraíble; si el motor no está instalado responde 503 `huella.cv.renderer_unavailable` y queda el texto ATS.
+- **Privacidad de la IA:** al proveedor van los logros, la oferta, el titular y «Mi voz»; nunca nombre, correo, teléfono ni enlaces. La clave se guarda cifrada y no se vuelve a mostrar.
 - **Vista previa al compartir (importante para reclutadores):** las plataformas de mensajería leen metadatos sin ejecutar JavaScript. El agente debe proponer y registrar en `docs/DECISIONS.md` el método más simple para entregar `title`, `description` y `og:*` del perfil publicado en `/huella/p/:token` (p. ej. el servidor devuelve el HTML de la aplicación con metadatos inyectados), sin añadir un servidor Node. Si requiere cambios en `nginx` o en zonas protegidas, pedir autorización del propietario (zonas compartidas, `AGENTS.md` §8).
 - **Público:** endpoints anónimos con límite de tasa y caché; sin cookies de sesión; sin datos del borrador. Requerir token vigente en la ruta, almacenar solo su hash, y mantener el token fuera de logs/referrers.
 - **No indexación:** el HTML inicial contiene `<meta name="robots" content="noindex,nofollow,noarchive">` y la respuesta HTML lleva `X-Robots-Tag: noindex, nofollow, noarchive`. No depender solo de `robots.txt`; este documento noindex aplica al perfil público, no a toda la plataforma.
@@ -46,7 +48,7 @@ Los logros son la capa que reutilizarán las futuras funciones (carta de recomen
 - Auditoría: publicar, despublicar y regenerar/revocar el enlace público (sin registrar el token en claro).
 
 ## 6. Fuera del MVP
-Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (requiere almacenamiento de archivos), PDF del servidor, analítica de visitas, dominio propio por perfil, internacionalización del perfil.
+Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (requiere almacenamiento de archivos), analítica de visitas, dominio propio por perfil, internacionalización del perfil.
 
 ## 7. Criterios de aceptación
 
