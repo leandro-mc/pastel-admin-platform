@@ -42,10 +42,14 @@ $env:PASTEL_MODULES = "*"      # volver al valor habitual
 ## 5. Proxy inverso y hosts
 `NGINX_TRUSTED_PROXY_CIDR` vale por defecto `192.0.2.0/24` (rango de documentación) para no confiar en un `X-Forwarded-For` suministrado por un cliente. Con un proxy inverso real, configure su CIDR junto con `REVERSE_PROXY_TRUSTED_NETWORKS` y `ALLOWED_HOSTS`, y mantenga HTTPS: las cookies de sesión usan el prefijo `__Host-` y necesitan HTTPS (salvo `localhost`).
 
-## 6. Desarrollo sin Docker
+## 6. Motor documental (Typst)
+- La imagen de la API incluye Typst (`/usr/local/bin/typst`, `Documents__TypstPath`) y las fuentes Source Sans 3 (OFL) en `/app/Fonts`. Para subir de versión, cambie `TYPST_VERSION` y las dos sumas en `src/Host/Pastel.Host/Dockerfile` **y** en `scripts/test-backend.ps1`. Sin Typst la API arranca igual y el PDF responde `503 huella.cv.renderer_unavailable`.
+- Opcionales: `Documents__TimeoutSeconds` (20), `Documents__MemoryLimitMb` (512) y `Documents__MaxOutputBytes`.
+
+## 7. Desarrollo sin Docker
 Requiere PostgreSQL y las variables `ConnectionStrings__Default`, `Jwt__SigningKey`, `Bootstrap__AdminEmail` y `Bootstrap__AdminPassword`.
 ```powershell
 dotnet restore Pastel.slnx; dotnet build Pastel.slnx -c Release; dotnet test Pastel.slnx -c Release
 Push-Location web; npm ci; npm run format:check; npm run lint; npm run build; Pop-Location
 ```
-`npm run dev` inicia Vite (proxy según `web/vite.config.ts`).
+`npm run dev` inicia Vite (proxy según `web/vite.config.ts`). Para el PDF y sus pruebas, instale Typst 0.15.1 y defina `Documents__TypstPath` (o agréguelo al `PATH`).

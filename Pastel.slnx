@@ -2,6 +2,8 @@
   <Folder Name="/BuildingBlocks/">
     <Project Path="src/BuildingBlocks/Pastel.SharedKernel/Pastel.SharedKernel.csproj" />
     <Project Path="src/BuildingBlocks/Pastel.Platform/Pastel.Platform.csproj" />
+    <Project Path="src/BuildingBlocks/Pastel.Documents/Pastel.Documents.csproj" />
+    <Project Path="src/BuildingBlocks/Pastel.Documents.Tests/Pastel.Documents.Tests.csproj" />
   </Folder>
   <Folder Name="/Host/">
     <Project Path="src/Host/Pastel.Host/Pastel.Host.csproj" />

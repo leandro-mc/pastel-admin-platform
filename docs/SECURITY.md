@@ -52,6 +52,10 @@ La protección se aplica tanto en la tarea como en `ProductionSecurityValidation
 - Registrar cambios administrativos sin guardar credenciales; auditar antes/después cuando corresponda.
 - Rotar claves y secretos, restringir la conectividad a PostgreSQL y usar HTTPS en despliegue real.
 
+## Motor documental (Typst, CCR-2)
+
+`Pastel.Documents` ejecuta Typst (versión y SHA-256 fijados en el `Dockerfile` del host) como proceso hijo del usuario sin privilegios: directorio temporal propio como raíz, sin fuentes del sistema, caché de paquetes vacía (sin descargas), entorno vacío, 20 s de tiempo, `ulimit -v` de 512 MB en Linux y salida validada por firma y tamaño (10 MB). La plantilla es código fijo del módulo; los datos (incluido lo que produzca una IA) entran solo como `data.json` y se imprimen como texto. El contenido de los documentos no se registra; ante un fallo solo se registra el código de salida y la primera línea del diagnóstico del compilador.
+
 ## Límites conocidos
 
 No incluye confirmación de correo, recuperación de contraseña por email, MFA ni notificaciones administrativas. Google OAuth 2.0/OIDC ya está implementado de forma opcional, conforme a la sección «Ingreso con Google»; requiere configurar las credenciales en el entorno. La verificación de bloqueo/versionado de usuario se hace por petición; cualquier optimización debe mantener el mismo modelo de permisos. Antes de producción, agregar pruebas de integración completas de los flujos de seguridad, evaluación de dependencias y revisión independiente.
