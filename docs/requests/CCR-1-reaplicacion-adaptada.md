@@ -2,7 +2,7 @@
 
 | Dato | Valor |
 |---|---|
-| Estado | **Preparada el 2026-11-13. No aplicada.** Es el análisis y el texto listo para aplicar; no se modificó ningún documento protegido. |
+| Estado | **Aplicada el 2026-11-15** durante la integración a `dev` autorizada por el propietario, tras releer los documentos (sin cambios desde el análisis del 2026-11-13). Se aplicó en `research/requirements-and-prototypes`, la rama de integración, por indicación del propietario de trabajar en esa rama. La «Jerarquía de reglas» quedó como viñeta del §7 de `AGENTS.md`, sin renumerar sus secciones, porque otros documentos citan `AGENTS.md` §8. |
 | Decisión del propietario | Reaplicar CCR-1 **durante el proceso de integración**, adaptado a las reglas actuales, leyendo ambas versiones de los documentos protegidos; sin fusión ciega y sin recuperar reglas obsoletas. La integración a `dev` **no está autorizada** todavía. |
 | Solicitud original | `docs/requests/CCR-1-reglas-por-modulo.md` en la rama `docs/module-rules-precedence` (commit `a1a0a96`, sobre `dev` `7ba6f1c`). Allí figura «aprobado y aplicado», pero solo en esa rama. |
 | Zonas protegidas que tocaría | `AGENTS.md`, `docs/DESIGN_SYSTEM.md`, `docs/ARCHITECTURE.md` (requieren autorización expresa del propietario) y la ficha `docs/modules/BRISA.md` (no protegida) |
@@ -64,6 +64,6 @@ Se compararon `dev` (`7ba6f1c`), la rama de CCR-1 (`a1a0a96`) y el estado actual
 3. Repetir las verificaciones (`check-design`, `check-module-boundaries`, pruebas del frontend).
 
 ## Pendiente
-- Autorización expresa del propietario para tocar las zonas protegidas.
-- Que termine `refactor/modular-foundation` y se repitan los ensayos de integración.
-- Decidir el acento claro de Brisa tras la revisión visual.
+- Decidir el acento claro de Brisa tras la revisión visual (punto 2 de la sección 7 de la ficha).
+
+*Resuelto el 2026-11-15:* autorización del propietario e integración a `dev`; `refactor/modular-foundation` sin cambios desde `a28da7b` y ensayo repetido sin conflictos.

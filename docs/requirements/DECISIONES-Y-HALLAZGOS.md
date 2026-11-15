@@ -95,10 +95,11 @@ Estados usados en todo el registro (y en los requerimientos de cada app):
 | D-114 | **Cosecha:** se mantiene `Campaign → Season` (confirma D-05) | Aprobado, pendiente de ejecución (el código y la ficha aún dicen `Campaign`) | `cosecha/REQUERIMIENTOS-COSECHA.md` §21 |
 | D-115 | **Huella:** sigue siendo exclusiva del Owner; no se reabre. Se retiró la fase de invitados y la vista «Invitada (F3)» del prototipo | Decidido | `huella/REQUERIMIENTOS-HUELLA.md` §3 y §16 |
 | D-116 | **Typst, fuentes autoalojadas y `Pastel.Documents`** siguen aprobados (confirman D-03 y D-06). Solicitud de cambio preparada como **CCR-2** (numeración provisional), distinta de CCR-1 | Aprobado, pendiente de ejecución (CCR-2 por autorizar) | [`../requests/CCR-2-motor-documental-typst.md`](../requests/CCR-2-motor-documental-typst.md) |
-| D-117 | **CCR-1** se reaplica durante el proceso de integración, adaptado a las reglas actuales: se leyeron ambas versiones de los documentos protegidos y no hay fusión ciega ni se recuperan reglas obsoletas | Aprobado, pendiente de ejecución | [`../requests/CCR-1-reaplicacion-adaptada.md`](../requests/CCR-1-reaplicacion-adaptada.md) |
+| D-117 | **CCR-1** se reaplica durante el proceso de integración, adaptado a las reglas actuales: se leyeron ambas versiones de los documentos protegidos y no hay fusión ciega ni se recuperan reglas obsoletas | **Ejecutado el 2026-11-15** al integrar en `dev` | [`../requests/CCR-1-reaplicacion-adaptada.md`](../requests/CCR-1-reaplicacion-adaptada.md) |
 | D-118 | La **Etapa 2** de QA profundo comienza cuando las cinco aplicaciones estén funcionales | Decidido (condición de inicio) | `docs/TESTING.md`, fichas de módulo |
-| D-119 | **La fusión a `dev` no está autorizada.** Se espera a que termine `refactor/modular-foundation`, se revisan sus cambios y se repiten los ensayos de integración | Decidido (restricción vigente) | [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md) |
-| D-120 | Tras una integración exitosa y verificada se retiran `research/brisa-balance-prototypes`, `docs/brisa-inventory` y `docs/balance-inventory`. **No se toca** `backup/refactor-modular-foundation-2026-10-25` | Aprobado, pendiente de ejecución (condicionado a D-119) | §7 |
+| D-119 | **La fusión a `dev` no está autorizada.** Se espera a que termine `refactor/modular-foundation`, se revisan sus cambios y se repiten los ensayos de integración | **Cumplido y superado por D-121** (2026-11-15) | [`PLAN-DE-FUSION-A-DEV.md`](PLAN-DE-FUSION-A-DEV.md) |
+| D-120 | Tras una integración exitosa y verificada se retiran `research/brisa-balance-prototypes`, `docs/brisa-inventory` y `docs/balance-inventory`. **No se toca** `backup/refactor-modular-foundation-2026-10-25` | **Ejecutado el 2026-11-15**, con etiquetas de archivo para no perder historia (D-121) | §7 |
+| D-121 | **Integración a `dev` autorizada por el propietario el 2026-11-15** («Todo validado, integra a rama dev»). Antes de integrar se repitieron los ensayos (`refactor/modular-foundation` y `dev` sin cambios; sin conflictos) y se reaplicó CCR-1 adaptado. `research/requirements-and-prototypes` entró en `dev` con un merge normal. Luego se retiraron las tres ramas sustituidas: `research/brisa-balance-prototypes` ya estaba contenida en `dev`; las de inventario tenían 13 commits propios (historial de revisiones y el carrusel original de Brisa), que se conservan en las etiquetas `archive/docs-brisa-inventory` y `archive/docs-balance-inventory` | Ejecutado | `PLAN-DE-FUSION-A-DEV.md`; `../../PROGRESS.md` |
 
 ---
 
@@ -226,13 +227,11 @@ Estados usados en todo el registro (y en los requerimientos de cada app):
 Actualizado el 2026-11-13. Las decisiones tomadas están en §0c (y D-01 a D-93); aquí solo lo que **todavía no está cerrado**, clasificado según los estados de §0c.
 
 ### Aprobado, pendiente de ejecución
+*Ejecutado el 2026-11-15 (D-121): la reaplicación de CCR-1, la integración a `dev` y el retiro de las ramas sustituidas.*
 | Tema | Qué falta | Condición |
 |---|---|---|
 | **CCR-2** (Typst, fuentes autoalojadas, `Pastel.Documents`) | Autorización expresa y aplicación de la solicitud ya redactada: [`../requests/CCR-2-motor-documental-typst.md`](../requests/CCR-2-motor-documental-typst.md) | Autorización del propietario; verificar versión y licencias (CCR-2, «Datos por verificar») |
-| **CCR-1 reaplicado y adaptado** | Aplicarlo a `AGENTS.md`, `docs/DESIGN_SYSTEM.md`, `docs/ARCHITECTURE.md` y la ficha de Brisa, según [`../requests/CCR-1-reaplicacion-adaptada.md`](../requests/CCR-1-reaplicacion-adaptada.md) | Durante la integración a `dev` (D-119) |
 | `Campaign → Season` | Renombrar en el código y en `docs/modules/COSECHA.md` | Al implementar Cosecha |
-| **Integración a `dev`** | Esperar que termine `refactor/modular-foundation`, revisar sus cambios y repetir los ensayos de integración | Autorización expresa (hoy **no** autorizada) |
-| **Retiro de ramas sustituidas** | Retirar `research/brisa-balance-prototypes`, `docs/brisa-inventory` y `docs/balance-inventory`. **No tocar** `backup/refactor-modular-foundation-2026-10-25` | Solo después de una integración exitosa y verificada |
 | **Etapa 2 de QA profundo** | Planificarla y ejecutarla | Cuando las cinco aplicaciones estén funcionales |
 
 ### Pendiente de validación externa (no son decisiones; no se asumió ningún valor)

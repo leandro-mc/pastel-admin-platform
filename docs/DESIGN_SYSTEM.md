@@ -4,6 +4,8 @@ Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **
 
 **Qué obliga y qué orienta:** solo la sección 1 (reglas duras) **bloquea**, además de la sección 9 para quien toque el shell compartido (zona compartida, con autorización expresa del propietario; ver `AGENTS.md` §8). El resto son **guías** para construir pantallas coherentes y accesibles sin burocracia: se siguen por criterio, no se verifican pantalla por pantalla en la Etapa 1, y su revisión sistemática es de la Etapa 2 (`docs/TESTING.md`).
 
+**Jerarquía de reglas:** las reglas de **diseño del frontend** de cada módulo (su ficha en `docs/modules/` y su `MODULE.md`) prevalecen sobre las guías de este documento; las de aquí aplican en lo que el módulo no regula. Solo el diseño del frontend: lo demás se rige por las reglas generales. No se relaja la sección 1 (ver `AGENTS.md` §7, «Jerarquía de reglas»).
+
 ## 1. Reglas duras (no negociables)
 - **No usar morado ni sus derivados**, ni nada de lo habitual del diseño generado por IA: colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA.
 - `scripts/check-design.mjs` (parte de `test-frontend.ps1`) verifica solo estas dos reglas: morado (en cualquier archivo) e iconos o emojis de IA.

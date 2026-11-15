@@ -1,11 +1,11 @@
 # Estado del proyecto
 
-Único documento de estado vigente. Se actualiza **una vez por unidad de trabajo**, dentro del mismo commit (ver `docs/GIT_WORKFLOW.md`). Última actualización: 2026-11-11.
+Único documento de estado vigente. Se actualiza **una vez por unidad de trabajo**, dentro del mismo commit (ver `docs/GIT_WORKFLOW.md`). Última actualización: 2026-11-15.
 
 ## 1. Resumen
 **Etapa actual: construir las cinco aplicaciones funcionales** (Ágora, Brisa, Balance, Cosecha y Huella). Se prueba solo lo esencial (seguridad, autorización, aislamiento, integridad de datos, reglas de negocio críticas y secretos); las pruebas exhaustivas, la automatización adicional, el QA profundo y las revisiones visuales sistemáticas son de la **Etapa 2**, que empieza con la primera versión funcional de las cinco (`docs/TESTING.md`). Lo diferido no bloquea entregas.
 
-**La Fase 0 está cerrada** (base modular, Identity, infraestructura y validación). El propietario aceptó los requisitos diferidos, que ya no son obligatorios y quedan como backlog (§5). La rama de trabajo es `refactor/modular-foundation`; no hay integración a `dev` ni a `main` todavía y no hay PR abierto.
+**La Fase 0 está cerrada** (base modular, Identity, infraestructura y validación). El propietario aceptó los requisitos diferidos, que ya no son obligatorios y quedan como backlog (§5). **El 2026-11-15 se integró en `dev`** (merge normal de `research/requirements-and-prototypes`, que ya contenía `refactor/modular-foundation` hasta `a28da7b`), con autorización del propietario. `main` no cambia. Cada aplicación se desarrolla ahora en su propia rama corta desde `dev`.
 
 ## 2. Qué existe
 - **Backend:** host .NET 10, `Pastel.SharedKernel` y `Pastel.Platform`, y un proyecto por módulo (Identity, Ágora, Brisa, Balance, Cosecha, Huella) con esquema y migración inicial propios. **Solo Identity tiene lógica de negocio**; los otros cinco son esqueletos con permisos, roles, manifiesto y fichas.
@@ -31,7 +31,9 @@ Backend 51/51 (formato, build Release, NuGet sin vulnerabilidades) · PostgreSQL
 - **Residual:** `CatalogSyncTask` conserva la limpieza del rol heredado «Huella — Propietario»; puede borrarse cuando se confirme que ninguna base lo tiene.
 
 ## 4. Pendiente de producto (fuera de la Fase 0)
-- **Identidad visual por aplicación**: no definida; la investigación y los prototipos están en la rama `research/requirements-and-prototypes`. Hasta entonces los tokens de `module-themes.css` son provisionales (`docs/DESIGN_SYSTEM.md`).
+- **Requisitos y prototipos de las cinco apps:** en `docs/requirements/<app>/` (requerimientos con ID, roles y permisos, investigación y prototipo probado). Decisiones y pendientes vigentes: `docs/requirements/DECISIONES-Y-HALLAZGOS.md` §0c y §7.
+- **Identidad visual por aplicación:** la referencia son los prototipos; lo que figura como pendiente de revisión visual en el registro (§7) se confirma con el propietario antes de fijarlo en `module-themes.css`. Las reglas propias de diseño de cada módulo van en su ficha (`AGENTS.md` §7, «Jerarquía de reglas»).
+- **CCR-2** (Typst, fuentes autoalojadas y `Pastel.Documents`): aprobado, **sin aplicar** (`docs/requests/CCR-2-motor-documental-typst.md`). Lo necesitan Huella, Cosecha y Ágora para generar documentos.
 - **Selección de apps en el registro**: hoy el registro pide nombre, correo y contraseña y asigna solo `Member`; no existen entidades ni API de membresías. Reglas acordadas en `docs/product/PASTEL-PRODUCT-AND-UX.md`.
 - **Huella** (tablas, enlace público, `noindex`), **catálogo persistente de aplicaciones**, **membresías y concesión de Cosecha por el Owner/Superuser** y **feed real de Ágora**.
 - Lógica de negocio de Ágora, Brisa, Balance, Cosecha y Huella.
@@ -45,4 +47,4 @@ Incluye, además de lo que sigue, las secciones «Diferido a QA — Etapa 2» de
 La rama llegó a 488 commits (446 propios y 42 de `dev`); el análisis y las reglas nuevas están en `docs/GIT_WORKFLOW.md` §4. El 2026-10-25 los 446 propios se unificaron en unidades lógicas **sin cambiar el contenido final** (árbol idéntico). El estado anterior se conserva en la rama de respaldo `backup/refactor-modular-foundation-2026-10-25`; puede borrarse cuando el propietario lo decida. La rama `research/requirements-and-prototypes` nació de la historia anterior y debe rebasarse sobre la nueva con los comandos de `docs/GIT_WORKFLOW.md` §4.
 
 ## 7. Cómo continuar
-1. Lee `AGENTS.md` y este documento. 2. Rama corta desde `refactor/modular-foundation` (o `dev` cuando se integre). 3. Implementa tu módulo con los esqueletos existentes y `docs/modules/<MODULO>.md`. 4. Valida con lo esencial de `docs/TESTING.md` (Etapa 1) y entrega por PR con commits lógicos. 5. Si tocas el shell, lee `docs/DESIGN_SYSTEM.md` §9 y, si tu entorno lo permite, ejecuta `node scripts/shell-visual.mjs audit` (no bloquea en la Etapa 1).
+1. Lee `AGENTS.md` y este documento. 2. Rama corta desde `dev` (`feat/<modulo>-<tema>`), un agente por rama. 3. Implementa tu módulo con los esqueletos existentes y `docs/modules/<MODULO>.md`. 4. Valida con lo esencial de `docs/TESTING.md` (Etapa 1) y entrega por PR con commits lógicos. 5. Si tocas el shell, lee `docs/DESIGN_SYSTEM.md` §9 y, si tu entorno lo permite, ejecuta `node scripts/shell-visual.mjs audit` (no bloquea en la Etapa 1).

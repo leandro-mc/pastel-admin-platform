@@ -46,7 +46,7 @@ Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, inte
 2. Aislamiento: la persona A nunca ve, edita ni borra pendientes de la persona B (IDs ajenos → 404).
 3. Idempotencia: crear el mismo pendiente dos veces con el mismo `Guid` de cliente no genera duplicados.
 4. Borrado lógico y `UpdatedAt`: borrar y volver a listar; `?updatedSince=` devuelve solo cambios; la concurrencia devuelve 409 con mensaje claro.
-5. Fechas: un pendiente para las 23:30 hora de Costa Rica (UTC-6) aparece en la lista "Hoy" correcta aunque en UTC sea el día siguiente; repeticiones respetan la zona horaria.
+5. Fechas: con «hoy» en la zona configurada de la persona (por defecto `America/Costa_Rica`, UTC-6, sin horario de verano), un pendiente del día 18 sigue en «Hoy» a las 23:30 hora local aunque en UTC ya sea el 19, y deja de serlo solo a las 00:00 local. Brisa no maneja hora del día ni repetición de tareas (inventario §13.1–§13.3).
 6. Importación: archivo de ejemplo del inventario → totales y campos íntegros; reimportar no duplica; archivo corrupto → error claro sin importar nada a medias.
 7. Permisos: anónimo 401; sin `brisa.access` 403.
 
@@ -59,3 +59,11 @@ Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md
 - Accesibilidad y recorrido a 320 px y claro/oscuro de los flujos principales.
 - Compilación y pruebas del módulo **aislado** (`PASTEL_MODULES=<módulo>`), con `ci:completo` o antes de desplegar.
 - **Deshacer seguro** (BR-19): deshacer «marcar» restaura `CompletedAt` exacto; deshacer «eliminar» restaura el pendiente; si el pendiente cambió después → 409 y no se revierte; no pisa ediciones ni se puede repetir. Hoy lo cubren las 7 pruebas de lógica y 3 de interfaz del prototipo; **pendiente de decisión del propietario** si pasa a prueba esencial de la Etapa 1.
+
+## 7. Reglas propias de diseño del frontend de Brisa
+Prevalecen sobre las guías generales de diseño del frontend (`AGENTS.md` §7, «Jerarquía de reglas»); lo demás sigue las reglas generales.
+
+1. **Tono y textos:** tuteo, cálido, calmado y sin culpa, igual que la app original; se conservan los textos originales (inventario §13.8) y los nuevos usan el mismo tono. Sin voseo.
+2. **Tema claro propio**, tomado de la app Android, con los dos valores ajustados a contraste (texto secundario y error). **Los valores definitivos del acento quedan pendientes de la revisión visual:** el inventario §13.7 cita `#315B4A`, mientras el prototipo y los tokens provisionales usan `#48775b`/`#416b52`.
+3. **Tema oscuro:** el de la plataforma, sin el fondo verdoso de Android. Las tarjetas de tarea mezclan su color pastel al **28 %** con `--surface`, con los tokens existentes y sin token nuevo; la fecha límite usa el texto general (`--text`) en esa tarjeta.
+4. **Patrón de interfaz:** «Deshacer» tras marcar/reabrir o eliminar, con reversión segura (BR-19 en `docs/requirements/brisa/REQUERIMIENTOS-BRISA.md`). Los recordatorios siguen aplazados.

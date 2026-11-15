@@ -1,6 +1,6 @@
-# Plan de fusión a `dev` (preparado, **no ejecutado**)
+# Plan de fusión a `dev` (**ejecutado el 2026-11-15**)
 
-> **Estado (actualizado 2026-11-13):** la integración a `dev` **no está autorizada ni hecha**; se espera a que termine `refactor/modular-foundation`, revisar sus cambios y **repetir los ensayos**. Lo único hecho es traer `refactor/modular-foundation` (`a28da7b`) a esta rama con un merge normal (`a619019`, 2026-11-13). `AGENTS.md` exige **autorización expresa** para integrar en `dev` o `main` y para tocar zonas protegidas (`AGENTS.md`, `docs/DESIGN_SYSTEM.md`, `docs/ARCHITECTURE.md`). Este documento deja el camino listo y señala **dónde hay conflictos reales**, comprobados con **fusiones de ensayo en ramas temporales** (ninguna rama real se tocó). Ensayos del 2026-11-10 con `dev` = `7ba6f1c`. **Repetirlos cuando `refactor/modular-foundation` avance:** los resultados de abajo cambiarán.
+> **Estado (2026-11-15): ejecutado.** El propietario autorizó la integración («Todo validado, integra a rama dev»). Se repitieron los ensayos (`refactor/modular-foundation` en `a28da7b` y `dev` en `7ba6f1c`, sin cambios ni conflictos), se reaplicó CCR-1 adaptado y `research/requirements-and-prototypes` entró en `dev` con un merge normal. Las ramas sustituidas se retiraron después, conservando con etiquetas de archivo los commits que no llegaban a `dev` (D-121). CCR-2 sigue aprobado y sin aplicar. Lo que sigue es el registro del camino recorrido.
 
 ## 1. Una sola rama de investigación
 
@@ -62,4 +62,4 @@ Ya hecho en `research`: las rutas de `docs/modules/BRISA.md` y `BALANCE.md` apun
 
 ## 7. Lo que NO se hizo (a propósito)
 
-No se fusionó nada en `dev` ni `main`; no se borró ninguna rama; no se reaplicó CCR-1 ni se modificaron `AGENTS.md`, `DESIGN_SYSTEM.md` o `ARCHITECTURE.md` por ese motivo; no se aplicó CCR-2; no se abrió ningún PR.
+Hasta el 2026-11-13 no se fusionó nada ni se borró ninguna rama. El 2026-11-15, con autorización: integración a `dev` y retiro de las ramas sustituidas (con etiquetas de archivo). **No** se tocó `main`, `refactor/modular-foundation`, `docs/module-rules-precedence` ni `backup/refactor-modular-foundation-2026-10-25`; no se aplicó CCR-2; no se abrió PR.
