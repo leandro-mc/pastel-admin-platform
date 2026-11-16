@@ -1,56 +1,31 @@
-# Estado del proyecto
+# Estado del proyecto (global)
 
-Único documento de estado vigente. Se actualiza **una vez por unidad de trabajo**, dentro del mismo commit (ver `docs/GIT_WORKFLOW.md`). Última actualización: 2026-11-15.
+Solo lo transversal. El estado de cada aplicación vive en `docs/progress/<APP>.md`; la historia cerrada, en `docs/HISTORY.md`. Se edita únicamente cuando cambia algo que afecta a varias apps (`AGENTS.md` §9). Última actualización: 2026-11-15.
 
-## 1. Resumen
-**Etapa actual: construir las cinco aplicaciones funcionales** (Ágora, Brisa, Balance, Cosecha y Huella). Se prueba solo lo esencial (seguridad, autorización, aislamiento, integridad de datos, reglas de negocio críticas y secretos); las pruebas exhaustivas, la automatización adicional, el QA profundo y las revisiones visuales sistemáticas son de la **Etapa 2**, que empieza con la primera versión funcional de las cinco (`docs/TESTING.md`). Lo diferido no bloquea entregas.
+## 1. Etapa
+**Etapa 1: construir las cinco aplicaciones funcionales.** La Fase 0 (base modular, Identity, infraestructura y validación) está cerrada e integrada en `dev` desde el 2026-11-15; `main` no cambia. Cada app se desarrolla en su rama `feat/<modulo>-<tema>` desde `dev`.
 
-**La Fase 0 está cerrada** (base modular, Identity, infraestructura y validación). El propietario aceptó los requisitos diferidos, que ya no son obligatorios y quedan como backlog (§5). **El 2026-11-15 se integró en `dev`** (merge normal de `research/requirements-and-prototypes`, que ya contenía `refactor/modular-foundation` hasta `a28da7b`), con autorización del propietario. `main` no cambia. Cada aplicación se desarrolla ahora en su propia rama corta desde `dev` (`AGENTS.md` §3).
+## 2. Aplicaciones
+| App | Estado | Rama / PR | Progreso |
+|---|---|---|---|
+| Plataforma (Identity, shell, infraestructura) | Completa y validada en lo esencial | `dev` | `docs/progress/PLATAFORMA.md` |
+| Huella | MVP funcional con PDF e IA; pendiente de aprobación | `feat/huella-mvp` · PR #43 | `docs/progress/HUELLA.md` |
+| Ágora | Esqueleto; requisitos y prototipo listos | — | `docs/progress/AGORA.md` |
+| Brisa | Esqueleto; requisitos y prototipo aprobado | — | `docs/progress/BRISA.md` |
+| Balance | Esqueleto; requisitos y prototipo nuevos | — | `docs/progress/BALANCE.md` |
+| Cosecha | Esqueleto; requisitos, prototipo y guías por rol | — | `docs/progress/COSECHA.md` |
 
-## 2. Qué existe
-- **Backend:** host .NET 10, `Pastel.SharedKernel` y `Pastel.Platform`, y un proyecto por módulo (Identity, Ágora, Brisa, Balance, Cosecha, Huella) con esquema y migración inicial propios. **Solo Identity tiene lógica de negocio**; los otros cinco son esqueletos con permisos, roles, manifiesto y fichas.
-- **Identity (completo):** correo y contraseña con política por longitud, ingreso con Google, sesión con refresh tokens rotados y ventana de gracia, limitación de intentos, roles y permisos con jerarquía de privilegios (Owner/Superuser, Administrator, gestores), bloqueo y restablecimiento de contraseña, auditoría, módulos y catálogo, cuenta de arranque, sembrador de QA, validación de configuración en producción.
-- **Frontend:** shell y router por módulo, cliente API (un solo refresco ante varios 401), autenticación, páginas de ingreso, cuenta y Configuración (usuarios, roles, permisos, módulos, auditoría), sistema de componentes y guardas de diseño. Los módulos de negocio son esqueletos.
-- **Infraestructura:** Docker Compose, Nginx con cabeceras de seguridad sin duplicados, compilación por subconjunto de módulos, CI manual por etiqueta/aprobación (`docs/GIT_WORKFLOW.md` §3), scripts de validación en Docker y hook de pre-commit.
+## 3. Pendientes transversales
+- **CCR-2** (Typst, `Pastel.Documents`, fuentes autoalojadas): aplicado en `feat/huella-mvp` salvo las fuentes de la interfaz (punto 4); entra en `dev` con el PR #43. Cosecha y Ágora lo reutilizan.
+- **Identidad visual por app**: pendiente de la revisión visual del propietario de los prototipos; hasta entonces los tokens de `module-themes.css` son provisionales.
+- **Selección de apps en el registro y membresías**: hoy el registro asigna solo `Member`; reglas en `docs/product/PASTEL-PRODUCT-AND-UX.md`.
+- **Catálogo persistente de aplicaciones.**
+- Decisiones abiertas por app: en el progreso de cada una. Registro completo de la investigación: `docs/requirements/DECISIONES-Y-HALLAZGOS.md` §7.
 
-## 3. Validación (ejecutada por el propietario, 2026-10-24 y 25)
-Backend 51/51 (formato, build Release, NuGet sin vulnerabilidades) · PostgreSQL 46/46 · frontend completo (Vitest 21/21, `npm audit` limpio, guardas) · stack aislado 10/10 (salud real del API, esquemas migrados desde base vacía, caída y recuperación de la base, cabeceras sin duplicados) · construcción de las imágenes de los cinco módulos · verificación manual de Google (cuenta nueva y vinculación a la cuenta de arranque).
-**Defectos reales que esta validación encontró y corrigió:** ediciones simultáneas de un rol que se fundían, cabeceras de seguridad duplicadas en `/api/*` y advertencias por cada acceso denegado repetido.
+## 4. Cómo continuar
+Lea `AGENTS.md` y, para su tarea, solo lo que indica su §2.
 
-## 3.1 Rediseño del shell y modo desarrollador (2026-11-10, en `refactor/modular-foundation`)
-- **Hecho:** investigación y auditoría (`docs/design/SHELL_RESEARCH.md`); shell nuevo (sidebar de 16 rem con riel plegable y el botón de plegar arriba, panel de cuenta con tema luna/sol, tamaño de texto en «A» y cierre de sesión destacado, un único control de app, barra superior solo con acciones globales y migas reales, barra inferior visible en móvil, pie de una línea, scroll del documento); contrato del manifiesto (`alsoActiveOn`, `group`); reglas en `docs/DESIGN_SYSTEM.md` §9; modo desarrollador (permiso `platform.developer.mode`, `core/devmode`, selector «Ver como», endpoint de definiciones de rol, asignación individual en Accesos).
-- **Validado** (`docs/design/SHELL_VALIDATION.md`): Vitest 54/54, tsc, ESLint, Prettier, build y guardas; en Chrome real, axe sin incumplimientos del shell en 8 estados, contraste mínimo 4,79:1 en 6 apps × 2 temas y sin desbordes de 320 a 1440 px. Herramienta repetible: `node scripts/shell-visual.mjs`.
-- **Sin validar (hacer antes de aceptar):** el **backend** del modo desarrollador no se compiló ni se ejecutó (sin .NET en el entorno de investigación): correr `.\scripts\test-backend.ps1` y las pruebas con PostgreSQL (3 unitarias y 5 de integración nuevas en `DeveloperModeTests`). Tampoco hubo lector de pantalla real, dispositivos físicos, otros navegadores ni personas usuarias. Primer `docker compose up -d --build` del propietario (2026-11-10): las imágenes se construyeron (el `dotnet publish` Release compiló todo el backend, incluido el código nuevo de Identity), pero el contenedor `api` no arrancó: `CatalogSyncTask` violaba la clave foránea de `role_permissions` porque EF trataba un permiso nuevo de un módulo ya sembrado como fila existente (UPDATE). Es un defecto latente del código previo que el permiso nuevo destapó en una base ya creada (en una vacía no ocurre); corregido con un `Add` explícito y cubierto por una prueba de integración de regresión. Falta confirmar que la API arranca sobre esa base.
-- **Decisiones:** el propietario ratificó íntegramente S1–S6 y M1–M4 el 2026-11-10 (`docs/DECISIONS.md`), incluida M3. S7 (`alsoActiveOn` y `group` en el manifiesto) sigue sin ratificar.
-- **Hallazgos fuera del shell:** foco visible de `core/ui` bajo 3:1 (1,55:1 y 2,4:1 en tema claro) y `--muted` como texto a 4,44:1; patrones de «AI slop» en páginas de Workspace y Ágora (`SHELL_VALIDATION.md` §6).
-
-## 3.2 Revisión de identificadores y PrivilegeGuard (2026-11-11, en `refactor/modular-foundation`)
-- **Hecho:** las claves de entidad de Identity usan `Guid.CreateVersion7()` (secretos y `jti` siguen aleatorios) y `ARCHITECTURE.md` §5 describe lo real: no existe generación de GUID desde el cliente. Las reservas de Cosecha y Huella las declara cada módulo con `PermissionGroup.GrantPolicy`; `PrivilegeGuard` y `CatalogSyncTask` ya no nombran módulos. Se eliminó una comprobación de Cosecha inalcanzable y se corrigieron los `MODULE.md` que decían que `Administrator` recibe todos los permisos.
-- **Sin validar (hacer antes de aceptar):** el entorno no alcanzaba NuGet, así que Identity no se compiló completo ni se ejecutaron sus pruebas. Sí se compilaron con advertencias como error el contrato de `Pastel.Platform` y los permisos de Cosecha/Huella, y se probó `GrantPolicyOf`; el resto de Identity solo tuvo compilación parcial (sin errores de sintaxis ni de los símbolos nuevos). Correr `.\scripts\test-backend.ps1` y `.\scripts\test-database.ps1` (las consultas de `CatalogSyncTask` ahora usan `ownerAccountOnlyCodes.Contains`).
-- **Cambios visibles:** el `reason` de la auditoría `identity.privilege.denied` pasó a `owner_account_only` / `owner_grants_only` (antes `huella_profile_is_owner_only` / `cosecha_access_requires_owner`) y cambió el texto de `identity.privilege.owner_permission_required`.
-- **Residual:** `CatalogSyncTask` conserva la limpieza del rol heredado «Huella — Propietario»; puede borrarse cuando se confirme que ninguna base lo tiene.
-
-## 3.3 Huella: MVP funcional, PDF e IA (2026-11-15, en `feat/huella-mvp`, PR #43; sin integrar en `dev`)
-- **Hecho:** banco privado, estudio de CV (ofertas, evidencia, generación, versiones, edición validada, texto ATS), perfil público por enlace secreto. **PDF** con Typst mediante `Pastel.Documents` (CCR-2 aplicado, salvo las fuentes de la interfaz). **IA** en tres caminos con el mismo prompt: automática con la clave y el modelo del propietario (Gemini, OpenAI o Anthropic; clave cifrada, nunca devuelta), prompt descargable en `.md`/`.txt` para una IA externa e importación de su respuesta (archivo o pegada); todo pasa por el guardián de verdad. Arreglos: compilación del contenedor (`AddRateLimiter`) y pérdida de la viñeta original cuando la IA traía una línea inválida.
-- **Validado (local, Windows + Docker):** `test-backend.ps1` completo (NuGet sin vulnerabilidades, formato, build Release, Typst instalado con su suma; Documents 2/2, Huella 8/8, Identity 51/51, arquitectura 6/6); **PostgreSQL 58/58** con `test-database.ps1` (incluye las 6 de Huella y la nueva de IA, con migraciones aplicadas de verdad); `has-pending-model-changes` sin cambios; `test-frontend.ps1` completo (Vitest 61/61, guardas y fronteras); `docker compose up --build` sano y recorrido real por nginx: generar CV, prompt, importar respuesta externa (una línea aceptada y una cifra inventada descartada), PDF de 28 kB descargado, clave guardada sin filtrarse y llamada real a Gemini con clave falsa traducida a `huella.ai.key_or_model_rejected`. Typst comprobado en el contenedor endurecido sin red.
-- **Por verificar:** respuesta real de Gemini, OpenAI y Anthropic con claves válidas (lo hace el propietario desde «Configurar IA»); revisión visual en navegador (diferida a la Etapa 2).
-- **Decisiones del propietario pendientes:** tema de Huella en `module-themes.css`; metadatos `og:*` del enlace público (nginx); fuentes de la interfaz (CCR-2 punto 4).
-
-## 4. Pendiente de producto (fuera de la Fase 0)
-- **Requisitos y prototipos de las cinco apps:** en `docs/requirements/<app>/` (requerimientos con ID, roles y permisos, investigación y prototipo probado). Decisiones y pendientes vigentes: `docs/requirements/DECISIONES-Y-HALLAZGOS.md` §0c y §7.
-- **Identidad visual por aplicación:** la referencia son los prototipos; lo que figura como pendiente de revisión visual en el registro (§7) se confirma con el propietario antes de fijarlo en `module-themes.css`. Las reglas propias de diseño de cada módulo van en su ficha (`AGENTS.md` §7, «Jerarquía de reglas»).
-- **CCR-2** (Typst, fuentes autoalojadas y `Pastel.Documents`): **aplicado** en `feat/huella-mvp` salvo las fuentes de la interfaz (`docs/requests/CCR-2-motor-documental-typst.md`). Cosecha y Ágora lo usan con `AddPastelDocuments` y su propia plantilla.
-- **Selección de apps en el registro**: hoy el registro pide nombre, correo y contraseña y asigna solo `Member`; no existen entidades ni API de membresías. Reglas acordadas en `docs/product/PASTEL-PRODUCT-AND-UX.md`.
-- **Catálogo persistente de aplicaciones**, **membresías y concesión de Cosecha por el Owner/Superuser** y **feed real de Ágora**.
-- Lógica de negocio de Ágora, Brisa, Balance y Cosecha (Huella: §3.3).
-
-## 5. Backlog diferido — Etapa 2 / QA (no se trabaja sin decisión del propietario; no bloquea la Etapa 1)
-Incluye, además de lo que sigue, las secciones «Diferido a QA — Etapa 2» de cada ficha de `docs/modules/` (matrices por rol, accesibilidad y 320 px por flujo, impresión, paridad completa de Brisa, propiedades del reparto de Cosecha, aislamiento por módulo con `PASTEL_MODULES`, E2E y pruebas visuales).
-- **Pruebas:** eventos de seguridad con antes/después (el núcleo ya está cubierto por las de privilegios), endpoint `/api/client-errors`, límite de errores de render, expiración de token por tiempo, pantalla de sesión vencida, esperas crecientes y aislamiento de Google en el limitador, recorridos en navegador (navegación, permisos, responsive y temas), regresión frente a `dev` y revisión visual y de contraste.
-- **Técnicas:** `SetUserPermissionsHandler` y `CreateRole` en transacción serializable (mismo patrón que corrigió el de roles); estrategia de reintento de EF Core ante conexiones caídas (tras reiniciar la base, la primera petición puede responder 503); nivel `Microsoft.AspNetCore` en Warning también en Development (hoy registraría la URL del callback con `code` y `state`); job de aislamiento por módulo en CI; bundle principal de ~533 kB; la importación sin extensión en `vite.config.ts` que avisa Vite.
-
-## 6. Historia de la rama `refactor/modular-foundation`
-La rama llegó a 488 commits (446 propios y 42 de `dev`); el análisis y las reglas nuevas están en `docs/GIT_WORKFLOW.md` §4. El 2026-10-25 los 446 propios se unificaron en unidades lógicas **sin cambiar el contenido final** (árbol idéntico). El estado anterior se conserva en la rama de respaldo `backup/refactor-modular-foundation-2026-10-25`; puede borrarse cuando el propietario lo decida. La rama `research/requirements-and-prototypes` nació de la historia anterior y debe rebasarse sobre la nueva con los comandos de `docs/GIT_WORKFLOW.md` §4.
-
-## 7. Cómo continuar
-1. Lee `AGENTS.md` y este documento. 2. Rama corta desde `dev` (`feat/<modulo>-<tema>`), un agente por rama. 3. Implementa tu módulo con los esqueletos existentes y `docs/modules/<MODULO>.md`. 4. Valida con lo esencial de `docs/TESTING.md` (Etapa 1) y entrega por PR con commits lógicos. 5. Si tocas el shell, lee `docs/DESIGN_SYSTEM.md` §9 y, si tu entorno lo permite, ejecuta `node scripts/shell-visual.mjs audit` (no bloquea en la Etapa 1).
+## 5. Backlog diferido — Etapa 2 (no se trabaja sin decisión del propietario)
+Además de las secciones «Diferido a QA — Etapa 2» de cada ficha de `docs/modules/`:
+- **Pruebas:** eventos de seguridad con antes/después, `/api/client-errors`, límite de errores de render, expiración de token por tiempo, pantalla de sesión vencida, esperas crecientes y aislamiento de Google en el limitador, recorridos en navegador (navegación, permisos, responsive y temas), regresión frente a `dev` y revisión visual y de contraste.
+- **Técnicas:** `SetUserPermissionsHandler` y `CreateRole` en transacción serializable; reintento de EF Core ante conexiones caídas (tras reiniciar la base, la primera petición puede responder 503); nivel `Microsoft.AspNetCore` en Warning también en Development (hoy registraría la URL del callback con `code` y `state`); job de aislamiento por módulo en CI; bundle principal de ~555 kB; importación sin extensión en `vite.config.ts` que avisa Vite.

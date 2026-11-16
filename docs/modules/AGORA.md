@@ -63,7 +63,7 @@ Foros, comentarios, reportes y moderación; flujo formal de aprobación previa; 
 
 ### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política: `docs/TESTING.md` §1; **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. **Autorización por rol en las acciones sensibles** (publicar, verificar, administrar): quien no tiene el permiso recibe 401/403; **un autor no puede verificar su propia pieza** (403 `agora.verification.self`).
 2. Borradores y piezas archivadas nunca aparecen en listados, búsqueda, página de pieza ni respuestas públicas.

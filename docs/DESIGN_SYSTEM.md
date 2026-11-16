@@ -4,7 +4,7 @@ Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **
 
 **Qué obliga y qué orienta:** solo la sección 1 (reglas duras) **bloquea**, además de la sección 9 para quien toque el shell compartido (zona compartida, con autorización expresa del propietario; ver `AGENTS.md` §8). El resto son **guías** para construir pantallas coherentes y accesibles sin burocracia: se siguen por criterio, no se verifican pantalla por pantalla en la Etapa 1, y su revisión sistemática es de la Etapa 2 (`docs/TESTING.md`).
 
-**Jerarquía de reglas:** las reglas de **diseño del frontend** de cada módulo (su ficha en `docs/modules/` y su `MODULE.md`) prevalecen sobre las guías de este documento; las de aquí aplican en lo que el módulo no regula. Solo el diseño del frontend: lo demás se rige por las reglas generales. No se relaja la sección 1 (ver `AGENTS.md` §7, «Jerarquía de reglas»).
+**Jerarquía de reglas:** las reglas de **diseño del frontend** de cada módulo (su ficha en `docs/modules/` y su `MODULE.md`) prevalecen sobre las guías de este documento; las de aquí aplican en lo que el módulo no regula. Solo el diseño del frontend: lo demás se rige por las reglas generales. No se relaja la sección 1 ni, en el shell, la sección 9.
 
 ## 1. Reglas duras (no negociables)
 - **No usar morado ni sus derivados**, ni nada de lo habitual del diseño generado por IA: colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA.
@@ -25,7 +25,7 @@ Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **
 ## 4. Estructura y componentes (guía)
 - **Navegación:** sidebar visible con texto en escritorio y barra inferior visible en móvil (§9). La app actual se distingue con icono, texto y `aria-current="page"`, no solo con color. No arrastrar acciones de un módulo a otro.
 - **Tablas:** en móvil conviene convertirlas en listas de tarjetas o priorizar los campos clave.
-- Los componentes compartidos viven en `web/src/core/ui` con variantes explícitas; se prefieren a armar a mano un `div` con `role="dialog"`. Si una pantalla necesita algo que el kit no ofrece, constrúyala y, si se repite, súbalo al kit.
+- Los componentes compartidos viven en `web/src/core/ui` con variantes explícitas (`cva` + `cn()`), no con clases semánticas de `@apply`; se prefieren a armar a mano un `div` con `role="dialog"`. Si una pantalla necesita algo que el kit no ofrece, constrúyala y, si se repite, súbalo al kit.
 
 | Patrón | Guía |
 |---|---|

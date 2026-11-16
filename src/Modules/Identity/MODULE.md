@@ -1,6 +1,6 @@
 # Identity — ficha técnica backend
 
-Estado: **implementación completa y validada en lo esencial** (backend 51/51, PostgreSQL 46/46; ver `docs/PROGRESS.md` §3). Las pruebas diferidas pertenecen a la Etapa 2 (`docs/PROGRESS.md` §5).
+Estado: **implementación completa y validada en lo esencial** (backend 51/51, PostgreSQL 46/46; ver `docs/progress/PLATAFORMA.md`). Las pruebas diferidas pertenecen a la Etapa 2 (`docs/PROGRESS.md` §5).
 
 - Código: `identity`; esquema PostgreSQL: `identity`.
 - Proyecto: `src/Modules/Identity/Pastel.Modules.Identity`.
@@ -31,4 +31,4 @@ Estado: **implementación completa y validada en lo esencial** (backend 51/51, P
 
 ## Pendientes explícitos
 
-Validado en PostgreSQL real (46/46): sesiones y refresh concurrentes, jerarquía de privilegios, CSRF, Google con el handler directo, migraciones desde base vacía, errores, logs y sembrador de QA; Google real se verificó a mano. Confirmar siempre que el sembrador de QA (`TESTING_SEED_ENABLED`) no esté activo en ningún entorno compartido. El resto de pruebas diferidas está en `docs/PROGRESS.md`.
+Validado en PostgreSQL real (46/46): sesiones y refresh concurrentes, jerarquía de privilegios, CSRF, Google con el handler directo, migraciones desde base vacía, errores, logs y sembrador de QA; Google real se verificó a mano. Confirmar siempre que el sembrador de QA (`TESTING_SEED_ENABLED`) no esté activo en ningún entorno compartido. El resto de pruebas diferidas está en `docs/PROGRESS.md` §5.

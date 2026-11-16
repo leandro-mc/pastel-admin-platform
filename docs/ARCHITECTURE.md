@@ -2,24 +2,9 @@
 
 Reemplaza a la versión por capas (`Domain / Application / Infrastructure / Api`) y es la arquitectura vigente, autorizada por el propietario del producto.
 
-## 1. Decisiones finales
+## 1. Decisiones (resumen)
 
-| # | Decisión | Motivo |
-|---|---|---|
-| D1 | **Monolito modular**: un proceso, una base PostgreSQL, un esquema por módulo | Un despliegue simple en un servidor; fronteras reales entre dominios |
-| D2 | **Módulo = un proyecto .NET** con carpetas internas (`Domain/`, `Features/`, `Persistence/`) | Menos proyectos y menos saltos; un cambio toca una sola carpeta |
-| D3 | **Vertical slices** dentro de cada módulo (`Features/<VerboSustantivo>/`) | Un agente modifica una funcionalidad sin leer el resto |
-| D4 | **Minimal APIs** agrupadas por módulo (`/api/<modulo>/...`) | Menos código ceremonial que controladores; una carpeta por caso de uso |
-| D5 | **Módulos descubiertos automáticamente** (atributo de ensamblado + globs de MSBuild) | Agregar o quitar un módulo no edita archivos compartidos |
-| D6 | **Frontend: React 19 + Vite + TypeScript + Tailwind 4 + React Router v7 (modo datos)** | Mantiene el stack; añade URLs reales por módulo. Sin SSR (ver 9.1) |
-| D7 | **Autenticación con Google (OAuth 2.0 / OIDC, código + PKCE)**, sesión propia en cookies `HttpOnly` | Una sola identidad para todos los módulos; no se tocan los tokens de Google |
-| D8 | **Un `DbContext`, un esquema y un historial de migraciones por módulo** | Propiedad de datos explícita; extraíble a otra base |
-| D9 | **Compilación por subconjunto de módulos** (`PASTEL_MODULES`) | Desplegar un "Pastel" por proyecto sin reescribir nada |
-| D10 | **Tailwind: utilidades en JSX**; patrones compartidos = componentes React (se prefieren a `@apply`) | Co-ubicación estilo/markup y hojas pequeñas (el análisis de `dev` halló 0 utilidades y 2 209 líneas de CSS) |
-| D11 | **Errores y logs estandarizados** (`Result` + `problem+json` + `traceId`; Serilog JSON; auditoría aparte) | Diagnóstico fiable y mensajes humanos en todos los módulos |
-| D12 | **Roles de agentes por etapa** (Etapa 1: Dev escribe el código; Build/QA compila, corrige y escribe las pocas pruebas esenciales y reporta con evidencia; Etapa 2: QA profundo, automatización y E2E planificados aparte) | Verificación esencial sin frenar el desarrollo funcional; sin autocertificación |
-
-Descartado: microservicios (operación excesiva), Clean Architecture por módulo (ceremonial para módulos CRUD), Next.js/Remix (ver 9.1), capas horizontales (cada cambio toca cuatro proyectos).
+Monolito modular: un proceso, una base PostgreSQL y un esquema por módulo; **módulo = un proyecto .NET** (`Domain/`, `Features/`, `Persistence/`) con *vertical slices* y Minimal APIs (`/api/<modulo>/...`), descubierto automáticamente; un `DbContext` y un historial de migraciones por módulo; compilación por subconjunto (`PASTEL_MODULES`); frontend React 19 + Vite + TypeScript + Tailwind 4 + React Router v7 (modo datos), sin SSR; sesión propia en cookies con Google como proveedor. El motivo de cada decisión y las alternativas descartadas están en `docs/DECISIONS.md`.
 
 ## 2. Reglas de frontera (obligatorias; las verifican pruebas de arquitectura)
 
@@ -137,13 +122,9 @@ public interface IPastelModule
 - Cada endpoint tiene permiso o `.AllowAnonymous()` explícito; las rutas públicas llevan límite de tasa.
 - Zona horaria de presentación: `America/Costa_Rica`. Formatos `es-CR` (ver `DESIGN_SYSTEM.md`).
 
-## 8. Seguridad y autenticación (resumen; detalle en `SECURITY.md`)
+## 8. Seguridad y autenticación
 
-- Inicio de sesión principal: **Google (OAuth 2.0 / OIDC con código + PKCE)** gestionado por el backend. Solo se usan los ámbitos `openid email profile`; no se guardan tokens de Google.
-- La sesión sigue siendo propia: JWT de acceso y refresh con rotación en cookies `HttpOnly; Secure; SameSite=Strict`, más CSRF de doble envío. No cambia.
-- La cuenta local con contraseña se conserva para el administrador de arranque y cuentas creadas por administración; el autorregistro con contraseña queda desactivado por defecto.
-- Autorización siempre en el backend (denegar por defecto). El frontend solo adapta la navegación.
-- **Jerarquía de privilegios:** quien administra solo concede lo que posee y no actúa sobre cuentas Administrator ni sobre sí mismo salvo que sea Administrator (detalle en `SECURITY.md`).
+Fuente única: `docs/SECURITY.md`. En la arquitectura solo importa que la autorización se resuelve siempre en el backend (denegar por defecto) y que el frontend solo adapta la navegación.
 
 ## 9. Frontend
 
@@ -203,10 +184,8 @@ web/src/modules/cosecha/
 Reglas: páginas finas, estado del servidor en TanStack Query, formularios con react-hook-form + zod, textos en `strings.ts`, archivos de ≤ ~200 líneas.
 
 ### 9.5 Estilos con Tailwind (regla única)
-- **Utilidades en el JSX.** Lo compartido son **componentes** de `core/ui` con variantes (`cva` + `cn()`), no clases semánticas con `@apply`.
-- Tokens en `core/design/tokens.css` y `module-themes.css`, expuestos con `@theme inline` (`bg-surface`, `text-fg`, `bg-accent`, `text-accent-strong`…). `data-module` cambia las variables del módulo. **Los valores actuales son provisionales** hasta que se defina la identidad visual (`DESIGN_SYSTEM.md`); `dark:` solo cuando sea imprescindible.
-- Se prefieren componentes a `@apply`; no hay comprobación automática. El CSS propio se mantiene pequeño y compartido en `core/design` (`tailwind-audit` informa los archivos de más de 400 líneas).
-- `scripts/tailwind-audit.mjs` mide estas metas como información; no bloquea. Orden de clases con `prettier-plugin-tailwindcss`.
+
+Utilidades en el JSX, componentes de `core/ui` para lo compartido y tokens en `core/design`. Regla completa: `docs/DESIGN_SYSTEM.md` §7.
 
 ## 10. Despliegue por subconjunto de módulos
 
@@ -214,40 +193,30 @@ Reglas: páginas finas, estado del servidor en TanStack Query, formularios con r
 
 ## 11. Pruebas y guardas automáticas
 
-| Nivel | Qué verifica | Herramienta |
-|---|---|---|
-| Unitarias | Reglas de dominio y casos de uso | xUnit |
-| Integración por módulo | Endpoints + PostgreSQL real | `WebApplicationFactory` + Testcontainers |
-| Arquitectura | Fronteras, `internal`, prefijos de permiso, que cada módulo tenga `MODULE.md` | NetArchTest o ArchUnitNET |
-| Frontend | Componentes y accesibilidad básica (axe); lo existente se conserva y se amplía en la Etapa 2 | Vitest + Testing Library + `vitest-axe` |
-| Diseño | Sin morado y sin iconos/símbolos de IA | `scripts/check-design.mjs` + ESLint |
-| Aislamiento (etapa 2 / `ci:completo`) | Cada módulo compila y pasa pruebas solo; en la Etapa 1 lo garantizan las pruebas de arquitectura y `check-module-boundaries` | Matriz de CI que borra los demás módulos |
-| Integración independiente y E2E (etapa 2) | Flujos completos por rol, permisos, errores, logs, accesibilidad | Pruebas de QA (Playwright, `WebApplicationFactory` + PostgreSQL) |
+Qué existe, política y comandos: `docs/TESTING.md`. Las fronteras de esta página las imponen el compilador, las pruebas de arquitectura (`tests/Pastel.ArchitectureTests`) y `scripts/check-module-boundaries.mjs`, no instrucciones en prosa.
 
 ## 12. Trabajo con agentes
 
-- Reglas de proceso, zonas compartidas, commits, pruebas y CI en `AGENTS.md` y `docs/GIT_WORKFLOW.md`; aquí solo la arquitectura.
-- Comandos con alcance de módulo: `dotnet test src/Modules/<M>`, `npm test -- src/modules/<m>`.
-- Las fronteras las imponen el compilador y las pruebas de arquitectura, no instrucciones en prosa.
+Proceso, zonas compartidas, commits y CI: `AGENTS.md`. Comandos con alcance de módulo: `dotnet test src/Modules/<M>` y `npm test -- src/modules/<m>`.
 
 ## 13. Cómo agregar un módulo (checklist)
 
 1. `tools/new-module` con el código (genera backend, pruebas, frontend, `MODULE.md`, esquema y migración vacía).
 2. Ficha de producto en `docs/modules/<MODULO>.md` (alcance, roles, reglas).
 3. Declarar permisos y roles sugeridos en `<M>Module.cs`.
-4. Tokens del módulo en `web/src/core/design/module-themes.css` cuando su identidad visual esté definida (hoy provisionales). El módulo puede definir paleta, neutros y tono propios en su ficha: prevalecen sobre las guías generales de diseño del frontend (`AGENTS.md` §7, «Jerarquía de reglas»); lo demás sigue las reglas generales.
+4. Tokens del módulo en `web/src/core/design/module-themes.css` cuando su identidad visual esté definida (hoy provisionales). El módulo puede definir paleta, neutros y tono propios en su ficha: prevalecen sobre las guías generales de diseño del frontend (`docs/DESIGN_SYSTEM.md`, «Jerarquía de reglas»); lo demás sigue las reglas generales.
 5. Implementar por slices con las pruebas esenciales (`docs/TESTING.md`).
 6. Completar `MODULE.md` (backend y frontend).
 7. Verificar (Etapa 1): guardas de arquitectura y de diseño. La compilación aislada del módulo (`PASTEL_MODULES`) se hace con `ci:completo` o antes de desplegar.
 
 ## 14. Errores y logs
 
-Estándar único en `docs/ERROR_HANDLING_AND_LOGGING.md`. Resumen: los fallos esperables son `Result` y se traducen en un solo lugar a `application/problem+json` con `code` estable y `traceId`; nunca se devuelve `ex.Message`; los errores técnicos (único, concurrencia, serialización) tienen traducción y reintento definidos; los logs son JSON estructurado (Serilog), sin secretos ni datos personales; la **auditoría** (quién, qué, antes→después) es independiente del log técnico; `/health/ready` comprueba base de datos y migraciones.
+Fuente única: `docs/ERROR_HANDLING_AND_LOGGING.md`.
 
 ## 15. Pruebas
 
-Política de pruebas esenciales, comandos y evidencia en `docs/TESTING.md`. Un módulo o fase solo se integra a `dev` tras validar el SHA que se integra, con cero fallos y cero omitidas.
+Fuente única: `docs/TESTING.md`.
 
 ## 16. Decisiones registradas
 
-El porqué de las decisiones de esta página (monolito modular, stack y router, esquemas y migraciones por módulo, compilación por subconjunto, Tailwind, errores y logs, Google, ventana de gracia del refresh) está en `docs/DECISIONS.md`.
+Fuente única: `docs/DECISIONS.md`.

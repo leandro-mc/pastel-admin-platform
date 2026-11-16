@@ -40,7 +40,7 @@ Conexión de la app Android, sincronización sin conexión, notificaciones push,
 
 ### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política: `docs/TESTING.md` §1; **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. **Reglas de fechas y reprogramación** (la regla crítica del módulo): los vectores del inventario como pruebas unitarias de la función pura, y los casos de paridad que las cubren.
 2. Aislamiento: la persona A nunca ve, edita ni borra pendientes de la persona B (IDs ajenos → 404).
@@ -61,7 +61,7 @@ Se planifican cuando las cinco aplicaciones estén funcionales (`docs/TESTING.md
 - **Deshacer seguro** (BR-19): deshacer «marcar» restaura `CompletedAt` exacto; deshacer «eliminar» restaura el pendiente; si el pendiente cambió después → 409 y no se revierte; no pisa ediciones ni se puede repetir. Hoy lo cubren las 7 pruebas de lógica y 3 de interfaz del prototipo; **pendiente de decisión del propietario** si pasa a prueba esencial de la Etapa 1.
 
 ## 7. Reglas propias de diseño del frontend de Brisa
-Prevalecen sobre las guías generales de diseño del frontend (`AGENTS.md` §7, «Jerarquía de reglas»); lo demás sigue las reglas generales.
+Prevalecen sobre las guías generales de diseño del frontend (`docs/DESIGN_SYSTEM.md`, «Jerarquía de reglas»); lo demás sigue las reglas generales.
 
 1. **Tono y textos:** tuteo, cálido, calmado y sin culpa, igual que la app original; se conservan los textos originales (inventario §13.8) y los nuevos usan el mismo tono. Sin voseo.
 2. **Tema claro propio**, tomado de la app Android, con los dos valores ajustados a contraste (texto secundario y error). **Los valores definitivos del acento quedan pendientes de la revisión visual:** el inventario §13.7 cita `#315B4A`, mientras el prototipo y los tokens provisionales usan `#48775b`/`#416b52`.
