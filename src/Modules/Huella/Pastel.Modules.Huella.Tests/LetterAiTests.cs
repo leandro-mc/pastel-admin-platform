@@ -129,4 +129,32 @@ public sealed class LetterAiTests
         Assert.Equal("Costa Rica", doc.Location);
         Assert.Equal(["ana@correo.test", "+506 8888 0000"], doc.Contact);
     }
+
+    // El saludo nunca repite el nombre de la empresa (ya está en el destinatario) y el prompt trae las precauciones de estilo.
+    [Fact]
+    public void GreetingStaysShortAndPromptWarnsAgainstStockOpenings()
+    {
+        var (bank, _, _) = CvAiComposeTests.Bank();
+        var json = JsonSerializer.Serialize(new
+        {
+            letters = new[]
+            {
+                new
+                {
+                    language = "es",
+                    greeting = "Estimado equipo de selección de Acme:",
+                    closing = "Atentamente,",
+                    paragraphs = new[] { "Me interesa el puesto porque busca automatizar con Playwright, algo que hice en mi último cargo.", "Automaticé 140 pruebas y bajé la regresión de 2 días a 3 horas." },
+                },
+            },
+        });
+        var request = new LetterRequest(["es"], "formal");
+
+        var (letters, _) = LetterAi.Parse(json, bank, "Buscamos QA.", "QA", "Acme", new DateOnly(2026, 11, 16), "letter", request);
+        var package = LetterAi.BuildPackage(bank, OfferAnalyzer.Analyze("Buscamos QA.", isFocus: false, bank.Data), "Buscamos QA.", "QA", "Acme", "letter", request);
+
+        Assert.Equal("Estimado equipo de selección:", Assert.Single(letters).Document.Greeting);
+        Assert.Contains("Me dirijo a ustedes", package.Prompt, StringComparison.Ordinal);
+        Assert.Contains("UNA sola vez", package.Prompt, StringComparison.Ordinal);
+    }
 }
