@@ -42,6 +42,10 @@ Rutas bajo `/api/cosecha`. Los cambios de registros editables reciben `version` 
 | `GET /products`, `POST /products`, `PUT /products/{id}` | `catalog.read` / `catalog.manage` | Productos (unidad kg) |
 | `GET /seasons`, `POST /seasons`, `PUT /seasons/{id}`, `POST /seasons/{id}/status` | `catalog.read` / `catalog.manage` | Temporadas; cerrar y reabrir queda en auditoría; el cambio de precio base va al registro de cambios |
 | `GET /policy`, `POST /policy/payment`, `POST /policy/claims` | `catalog.read` / `catalog.manage` | Parámetros de pago y de reclamos como configuración versionada: nada sembrado, vigencia desde hoy, ratificación exige nota |
+| `GET /producers` (búsqueda por nombre o teléfono, paginada), `GET /producers/{id}` | `producers.read` | Con teléfonos y capacidad por temporada |
+| `POST /producers`, `PUT /producers/{id}`, `POST /producers/{id}/archive`, `PUT /producers/{id}/capacities/{seasonId}` | `producers.manage` | Teléfonos de Costa Rica (8 dígitos, mínimo uno, un solo principal); archivar en vez de borrar; cada cambio de capacidad va al registro de cambios |
+| `GET /buyers`, `GET /buyers/{id}` | `buyers.read` | Con contactos |
+| `POST /buyers`, `PUT /buyers/{id}`, `POST /buyers/{id}/archive` | `buyers.manage` | Al menos un contacto; `userId` vincula la cuenta del comprador (se escribe tal cual: Cosecha no consulta a Identity) |
 
 ## Datos
 
@@ -65,7 +69,7 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 | Código | Estado | Cuándo |
 |---|---|---|
 | `cosecha.resource.not_found` | 404 | El recurso no existe (o no es visible para la persona: no se distingue) |
-| `cosecha.product.invalid`, `cosecha.season.invalid`, `cosecha.policy.invalid` | 400 | Validación por campo |
+| `cosecha.product.invalid`, `cosecha.season.invalid`, `cosecha.policy.invalid`, `cosecha.producer.invalid`, `cosecha.buyer.invalid` | 400 | Validación por campo (los enlaces de mapa solo admiten http o https) |
 | `cosecha.product.name_taken`, `cosecha.season.name_taken` | 409 | Nombre repetido (sin distinguir mayúsculas ni espacios) |
 | `cosecha.policy.backdated`, `cosecha.policy.ratification_note_required` | 400 | Vigencia anterior a hoy; ratificado sin acuerdo |
 | `cosecha.documents.unavailable` | 503 | Costura de PDF sin motor (CCR-2); ninguna ruta la expone todavía |
@@ -76,4 +80,4 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 
 ## Pendiente
 
-Productores, compradores, pedidos, envíos, liquidación y reportes (siguientes commits de la rama).
+Pedidos, envíos, liquidación y reportes (siguientes commits de la rama).

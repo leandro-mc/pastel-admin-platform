@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Cosecha.Common;
 using Pastel.Modules.Cosecha.Documents;
+using Pastel.Modules.Cosecha.Features.Buyers;
 using Pastel.Modules.Cosecha.Features.Policy;
+using Pastel.Modules.Cosecha.Features.Producers;
 using Pastel.Modules.Cosecha.Features.Products;
 using Pastel.Modules.Cosecha.Features.Seasons;
 using Pastel.Platform.Errors;
@@ -25,6 +27,8 @@ internal static class CosechaEndpoints
         services.AddScoped<ProductsHandler>();
         services.AddScoped<SeasonsHandler>();
         services.AddScoped<PolicyHandler>();
+        services.AddScoped<ProducersHandler>();
+        services.AddScoped<BuyersHandler>();
         return services;
     }
 
@@ -33,6 +37,8 @@ internal static class CosechaEndpoints
         ProductsEndpoint.Map(api.MapGroup("/products"));
         SeasonsEndpoint.Map(api.MapGroup("/seasons"));
         PolicyEndpoint.Map(api.MapGroup("/policy"));
+        ProducersEndpoint.Map(api.MapGroup("/producers"));
+        BuyersEndpoint.Map(api.MapGroup("/buyers"));
     }
 }
 
