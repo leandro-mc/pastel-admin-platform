@@ -4,6 +4,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Cosecha.Common;
 using Pastel.Modules.Cosecha.Documents;
 using Pastel.Modules.Cosecha.Features.Buyers;
+using Pastel.Modules.Cosecha.Features.Orders;
 using Pastel.Modules.Cosecha.Features.Policy;
 using Pastel.Modules.Cosecha.Features.Producers;
 using Pastel.Modules.Cosecha.Features.Products;
@@ -29,6 +30,9 @@ internal static class CosechaEndpoints
         services.AddScoped<PolicyHandler>();
         services.AddScoped<ProducersHandler>();
         services.AddScoped<BuyersHandler>();
+        services.AddScoped<OrderQueries>();
+        services.AddScoped<OrdersHandler>();
+        services.AddScoped<MyOrdersHandler>();
         return services;
     }
 
@@ -39,6 +43,8 @@ internal static class CosechaEndpoints
         PolicyEndpoint.Map(api.MapGroup("/policy"));
         ProducersEndpoint.Map(api.MapGroup("/producers"));
         BuyersEndpoint.Map(api.MapGroup("/buyers"));
+        OrdersEndpoint.Map(api.MapGroup("/orders"));
+        MyOrdersEndpoint.Map(api.MapGroup("/my"));
     }
 }
 

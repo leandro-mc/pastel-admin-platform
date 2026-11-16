@@ -46,6 +46,9 @@ Rutas bajo `/api/cosecha`. Los cambios de registros editables reciben `version` 
 | `POST /producers`, `PUT /producers/{id}`, `POST /producers/{id}/archive`, `PUT /producers/{id}/capacities/{seasonId}` | `producers.manage` | Teléfonos de Costa Rica (8 dígitos, mínimo uno, un solo principal); archivar en vez de borrar; cada cambio de capacidad va al registro de cambios |
 | `GET /buyers`, `GET /buyers/{id}` | `buyers.read` | Con contactos |
 | `POST /buyers`, `PUT /buyers/{id}`, `POST /buyers/{id}/archive` | `buyers.manage` | Al menos un contacto; `userId` vincula la cuenta del comprador (se escribe tal cual: Cosecha no consulta a Identity) |
+| `GET /orders` (temporada, comprador, estado guardado o derivado, fechas, búsqueda; paginada), `GET /orders/{id}` | `orders.read` | El avance Parcial/Entregado se deriva de lo entregado; el detalle trae líneas, envíos y registro de cambios |
+| `POST /orders`, `PUT /orders/{id}`, `POST /orders/{id}/confirm`, `POST /orders/{id}/cancel` | `orders.manage` | Editar cantidades o precios queda en el registro de cambios (nota obligatoria si el pedido está entregado o la temporada cerrada); cancelar pide motivo y queda en auditoría |
+| `GET /my/orders`, `GET /my/orders/{id}` | `orders.read.own` | Comprador: solo pedidos de los compradores vinculados a su cuenta (`buyers.user_id`), sin borradores, notas internas ni datos de productores; uno ajeno responde 404 |
 
 ## Datos
 
@@ -69,8 +72,11 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 | Código | Estado | Cuándo |
 |---|---|---|
 | `cosecha.resource.not_found` | 404 | El recurso no existe (o no es visible para la persona: no se distingue) |
-| `cosecha.product.invalid`, `cosecha.season.invalid`, `cosecha.policy.invalid`, `cosecha.producer.invalid`, `cosecha.buyer.invalid` | 400 | Validación por campo (los enlaces de mapa solo admiten http o https) |
+| `cosecha.product.invalid`, `cosecha.season.invalid`, `cosecha.policy.invalid`, `cosecha.producer.invalid`, `cosecha.buyer.invalid`, `cosecha.order.invalid` | 400 | Validación por campo (los enlaces de mapa solo admiten http o https) |
 | `cosecha.product.name_taken`, `cosecha.season.name_taken` | 409 | Nombre repetido (sin distinguir mayúsculas ni espacios) |
+| `cosecha.season.closed`, `cosecha.record.archived` | 409 | Temporada cerrada o comprador archivado al crear un pedido |
+| `cosecha.order.cancelled`, `cosecha.order.not_draft`, `cosecha.order.has_deliveries`, `cosecha.order.in_open_shipment` | 409 | Reglas de estado del pedido (no se cancela con entregas ni dentro de un envío abierto) |
+| `cosecha.change.note_required`, `cosecha.reason.required` | 400 | Editar un registro cerrado o cancelar exige nota o motivo |
 | `cosecha.policy.backdated`, `cosecha.policy.ratification_note_required` | 400 | Vigencia anterior a hoy; ratificado sin acuerdo |
 | `cosecha.documents.unavailable` | 503 | Costura de PDF sin motor (CCR-2); ninguna ruta la expone todavía |
 
@@ -80,4 +86,4 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 
 ## Pendiente
 
-Pedidos, envíos, liquidación y reportes (siguientes commits de la rama).
+Envíos, liquidación y reportes (siguientes commits de la rama).
