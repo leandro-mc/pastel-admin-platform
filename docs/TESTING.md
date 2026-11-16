@@ -56,19 +56,18 @@ La declara el propietario cuando las cinco aplicaciones estén funcionales. Ento
 
 **Si solo falla el formato** (Prettier o `dotnet format`), no es un defecto de la unidad: ejecute `format-backend.ps1`/`format-frontend.ps1`, revise el diff y siga.
 
-**Qué ejecutar en la Etapa 1** (una unidad de trabajo): `test-backend.ps1` si tocó backend; `test-frontend.ps1` si tocó frontend; `test-database.ps1` **solo** si tocó autenticación, permisos o datos con PostgreSQL; `test-all.ps1` antes de entregar el PR. `qa-phase0-stack.ps1` y `qa-inspect-identity.ps1` son de la Etapa 2 y de operación (diagnóstico), no un requisito por unidad.
+**Cuándo ejecutar:** solo cuando el propietario lo pide o autoriza (`AGENTS.md` §4), tras mucho desarrollo válido y con el alcance que indique: `test-backend.ps1` si tocó backend, `test-frontend.ps1` si tocó frontend, `test-database.ps1` solo si tocó autenticación, permisos o datos con PostgreSQL, `test-all.ps1` solo si lo pide. `qa-phase0-stack.ps1` y `qa-inspect-identity.ps1` son de la Etapa 2 y de diagnóstico.
 
 Los scripts trabajan sobre una copia temporal del repositorio dentro de contenedores (copia sin `.git`, `node_modules`, `bin` ni `obj`), con cachés de NuGet y npm en volúmenes propios (`pastel-nuget-cache`, `pastel-npm-cache`). Los resultados TRX se escriben en una carpeta temporal. La base reservada de pruebas es `pastel_integration_tests`: el script comprueba que no coincide con la de desarrollo, no ejecuta `down -v` y no toca el volumen de desarrollo. Las cadenas de conexión no se imprimen.
 
 **Límite de inicio de sesión:** el limitador de autenticación admite 12 inicios por minuto por IP y TestServer comparte IP; las pruebas de integración reutilizan sesiones por esa razón.
 
-## 4. Formato y hook de pre-commit
-- Instalación, una vez por clon: `.\scripts\install-hooks.ps1` (o `node scripts/install-hooks.mjs`). Requiere Git y Node 20+; para Prettier, `cd web && npm ci`.
-- **En cada commit**, sobre los archivos preparados: **detiene el commit solo** ante archivos `.csn`/`.env`/claves y patrones de secretos (nunca imprime el valor). El **formato no frena**: corrige lo seguro (BOM, CRLF y nueva línea final en C#, y Prettier en `web/`) cuando el archivo no tiene cambios sin preparar y, si no puede corregirlo solo (espacios finales, archivo con cambios sin preparar, error de Prettier), **avisa y deja pasar**; `test-backend.ps1`/`test-frontend.ps1` y el CI básico lo verifican después y `format-*.ps1` lo corrigen. También valida el mensaje del commit (`docs/GIT_WORKFLOW.md`).
-- No ejecuta `dotnet format`, build ni pruebas (eso es de los scripts) y no hay hook de push. Emergencia: `PASTEL_SKIP_HOOKS=1 git commit …` (lo omitido se detecta después). Desinstalar: `git config --unset core.hooksPath`.
+## 4. Hook de pre-commit (solo seguridad)
+- Instalación, una vez por clon: `.\scripts\install-hooks.ps1` (o `node scripts/install-hooks.mjs`). Requiere Git y Node 20+.
+- **En cada commit** solo **detiene** ante archivos `.csn`/`.env`/claves y patrones de secretos (nunca imprime el valor), y valida el mensaje del commit (`docs/GIT_WORKFLOW.md` §2). **No formatea, no avisa de formato y no ejecuta Prettier, lint, build ni pruebas.** El formato se aplica a pedido con `format-backend.ps1` / `format-frontend.ps1`.
+- Emergencia: `PASTEL_SKIP_HOOKS=1 git commit …`. Desinstalar: `git config --unset core.hooksPath`.
 - **Archivos `.csn`**: aparecieron una vez en un equipo local, su origen nunca se determinó, no existen en el repositorio ni en su historial y no deben versionarse (`.gitignore` los excluye y el hook los bloquea).
-- Pruebas del hook: `node --test scripts/tests/pre-commit.test.mjs scripts/tests/commit-msg.test.mjs`.
-- Los formateadores copian de vuelta solo los archivos con contenido distinto; correr dos veces seguidas debe dar «0 archivos actualizados».
+- Pruebas del hook (a pedido): `node --test scripts/tests/pre-commit.test.mjs scripts/tests/commit-msg.test.mjs`.
 
 ## 5. Fixtures de QA (solo local, Compose con `TESTING_SEED_ENABLED=true`)
 - Owner/Superuser: `test.owner@pastel.local` / `Local-Only-Test-Owner-2026!`

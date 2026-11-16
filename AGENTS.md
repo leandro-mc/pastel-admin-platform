@@ -32,15 +32,19 @@ Solo si lo necesita: el porqué de una decisión → `docs/DECISIONS.md`; una du
 ## 3. Flujo, ramas y commits
 - Una rama corta por tarea desde `dev` (`feat/<modulo>-<tema>`, `fix/`, `docs/`, `chore/`); **un agente por rama**; sincronice con `git pull --rebase` (sin merges de sincronización).
 - **Un commit = una unidad completa** (código + prueba + documentación de esa unidad), que un revisor entienda y pueda revertir sola. Prohibido commitear por tiempo, por archivo, como punto de control o para «registrar avance» (`wip`, `checkpoint`, `docs: registrar…`).
-- Valide antes de commitear; sus arreglos no publicados se integran en su commit antes de empujar. Lo no verificado se declara una vez, en el cuerpo del commit y en el progreso de su app.
+- **Durante el desarrollo no se ejecutan validaciones** (§4). Los arreglos no publicados se integran en su commit antes de empujar. Lo no verificado se declara una vez, en el cuerpo del commit y en el progreso de su app ("por verificar").
 - Mensaje: `tipo(ámbito): resumen en imperativo` (≤ 72 caracteres, español) y cuerpo con qué, por qué y cómo se verificó. Tipos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `style`.
 - Entrega por PR hacia `dev`. **Nadie integra en `dev` ni `main`, ni abre o fusiona un PR, sin autorización expresa del propietario**; `main` solo por promoción. No reescriba historia compartida.
 
-## 4. Pruebas (Etapa 1)
-Solo se escriben pruebas que protegen seguridad del backend, autorización, aislamiento, integridad de datos, reglas de negocio críticas (dinero, fechas) y secretos: pocas, una por defecto concreto. Antes de escribir una: ¿qué defecto detecta y por qué no lo cubre otra? Las existentes se conservan. Nada se declara aprobado sin ejecución real (cero fallos, cero omitidas); lo no ejecutado es «por verificar». Comandos: `docs/TESTING.md §3`.
+## 4. Validación: solo a pedido del propietario
+**Prohibido por defecto**, en cada tarea y antes de cada commit o PR: Prettier, ESLint, `tsc`/build, Vitest, `dotnet format`, `dotnet build`/`test` de la solución, `check-design`, `check-module-boundaries`, `test-*.ps1`, `format-*.ps1`, `docker compose build`/`up` y pruebas de integración. Tampoco se ejecutan guardas «de paso» ni se vuelve a validar lo ya validado. El objetivo es desarrollar funcionalidad.
+- **Se ejecutan solo cuando el propietario lo pide o autoriza**, normalmente tras mucho desarrollo, y solo el alcance que pide (el mínimo que cubra lo tocado, no el conjunto completo).
+- Sí es válido, sin pedirlo: una compilación puntual del proyecto que está editando cuando necesita saber si un cambio compila para seguir trabajando (`dotnet build <proyecto>`, `tsc --noEmit` sobre su módulo), y probar a mano una función concreta. Sin formato, lint ni suites.
+- Pruebas que escribir (Etapa 1): solo las que protegen seguridad del backend, autorización, aislamiento, integridad de datos, reglas de negocio críticas y secretos; pocas, una por defecto concreto. Se escriben, pero **no se ejecutan** hasta que el propietario lo pida. Las existentes se conservan.
+- Nada se declara aprobado sin ejecución real: lo no ejecutado se marca «por verificar» y no es un defecto de la entrega. Comandos: `docs/TESTING.md §3`.
 
 ## 5. CI
-Nunca por commit, push ni PR abierto: solo al aprobar un PR hacia `dev` (o etiqueta `ci:basico`/`ci:completo`) y a mano. No se despacha CI durante la depuración. Detalle: `docs/GIT_WORKFLOW.md §3`.
+Nunca por commit, push ni PR abierto: solo al aprobar un PR hacia `dev` (o etiqueta `ci:basico`/`ci:completo`) y a mano. No se despacha CI durante la depuración ni se corren sus equivalentes en local sin que el propietario lo pida. Detalle: `docs/GIT_WORKFLOW.md §3`.
 
 ## 6. Roles
 **Dev** implementa en su módulo y compila; **Build/QA** compila, corrige, escribe las pruebas esenciales y reporta con evidencia (si no puede ejecutar algo, el propietario corre el comando y devuelve la salida); **Investigación** produce documentos o prototipos sin tocar código de producto.

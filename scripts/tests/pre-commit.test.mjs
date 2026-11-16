@@ -120,32 +120,16 @@ const withRepo = (name, body) =>
     }
   });
 
-withRepo("corrige BOM/CRLF/nueva linea de un .cs, lo vuelve a preparar y permite el commit", ({ dir, run }) => {
-  write(dir, "src/Mod/A.cs", Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from("class A {}\r\nclass B {}", "utf8")]));
-  run("add", "src/Mod/A.cs");
-  const result = commit(dir);
-  assert.equal(result.status, 0, result.stderr);
-  assert.equal(readFileSync(join(dir, "src/Mod/A.cs"), "utf8"), "class A {}\nclass B {}\n");
-  assert.equal(run("show", "HEAD:src/Mod/A.cs"), "class A {}\nclass B {}\n");
-  assert.equal(run("status", "--porcelain", "--", "src").trim(), "", "no debe quedar nada modificado en src/");
-});
-
-withRepo("un .cs ya correcto se confirma sin modificarlo (idempotencia)", ({ dir, run }) => {
-  write(dir, "src/Mod/A.cs", "class A {}\n");
+withRepo("no formatea ni avisa de formato: un .cs con BOM, CRLF y espacios se confirma intacto", ({ dir, run }) => {
+  const raw = Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from("class A {} 
+class B {}", "utf8")]);
+  write(dir, "src/Mod/A.cs", raw);
   run("add", "src/Mod/A.cs");
   const before = run("hash-object", "src/Mod/A.cs");
-  assert.equal(commit(dir).status, 0);
-  assert.equal(run("hash-object", "src/Mod/A.cs"), before);
-});
-
-withRepo("avisa (sin bloquear) de espacios al final de linea en C# y no altera el archivo", ({ dir, run }) => {
-  write(dir, "src/Mod/A.cs", "class A {} \n");
-  run("add", "src/Mod/A.cs");
   const result = commit(dir);
   assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stderr, /AVISO \(no bloquea\)/);
-  assert.match(result.stderr, /espacios al final de linea/);
-  assert.equal(readFileSync(join(dir, "src/Mod/A.cs"), "utf8"), "class A {} \n");
+  assert.equal(result.stderr.includes("AVISO"), false);
+  assert.equal(run("hash-object", "src/Mod/A.cs"), before);
 });
 
 withRepo("bloquea un .csn, un .env y un secreto", ({ dir, run }) => {
@@ -161,21 +145,6 @@ withRepo("bloquea un .csn, un .env y un secreto", ({ dir, run }) => {
   assert.equal(result.stderr.includes("Zz9_Zz9_"), false, "no debe imprimir el valor del secreto");
 });
 
-withRepo("no corrige solo un .cs con cambios sin preparar: avisa e indica como, sin bloquear", ({ dir, run }) => {
-  write(dir, "src/Mod/A.cs", "class A {}\n");
-  run("add", "src/Mod/A.cs");
-  assert.equal(commit(dir).status, 0);
-  write(dir, "src/Mod/A.cs", "class A {} \n");
-  run("add", "src/Mod/A.cs");
-  write(dir, "src/Mod/A.cs", "class A {} \nclass B {}\n");
-  const result = commit(dir, "chore: prueba parcial");
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stderr, /cambios sin preparar/);
-  assert.match(result.stderr, /espacios al final de linea/);
-  assert.equal(run("show", "HEAD:src/Mod/A.cs"), "class A {} \n", "el contenido preparado no se altera");
-  assert.equal(readFileSync(join(dir, "src/Mod/A.cs"), "utf8"), "class A {} \nclass B {}\n");
-});
-
 withRepo("PASTEL_SKIP_HOOKS=1 omite el hook de forma explicita", ({ dir, run }) => {
   write(dir, "src/Mod/A.cs", "class A {} \n");
   run("add", "src/Mod/A.cs");
@@ -185,12 +154,4 @@ withRepo("PASTEL_SKIP_HOOKS=1 omite el hook de forma explicita", ({ dir, run }) 
     env: { ...process.env, PASTEL_SKIP_HOOKS: "1" },
   });
   assert.equal(result.status, 0);
-});
-
-withRepo("sin Prettier instalado avisa y no bloquea archivos del frontend", ({ dir, run }) => {
-  write(dir, "web/src/app/App.tsx", "export const a=1\n");
-  run("add", "web/src/app/App.tsx");
-  const result = commit(dir);
-  assert.equal(result.status, 0, result.stderr);
-  assert.match(result.stderr, /Prettier no esta instalado/);
 });
