@@ -32,17 +32,18 @@ Identificadores `Guid` v7; fechas UTC; dinero `numeric(18,2)` en colones (`CRC`)
 
 | Entidad | Campos principales |
 |---|---|
-| `Campaign` (Campaña; **su renombre a `Season`/«Temporada» está aprobado y pendiente de ejecución**, 2026-11-13) | nombre ("Rambután 2026"), producto, inicio, fin, estado (Activa/Cerrada), `defaultProducerPricePerKg` |
+| `Season` (Temporada; antes `Campaign`, renombrada el 2026-11-15) | nombre ("Rambután 2026"), producto, inicio, fin, estado (Activa/Cerrada), `defaultProducerPricePerKg` |
 | `Product` | nombre, unidad (kg), activo |
-| `Producer` | nombre, teléfono(s), finca o punto de recolección (texto), ubicación opcional (lat/lng + enlace de mapa), `estimatedCapacityKg` por campaña, activo, notas, `UserId?` |
-| `Buyer` | nombre/razón social, contactos (nombre, teléfono, cargo), dirección (texto), cantón/zona, ubicación opcional (lat/lng), condiciones de entrega (horario, acceso), activo, notas, `UserId?` |
-| `Order` (Pedido) | comprador, campaña, fecha requerida, estado, notas; líneas: producto, kg, `pricePerKg` |
-| `Shipment` (Envío) | campaña, fecha, estado, notas, `bufferPercent` (margen sobre lo pedido, por defecto 0) |
+| `Producer` | nombre, finca o punto de recolección (texto), ubicación opcional (lat/lng + enlace de mapa), notas, archivado, `UserId?`. Sus teléfonos (`ProducerPhone`, 8 dígitos) y su capacidad por temporada (`ProducerSeasonCapacity`: `estimatedCapacityKg`) son tablas propias |
+| `Buyer` | nombre/razón social, dirección (texto), cantón/zona, ubicación opcional (lat/lng), condiciones de entrega (horario, acceso), notas, archivado, `UserId?`. Sus contactos (nombre, teléfono, cargo) son `BuyerContact` |
+| `Order` (Pedido) | comprador, temporada, fecha requerida, estado, notas; líneas (`OrderLine`): producto, kg, `pricePerKg` |
+| `Shipment` (Envío) | temporada, fecha, estado, notas, `bufferPercent` (margen sobre lo pedido, por defecto 0) |
 | `ShipmentOrder` | envío, pedido, `plannedKg`, `deliveredKg?`, nota de entrega |
-| `ProducerDelivery` (Entrega del productor) | envío, productor, `requestedKg`, `availableKg?` (tope de ese envío), `receivedKg?`, `rejectedKg` (mal estado, por defecto 0), `acceptedKg` (= recibido − rechazado), `pricePerKg`, estado, calidad (Buena / Con observaciones / Mala), notas, `expectedPaymentDate?` |
-| `ProducerPayment` | productor, fecha, monto, método (Efectivo / SINPE / Transferencia), referencia, nota |
+| `ProducerDelivery` (Entrega del productor) | envío, productor, `requestedKg`, `availableKg?` (tope de ese envío), `receivedKg?`, `rejectedKg` (mal estado, por defecto 0), `acceptedKg` (= recibido − rechazado) y `amountCrc` (= aceptado × precio, 2 decimales), ambos columnas generadas por la base, `pricePerKg`, estado, calidad (Buena / Con observaciones / Mala), notas, `expectedPaymentDate?` |
+| `ProducerPayment` | productor, fecha, monto, método (Efectivo / SINPE / Transferencia), referencia, nota; no se edita: se anula con motivo |
 | `ProducerPaymentAllocation` | pago, entrega, monto |
-| `ChangeLogEntry` | entidad, id, campo, valor anterior, valor nuevo, motivo/nota, usuario, fecha (para ediciones de cantidades y precios) |
+| `ChangeLogEntry` | entidad, id, campo, valor anterior, valor nuevo, motivo/nota, usuario, fecha (para ediciones de cantidades y precios); solo se agrega |
+| `PaymentPolicyVersion`, `ClaimsPolicyVersion` | Parámetros del modelo de pago y de la política de reclamos como **configuración versionada**: vigencia, valores (todos opcionales, sin valores sembrados), si fueron ratificados en asamblea y nota. Siguen pendientes de validación (`docs/requirements/DECISIONES-Y-HALLAZGOS.md` §7) |
 
 Estados:
 - **Pedido:** Borrador → Confirmado → Parcial → Entregado · Cancelado (el estado Parcial/Entregado se **deriva** de lo entregado).
@@ -51,7 +52,7 @@ Estados:
 
 ## 4. Flujos principales (en orden de uso real)
 
-1. **Preparar la campaña (una vez):** crear campaña y producto; fijar precio base al productor por kg.
+1. **Preparar la temporada (una vez):** crear temporada y producto; fijar precio base al productor por kg.
 2. **Registrar productores:** nombre, teléfono, finca, capacidad estimada. Edición rápida de la capacidad durante la temporada.
 3. **Registrar compradores:** nombre, contacto(s), ubicación (dirección y, si se tiene, enlace de mapa o coordenadas), condiciones de entrega.
 4. **Registrar pedidos:** comprador, kg, **fecha requerida**, **precio por kg**. Lista de pedidos con filtros (fecha, comprador, estado).
@@ -65,7 +66,7 @@ Estados:
 7. **Entrega a compradores:** por pedido del envío, registrar `deliveredKg` y notas; el estado del pedido se actualiza.
 8. **Cierre del envío:** resumen de verificación (pedido vs. recibido vs. entregado; diferencias señaladas) y botón "Cerrar envío".
 9. **Liquidación a productores:** lista de entregas pendientes de pago por productor con monto (`acceptedKg × pricePerKg`), fecha prevista de pago y saldo; **Registrar pago** (selecciona entregas, monto sugerido = suma, método, referencia). Estado de cada entrega: Pendiente / Parcial / Pagada.
-10. **Reportes y exportación:** resumen por envío, por productor (estado de cuenta), por comprador y por campaña; exportar a CSV (compatible con Excel, codificación UTF-8 con BOM, separador acorde a Excel en español) y vista imprimible.
+10. **Reportes y exportación:** resumen por envío, por productor (estado de cuenta), por comprador y por temporada; exportar a CSV (compatible con Excel, codificación UTF-8 con BOM, separador acorde a Excel en español) y vista imprimible.
 
 ## 5. Reglas de cálculo (se prueban con casos clave; ver sección 10)
 
@@ -89,7 +90,7 @@ Estados:
 | `/cosecha/productores` · `/:id` | Productores | Ficha con capacidad, historial de entregas, saldo |
 | `/cosecha/liquidacion` | Liquidación | Por productor; registrar pagos; fechas previstas |
 | `/cosecha/reportes` | Reportes | Selector de período y exportación |
-| `/cosecha/configuracion` | Campañas y productos | Solo gestor |
+| `/cosecha/configuracion` | Temporadas, productos y parámetros de pago y reclamos | Solo gestor |
 | `/cosecha/mis-pedidos` | Comprador | Solo lectura, texto grande, estado claro por pedido |
 
 Requisitos de UX específicos:
@@ -125,7 +126,7 @@ Mapas incrustados y rutas optimizadas, vistas para transportistas, comprobante d
 ## 10. Criterios de aceptación
 
 ### Etapa 1 — app funcional (obligatorio ahora)
-- Un gestor completa sin ayuda: crear campaña → 5 productores → 3 compradores → 4 pedidos → planificar un envío con reparto automático → registrar recepción con diferencias y notas → registrar entregas → cerrar → pagar a un productor → exportar CSV.
+- Un gestor completa sin ayuda: crear temporada → 5 productores → 3 compradores → 4 pedidos → planificar un envío con reparto automático → registrar recepción con diferencias y notas → registrar entregas → cerrar → pagar a un productor → exportar CSV.
 - Las **pruebas esenciales** de abajo en verde; `MODULE.md` (backend y frontend) actualizados; el módulo compila y respeta las fronteras entre módulos (pruebas de arquitectura).
 
 ### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
