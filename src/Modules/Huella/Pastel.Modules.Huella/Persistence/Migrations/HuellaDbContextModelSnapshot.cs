@@ -584,11 +584,6 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                         .HasMaxLength(600)
                         .HasColumnType("character varying(600)");
 
-                    b.Property<string>("PreferredLanguage")
-                        .IsRequired()
-                        .HasMaxLength(2)
-                        .HasColumnType("character varying(2)");
-
                     b.Property<string>("PreferredPaper")
                         .IsRequired()
                         .HasMaxLength(8)
@@ -736,6 +731,44 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("profiles", "huella");
+                });
+
+            modelBuilder.Entity("Pastel.Modules.Huella.Domain.ProfileContent", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("EnJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<string>("EsJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("StateJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId")
+                        .IsUnique();
+
+                    b.ToTable("profile_contents", "huella");
                 });
 
             modelBuilder.Entity("Pastel.Modules.Huella.Domain.ProfileLink", b =>
@@ -1038,6 +1071,15 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                 });
 
             modelBuilder.Entity("Pastel.Modules.Huella.Domain.PrivateNote", b =>
+                {
+                    b.HasOne("Pastel.Modules.Huella.Domain.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pastel.Modules.Huella.Domain.ProfileContent", b =>
                 {
                     b.HasOne("Pastel.Modules.Huella.Domain.Profile", null)
                         .WithMany()

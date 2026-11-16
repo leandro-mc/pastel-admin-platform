@@ -5,18 +5,22 @@ import { StateView } from "@/core/ui";
 import { usePublicCv, usePublicProfile } from "../api/hooks";
 import { PublicCvScreen } from "../components/PublicCvScreen";
 import { PublicProfileView } from "../components/PublicProfileView";
+import { publicText } from "../lib/publicText";
+import { useLang } from "../lib/useLang";
 import { useNoIndex } from "../lib/useNoIndex";
-import { strings } from "../strings";
 import "../components/public-profile.css";
 
-const t = strings.public;
-
-/** Vista pública por enlace (`/huella/p/:token`). Sin sesión: quien llega solo lee lo que la persona publicó. */
+/**
+ * Vista pública por enlace (`/huella/p/:token`). Sin sesión y sin el marco de Pastel: quien llega solo lee lo que la
+ * persona publicó, en inglés por defecto y con selector de idioma y de tema.
+ */
 export function Component() {
   useNoIndex();
   const { token = "" } = useParams();
   const profile = usePublicProfile(token);
   const [showCv, setShowCv] = useState(false);
+  const [lang, setLang] = useLang();
+  const t = publicText[lang];
 
   useEffect(() => {
     const previous = document.title;
@@ -25,12 +29,12 @@ export function Component() {
     return () => {
       document.title = previous;
     };
-  }, [profile.data]);
+  }, [profile.data, t.noindex]);
 
   if (profile.isPending) {
     return (
       <div className="hp">
-        <StateView status="loading" title={strings.common.loading} />
+        <StateView status="loading" title={t.loading} />
       </div>
     );
   }
@@ -38,9 +42,9 @@ export function Component() {
     // Ausente, despublicado, mal formado o regenerado: el servidor responde igual (404) y aquí también se ve igual.
     const notFound = isApiError(profile.error) && profile.error.isNotFound;
     return (
-      <div className="hp">
+      <div className="hp" lang={lang}>
         <main className="hp-gone">
-          <h1>{notFound ? t.gone.title : strings.common.loadFailed}</h1>
+          <h1>{notFound ? t.gone.title : t.loadFailed}</h1>
           <p>{notFound ? t.gone.body : ""}</p>
         </main>
       </div>
@@ -48,17 +52,28 @@ export function Component() {
   }
 
   const { profile: doc, seed } = profile.data;
-  if (showCv) return <PublicCv token={token} onBack={() => setShowCv(false)} />;
+  if (showCv)
+    return <PublicCv token={token} lang={lang} onBack={() => setShowCv(false)} />;
   return (
     <PublicProfileView
       profile={doc}
       seed={seed}
+      lang={lang}
+      onLangChange={setLang}
       onViewCv={doc.hasCv ? () => setShowCv(true) : undefined}
     />
   );
 }
 
-function PublicCv({ token, onBack }: { token: string; onBack: () => void }) {
+function PublicCv({
+  token,
+  lang,
+  onBack,
+}: {
+  token: string;
+  lang: "en" | "es";
+  onBack: () => void;
+}) {
   const cv = usePublicCv(token, true);
-  return <PublicCvScreen cv={cv} onBack={onBack} />;
+  return <PublicCvScreen cv={cv} lang={lang} onBack={onBack} />;
 }

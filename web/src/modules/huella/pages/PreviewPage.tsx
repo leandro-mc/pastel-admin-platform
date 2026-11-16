@@ -3,6 +3,7 @@ import { StateView } from "@/core/ui";
 import { usePreview, usePreviewCv } from "../api/hooks";
 import { PublicCvScreen } from "../components/PublicCvScreen";
 import { PublicProfileView } from "../components/PublicProfileView";
+import { useLang } from "../lib/useLang";
 import { useNoIndex } from "../lib/useNoIndex";
 import { strings } from "../strings";
 import "../components/public-profile.css";
@@ -17,6 +18,7 @@ export function Component() {
   useNoIndex();
   const preview = usePreview();
   const [showCv, setShowCv] = useState(false);
+  const [lang, setLang] = useLang();
   const cv = usePreviewCv(showCv);
 
   useEffect(() => {
@@ -43,11 +45,13 @@ export function Component() {
         {t.banner}
       </div>
       {showCv ? (
-        <PublicCvScreen cv={cv} onBack={() => setShowCv(false)} />
+        <PublicCvScreen cv={cv} lang={lang} onBack={() => setShowCv(false)} />
       ) : (
         <PublicProfileView
           profile={preview.data.profile}
           seed={preview.data.seed}
+          lang={lang}
+          onLangChange={setLang}
           onViewCv={
             preview.data.profile.hasCv ? () => setShowCv(true) : undefined
           }

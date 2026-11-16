@@ -5,9 +5,11 @@ using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Huella.Cv;
 using Pastel.Modules.Huella.Features.AiSettings;
+using Pastel.Modules.Huella.Features.AiTasks;
 using Pastel.Modules.Huella.Features.Bank;
 using Pastel.Modules.Huella.Features.Common;
 using Pastel.Modules.Huella.Features.MyProfile;
+using Pastel.Modules.Huella.Features.PublicContent;
 using Pastel.Modules.Huella.Features.PublicProfile;
 using Pastel.Modules.Huella.Features.Publication;
 using Pastel.Modules.Huella.Features.Studio;
@@ -33,6 +35,8 @@ internal static class HuellaEndpoints
         services.AddScoped<ProfileHandler>();
         services.AddScoped<BankHandler>();
         services.AddScoped<StudioHandler>();
+        services.AddScoped<ContentHandler>();
+        services.AddScoped<AiTaskHandler>();
         services.AddScoped<PublicationHandler>();
         services.AddScoped<PublicProfileHandler>();
         services.AddSingleton<Cv.ICvRenderer, Cv.TypstCvRenderer>();
@@ -59,6 +63,20 @@ internal static class HuellaEndpoints
         // Perfil
         api.MapGet("/profile", async (ProfileHandler h, HttpContext http, CancellationToken ct) => (await h.GetAsync(ct)).ToResponse(http)).RequirePermission(read);
         api.MapPut("/profile", async (ProfileInput input, ProfileHandler h, HttpContext http, CancellationToken ct) => (await h.SaveAsync(input, ct)).ToResponse(http)).RequirePermission(write);
+
+        // Contenido del perfil público (español editable, inglés sincronizado por IA), por secciones.
+        api.MapGet("/profile/content", async (ContentHandler h, HttpContext http, CancellationToken ct) => (await h.GetAsync(ct)).ToResponse(http)).RequirePermission(read);
+        api.MapPut("/profile/content/{section}", async (string section, ContentDoc input, ContentHandler h, HttpContext http, CancellationToken ct) => (await h.SaveSectionAsync(section, input, ct)).ToResponse(http)).RequirePermission(write);
+
+        // Acciones de IA: cada una con su prompt para una IA externa (ai-package), su ejecución con el proveedor configurado
+        // (ai-run; nginx le da 150 s) y la importación de la respuesta de una IA externa (ai-result). Mismas reglas en las tres.
+        var tasks = api.MapGroup("/tasks/{kind}");
+        tasks.MapPost("/ai-package", async (string kind, AiTaskInput input, AiTaskHandler h, HttpContext http, CancellationToken ct) =>
+            AiTaskHandler.IsKnown(kind) ? (await h.PackageAsync(kind, input, ct)).ToResponse(http) : PastelProblem.From(HuellaErrors.NotFound, http)).RequirePermission(write);
+        tasks.MapPost("/ai-run", async (string kind, AiTaskInput input, AiTaskHandler h, HttpContext http, CancellationToken ct) =>
+            AiTaskHandler.IsKnown(kind) ? (await h.RunAsync(kind, input, ct)).ToResponse(http) : PastelProblem.From(HuellaErrors.NotFound, http)).RequirePermission(write);
+        tasks.MapPost("/ai-result", async (string kind, AiTaskInput input, AiTaskHandler h, HttpContext http, CancellationToken ct) =>
+            AiTaskHandler.IsKnown(kind) ? (await h.ImportAsync(kind, input, ct)).ToResponse(http) : PastelProblem.From(HuellaErrors.NotFound, http)).RequirePermission(write);
 
         // Banco
         var bank = api.MapGroup("/bank");
@@ -97,9 +115,6 @@ internal static class HuellaEndpoints
         studio.MapPut("/versions/{versionId:guid}/name", async (Guid versionId, RenameInput i, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.RenameAsync(versionId, i, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapPut("/versions/{versionId:guid}/line", async (Guid versionId, EditLineInput i, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.EditLineAsync(versionId, i, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapPut("/versions/{versionId:guid}/public", async (Guid versionId, bool isPublic, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.SetPublicAsync(versionId, isPublic, ct)).ToResponse(http)).RequirePermission(write);
-        studio.MapPost("/versions/{versionId:guid}/ai-package", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.AiPackageAsync(versionId, ct)).ToResponse(http)).RequirePermission(write);
-        studio.MapPost("/versions/{versionId:guid}/ai-run", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.RunAiAsync(versionId, ct)).ToResponse(http)).RequirePermission(write);
-        studio.MapPost("/versions/{versionId:guid}/ai-result", async (Guid versionId, AiResultInput i, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.ApplyAiResultAsync(versionId, i, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapGet("/versions/{versionId:guid}/pdf", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) =>
         {
             var pdf = await h.RenderPdfAsync(versionId, ct);

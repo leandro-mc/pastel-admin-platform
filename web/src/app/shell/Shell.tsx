@@ -116,6 +116,18 @@ export default function Shell() {
     }
   }, [collapsed]);
 
+  // Rutas «bare» (el perfil público): sin barra lateral ni barra superior, solo la página.
+  const bare = matches.some(
+    (m) => (m.handle as { bare?: boolean } | undefined)?.bare === true,
+  );
+  if (bare) {
+    return (
+      <RouterProvider navigate={(to, options) => void navigate(to, options)}>
+        <Outlet />
+      </RouterProvider>
+    );
+  }
+
   if (pathname === routes.login) {
     return (
       <RouterProvider navigate={(to, options) => void navigate(to, options)}>

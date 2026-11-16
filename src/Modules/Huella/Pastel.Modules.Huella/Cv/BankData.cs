@@ -17,8 +17,47 @@ internal sealed record BankData(
     BankPrivate Private,
     IReadOnlyList<string> ExtraBannedPhrases,
     string Voice,
-    int CurrentYear)
+    int CurrentYear,
+    IReadOnlyDictionary<Guid, string>? EntryTexts = null,
+    string? AllText = null)
 {
+    /// <summary>¿El id es de un logro, de una experiencia o de un proyecto del banco? Una viñeta puede citar cualquiera de los tres.</summary>
+    public bool IsSource(Guid id) => (EntryTexts?.ContainsKey(id) ?? false) || AllAchievements().Any(a => a.Id == id);
+
+    /// <summary>Cifras que respaldan lo citado: las de los logros y las del texto en bruto de las experiencias o proyectos citados.</summary>
+    public IReadOnlySet<string> NumbersOf(IReadOnlyCollection<Guid> sourceIds)
+    {
+        var numbers = AllAchievements().Where(a => sourceIds.Contains(a.Id))
+            .SelectMany(a => AchievementRules.Numbers(a.ShortText + " " + a.LongText + " " + a.RawText))
+            .ToHashSet(StringComparer.Ordinal);
+        foreach (var id in sourceIds)
+        {
+            if (EntryTexts is not null && EntryTexts.TryGetValue(id, out var text))
+            {
+                numbers.UnionWith(AchievementRules.Numbers(text));
+            }
+        }
+
+        return numbers;
+    }
+
+    /// <summary>¿El banco menciona el término (una habilidad, una herramienta)? Se busca en todo el texto en bruto, sin tildes.</summary>
+    public bool Mentions(string term)
+    {
+        var folded = TermMatcher.Fold(term);
+        if (folded.Length == 0)
+        {
+            return false;
+        }
+
+        if (Skills.Any(s => TermMatcher.Fold(s.Name) == folded))
+        {
+            return true;
+        }
+
+        return AllText is not null && TermMatcher.Contains(TermMatcher.Fold(AllText), folded);
+    }
+
     public IEnumerable<BankAchievement> AllAchievements() =>
         Experiences.SelectMany(e => e.Achievements).Concat(Projects.SelectMany(p => p.Achievements));
 

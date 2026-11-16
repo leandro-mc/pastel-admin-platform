@@ -2,7 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Pastel.Modules.Huella.Ai;
 using Pastel.Modules.Huella.Cv;
 using Pastel.Modules.Huella.Domain;
-using Pastel.Modules.Huella.Features.Bank;
+using Pastel.Modules.Huella.Features.AiTasks;
 using Pastel.Modules.Huella.Persistence;
 using Pastel.SharedKernel;
 
@@ -10,9 +10,9 @@ namespace Pastel.Modules.Huella.Features.Studio;
 
 /// <summary>
 /// Estudio de CV: ofertas, generación determinista desde el banco, edición validada por el guardián de verdad,
-/// versiones, y los paquetes de IA en modo manual. La IA solo devuelve JSON; nada de lo que llega se guarda sin validar.
+/// versiones, y la redacción del CV con IA (la IA solo devuelve JSON; nada de lo que llega se guarda sin validar).
 /// </summary>
-internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, AiAssistant ai, IClock clock)
+internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, IClock clock)
 {
     public const int MaxOffers = 50;
     public const int MaxVersions = 60;
@@ -163,7 +163,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var bank = await LoadBankAsync(profile.Value, cancellationToken);
         var level = errors.OneOf("level", input.Level, CvLimits.Levels.ToArray(), CvLimits.SuggestLevel(bank.Data.ProfessionalYears()));
         var paper = errors.OneOf("paper", input.Paper, CvLimits.Papers.ToArray(), notes.PreferredPaper.Length > 0 ? notes.PreferredPaper : "letter");
-        var language = errors.OneOf("language", input.Language, CvLimits.Languages.ToArray(), notes.PreferredLanguage.Length > 0 ? notes.PreferredLanguage : "es");
+        var language = errors.OneOf("language", input.Language, CvLimits.Languages.ToArray(), "es");
         var focus = errors.OptionalLine("focus", input.Focus, HuellaLimits.CvVersion.Focus);
         var name = errors.OptionalLine("name", input.Name, HuellaLimits.CvVersion.Name);
         if (errors.Any)
@@ -350,81 +350,163 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         return Result.Success();
     }
 
-    // ───────────────────────────── IA en modo manual ─────────────────────────────
-    public async Task<Result<AiPackageView>> AiPackageAsync(Guid versionId, CancellationToken cancellationToken)
+    // ───────────────────────────── CV con IA desde el banco ─────────────────────────────
+    private sealed record ComposeContext(
+        Profile Profile,
+        AiBank Bank,
+        CvComposeRequest Request,
+        CvVersion? Existing,
+        JobOffer? Offer,
+        string? Focus,
+        string? Name);
+
+    private async Task<Result<ComposeContext>> PrepareComposeAsync(AiTaskInput input, CancellationToken cancellationToken)
     {
-        var loaded = await LoadVersionAsync(versionId, cancellationToken);
-        if (loaded.IsFailure)
+        var profile = await owners.GetOrCreateAsync(cancellationToken);
+        if (profile.IsFailure)
         {
-            return loaded.Error;
+            return profile.Error;
         }
 
-        var (version, document) = loaded.Value;
-        var profile = await owners.GetOrCreateAsync(cancellationToken);
-        var bank = await LoadBankAsync(profile.Value, cancellationToken);
-        var (analysis, _) = await AnalysisOfAsync(version, bank.Data, cancellationToken);
-        var package = AiPackages.ForCvDraft(document, bank.Data, analysis, CvLimits.For(version.Level, version.Paper), version.Language);
-        return new AiPackageView(package.Task, package.Prompt, package.Schema);
+        var loaded = await LoadBankAsync(profile.Value, cancellationToken);
+        if (!loaded.Bank.HasContent)
+        {
+            return HuellaErrors.CvRequiresContent;
+        }
+
+        var errors = new FieldErrors();
+        CvVersion? existing = null;
+        if (input.VersionId is { } versionId)
+        {
+            existing = await db.CvVersions.SingleOrDefaultAsync(v => v.Id == versionId && v.ProfileId == profile.Value.Id, cancellationToken);
+            if (existing is null)
+            {
+                return HuellaErrors.NotFound;
+            }
+        }
+
+        string level;
+        string paper;
+        List<string> languages;
+        if (existing is not null)
+        {
+            (level, paper, languages) = (existing.Level, existing.Paper, [existing.Language]);
+        }
+        else
+        {
+            var notes = await owners.GetNotesAsync(profile.Value, cancellationToken);
+            level = errors.OneOf("level", input.Level, CvLimits.Levels.ToArray(), CvLimits.SuggestLevel(loaded.Data.ProfessionalYears()));
+            paper = errors.OneOf("paper", input.Paper, CvLimits.Papers.ToArray(), notes.PreferredPaper.Length > 0 ? notes.PreferredPaper : "letter");
+            languages = (input.Languages ?? [])
+                .Select(l => (l ?? string.Empty).Trim().ToLowerInvariant())
+                .Where(l => CvLimits.Languages.Contains(l))
+                .Distinct()
+                .ToList();
+            if (languages.Count == 0)
+            {
+                errors.Add("languages", "Elija si quiere el CV en español, en inglés o en ambos.");
+            }
+        }
+
+        var focus = existing is not null ? existing.Focus : errors.OptionalLine("focus", input.Focus, HuellaLimits.CvVersion.Focus);
+        var name = errors.OptionalLine("name", input.Name, HuellaLimits.CvVersion.Name);
+        if (errors.Any)
+        {
+            return HuellaErrors.Invalid(errors.ToDictionary());
+        }
+
+        JobOffer? offer = null;
+        if ((existing?.JobOfferId ?? input.OfferId) is { } offerId)
+        {
+            offer = await db.JobOffers.SingleOrDefaultAsync(o => o.Id == offerId && o.ProfileId == profile.Value.Id, cancellationToken);
+            if (offer is null)
+            {
+                return HuellaErrors.NotFound;
+            }
+        }
+
+        return new ComposeContext(profile.Value, loaded.Bank, new CvComposeRequest(level, paper, languages), existing, offer, offer is null ? focus : null, name);
     }
 
-    public async Task<Result<AiApplyView>> ApplyAiResultAsync(Guid versionId, AiResultInput input, CancellationToken cancellationToken)
+    /// <summary>Prompt del CV: oferta (o enfoque) y banco en crudo. Es el mismo texto para el proveedor configurado y para una IA externa.</summary>
+    public async Task<Result<AiTaskPackage>> ComposePackageAsync(AiTaskInput input, CancellationToken cancellationToken)
     {
-        var loaded = await LoadVersionAsync(versionId, cancellationToken);
-        if (loaded.IsFailure)
+        var context = await PrepareComposeAsync(input, cancellationToken);
+        if (context.IsFailure)
         {
-            return loaded.Error;
+            return context.Error;
         }
 
-        var profile = await owners.GetOrCreateAsync(cancellationToken);
-        return await ApplyAsync(loaded.Value.Version, loaded.Value.Document, profile.Value, input.Json, HuellaErrors.AiResultInvalid, cancellationToken);
+        var c = context.Value;
+        var analysis = OfferAnalyzer.Analyze(c.Offer?.RawText ?? c.Focus ?? string.Empty, isFocus: c.Offer is null, c.Bank.Data);
+        var package = CvAiCompose.BuildPackage(c.Bank, analysis, c.Offer?.RawText, c.Focus, c.Request);
+        var languages = string.Join("-", c.Request.Languages);
+        return new AiTaskPackage("cv", $"CV ({string.Join(" + ", c.Request.Languages.Select(l => l.ToUpperInvariant()))})", $"huella-cv-{c.Request.Level}-{languages}", package.Prompt, package.Schema);
     }
 
-    /// <summary>IA automática: arma el mismo paquete que el modo manual, lo envía al proveedor activo y aplica la respuesta validada.</summary>
-    public async Task<Result<AiApplyView>> RunAiAsync(Guid versionId, CancellationToken cancellationToken)
+    /// <summary>Aplica la respuesta de la IA: crea una versión por idioma (o reemplaza la versión indicada), siempre tras el guardián y el ajuste a página.</summary>
+    public async Task<Result<AiTaskOutcome>> ComposeApplyAsync(AiTaskInput input, string? raw, Error invalid, CancellationToken cancellationToken)
     {
-        var package = await AiPackageAsync(versionId, cancellationToken);
-        if (package.IsFailure)
+        var context = await PrepareComposeAsync(input, cancellationToken);
+        if (context.IsFailure)
         {
-            return package.Error;
+            return context.Error;
         }
 
-        var profile = await owners.GetOrCreateAsync(cancellationToken);
-        var answer = await ai.RunAsync(profile.Value, package.Value.Prompt, cancellationToken);
-        if (answer.IsFailure)
+        var c = context.Value;
+        var (composed, rejected) = CvAiCompose.Parse(raw, c.Bank, c.Request);
+        if (composed.Count == 0)
         {
-            return answer.Error;
+            return rejected.Count == 0 ? invalid : new AiTaskOutcome("cv", 0, rejected, [], []);
         }
 
-        var loaded = await LoadVersionAsync(versionId, cancellationToken);
-        return loaded.IsFailure
-            ? loaded.Error
-            : await ApplyAsync(loaded.Value.Version, loaded.Value.Document, profile.Value, answer.Value, HuellaErrors.AiProviderInvalidJson, cancellationToken);
-    }
-
-    private async Task<Result<AiApplyView>> ApplyAsync(CvVersion version, CvDocument document, Profile profile, string? raw, Error invalid, CancellationToken cancellationToken)
-    {
-        using var json = CvAiResult.TryParse(raw);
-        if (json is null)
+        if (c.Existing is null)
         {
-            return invalid;
+            var versionCount = await db.CvVersions.CountAsync(v => v.ProfileId == c.Profile.Id, cancellationToken);
+            if (versionCount + composed.Count > MaxVersions)
+            {
+                return HuellaErrors.Invalid(new Dictionary<string, string[]> { ["name"] = [$"Puede guardar hasta {MaxVersions} versiones. Elimine alguna para crear otra."] });
+            }
         }
 
-        var bank = await LoadBankAsync(profile, cancellationToken);
-        var limits = CvLimits.For(version.Level, version.Paper);
-        var outcome = CvAiResult.ApplyDraft(json, document, bank.Data, limits);
-        if (outcome.Accepted == 0)
+        var limits = CvLimits.For(c.Request.Level, c.Request.Paper);
+        var analysisText = c.Offer?.RawText ?? c.Focus ?? string.Empty;
+        var analysis = OfferAnalyzer.Analyze(analysisText, isFocus: c.Offer is null, c.Bank.Data);
+        var now = clock.UtcNow;
+        var defaultName = c.Offer is not null ? $"{c.Offer.Title}{(c.Offer.Company is null ? string.Empty : " · " + c.Offer.Company)}" : (c.Focus ?? "CV general");
+        var ids = new List<Guid>();
+        foreach (var item in composed)
         {
-            return new AiApplyView(ViewOf(version, document, ReportOf(version)), 0, outcome.Rejected);
+            var log = CvLayout.Fit(item.Document, limits);
+            var report = BuildReport(item.Document, c.Bank.Data, limits, item.Language, analysis, analysisText, log);
+            var version = c.Existing;
+            if (version is null)
+            {
+                var baseName = c.Name ?? defaultName;
+                version = new CvVersion
+                {
+                    Id = Guid.CreateVersion7(),
+                    ProfileId = c.Profile.Id,
+                    JobOfferId = c.Offer?.Id,
+                    Name = Trim(composed.Count > 1 ? $"{baseName} · {item.Language.ToUpperInvariant()}" : baseName, HuellaLimits.CvVersion.Name),
+                    Level = c.Request.Level,
+                    Paper = c.Request.Paper,
+                    Language = item.Language,
+                    Mode = c.Offer is not null ? "offer" : "general",
+                    Focus = c.Focus,
+                    CreatedAt = now,
+                };
+                db.CvVersions.Add(version);
+            }
+
+            version.Source = "ai";
+            version.UpdatedAt = now;
+            Apply(version, item.Document, report, limits);
+            ids.Add(version.Id);
         }
 
-        var (analysis, text) = await AnalysisOfAsync(version, bank.Data, cancellationToken);
-        var log = CvLayout.Fit(document, limits);
-        var report = BuildReport(document, bank.Data, limits, version.Language, analysis, text, log);
-        version.Source = "ai";
-        Apply(version, document, report, limits);
-        version.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        return new AiApplyView(ViewOf(version, document, report), outcome.Accepted, outcome.Rejected);
+        return new AiTaskOutcome("cv", composed.Count, rejected, ids, []);
     }
 
     // ───────────────────────────── PDF (CCR-2) ─────────────────────────────
@@ -455,13 +537,14 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     }
 
     // ───────────────────────────── Apoyo ─────────────────────────────
-    private sealed record LoadedBank(BankData Data);
+    private sealed record LoadedBank(BankData Data, AiBank Bank);
 
     private async Task<LoadedBank> LoadBankAsync(Profile profile, CancellationToken cancellationToken)
     {
         var notes = await owners.GetNotesAsync(profile, cancellationToken);
         var records = await loader.LoadAsync(profile.Id, cancellationToken);
-        return new LoadedBank(BankLoader.ToBankData(profile, notes, records, clock.UtcNow.Year));
+        var bank = new AiBank(profile, notes, records, clock.UtcNow.Year);
+        return new LoadedBank(bank.Data, bank);
     }
 
     private async Task<Result<(CvVersion Version, CvDocument Document)>> LoadVersionAsync(Guid versionId, CancellationToken cancellationToken)
@@ -475,24 +558,6 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var version = await db.CvVersions.SingleOrDefaultAsync(v => v.Id == versionId && v.ProfileId == profile.Value.Id, cancellationToken);
         var document = version is null ? null : HuellaJson.Deserialize<CvDocument>(version.ContentJson);
         return version is null || document is null ? HuellaErrors.NotFound : (version, document);
-    }
-
-    /// <summary>Análisis de la oferta (o del enfoque) con que se generó una versión, vuelto a calcular contra el banco actual.</summary>
-    private async Task<(OfferAnalysis Analysis, string Text)> AnalysisOfAsync(CvVersion version, BankData bank, CancellationToken cancellationToken)
-    {
-        var text = version.Focus ?? string.Empty;
-        var isFocus = true;
-        if (version.JobOfferId is { } offerId)
-        {
-            var offer = await db.JobOffers.SingleOrDefaultAsync(o => o.Id == offerId && o.ProfileId == version.ProfileId, cancellationToken);
-            if (offer is not null)
-            {
-                text = offer.RawText;
-                isFocus = false;
-            }
-        }
-
-        return (OfferAnalyzer.Analyze(text, isFocus, bank), text);
     }
 
     private static CvReport BuildReport(CvDocument document, BankData bank, CvLimits limits, string language, OfferAnalysis analysis, string text, IReadOnlyList<string> log) =>

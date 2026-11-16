@@ -32,7 +32,6 @@ internal static class HuellaLimits
         public const int WorkAuthorization = 160;
         public const int SalaryExpectation = 120;
         public const int Avoid = 400;
-        public const int PreferredLanguage = 2;
         public const int PreferredPaper = 8;
         public const int ExtraBannedPhrases = 600;
     }

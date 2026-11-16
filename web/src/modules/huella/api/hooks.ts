@@ -7,11 +7,13 @@ import {
 import { z } from "zod";
 import { api } from "@/core/api";
 import {
-  aiApplySchema,
   aiModelSchema,
   aiPackageSchema,
   aiSettingsSchema,
+  aiTaskOutcomeSchema,
+  aiTaskPackageSchema,
   bankSchema,
+  contentViewSchema,
   cvDocumentSchema,
   derivationSchema,
   offerSchema,
@@ -31,6 +33,7 @@ const base = "/api/huella";
 export const huellaKeys = {
   all: ["huella"] as const,
   profile: ["huella", "profile"] as const,
+  content: ["huella", "content"] as const,
   bank: ["huella", "bank"] as const,
   offers: ["huella", "offers"] as const,
   offer: (id: string) => ["huella", "offer", id] as const,
@@ -324,42 +327,70 @@ export function useDeleteVersion() {
   });
 }
 
-export const useCvAiPackage = () =>
-  useMutation({
-    mutationFn: (id: string) =>
-      api.post(`${base}/studio/versions/${id}/ai-package`, aiPackageSchema),
+// ───────── Tareas de IA ─────────
+/** Datos de una tarea de IA (los mismos campos que `AiTaskInput` del servidor); cada tarea usa los suyos. */
+export type AiTaskInput = {
+  offerId?: string | null;
+  focus?: string | null;
+  level?: string;
+  paper?: string;
+  languages?: string[];
+  name?: string | null;
+  versionId?: string | null;
+  sections?: string[];
+};
+
+/** Tareas: `cv` (redacta el CV desde el banco), `profile` (redacta secciones del perfil) y `profile-translate` (reescribe el inglés). */
+export type AiTaskKind = "cv" | "profile" | "profile-translate";
+
+const taskPath = (kind: AiTaskKind, action: "ai-package" | "ai-run" | "ai-result") =>
+  `${base}/tasks/${kind}/${action}`;
+
+/** El prompt completo de la tarea: el mismo texto que recibe el proveedor configurado. */
+export const fetchAiTaskPackage = (kind: AiTaskKind, input: AiTaskInput) =>
+  api.post(taskPath(kind, "ai-package"), aiTaskPackageSchema, input);
+
+/** Ejecuta la tarea con el proveedor de IA configurado (tarda: nginx da 150 s). */
+export const runAiTask = (kind: AiTaskKind, input: AiTaskInput) =>
+  api.post(taskPath(kind, "ai-run"), aiTaskOutcomeSchema, input, {
+    timeoutMs: AI_TIMEOUT_MS,
   });
 
-function useCvAiMutation<TVars>(
-  request: (vars: TVars) => Promise<z.infer<typeof aiApplySchema>>,
-) {
+/** Importa la respuesta que devolvió una IA externa. */
+export const importAiTask = (
+  kind: AiTaskKind,
+  input: AiTaskInput,
+  json: string,
+) => api.post(taskPath(kind, "ai-result"), aiTaskOutcomeSchema, { ...input, json });
+
+/** Tras una tarea de IA se refrescan los CV y el contenido del perfil. */
+export function refreshAfterAiTask(client: QueryClient) {
+  void client.invalidateQueries({ queryKey: huellaKeys.versions });
+  void client.invalidateQueries({ queryKey: huellaKeys.content });
+  void client.invalidateQueries({ queryKey: huellaKeys.profile });
+  refreshDerived(client);
+}
+
+// ───────── Contenido del perfil público ─────────
+export const useProfileContent = () =>
+  useQuery({
+    queryKey: huellaKeys.content,
+    queryFn: ({ signal }) =>
+      api.get(`${base}/profile/content`, contentViewSchema, { signal }),
+  });
+
+export function useSaveContentSection() {
   const client = useQueryClient();
   return useMutation({
-    mutationFn: request,
+    mutationFn: ({ section, body }: { section: string; body: unknown }) =>
+      api.put(`${base}/profile/content/${section}`, contentViewSchema, body),
     onSuccess: (data) => {
-      client.setQueryData(
-        huellaKeys.version(data.version.summary.id),
-        data.version,
-      );
-      void client.invalidateQueries({ queryKey: huellaKeys.versions });
+      client.setQueryData(huellaKeys.content, data);
+      void client.invalidateQueries({ queryKey: huellaKeys.profile });
       refreshDerived(client);
     },
   });
 }
-
-export const useCvAiResult = () =>
-  useCvAiMutation(({ id, json }: { id: string; json: string }) =>
-    api.post(`${base}/studio/versions/${id}/ai-result`, aiApplySchema, {
-      json,
-    }),
-  );
-
-export const useCvAiRun = () =>
-  useCvAiMutation((id: string) =>
-    api.post(`${base}/studio/versions/${id}/ai-run`, aiApplySchema, undefined, {
-      timeoutMs: AI_TIMEOUT_MS,
-    }),
-  );
 
 /** Descarga el PDF de una versión con la sesión vigente y lo entrega al navegador como archivo. */
 export async function downloadCvPdf(id: string, fileName: string) {

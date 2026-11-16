@@ -26,43 +26,30 @@ public sealed class PublicProfilePrivacyTests
         };
         var visible = new Experience { Id = Guid.CreateVersion7(), ProfileId = profileId, Role = "QA", Company = "Empresa Visible", StartDate = new(2022, 3, 1), IsVisible = true };
         var hidden = new Experience { Id = Guid.CreateVersion7(), ProfileId = profileId, Role = "QA", Company = "Empresa Oculta", StartDate = new(2020, 1, 1), IsVisible = false };
-        Achievement Make(Guid parent, string text, string visibility) => new()
+        var records = new BankRecords([], [visible, hidden], [], [], [], [], [], [], []);
+
+        // Contenido redactado: incluye, por error o por haberla ocultado después, una experiencia que el banco marca como oculta.
+        string Entry(Experience e, string bullet) => $"{{\"sourceId\":\"{e.Id}\",\"role\":\"QA\",\"company\":\"{e.Company}\",\"start\":\"2022-03\",\"bullets\":[\"{bullet}\"]}}";
+        var content = new ProfileContent
         {
             Id = Guid.CreateVersion7(),
-            ExperienceId = parent,
-            ShortText = text,
-            LongText = text,
-            RawText = "RELATO-PRIVADO",
-            ImpactType = "other",
-            Source = "manual",
-            Visibility = visibility,
-            Strength = 3,
+            ProfileId = profileId,
+            EsJson = $"{{\"headline\":\"QA Engineer\",\"summary\":\"Resumen\",\"experience\":[{Entry(visible, "Logro publico")},{Entry(hidden, "Logro de empresa oculta")}]}}",
+            EnJson = "{}",
         };
-        var records = new BankRecords(
-            [],
-            [visible, hidden],
-            [],
-            [Make(visible.Id, "Logro publico", "both"), Make(visible.Id, "Logro solo CV", "cv"), Make(visible.Id, "Logro nunca", "never"), Make(hidden.Id, "Logro de empresa oculta", "both")],
-            [],
-            [],
-            [],
-            [],
-            []);
 
-        var json = HuellaJson.Serialize(PublicProfileBuilder.Build(profile, records, 2026, hasCv: false));
+        var json = HuellaJson.Serialize(PublicProfileBuilder.Build(profile, records, content, 2026, hasCv: false));
 
         Assert.DoesNotContain("marta.privada@correo.test", json, StringComparison.Ordinal);
         Assert.DoesNotContain("8888-0000", json, StringComparison.Ordinal);
         Assert.DoesNotContain("Heredia", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("RELATO-PRIVADO", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("Logro solo CV", json, StringComparison.Ordinal);
-        Assert.DoesNotContain("Logro nunca", json, StringComparison.Ordinal);
         Assert.DoesNotContain("Empresa Oculta", json, StringComparison.Ordinal);
         Assert.DoesNotContain("Logro de empresa oculta", json, StringComparison.Ordinal);
         Assert.Contains("Logro publico", json, StringComparison.Ordinal);
+        Assert.Contains("Logro publico", HuellaJson.Serialize(PublicProfileBuilder.Build(profile, records, content, 2026, hasCv: false).En), StringComparison.Ordinal);
 
         profile.ShowContactEmail = true;
-        var enabled = HuellaJson.Serialize(PublicProfileBuilder.Build(profile, records, 2026, hasCv: false));
+        var enabled = HuellaJson.Serialize(PublicProfileBuilder.Build(profile, records, content, 2026, hasCv: false));
         Assert.Contains("marta.privada@correo.test", enabled, StringComparison.Ordinal);
         Assert.DoesNotContain("8888-0000", enabled, StringComparison.Ordinal);
     }

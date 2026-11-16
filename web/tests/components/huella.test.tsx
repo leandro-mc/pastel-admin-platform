@@ -1,6 +1,7 @@
 import { cleanup, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { afterEach, describe, expect, it } from "vitest";
+import { PreferencesProvider } from "../../src/core/preferences";
 import { publicProfileSchema } from "../../src/modules/huella/api/schemas";
 import {
   PublicProfileView,
@@ -13,32 +14,19 @@ import {
   segments,
 } from "../../src/modules/huella/lib/highlight";
 
-const profile = publicProfileSchema.parse({
-  name: "Marta Solís",
-  headline: "Ingeniera de QA",
-  summary: "Automatizo pruebas de extremo a extremo con Playwright.",
-  location: null,
-  availability: null,
-  contact: { email: null, phone: null },
-  links: [
-    { kind: "website", label: "Sitio", url: "https://ejemplo.dev" },
-    { kind: "other", label: "Raro", url: "javascript:alert(1)" },
-  ],
+const localized = (headline: string, summary: string, bullet: string) => ({
+  headline,
+  summary,
   facts: {
     yearsOfExperience: 6,
     currentRole: "QA Lead",
     currentCompany: "Acme",
-    currentSince: "2022",
+    currentSince: "2022-03",
     previousRole: null,
     previousCompany: null,
     previousYears: null,
   },
-  highlights: [
-    {
-      figure: "-40 %",
-      text: "Reduje el tiempo de CI con pipelines en paralelo.",
-    },
-  ],
+  highlights: [{ figure: "-40 %", text: bullet }],
   experience: [
     {
       role: "QA Lead",
@@ -46,22 +34,36 @@ const profile = publicProfileSchema.parse({
       location: null,
       start: "2022-03",
       end: null,
-      achievements: [{ figure: "92 %", text: "Cobertura de API con Postman." }],
+      achievements: [{ figure: null, text: "Cobertura de API con Postman." }],
     },
   ],
   projects: [],
-  skills: [
-    {
-      name: "Playwright",
-      category: "Pruebas",
-      recency: "current",
-      evidence: 2,
-    },
-  ],
+  skills: [{ label: "Pruebas", items: ["Playwright"] }],
   education: [],
   certifications: [],
   languages: [],
+});
+
+const profile = publicProfileSchema.parse({
+  name: "Marta Solís",
+  location: null,
+  availability: null,
+  contact: { email: null, phone: null },
+  links: [
+    { kind: "website", label: "Sitio", url: "https://ejemplo.dev" },
+    { kind: "other", label: "Raro", url: "javascript:alert(1)" },
+  ],
   hasCv: false,
+  es: localized(
+    "Ingeniera de QA",
+    "Automatizo pruebas de extremo a extremo con Playwright.",
+    "Reduje el tiempo de CI con pipelines en paralelo.",
+  ),
+  en: localized(
+    "QA Engineer",
+    "I automate end-to-end tests with Playwright.",
+    "Cut CI time with parallel pipelines.",
+  ),
 });
 
 afterEach(cleanup);
@@ -106,7 +108,15 @@ describe("huella · perfil público", () => {
   });
 
   it("no muestra contacto que el servidor no envió y abre enlaces de forma segura", () => {
-    render(<PublicProfileView profile={profile} seed="0123456789abcdef" />);
+    render(
+      <PublicProfileView
+        profile={profile}
+        seed="0123456789abcdef"
+        lang="es"
+        onLangChange={() => undefined}
+      />,
+      { wrapper: PreferencesProvider },
+    );
     expect(screen.queryByRole("link", { name: /@/ })).not.toBeInTheDocument();
     expect(
       screen.queryByRole("heading", { name: "Contacto" }),
@@ -123,7 +133,15 @@ describe("huella · perfil público", () => {
 
   it("marca la evidencia y declara lo que no figura", async () => {
     const user = userEvent.setup();
-    render(<PublicProfileView profile={profile} seed="0123456789abcdef" />);
+    render(
+      <PublicProfileView
+        profile={profile}
+        seed="0123456789abcdef"
+        lang="es"
+        onLangChange={() => undefined}
+      />,
+      { wrapper: PreferencesProvider },
+    );
     await user.type(screen.getByRole("textbox"), "Playwright, Kubernetes");
     const status = screen.getByRole("status");
     expect(status).toHaveTextContent("1 de 2 términos con evidencia");
@@ -131,5 +149,28 @@ describe("huella · perfil público", () => {
     expect(
       results.getByRole("button", { name: /Kubernetes · sin evidencia/ }),
     ).toBeDisabled();
+  });
+
+  it("muestra el idioma elegido y ofrece cambiarlo, junto con el tema", async () => {
+    const user = userEvent.setup();
+    const changes: string[] = [];
+    render(
+      <PublicProfileView
+        profile={profile}
+        seed="0123456789abcdef"
+        lang="en"
+        onLangChange={(l) => changes.push(l)}
+      />,
+      { wrapper: PreferencesProvider },
+    );
+    expect(screen.getByText("QA Engineer")).toBeInTheDocument();
+    expect(screen.queryByText("Ingeniera de QA")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "English" })).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await user.click(screen.getByRole("button", { name: "Español" }));
+    expect(changes).toEqual(["es"]);
+    expect(screen.getByRole("button", { name: /Theme/ })).toBeInTheDocument();
   });
 });

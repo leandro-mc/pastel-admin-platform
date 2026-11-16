@@ -128,7 +128,6 @@ export const notesSchema = z.object({
   workAuthorization: text,
   salaryExpectation: text,
   avoid: text,
-  preferredLanguage: text,
   preferredPaper: text,
   extraBannedPhrases: text,
 });
@@ -223,6 +222,7 @@ export const entrySchema = z.object({
 });
 
 export const cvDocumentSchema = z.object({
+  language: maybe.optional(),
   header: z.object({
     name: text,
     headline: text,
@@ -276,10 +276,21 @@ export const versionSchema = z.object({
   pdfAvailable: z.boolean(),
 });
 
-export const aiApplySchema = z.object({
-  version: versionSchema,
+// ── Tareas de IA (CV, perfil público, traducción) ──
+export const aiTaskPackageSchema = z.object({
+  kind: text,
+  title: text,
+  fileName: text,
+  prompt: text,
+  schema: text,
+});
+
+export const aiTaskOutcomeSchema = z.object({
+  kind: text,
   accepted: z.number(),
   rejected: z.array(text),
+  versionIds: z.array(id),
+  sections: z.array(text),
 });
 
 // ── IA automática ──
@@ -302,17 +313,74 @@ export const aiSettingsSchema = z.object({
 
 export const aiModelSchema = z.object({ id: text, label: text });
 
-// ── Publicación y vista pública ──
-export const publicProfileSchema = z.object({
-  name: text,
+// ── Contenido del perfil público (español editable, inglés sincronizado) ──
+const nullableNumber = z.number().nullable();
+
+export const contentDocSchema = z.object({
   headline: text,
   summary: text,
-  location: maybe,
-  availability: maybe,
-  contact: z.object({ email: maybe, phone: maybe }),
-  links: z.array(
-    z.object({ kind: text, label: text, url: text, icon: maybe.optional() }),
+  highlights: z.array(z.object({ figure: maybe, text })),
+  experience: z.array(
+    z.object({
+      sourceId: id,
+      role: text,
+      company: text,
+      location: maybe,
+      start: text,
+      end: maybe,
+      bullets: z.array(text),
+    }),
   ),
+  projects: z.array(
+    z.object({
+      sourceId: id,
+      name: text,
+      url: maybe,
+      stack: maybe,
+      summary: text,
+    }),
+  ),
+  skills: z.array(z.object({ label: text, items: z.array(text) })),
+  education: z.array(
+    z.object({
+      sourceId: id,
+      degree: text,
+      institution: text,
+      startYear: nullableNumber,
+      endYear: nullableNumber,
+      note: maybe,
+    }),
+  ),
+  certifications: z.array(
+    z.object({
+      sourceId: id,
+      name: text,
+      issuer: maybe,
+      year: nullableNumber,
+      url: maybe,
+    }),
+  ),
+  languages: z.array(z.object({ sourceId: id, language: text, level: text })),
+});
+
+export const contentViewSchema = z.object({
+  es: contentDocSchema,
+  en: contentDocSchema,
+  sections: z.array(
+    z.object({
+      id: text,
+      status: z.enum(["empty", "ready", "stale"]),
+      updatedAt: maybe,
+    }),
+  ),
+});
+
+// ── Publicación y vista pública ──
+const ledgerLine = z.object({ figure: maybe, text });
+
+export const publicLocalizedSchema = z.object({
+  headline: text,
+  summary: text,
   facts: z.object({
     yearsOfExperience: z.number(),
     currentRole: maybe,
@@ -322,7 +390,7 @@ export const publicProfileSchema = z.object({
     previousCompany: maybe,
     previousYears: maybe,
   }),
-  highlights: z.array(z.object({ figure: maybe, text })),
+  highlights: z.array(ledgerLine),
   experience: z.array(
     z.object({
       role: text,
@@ -330,32 +398,19 @@ export const publicProfileSchema = z.object({
       location: maybe,
       start: text,
       end: maybe,
-      achievements: z.array(z.object({ figure: maybe, text })),
+      achievements: z.array(ledgerLine),
     }),
   ),
   projects: z.array(
-    z.object({
-      name: text,
-      url: maybe,
-      stack: maybe,
-      summary: text,
-      achievements: z.array(z.object({ figure: maybe, text })),
-    }),
+    z.object({ name: text, url: maybe, stack: maybe, summary: text }),
   ),
-  skills: z.array(
-    z.object({
-      name: text,
-      category: text,
-      recency: z.enum(["current", "recent", "earlier"]),
-      evidence: z.number(),
-    }),
-  ),
+  skills: z.array(z.object({ label: text, items: z.array(text) })),
   education: z.array(
     z.object({
       degree: text,
       institution: text,
-      startYear: z.number().nullable(),
-      endYear: z.number().nullable(),
+      startYear: nullableNumber,
+      endYear: nullableNumber,
       note: maybe,
     }),
   ),
@@ -363,14 +418,24 @@ export const publicProfileSchema = z.object({
     z.object({
       name: text,
       issuer: maybe,
-      year: z.number().nullable(),
+      year: nullableNumber,
       url: maybe,
     }),
   ),
-  languages: z.array(
-    z.object({ language: text, level: text, evidence: maybe }),
+  languages: z.array(z.object({ language: text, level: text })),
+});
+
+export const publicProfileSchema = z.object({
+  name: text,
+  location: maybe,
+  availability: maybe,
+  contact: z.object({ email: maybe, phone: maybe }),
+  links: z.array(
+    z.object({ kind: text, label: text, url: text, icon: maybe.optional() }),
   ),
   hasCv: z.boolean(),
+  es: publicLocalizedSchema,
+  en: publicLocalizedSchema,
 });
 
 export const statusSchema = z.object({
@@ -427,4 +492,9 @@ export type CvVersion = z.infer<typeof versionSchema>;
 export type VersionSummary = z.infer<typeof versionSummarySchema>;
 export type CvDocument = z.infer<typeof cvDocumentSchema>;
 export type PublicProfile = z.infer<typeof publicProfileSchema>;
+export type PublicLocalized = z.infer<typeof publicLocalizedSchema>;
+export type ContentDoc = z.infer<typeof contentDocSchema>;
+export type ContentView = z.infer<typeof contentViewSchema>;
+export type AiTaskPackage = z.infer<typeof aiTaskPackageSchema>;
+export type AiTaskOutcome = z.infer<typeof aiTaskOutcomeSchema>;
 export type PublicationStatus = z.infer<typeof statusSchema>;

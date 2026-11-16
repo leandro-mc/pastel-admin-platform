@@ -18,7 +18,8 @@ internal sealed class PublicProfileHandler(HuellaDbContext db)
     {
         var snapshot = await FindSnapshotAsync(token, cancellationToken);
         var document = snapshot is null ? null : HuellaJson.Deserialize<PublicProfileDocument>(snapshot.ContentJson);
-        if (snapshot is null || document is null)
+        // Una publicación anterior al perfil bilingüe no trae las dos versiones: se vuelve a publicar para recuperarla.
+        if (snapshot is null || document?.Es is null || document.En is null)
         {
             return HuellaErrors.PublicProfileUnavailable;
         }

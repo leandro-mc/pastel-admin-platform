@@ -47,7 +47,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
             a.Verified, a.Source, a.Visibility, r.SkillIdsOf(a));
         return new BankView(
             new NotesView(notes.Story, notes.Voice, notes.Residence, notes.WorkMode, notes.Availability, notes.WorkAuthorization,
-                notes.SalaryExpectation, notes.Avoid, notes.PreferredLanguage, notes.PreferredPaper, notes.ExtraBannedPhrases),
+                notes.SalaryExpectation, notes.Avoid, notes.PreferredPaper, notes.ExtraBannedPhrases),
             r.Experiences.Select(e => new ExperienceView(
                 e.Id, e.Role, e.MarketRole, e.Company, e.Location, e.EmploymentType, e.WorkMode, MonthDate.Format(e.StartDate),
                 MonthDate.Format(e.EndDate), e.Narrative, e.CompanyContext, e.TeamSize, e.IsVisible, r.AchievementsOf(e).Select(A).ToList())).ToList(),
@@ -77,7 +77,6 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
         var authorization = errors.Text("workAuthorization", input.WorkAuthorization, HuellaLimits.PrivateNote.WorkAuthorization);
         var salary = errors.Text("salaryExpectation", input.SalaryExpectation, HuellaLimits.PrivateNote.SalaryExpectation);
         var avoid = errors.Text("avoid", input.Avoid, HuellaLimits.PrivateNote.Avoid);
-        var language = errors.OneOf("preferredLanguage", input.PreferredLanguage, CvLimits.Languages.ToArray(), "es");
         var paper = errors.OneOf("preferredPaper", input.PreferredPaper, CvLimits.Papers.ToArray(), "letter");
         var banned = errors.Text("extraBannedPhrases", input.ExtraBannedPhrases, HuellaLimits.PrivateNote.ExtraBannedPhrases);
         if (errors.Any)
@@ -94,7 +93,6 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
         notes.WorkAuthorization = authorization;
         notes.SalaryExpectation = salary;
         notes.Avoid = avoid;
-        notes.PreferredLanguage = language;
         notes.PreferredPaper = paper;
         notes.ExtraBannedPhrases = banned;
         notes.UpdatedAt = clock.UtcNow;

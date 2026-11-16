@@ -10,6 +10,9 @@ namespace Pastel.Modules.Huella.Cv;
 /// </summary>
 internal sealed class CvDocument
 {
+    /// <summary>Idioma en que está redactado (<c>es</c> o <c>en</c>); lo usa la vista pública del CV para sus títulos.</summary>
+    public string? Language { get; set; }
+
     public CvHeader Header { get; set; } = new();
 
     public string Summary { get; set; } = string.Empty;

@@ -42,7 +42,6 @@ internal sealed class OwnerProfiles(HuellaDbContext db, ICurrentUser currentUser
         {
             Id = Guid.CreateVersion7(),
             ProfileId = profile.Id,
-            PreferredLanguage = "es",
             PreferredPaper = "letter",
             UpdatedAt = now,
         });
@@ -79,7 +78,6 @@ internal sealed class OwnerProfiles(HuellaDbContext db, ICurrentUser currentUser
         {
             Id = Guid.CreateVersion7(),
             ProfileId = profile.Id,
-            PreferredLanguage = "es",
             PreferredPaper = "letter",
             UpdatedAt = clock.UtcNow,
         };

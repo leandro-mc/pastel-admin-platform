@@ -85,11 +85,13 @@ export default {
     {
       path: "/huella/vista-previa",
       session: true,
+      bare: true,
       lazy: () => import("./pages/PreviewPage"),
     },
     {
       path: "/huella/p/:token",
       session: false,
+      bare: true,
       lazy: () => import("./pages/PublicPage"),
     },
   ],

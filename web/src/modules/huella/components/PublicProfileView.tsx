@@ -1,12 +1,20 @@
-import { createContext, useContext, useId, useMemo, useState } from "react";
-import type { PublicProfile } from "../api/schemas";
+import { Moon, Sun } from "lucide-react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { usePreferences } from "@/core/preferences";
+import type { PublicLocalized, PublicProfile } from "../api/schemas";
 import { countEvidence, parseTerms, segments } from "../lib/highlight";
 import { LinkGlyph } from "../lib/linkIcons";
-import { strings } from "../strings";
+import { formatMonth, publicText, type Lang } from "../lib/publicText";
 import { Fingerprint } from "./Fingerprint";
 import "./public-profile.css";
-
-const p = strings.public;
 
 const TermsContext = createContext<readonly string[]>([]);
 
@@ -50,32 +58,25 @@ function ExternalLink({ url, children }: { url: string; children: string }) {
   );
 }
 
-const year = (month: string) => month.slice(0, 4);
-
-function texts(profile: PublicProfile): string[] {
+function texts(loc: PublicLocalized): string[] {
   return [
-    profile.headline,
-    profile.summary,
-    ...profile.highlights.map((h) => h.text),
-    ...profile.experience.flatMap((e) => [
+    loc.headline,
+    loc.summary,
+    ...loc.highlights.map((h) => h.text),
+    ...loc.experience.flatMap((e) => [
       e.role,
       e.company,
       ...e.achievements.map((a) => a.text),
     ]),
-    ...profile.projects.flatMap((x) => [
-      x.name,
-      x.summary,
-      x.stack ?? "",
-      ...x.achievements.map((a) => a.text),
-    ]),
-    ...profile.skills.map((s) => s.name),
-    ...profile.education.map((e) => `${e.degree} ${e.institution}`),
-    ...profile.certifications.map((c) => c.name),
-    ...profile.languages.map((l) => l.language),
+    ...loc.projects.flatMap((x) => [x.name, x.summary, x.stack ?? ""]),
+    ...loc.skills.flatMap((g) => [g.label, ...g.items]),
+    ...loc.education.map((e) => `${e.degree} ${e.institution}`),
+    ...loc.certifications.map((c) => c.name),
+    ...loc.languages.map((l) => l.language),
   ];
 }
 
-function Ledger({ items }: { items: PublicProfile["highlights"] }) {
+function Ledger({ items }: { items: PublicLocalized["highlights"] }) {
   return (
     <ul className="hp-ledger">
       {items.map((item, i) => (
@@ -93,63 +94,42 @@ function Ledger({ items }: { items: PublicProfile["highlights"] }) {
 type Props = {
   profile: PublicProfile;
   seed: string;
+  lang: Lang;
+  onLangChange: (lang: Lang) => void;
   /** Abre el CV público; solo se ofrece si el perfil lo incluye. */
   onViewCv?: () => void;
   /** En la vista previa del Owner no se ofrece imprimir ni abrir el CV. */
   preview?: boolean;
 };
 
-/** Perfil público: el mismo componente para la vista previa del Owner y para quien abre el enlace. */
+/** Perfil público: el mismo componente para la vista previa de la persona dueña y para quien abre el enlace. */
 export function PublicProfileView({
   profile,
   seed,
+  lang,
+  onLangChange,
   onViewCv,
   preview = false,
 }: Props) {
+  const p = publicText[lang];
+  const loc = profile[lang];
   const inputId = useId();
   const [raw, setRaw] = useState("");
   const terms = useMemo(() => parseTerms(raw), [raw]);
-  const counts = useMemo(
-    () => countEvidence(texts(profile), terms),
-    [profile, terms],
-  );
+  const counts = useMemo(() => countEvidence(texts(loc), terms), [loc, terms]);
   const withEvidence = counts.filter((n) => n > 0).length;
-  const f = profile.facts;
-
-  const skillGroups = useMemo(() => {
-    const map = new Map<string, PublicProfile["skills"]>();
-    for (const s of profile.skills) {
-      map.set(s.category, [...(map.get(s.category) ?? []), s]);
-    }
-    return [...map.entries()];
-  }, [profile.skills]);
-
+  const f = loc.facts;
   const hasContact = profile.contact.email || profile.contact.phone;
+
   const sections = [
-    { id: "resumen", label: p.sections.summary, show: true },
-    {
-      id: "trayectoria",
-      label: p.sections.path,
-      show: profile.experience.length > 0,
-    },
-    {
-      id: "proyectos",
-      label: p.sections.projects,
-      show: profile.projects.length > 0,
-    },
-    {
-      id: "herramientas",
-      label: p.sections.tools,
-      show: profile.skills.length > 0,
-    },
+    { id: "resumen-texto", label: p.sections.summary, show: true },
+    { id: "trayectoria", label: p.sections.path, show: loc.experience.length > 0 },
+    { id: "proyectos", label: p.sections.projects, show: loc.projects.length > 0 },
+    { id: "herramientas", label: p.sections.tools, show: loc.skills.length > 0 },
     {
       id: "formacion",
       label: p.sections.education,
-      show:
-        profile.education.length +
-          profile.certifications.length +
-          profile.languages.length >
-        0,
+      show: loc.education.length + loc.certifications.length + loc.languages.length > 0,
     },
     {
       id: "contacto",
@@ -158,23 +138,54 @@ export function PublicProfileView({
     },
   ].filter((s) => s.show);
 
+  const { condensed, heroRef, active } = useScrollState(sections.map((s) => s.id));
+
   const jump = (term: number) => {
     document
       .querySelector(`.hp mark[data-term="${term}"]`)
       ?.scrollIntoView({ block: "center" });
   };
 
+  const range = (start: string, end: string | null) =>
+    `${formatMonth(start, lang)} – ${end ? formatMonth(end, lang) : p.facts.present}`;
+
   return (
     <TermsContext.Provider value={terms}>
-      <div className="hp" data-module="huella">
+      <div className="hp" data-module="huella" lang={lang}>
         <a className="hp-skip" href="#resumen">
           {p.skip}
         </a>
+
+        <header className="hp-bar hp-noprint" data-condensed={condensed || undefined}>
+          <div className="hp-bar-in">
+            <div className="hp-bar-id" aria-hidden={!condensed}>
+              <strong>{profile.name}</strong>
+              <span className="hp-bar-headline">{loc.headline}</span>
+              {profile.contact.email ? (
+                <a
+                  href={`mailto:${profile.contact.email}`}
+                  tabIndex={condensed ? 0 : -1}
+                >
+                  {profile.contact.email}
+                </a>
+              ) : null}
+            </div>
+            <div className="hp-bar-tools">
+              <LanguageToggle lang={lang} onChange={onLangChange} />
+              <ThemeToggle lang={lang} />
+            </div>
+          </div>
+        </header>
+
         <div className="hp-wrap">
           <aside className="hp-rail">
-            <nav aria-label={profile.name}>
+            <nav aria-label={`${p.menu} · ${profile.name}`}>
               {sections.map((s) => (
-                <a key={s.id} href={`#${s.id}`}>
+                <a
+                  key={s.id}
+                  href={`#${s.id}`}
+                  aria-current={active === s.id ? "location" : undefined}
+                >
                   {s.label}
                 </a>
               ))}
@@ -185,14 +196,18 @@ export function PublicProfileView({
           </aside>
 
           <main id="resumen">
-            <div className="hp-top">
+            <div className="hp-top" ref={heroRef}>
               <div>
                 <h1 className="hp-name">{profile.name}</h1>
                 <p className="hp-lead">
-                  <Hl text={profile.headline} />
+                  <Hl text={loc.headline} />
                 </p>
               </div>
-              <Fingerprint seed={seed} />
+              <Fingerprint
+                seed={seed}
+                caption={p.fingerprint}
+                label={p.fingerprintLabel}
+              />
             </div>
 
             <dl className="hp-fact">
@@ -202,7 +217,7 @@ export function PublicProfileView({
                 <>
                   <dt>{p.facts.now}</dt>
                   <dd>
-                    {[f.currentRole, f.currentCompany, f.currentSince]
+                    {[f.currentRole, f.currentCompany, f.currentSince ? formatMonth(f.currentSince, lang) : null]
                       .filter(Boolean)
                       .join(" · ")}
                   </dd>
@@ -238,7 +253,7 @@ export function PublicProfileView({
                   {p.actions.contact}
                 </a>
               ) : null}
-              {profile.hasCv && onViewCv && !preview ? (
+              {profile.hasCv && onViewCv ? (
                 <button type="button" className="hp-btn" onClick={onViewCv}>
                   {p.actions.cv}
                 </button>
@@ -276,19 +291,10 @@ export function PublicProfileView({
                 {terms.map((term, i) => {
                   const n = counts[i] ?? 0;
                   return (
-                    <li
-                      key={`${term}-${i}`}
-                      className={n > 0 ? "is-ok" : "is-no"}
-                    >
-                      <button
-                        type="button"
-                        disabled={n === 0}
-                        onClick={() => jump(i)}
-                      >
+                    <li key={`${term}-${i}`} className={n > 0 ? "is-ok" : "is-no"}>
+                      <button type="button" disabled={n === 0} onClick={() => jump(i)}>
                         {n > 0 ? "✓" : "✕"} {term} ·{" "}
-                        {n > 0
-                          ? p.highlighter.places(n)
-                          : p.highlighter.noEvidence}
+                        {n > 0 ? p.highlighter.places(n) : p.highlighter.noEvidence}
                       </button>
                     </li>
                   );
@@ -302,36 +308,27 @@ export function PublicProfileView({
                 >
                   {p.highlighter.example}
                 </button>
-                <button
-                  type="button"
-                  className="hp-link"
-                  onClick={() => setRaw("")}
-                >
+                <button type="button" className="hp-link" onClick={() => setRaw("")}>
                   {p.highlighter.clear}
                 </button>
               </div>
             </section>
 
-            <section aria-labelledby="t-resumen">
+            <section id="resumen-texto" aria-labelledby="t-resumen">
               <h2 id="t-resumen">{p.sections.summary}</h2>
               <p>
-                <Hl text={profile.summary} />
+                <Hl text={loc.summary} />
               </p>
-              {profile.highlights.length > 0 ? (
-                <Ledger items={profile.highlights} />
-              ) : null}
+              {loc.highlights.length > 0 ? <Ledger items={loc.highlights} /> : null}
             </section>
 
-            {profile.experience.length > 0 ? (
+            {loc.experience.length > 0 ? (
               <section id="trayectoria" aria-labelledby="t-trayectoria">
                 <h2 id="t-trayectoria">{p.sections.path}</h2>
                 <div className="hp-tl">
-                  {profile.experience.map((job, i) => (
+                  {loc.experience.map((job, i) => (
                     <article key={i} className="hp-job">
-                      <span className="hp-yr">
-                        {year(job.start)} –{" "}
-                        {job.end ? year(job.end) : p.facts.present}
-                      </span>
+                      <span className="hp-yr">{range(job.start, job.end)}</span>
                       <h3>
                         <Hl text={job.role} /> · <Hl text={job.company} />
                       </h3>
@@ -342,16 +339,14 @@ export function PublicProfileView({
               </section>
             ) : null}
 
-            {profile.projects.length > 0 ? (
+            {loc.projects.length > 0 ? (
               <section id="proyectos" aria-labelledby="t-proyectos">
                 <h2 id="t-proyectos">{p.sections.projects}</h2>
-                {profile.projects.map((project, i) => (
+                {loc.projects.map((project, i) => (
                   <article key={i} className="hp-proj">
                     <h3>
                       {project.url ? (
-                        <ExternalLink url={project.url}>
-                          {project.name}
-                        </ExternalLink>
+                        <ExternalLink url={project.url}>{project.name}</ExternalLink>
                       ) : (
                         <Hl text={project.name} />
                       )}
@@ -361,33 +356,32 @@ export function PublicProfileView({
                         <Hl text={project.stack} />
                       </p>
                     ) : null}
-                    <p>
-                      <Hl text={project.summary} />
-                    </p>
-                    <Ledger items={project.achievements} />
+                    {project.summary ? (
+                      <p>
+                        <Hl text={project.summary} />
+                      </p>
+                    ) : null}
                   </article>
                 ))}
               </section>
             ) : null}
 
-            {skillGroups.length > 0 ? (
+            {loc.skills.length > 0 ? (
               <section id="herramientas" aria-labelledby="t-herramientas">
                 <h2 id="t-herramientas">{p.sections.tools}</h2>
                 <dl className="hp-tools">
-                  {skillGroups.map(([category, skills]) => (
-                    <div key={category} style={{ display: "contents" }}>
-                      <dt>{category}</dt>
+                  {loc.skills.map((group, i) => (
+                    <div key={i} style={{ display: "contents" }}>
+                      <dt>{group.label}</dt>
                       <dd>
-                        {skills.map((s) => (
+                        {group.items.map((name) => (
                           <button
-                            key={s.name}
+                            key={name}
                             type="button"
                             className="hp-chip"
-                            data-recency={s.recency}
-                            title={`${p.recency[s.recency]} · ${p.evidence(s.evidence)}`}
-                            onClick={() => setRaw(s.name)}
+                            onClick={() => setRaw(name)}
                           >
-                            {s.name}
+                            {name}
                           </button>
                         ))}
                       </dd>
@@ -397,27 +391,20 @@ export function PublicProfileView({
               </section>
             ) : null}
 
-            {profile.education.length +
-              profile.certifications.length +
-              profile.languages.length >
-            0 ? (
+            {loc.education.length + loc.certifications.length + loc.languages.length > 0 ? (
               <section id="formacion" aria-labelledby="t-formacion">
                 <h2 id="t-formacion">{p.sections.education}</h2>
                 <ul className="hp-ledger">
-                  {profile.education.map((e, i) => (
+                  {loc.education.map((e, i) => (
                     <li key={`e${i}`}>
-                      <span className="hp-yr">
-                        {e.endYear ?? e.startYear ?? ""}
-                      </span>
+                      <span className="hp-yr">{e.endYear ?? e.startYear ?? ""}</span>
                       <span>
                         <Hl text={`${e.degree}, ${e.institution}`} />
-                        {e.note ? (
-                          <span className="hp-meta"> · {e.note}</span>
-                        ) : null}
+                        {e.note ? <span className="hp-meta"> · {e.note}</span> : null}
                       </span>
                     </li>
                   ))}
-                  {profile.certifications.map((c, i) => (
+                  {loc.certifications.map((c, i) => (
                     <li key={`c${i}`}>
                       <span className="hp-yr">{c.year ?? ""}</span>
                       <span>
@@ -426,20 +413,15 @@ export function PublicProfileView({
                         ) : (
                           <Hl text={c.name} />
                         )}
-                        {c.issuer ? (
-                          <span className="hp-meta"> · {c.issuer}</span>
-                        ) : null}
+                        {c.issuer ? <span className="hp-meta"> · {c.issuer}</span> : null}
                       </span>
                     </li>
                   ))}
-                  {profile.languages.map((l, i) => (
+                  {loc.languages.map((l, i) => (
                     <li key={`l${i}`}>
                       <span className="hp-yr">{l.level}</span>
                       <span>
                         <Hl text={l.language} />
-                        {l.evidence ? (
-                          <span className="hp-meta"> · {l.evidence}</span>
-                        ) : null}
                       </span>
                     </li>
                   ))}
@@ -454,9 +436,7 @@ export function PublicProfileView({
                   {profile.contact.email ? (
                     <li>
                       <span className="hp-yr">@</span>
-                      <a href={`mailto:${profile.contact.email}`}>
-                        {profile.contact.email}
-                      </a>
+                      <a href={`mailto:${profile.contact.email}`}>{profile.contact.email}</a>
                     </li>
                   ) : null}
                   {profile.contact.phone ? (
@@ -485,5 +465,84 @@ export function PublicProfileView({
         </div>
       </div>
     </TermsContext.Provider>
+  );
+}
+
+/**
+ * Estado de desplazamiento: `condensed` se activa cuando el encabezado grande (nombre y titular) sale de la pantalla, y
+ * entonces la barra fija muestra el nombre, el titular y el correo; `active` es la sección que se está leyendo.
+ */
+function useScrollState(ids: string[]) {
+  const heroRef = useRef<HTMLDivElement>(null);
+  const [condensed, setCondensed] = useState(false);
+  const [active, setActive] = useState<string | null>(null);
+  const key = ids.join("|");
+
+  useEffect(() => {
+    const hero = heroRef.current;
+    if (!hero || typeof IntersectionObserver === "undefined") return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setCondensed(!(entry?.isIntersecting ?? true)),
+      { rootMargin: "-56px 0px 0px 0px" },
+    );
+    observer.observe(hero);
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (typeof IntersectionObserver === "undefined") return;
+    const targets = key
+      .split("|")
+      .map((id) => document.getElementById(id))
+      .filter((el): el is HTMLElement => el !== null);
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const visible = entries.filter((e) => e.isIntersecting);
+        const first = visible.sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+        if (first) setActive(first.target.id);
+      },
+      { rootMargin: "-20% 0px -65% 0px" },
+    );
+    targets.forEach((t) => observer.observe(t));
+    return () => observer.disconnect();
+  }, [key]);
+
+  return { condensed, heroRef, active };
+}
+
+function LanguageToggle({ lang, onChange }: { lang: Lang; onChange: (lang: Lang) => void }) {
+  const p = publicText[lang];
+  return (
+    <div className="hp-toggle" role="group" aria-label={p.language.label}>
+      {(["en", "es"] as const).map((code) => (
+        <button
+          key={code}
+          type="button"
+          lang={code}
+          aria-pressed={lang === code}
+          onClick={() => onChange(code)}
+        >
+          {p.language[code]}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function ThemeToggle({ lang }: { lang: Lang }) {
+  const { theme, setTheme } = usePreferences();
+  const p = publicText[lang].theme;
+  const next = theme === "dark" ? "light" : "dark";
+  return (
+    <button
+      type="button"
+      className="hp-theme"
+      onClick={() => setTheme(next)}
+      aria-label={`${p.label}: ${next === "dark" ? p.dark : p.light}`}
+      title={`${p.label}: ${next === "dark" ? p.dark : p.light}`}
+    >
+      {theme === "dark" ? <Sun aria-hidden="true" size={18} /> : <Moon aria-hidden="true" size={18} />}
+      <span>{theme === "dark" ? p.light : p.dark}</span>
+    </button>
   );
 }

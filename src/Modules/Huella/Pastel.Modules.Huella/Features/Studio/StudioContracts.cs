@@ -53,4 +53,3 @@ internal sealed record EditLineInput(string? Target, string? Section, int? Entry
 
 internal sealed record RenameInput(string? Name);
 
-internal sealed record AiApplyView(CvVersionView Version, int Accepted, IReadOnlyList<string> Rejected);

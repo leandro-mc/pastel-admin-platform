@@ -39,6 +39,8 @@ export type ModuleRoute = {
 export type PlatformRoute = {
   path: string;
   session: boolean;
+  /** Se pinta sola, sin la barra lateral ni la barra superior de Pastel (p. ej. el perfil público de Huella). */
+  bare?: boolean;
   lazy: ModuleRoute["lazy"];
 };
 

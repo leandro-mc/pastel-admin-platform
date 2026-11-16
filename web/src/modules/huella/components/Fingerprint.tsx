@@ -3,14 +3,22 @@ import { fingerprintShape } from "../lib/fingerprint";
 import { strings } from "../strings";
 
 /** Dibujo generativo de la publicación; decorativo en el perfil, con el nombre de la huella para lectores de pantalla. */
-export function Fingerprint({ seed }: { seed: string }) {
+export function Fingerprint({
+  seed,
+  caption = strings.public.fingerprint,
+  label = strings.public.fingerprintLabel,
+}: {
+  seed: string;
+  caption?: (id: string) => string;
+  label?: (id: string) => string;
+}) {
   const shape = useMemo(() => fingerprintShape(seed), [seed]);
   return (
     <figure className="hp-fp">
       <svg
         viewBox={`0 0 ${shape.size} ${shape.size}`}
         role="img"
-        aria-label={strings.public.fingerprintLabel(shape.id)}
+        aria-label={label(shape.id)}
       >
         {shape.paths.map((p, i) => (
           <path
@@ -23,7 +31,7 @@ export function Fingerprint({ seed }: { seed: string }) {
           />
         ))}
       </svg>
-      <figcaption>{strings.public.fingerprint(shape.id)}</figcaption>
+      <figcaption>{caption(shape.id)}</figcaption>
     </figure>
   );
 }

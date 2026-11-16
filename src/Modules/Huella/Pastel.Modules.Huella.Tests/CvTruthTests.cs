@@ -38,39 +38,4 @@ public sealed class CvTruthTests
             Assert.NotEmpty(document.AllBullets());
         }
     }
-
-    // Integridad: si la IA (automática o pegada) trae una línea inválida, la viñeta original de esa posición se conserva.
-    [Fact]
-    public void RejectedAiLineKeepsTheOriginalBullet()
-    {
-        var bank = SampleBank.Create();
-        var limits = CvLimits.For("mid", "letter");
-        var analysis = OfferAnalyzer.Analyze("Buscamos QA con Playwright, k6 y GitHub Actions.", isFocus: false, bank);
-        var document = CvComposer.Compose(bank, new CvRequestOptions("mid", "letter", "es"), analysis, limits);
-        var original = document.Experience[0].Bullets.Select(b => b.Text).ToList();
-        Assert.True(original.Count >= 2);
-        var first = document.Experience[0].Bullets[0];
-        var json = System.Text.Json.JsonSerializer.Serialize(new
-        {
-            experience = new[]
-            {
-                new
-                {
-                    entry = 0,
-                    bullets = new[]
-                    {
-                        new { text = first.Text, sourceIds = first.SourceIds },
-                        new { text = "Aumenté la cobertura 999 % en un mes.", sourceIds = document.Experience[0].Bullets[1].SourceIds },
-                    },
-                },
-            },
-        });
-
-        using var parsed = CvAiResult.TryParse(json)!;
-        var outcome = CvAiResult.ApplyDraft(parsed, document, bank, limits);
-
-        Assert.Equal(1, outcome.Accepted);
-        Assert.Single(outcome.Rejected);
-        Assert.Equal(original[1], document.Experience[0].Bullets[1].Text);
-    }
 }

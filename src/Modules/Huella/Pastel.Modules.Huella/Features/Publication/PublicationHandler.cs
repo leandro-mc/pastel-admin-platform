@@ -173,7 +173,8 @@ internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owner
     {
         var records = await loader.LoadAsync(p.Id, cancellationToken);
         var cvVersion = await db.CvVersions.Where(v => v.ProfileId == p.Id && v.IsPublic).SingleOrDefaultAsync(cancellationToken);
-        var document = PublicProfileBuilder.Build(p, records, clock.UtcNow.Year, cvVersion is not null);
+        var content = await db.ProfileContents.AsNoTracking().SingleOrDefaultAsync(c => c.ProfileId == p.Id, cancellationToken);
+        var document = PublicProfileBuilder.Build(p, records, content, clock.UtcNow.Year, cvVersion is not null);
         string? cvJson = null;
         if (cvVersion is not null && HuellaJson.Deserialize<CvDocument>(cvVersion.ContentJson) is { } cv)
         {

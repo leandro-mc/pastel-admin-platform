@@ -4,7 +4,7 @@ import { useNotify } from "@/core/notifications";
 import { Button } from "@/core/ui";
 import { labelClass } from "@/core/ui/styles";
 import { saveFile, useAiSettings } from "../api/hooks";
-import type { AiPackage } from "../api/schemas";
+import { AiBusyDialog } from "../lib/useAiJob";
 import { strings } from "../strings";
 import { ErrorNotice, TextAreaField } from "./Form";
 
@@ -16,7 +16,7 @@ type Props = {
   /** Base del nombre de archivo del prompt descargado (sin extensión). */
   fileBase: string;
   /** Paquete con el prompt: idéntico para el proveedor configurado y para una IA externa. */
-  getPackage: () => Promise<AiPackage>;
+  getPackage: () => Promise<{ prompt: string }>;
   preparing: boolean;
   onRun: () => void;
   running: boolean;
@@ -26,6 +26,16 @@ type Props = {
   rejected: readonly string[];
   /** Contenido tras una aplicación correcta (p. ej. el botón del PDF). */
   after?: ReactNode;
+  /** Deshabilita todas las acciones (p. ej. falta un dato obligatorio). */
+  disabled?: boolean;
+  /** Texto del botón del proveedor configurado. */
+  runLabel?: (label: string, model: string) => string;
+  /** Texto que explica el prompt para una IA externa. */
+  externalHint?: string;
+  /** Título de la ventana de progreso mientras el proveedor responde. */
+  busyTitle?: string;
+  /** No mostrar la ventana simple de espera (la acción ya trae su propia ventana de progreso). */
+  hideBusy?: boolean;
 };
 
 /**
@@ -43,16 +53,23 @@ export function AiWorkbench({
   error,
   rejected,
   after,
+  disabled = false,
+  runLabel,
+  externalHint,
+  busyTitle,
+  hideBusy = false,
 }: Props) {
   const notify = useNotify();
   const settings = useAiSettings();
   const [pasted, setPasted] = useState("");
   const [fileError, setFileError] = useState<string | null>(null);
+  const [busyHidden, setBusyHidden] = useState(false);
   const fileId = useId();
   const active = settings.data?.providers.find((p) => p.isActive);
 
   const download = async (extension: "md" | "txt") => {
-    const pack = await getPackage();
+    const pack = await getPackage().catch(() => null);
+    if (!pack) return;
     const type = extension === "md" ? "text/markdown" : "text/plain";
     saveFile(
       new Blob([pack.prompt], { type: `${type};charset=utf-8` }),
@@ -61,7 +78,8 @@ export function AiWorkbench({
   };
 
   const copy = async () => {
-    const pack = await getPackage();
+    const pack = await getPackage().catch(() => null);
+    if (!pack) return;
     await navigator.clipboard.writeText(pack.prompt);
     notify(strings.common.copied);
   };
@@ -96,10 +114,14 @@ export function AiWorkbench({
               variant="primary"
               type="button"
               loading={running}
+              disabled={disabled}
               loadingLabel={t.running}
-              onClick={onRun}
+              onClick={() => {
+                setBusyHidden(false);
+                onRun();
+              }}
             >
-              {t.run(active.label, active.model ?? active.defaultModel)}
+              {(runLabel ?? t.run)(active.label, active.model ?? active.defaultModel)}
             </Button>
             <Link
               to="/huella/ia"
@@ -128,12 +150,13 @@ export function AiWorkbench({
         <h4 id={`${fileId}-external`} className="text-sm font-semibold text-fg">
           {t.external}
         </h4>
-        <p className="text-sm text-muted">{t.step1}</p>
+        <p className="text-sm text-muted">{externalHint ?? t.step1}</p>
         <div className="flex flex-wrap gap-2">
           <Button
             variant="secondary"
             type="button"
             loading={preparing}
+            disabled={disabled}
             onClick={() => void download("md")}
           >
             {t.downloadMd}
@@ -141,7 +164,7 @@ export function AiWorkbench({
           <Button
             variant="secondary"
             type="button"
-            disabled={preparing}
+            disabled={preparing || disabled}
             onClick={() => void download("txt")}
           >
             {t.downloadTxt}
@@ -149,7 +172,7 @@ export function AiWorkbench({
           <Button
             variant="ghost"
             type="button"
-            disabled={preparing}
+            disabled={preparing || disabled}
             onClick={() => void copy()}
           >
             {strings.common.copy}
@@ -183,7 +206,7 @@ export function AiWorkbench({
           <Button
             variant="secondary"
             type="button"
-            disabled={pasted.trim() === ""}
+            disabled={pasted.trim() === "" || disabled}
             loading={importing}
             onClick={() => onImport(pasted, () => setPasted(""))}
           >
@@ -192,6 +215,12 @@ export function AiWorkbench({
         </div>
       </section>
 
+      {(running || importing) && !busyHidden && !hideBusy ? (
+        <AiBusyDialog
+          title={busyTitle ?? t.busy}
+          onClose={() => setBusyHidden(true)}
+        />
+      ) : null}
       {rejected.length > 0 ? (
         <div className="text-sm text-muted">
           <p className="font-medium text-fg">{t.rejected}</p>

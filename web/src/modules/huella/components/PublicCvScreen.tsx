@@ -1,8 +1,6 @@
 import type { CvDocument } from "../api/schemas";
-import { strings } from "../strings";
+import { publicText, type Lang } from "../lib/publicText";
 import "./public-profile.css";
-
-const t = strings.public;
 
 type CvQuery = { isPending: boolean; isError: boolean; data?: CvDocument };
 
@@ -10,12 +8,15 @@ type CvQuery = { isPending: boolean; isError: boolean; data?: CvDocument };
 export function PublicCvScreen({
   cv,
   onBack,
+  lang,
 }: {
   cv: CvQuery;
   onBack: () => void;
+  lang: Lang;
 }) {
+  const t = publicText[lang];
   return (
-    <div className="hp">
+    <div className="hp" lang={lang}>
       <main className="hp-cv">
         <p className="hp-noprint">
           <button type="button" className="hp-link" onClick={onBack}>
@@ -29,15 +30,17 @@ export function PublicCvScreen({
             {t.actions.print}
           </button>
         </p>
-        {cv.isPending ? <p>{strings.common.loading}</p> : null}
-        {cv.isError ? <p>{strings.common.loadFailed}</p> : null}
-        {cv.data ? <CvReadOnly doc={cv.data} /> : null}
+        {cv.isPending ? <p>{t.cv.loading}</p> : null}
+        {cv.isError ? <p>{t.cv.failed}</p> : null}
+        {cv.data ? <CvReadOnly doc={cv.data} lang={lang} /> : null}
       </main>
     </div>
   );
 }
 
-function CvReadOnly({ doc }: { doc: CvDocument }) {
+/** Los títulos siguen el idioma en que está redactado el CV (si lo trae); si no, el idioma elegido en la página. */
+function CvReadOnly({ doc, lang }: { doc: CvDocument; lang: Lang }) {
+  const t = publicText[doc.language === "es" || doc.language === "en" ? doc.language : lang];
   const section = (title: string, entries: CvDocument["experience"]) =>
     entries.length > 0 ? (
       <section aria-label={title}>

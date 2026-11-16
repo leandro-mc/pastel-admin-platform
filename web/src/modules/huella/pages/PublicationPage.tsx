@@ -1,6 +1,7 @@
 import { PageHeader, Panel } from "@/core/ui";
 import { secondaryButton } from "@/core/ui/styles";
 import { usePreview, useProfile } from "../api/hooks";
+import { ContentPanel } from "../components/ContentPanel";
 import { Loaded } from "../components/Form";
 import { ProfileForm } from "../components/ProfileForm";
 import { PublicationPanel } from "../components/PublicationPanel";
@@ -32,6 +33,7 @@ export function Component() {
           {strings.publication.preview.open}
         </a>
       </Panel>
+      <ContentPanel />
       <Loaded query={profile}>
         {(data) => <ProfileForm profile={data} />}
       </Loaded>

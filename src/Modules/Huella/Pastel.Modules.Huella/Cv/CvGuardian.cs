@@ -37,16 +37,15 @@ internal static class CvGuardian
 
         if (sourceIds.Count == 0)
         {
-            return "Cada línea debe citar al menos un logro de su banco (sourceIds).";
+            return "Cada línea debe citar al menos una experiencia, un proyecto o un logro de su banco (sourceIds).";
         }
 
-        var achievements = bank.AllAchievements().Where(a => sourceIds.Contains(a.Id)).ToList();
-        if (achievements.Count != sourceIds.Count)
+        if (sourceIds.Any(id => !bank.IsSource(id)))
         {
-            return "La línea cita un logro que no está en su banco.";
+            return "La línea cita un origen que no está en su banco.";
         }
 
-        var known = achievements.SelectMany(a => AchievementRules.Numbers(a.ShortText + " " + a.LongText + " " + a.RawText)).ToHashSet(StringComparer.Ordinal);
+        var known = bank.NumbersOf(sourceIds);
         var invented = AchievementRules.Numbers(clean).FirstOrDefault(n => !known.Contains(n));
         if (invented is not null)
         {
@@ -72,6 +71,7 @@ internal static class CvGuardian
 
         var known = bank.AllAchievements()
             .SelectMany(a => AchievementRules.Numbers(a.ShortText + " " + a.LongText + " " + a.RawText))
+            .Concat(AchievementRules.Numbers(bank.AllText))
             .Concat(AchievementRules.Numbers(bank.ProfileSummary + " " + bank.Header.Headline))
             .Append(bank.ProfessionalYears().ToString(System.Globalization.CultureInfo.InvariantCulture))
             .ToHashSet(StringComparer.Ordinal);
@@ -82,6 +82,31 @@ internal static class CvGuardian
         }
 
         return BannedIn(clean, bank) is { } phrase ? $"Frase prohibida: «{phrase}»." : null;
+    }
+
+    /// <summary>
+    /// Texto libre redactado por una IA (titular, perfil, viñeta): no vacío, dentro del tope, sin cifras que el banco no
+    /// respalde (<paramref name="knownNumbers"/>) y sin frases prohibidas. <c>null</c> si es válido.
+    /// </summary>
+    public static string? ValidateWritten(string text, int maxChars, IReadOnlySet<string> knownNumbers, BankData bank)
+    {
+        if (text.Length == 0)
+        {
+            return "Texto vacío.";
+        }
+
+        if (text.Length > maxChars)
+        {
+            return $"Excede el tope ({text.Length} de {maxChars} caracteres).";
+        }
+
+        var invented = AchievementRules.Numbers(text).FirstOrDefault(n => !knownNumbers.Contains(n));
+        if (invented is not null)
+        {
+            return $"Cifra «{invented}» sin respaldo en el banco.";
+        }
+
+        return BannedIn(text, bank) is { } phrase ? $"Frase prohibida: «{phrase}»." : null;
     }
 
     private static string? BannedIn(string text, BankData bank)
@@ -152,8 +177,6 @@ internal static class CvGuardian
         var text = AtsText(doc, language);
         var bullets = doc.AllBullets().ToList();
         var total = CvLayout.Total(doc, limits);
-        var bankIds = bank.AllAchievements().Select(a => a.Id).ToHashSet();
-        var skillNames = bank.Skills.Select(s => s.Name).ToHashSet(StringComparer.Ordinal);
         var firstContact = doc.Header.ContactLine1.FirstOrDefault();
         return
         [
@@ -164,9 +187,9 @@ internal static class CvGuardian
             new($"Dentro del cupo de páginas ({CvLayout.Fmt(total)} de {limits.CapacityLu} LU)", total <= limits.CapacityLu, null),
             new($"Ninguna viñeta supera el tope duro ({limits.BulletMax})", bullets.All(b => b.Text.Length <= limits.BulletMax), null),
             new("Sin frases prohibidas", BannedIn(text, bank) is null, null),
-            new("Cada viñeta cita su logro de origen (sourceIds)", bullets.All(b => b.SourceIds.Count > 0 && b.SourceIds.All(bankIds.Contains)), null),
+            new("Cada viñeta cita su logro de origen (sourceIds)", bullets.All(b => b.SourceIds.Count > 0 && b.SourceIds.All(bank.IsSource)), null),
             new("Todas las cifras existen en el banco", bullets.All(b => !(ValidateBullet(b.Text, b.SourceIds, bank, limits)?.StartsWith("Cifra", StringComparison.Ordinal) ?? false)), null),
-            new("Ninguna habilidad inventada (todas están en el banco)", doc.Skills.SelectMany(g => g.Items).All(skillNames.Contains), null),
+            new("Ninguna habilidad inventada (todas están en el banco)", doc.Skills.SelectMany(g => g.Items).All(bank.Mentions), null),
         ];
     }
 }

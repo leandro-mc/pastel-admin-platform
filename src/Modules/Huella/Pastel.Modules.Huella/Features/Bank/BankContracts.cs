@@ -19,7 +19,6 @@ internal sealed record NotesView(
     string WorkAuthorization,
     string SalaryExpectation,
     string Avoid,
-    string PreferredLanguage,
     string PreferredPaper,
     string ExtraBannedPhrases);
 
@@ -84,7 +83,6 @@ internal sealed record NotesInput(
     string? WorkAuthorization,
     string? SalaryExpectation,
     string? Avoid,
-    string? PreferredLanguage,
     string? PreferredPaper,
     string? ExtraBannedPhrases);
 

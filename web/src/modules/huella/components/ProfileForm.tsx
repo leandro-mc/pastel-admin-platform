@@ -17,7 +17,7 @@ import {
   resolveLinkIcon,
 } from "../lib/linkIcons";
 import { strings } from "../strings";
-import { ErrorNotice, TextAreaField, fieldError } from "./Form";
+import { ErrorNotice, fieldError } from "./Form";
 import { newKey } from "./SectionEditor";
 
 const t = strings.publication.profile;
@@ -93,8 +93,6 @@ export function ProfileForm({ profile }: { profile: Profile }) {
     try {
       await save.mutateAsync({
         displayName: draft.displayName,
-        headline: draft.headline,
-        summary: draft.summary,
         location: optional(draft.location),
         availability: optional(draft.availability),
         contactEmail: optional(draft.contactEmail),
@@ -142,21 +140,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
           error={err("displayName")}
           onChange={(e) => set({ displayName: e.target.value })}
         />
-        <TextField
-          label={t.headline}
-          value={draft.headline}
-          error={err("headline")}
-          onChange={(e) => set({ headline: e.target.value })}
-        />
-        <div className="sm:col-span-2">
-          <TextAreaField
-            label={t.summary}
-            rows={5}
-            value={draft.summary}
-            error={err("summary")}
-            onChange={(e) => set({ summary: e.target.value })}
-          />
-        </div>
+        <p className="self-end text-sm text-muted">{t.headlineMoved}</p>
         <TextField
           label={t.location}
           value={draft.location ?? ""}

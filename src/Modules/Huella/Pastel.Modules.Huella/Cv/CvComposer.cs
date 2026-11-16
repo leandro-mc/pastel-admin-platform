@@ -15,6 +15,7 @@ internal static class CvComposer
         var vocabulary = TermMatcher.Vocabulary(bank);
         var doc = new CvDocument
         {
+            Language = options.Language,
             Header = new CvHeader
             {
                 Name = bank.Header.Name,
@@ -189,7 +190,7 @@ internal static class CvComposer
         return (space > max / 2 ? cut[..space] : cut).TrimEnd(',', ';', ':') + (cut.EndsWith('.') ? string.Empty : ".");
     }
 
-    private static string YearRange(int? start, int? end) => (start, end) switch
+    public static string YearRange(int? start, int? end) => (start, end) switch
     {
         ({ } s, { } e) => $"{s.ToString(CultureInfo.InvariantCulture)} - {e.ToString(CultureInfo.InvariantCulture)}",
         (null, { } e) => e.ToString(CultureInfo.InvariantCulture),

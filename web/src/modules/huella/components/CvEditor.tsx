@@ -4,16 +4,13 @@ import { Badge, Button, Panel, TextField } from "@/core/ui";
 import {
   downloadCvDocx,
   downloadCvPdf,
-  useCvAiPackage,
-  useCvAiResult,
-  useCvAiRun,
   useEditLine,
   useRenameVersion,
   useSetPublicVersion,
 } from "../api/hooks";
 import type { CvDocument, CvVersion } from "../api/schemas";
 import { strings } from "../strings";
-import { AiWorkbench } from "./AiWorkbench";
+import { AiTaskPanel } from "./AiTaskPanel";
 import { ErrorNotice, TextAreaField } from "./Form";
 import { EvidenceList } from "./OfferPanel";
 
@@ -397,7 +394,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
         />
       </Panel>
 
-      <AiRewrite version={version} />
+      <AiRegenerate version={version} />
     </div>
   );
 }
@@ -463,55 +460,26 @@ function DownloadButtons({ version }: { version: CvVersion }) {
   );
 }
 
-function AiRewrite({ version }: { version: CvVersion }) {
-  const notify = useNotify();
+/** Vuelve a redactar esta versión con IA desde el banco (misma oferta, nivel, papel e idioma) y reemplaza su contenido. */
+function AiRegenerate({ version }: { version: CvVersion }) {
   const versionId = version.summary.id;
-  const pack = useCvAiPackage();
-  const run = useCvAiRun();
-  const apply = useCvAiResult();
-  const [rejected, setRejected] = useState<readonly string[]>([]);
-  const [applied, setApplied] = useState(false);
-  const onApplied = (result: { accepted: number; rejected: string[] }) => {
-    setRejected(result.rejected);
-    setApplied(result.accepted > 0);
-    notify(strings.studio.ai.accepted(result.accepted));
-  };
   return (
     <Panel
       title={strings.studio.ai.title}
       description={strings.studio.ai.description}
     >
-      <AiWorkbench
+      <AiTaskPanel
+        kind="cv"
+        title={strings.studio.ai.busy}
         fileBase={`huella-cv-${fileName(version.summary.name)}`}
-        getPackage={() => pack.mutateAsync(versionId)}
-        preparing={pack.isPending}
-        onRun={() => {
-          apply.reset();
-          run.mutate(versionId, { onSuccess: onApplied });
-        }}
-        running={run.isPending}
-        onImport={(json, done) => {
-          run.reset();
-          apply.mutate(
-            { id: versionId, json },
-            {
-              onSuccess: (result) => {
-                done();
-                onApplied(result);
-              },
-            },
-          );
-        }}
-        importing={apply.isPending}
-        error={run.error ?? apply.error ?? pack.error}
-        rejected={rejected}
+        input={() => ({ versionId })}
+        runLabel={(label, model) => strings.studio.ai.run(label, model)}
+        externalHint={strings.studio.generate.externalHint}
         after={
-          applied ? (
-            <div className="flex flex-col gap-2 rounded-lg border border-line p-3">
-              <p className="text-sm text-fg">{strings.studio.ai.savedPdf}</p>
-              <DownloadButtons version={version} />
-            </div>
-          ) : null
+          <div className="flex flex-col gap-2 rounded-lg border border-line p-3">
+            <p className="text-sm text-fg">{strings.studio.ai.savedPdf}</p>
+            <DownloadButtons version={version} />
+          </div>
         }
       />
     </Panel>

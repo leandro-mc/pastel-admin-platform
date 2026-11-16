@@ -28,8 +28,9 @@ internal sealed class ProfileHandler(HuellaDbContext db, OwnerProfiles owners, I
 
         var errors = new FieldErrors();
         var displayName = errors.RequiredLine("displayName", input.DisplayName, HuellaLimits.Profile.DisplayName);
-        var headline = errors.RequiredLine("headline", input.Headline, HuellaLimits.Profile.Headline);
-        var summary = errors.Text("summary", input.Summary, HuellaLimits.Profile.Summary);
+        // El titular y el resumen ahora se redactan y editan en el contenido del perfil (español e inglés); aquí solo se conservan.
+        var headline = input.Headline is null ? profile.Value.Headline : errors.RequiredLine("headline", input.Headline, HuellaLimits.Profile.Headline);
+        var summary = input.Summary is null ? profile.Value.Summary : errors.Text("summary", input.Summary, HuellaLimits.Profile.Summary);
         var location = errors.OptionalLine("location", input.Location, HuellaLimits.Profile.Location);
         var availability = errors.OptionalLine("availability", input.Availability, HuellaLimits.Profile.Availability);
         var email = errors.OptionalLine("contactEmail", input.ContactEmail, HuellaLimits.Profile.ContactEmail);

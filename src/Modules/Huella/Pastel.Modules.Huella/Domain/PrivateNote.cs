@@ -26,8 +26,6 @@ internal sealed class PrivateNote : IProfileOwned
 
     public string Avoid { get; set; } = string.Empty;
 
-    public string PreferredLanguage { get; set; } = string.Empty;
-
     public string PreferredPaper { get; set; } = string.Empty;
 
     public string ExtraBannedPhrases { get; set; } = string.Empty;

@@ -57,7 +57,7 @@ export const strings = {
   bank: {
     title: "Banco de información",
     description:
-      "Todo lo que sabe de su trayectoria, en un solo lugar privado. De aquí salen el perfil público y cada CV; nada se publica sin que usted lo elija.",
+      "Cuente todo lo que ha hecho, con sus palabras y sin cuidar el formato ni el largo: es material en bruto, no texto para publicar. La IA lo lee completo para redactar cada CV y su perfil público; nada se copia tal cual y nada se publica sin que usted lo elija.",
     tabs: {
       notes: "Mi historia",
       experiences: "Experiencia",
@@ -70,7 +70,7 @@ export const strings = {
     notes: {
       title: "Notas privadas",
       description:
-        "Solo usted las ve. Ayudan a redactar y a filtrar ofertas; no salen al perfil público.",
+        "Solo usted las ve. Su historia y su voz se envían a la IA (con el resto del banco) para redactar con su estilo; no salen al perfil público tal cual.",
       story: "Su historia en sus palabras",
       voice: "Cómo escribe (voz)",
       residence: "Residencia",
@@ -276,19 +276,40 @@ export const strings = {
     },
     generate: {
       title: "Generar CV",
+      description:
+        "La IA lee su banco completo (tal como lo escribió) y la oferta, elige lo más relevante y redacta el CV dentro del límite de páginas del nivel. Nada se copia tal cual del banco.",
+      languageChoices: {
+        es: "Español",
+        en: "Inglés",
+        both: "Español e inglés (dos versiones)",
+      },
+      languageHint:
+        "El CV se redacta completo en el idioma que elija, aunque su banco esté en otro. Con «ambos» se crea una versión por idioma.",
+      fromOffer: "Se generará a partir de la oferta seleccionada.",
+      aiTitle: (n: number) =>
+        n === 1 ? "Redactando su CV" : "Redactando su CV en español e inglés",
+      run: (label: string, model: string) =>
+        `Generar con ${label} (${model})`,
+      externalHint:
+        "1. Descargue las instrucciones: llevan su oferta, su banco y los límites del nivel. Péguelas completas en la IA que prefiera; con una sola respuesta tendrá el CV en el idioma o idiomas elegidos.",
+      draft: "Borrador rápido sin IA",
+      draftHint:
+        "Si no tiene IA a mano: arma un borrador con reglas a partir de los logros ya derivados de su banco (sin reescribirlos).",
+      draftNeedsAchievements:
+        "El borrador sin IA necesita al menos un logro derivado en el banco.",
+      emptyBank:
+        "Su banco aún no tiene experiencias ni proyectos. Cuéntelos en el Banco (sin cuidar el formato) para poder generar un CV.",
       focus: "Enfoque (si no usa una oferta)",
       focusHint: "Por ejemplo: «automatización de pruebas».",
       offerSelect: "Oferta",
       noOffer: "Sin oferta (CV general)",
       level: "Nivel",
       paper: "Papel",
-      language: "Idioma",
+      language: "Idioma del CV",
       name: "Nombre de la versión (opcional)",
       submit: "Generar CV",
       submitting: "Generando…",
       levels: { junior: "Junior", mid: "Mid", senior: "Senior" },
-      empty:
-        "Para generar un CV necesita al menos un logro en el banco. Agregue experiencia y derive sus logros.",
     },
     versions: {
       createdAt: "Creada el",
@@ -328,13 +349,13 @@ export const strings = {
       fit: "Ajuste a la página",
     },
     ai: {
-      title: "Mejorar la redacción con IA",
+      title: "Volver a redactar con IA",
       description:
-        "Use su proveedor configurado o cualquier asistente externo. Cada viñeta debe citar logros de su banco y no puede traer cifras nuevas: lo que no cumpla se descarta.",
-      accepted: (n: number) =>
-        `${n} línea${n === 1 ? "" : "s"} aplicada${n === 1 ? "" : "s"}.`,
+        "Redacta de nuevo esta versión desde su banco, con la misma oferta, nivel, papel e idioma, y reemplaza su contenido. Lo que escriba la IA no puede traer cifras que su banco no tenga: lo que no cumpla se descarta.",
+      busy: "Redactando de nuevo su CV",
+      run: (label: string, model: string) => `Redactar de nuevo con ${label} (${model})`,
       savedPdf:
-        "La versión quedó guardada con los cambios. Ya puede descargar el PDF o el Word.",
+        "Si la versión se actualizó, ya puede descargar el PDF o el Word.",
     },
   },
   aiSettings: {
@@ -342,7 +363,7 @@ export const strings = {
     description:
       "Elija un proveedor, pegue su clave y escoja el modelo. Huella usará esa cuenta cuando pida «Mejorar con IA». La clave se guarda cifrada y nunca se vuelve a mostrar.",
     privacy:
-      "Al usar la IA automática se envían al proveedor los logros de su banco, la oferta, su titular y «Mi voz»; nunca su nombre, correo, teléfono ni enlaces. El uso se cobra a su cuenta del proveedor.",
+      "Al usar la IA automática (o al llevar el prompt a una IA externa) se envía su banco tal como lo escribió (relatos, su historia y su voz) y la oferta; nunca su nombre, correo, teléfono ni enlaces. El uso se cobra a su cuenta del proveedor.",
     provider: "Proveedor",
     getKey: "Obtener una clave",
     apiKey: "Clave de API",
@@ -392,6 +413,134 @@ export const strings = {
     paste: "O pegue aquí el JSON de la respuesta",
     import: "Importar y validar",
     rejected: "Se descartó:",
+    busy: "La IA está trabajando",
+  },
+  aiJob: {
+    working:
+      "Espere a que responda. Puede cerrar esta ventana: el trabajo sigue y se le avisa al terminar.",
+    doneTitle: "Listo",
+    failedTitle: "No se pudo completar",
+    close: "Cerrar",
+    hide: "Seguir en segundo plano",
+    retry: "Reintentar",
+    nothingUsable:
+      "La IA respondió, pero nada pasó la validación del servidor.",
+    done: (n: number) =>
+      n === 1 ? "La IA terminó." : `La IA terminó los ${n} pasos.`,
+    failed: (label: string) => `La IA no pudo completar: ${label}.`,
+    rejected: (n: number) =>
+      `Se descartó ${n} línea${n === 1 ? "" : "s"} que no pasó la validación`,
+    imported: (n: number) =>
+      n === 1 ? "Se importó y validó la respuesta." : `Se importaron ${n} elementos.`,
+    importedNothing: "La respuesta no trajo nada que se pudiera usar.",
+  },
+  content: {
+    title: "Contenido del perfil",
+    description:
+      "Lo que verá quien abra su enlace, en español e inglés. Es texto corto y priorizado (con un máximo por sección), no una copia de su banco. Edite el español: al guardar, la IA reescribe esa sección en inglés para que las dos versiones queden iguales.",
+    counter: (n: number, max: number) => `${n} de ${max} caracteres`,
+    generateAll: "Redactar todo el perfil con IA",
+    generateAllHint:
+      "Con su proveedor se redacta una sección a la vez (trayectoria, proyectos, habilidades, formación y, al final, titular y resumen), esperando la respuesta de cada una. Con una IA externa se usa un solo prompt para todo.",
+    generateAllTitle: "Redactando su perfil",
+    run: (label: string, model: string) =>
+      `Redactar el perfil con ${label} (${model})`,
+    externalHint:
+      "1. Descargue las instrucciones: llevan su banco completo y los máximos de cada sección. Péguelas completas en la IA que prefiera; con una sola respuesta tendrá todo el perfil en español e inglés.",
+    sectionExternalHint:
+      "1. Descargue las instrucciones de esta sección y péguelas completas en la IA que prefiera.",
+    regenerate: "Volver a redactar esta sección con IA",
+    regenerateHint:
+      "Reemplaza esta sección (español e inglés) con una redacción nueva desde su banco. Lo que haya editado en ella se pierde.",
+    stalePending: (n: number) =>
+      `Inglés pendiente de actualizar (${n} sección${n === 1 ? "" : "es"})`,
+    staleHint:
+      "Editó el español y el inglés de estas secciones quedó atrasado. Reescríbalo para que las dos versiones queden iguales.",
+    translateTitle: "Reescribiendo el inglés",
+    translateRun: (label: string, model: string) =>
+      `Reescribir el inglés con ${label} (${model})`,
+    translateExternalHint:
+      "1. Descargue las instrucciones: llevan el español de las secciones pendientes para pasarlo al inglés.",
+    status: {
+      ready: "Al día",
+      stale: "Inglés desactualizado",
+      empty: "Sin contenido",
+    },
+    save: "Guardar",
+    saveHintAi: "Al guardar, la IA reescribe esta sección en inglés.",
+    saveHintNoAi:
+      "Sin un proveedor de IA configurado, el inglés queda pendiente: reescríbalo con una IA externa.",
+    thisItem: "este elemento",
+    present: "actual",
+    emptySection:
+      "Aún no hay contenido en esta sección. Redáctela con IA desde su banco.",
+    sections: {
+      overview: {
+        title: "Titular, resumen y destacados",
+        hint: "Lo primero que lee quien abre su perfil. Se redacta al final, a partir del resto.",
+        generating: "Titular, resumen y destacados",
+        translating: "Titular, resumen y destacados (inglés)",
+      },
+      experience: {
+        title: "Trayectoria",
+        hint: "Hasta 4 experiencias y 3 viñetas por cada una. Empresa y fechas salen de su banco y no se editan aquí.",
+        generating: "Trayectoria",
+        translating: "Trayectoria (inglés)",
+      },
+      projects: {
+        title: "Proyectos",
+        hint: "Hasta 3 proyectos, con un resumen corto cada uno.",
+        generating: "Proyectos",
+        translating: "Proyectos (inglés)",
+      },
+      skills: {
+        title: "Habilidades",
+        hint: "Hasta 5 grupos y 20 habilidades en total: las principales, no todas.",
+        generating: "Habilidades",
+        translating: "Habilidades (inglés)",
+      },
+      credentials: {
+        title: "Formación, certificaciones e idiomas",
+        hint: "Hasta 3 estudios, 4 certificaciones y 5 idiomas.",
+        generating: "Formación, certificaciones e idiomas",
+        translating: "Formación, certificaciones e idiomas (inglés)",
+      },
+    },
+    overview: {
+      headline: "Titular",
+      summary: "Resumen",
+      highlights: "Destacados",
+      figure: "Cifra",
+      highlightText: "Texto",
+      highlight: "este destacado",
+      addHighlight: "Agregar destacado",
+    },
+    experience: {
+      role: "Cargo",
+      bullet: (n: number) => `Viñeta ${n}`,
+      addBullet: "Agregar viñeta",
+    },
+    projects: { summary: "Resumen del proyecto" },
+    skills: {
+      label: "Grupo",
+      items: "Habilidades",
+      itemsHint: (n: number) => `Separadas por comas; hasta ${n} por grupo.`,
+    },
+    credentials: {
+      education: "Formación",
+      degree: "Título",
+      note: "Nota",
+      certifications: "Certificaciones",
+      name: "Nombre",
+      languages: "Idiomas",
+      language: "Idioma",
+      level: "Nivel",
+    },
+    english: {
+      title: "Versión en inglés",
+      empty: "Aún no hay versión en inglés.",
+      note: "Se actualiza sola cuando guarda el español; no se edita aquí.",
+    },
   },
   publication: {
     title: "Perfil público",
@@ -400,6 +549,8 @@ export const strings = {
     profile: {
       title: "Datos del perfil",
       displayName: "Nombre",
+      headlineMoved:
+        "El titular y el resumen se redactan y editan en «Contenido del perfil» (español e inglés).",
       headline: "Titular",
       summary: "Resumen",
       location: "Ubicación",

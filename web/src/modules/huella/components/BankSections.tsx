@@ -97,12 +97,6 @@ export function NotesSection({ notes }: { notes: Notes }) {
           onChange={(e) => set({ avoid: e.target.value })}
         />
         <SelectField
-          label={t.notes.language}
-          options={options(t.languages)}
-          value={draft.preferredLanguage}
-          onChange={(e) => set({ preferredLanguage: e.target.value })}
-        />
-        <SelectField
           label={t.notes.paper}
           options={options(t.papers)}
           value={draft.preferredPaper}

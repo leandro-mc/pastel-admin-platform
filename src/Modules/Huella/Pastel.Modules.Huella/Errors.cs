@@ -29,7 +29,13 @@ internal static class HuellaErrors
         60);
 
     public static readonly Error CvRequiresAchievements = Error.Validation(
-        "huella.cv.empty_bank", "Su banco aún no tiene logros. Cuente al menos una experiencia y confirme sus logros antes de generar un CV.");
+        "huella.cv.no_achievements", "Para el borrador sin IA su banco necesita al menos un logro. Genere el CV con IA o agregue logros a una experiencia.");
+
+    public static readonly Error CvRequiresContent = Error.Validation(
+        "huella.cv.empty_bank", "Su banco aún no tiene experiencias ni proyectos. Cuéntelos (sin cuidar el formato) antes de generar un CV.");
+
+    public static readonly Error ProfileRequiresContent = Error.Validation(
+        "huella.profile.empty_bank", "Su banco aún no tiene experiencias ni proyectos. Cuéntelos (sin cuidar el formato) antes de generar su perfil.");
 
     public static readonly Error AiResultInvalid = Error.Validation(
         "huella.ai.invalid_json", "La respuesta pegada no es un JSON válido para esta tarea. Copie solo el bloque JSON que devolvió el asistente.");

@@ -287,6 +287,103 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
         Assert.Contains(rejected, r => r!.Contains("999", StringComparison.Ordinal));
     }
 
+    // El CV y el perfil público los redacta la IA desde el banco en crudo. Sin proveedor, la respuesta de una IA externa se
+    // importa por la misma vía: lo que no respalda el banco se rechaza, los hechos salen del banco y el inglés queda al día.
+    [Trait("RequirementId", "HUELLA-E1-8")]
+    [RequiresPostgresFact]
+    public async Task Cv_and_profile_are_written_by_ai_from_the_raw_bank_and_validated()
+    {
+        var owner = await OwnerAsync();
+        using var bank = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/bank/experiences", new
+        {
+            items = new[] { new { role = "QA Engineer", company = "Empresa Compose", start = "2022-03", isVisible = true, narrative = "Automaticé 140 pruebas con Playwright y bajé la regresión de 2 días a 3 horas." } },
+        });
+        Assert.Equal(HttpStatusCode.OK, bank.StatusCode);
+        using var bankJson = JsonDocument.Parse(await bank.Content.ReadAsStringAsync());
+        var experienceId = bankJson.RootElement.GetProperty("experiences").EnumerateArray()
+            .First(e => e.GetProperty("company").GetString() == "Empresa Compose").GetProperty("id").GetString();
+
+        // El prompt lleva el banco en crudo y nunca los datos de contacto.
+        using (var package = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/tasks/cv/ai-package", new { level = "junior", paper = "letter", languages = new[] { "es", "en" } }))
+        {
+            var text = await package.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, package.StatusCode);
+            Assert.Contains("Automaticé 140 pruebas", text, StringComparison.Ordinal);
+            Assert.DoesNotContain(OwnerEmail, text, StringComparison.OrdinalIgnoreCase);
+        }
+
+        object Version(string language, string bullet) => new
+        {
+            language,
+            headline = "QA Engineer",
+            summary = "QA con foco en automatización.",
+            skills = Array.Empty<object>(),
+            experience = new[] { new { id = experienceId, title = "QA Engineer", bullets = new[] { bullet, "Aumenté la cobertura 999 % en un solo mes con suites nuevas." } } },
+        };
+        var json = JsonSerializer.Serialize(new
+        {
+            versions = new[]
+            {
+                Version("es", "Automaticé 140 pruebas con Playwright y bajé la regresión de 2 días a 3 horas."),
+                Version("en", "Automated 140 Playwright tests and cut manual regression from 2 days to 3 hours."),
+            },
+        });
+        using (var imported = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/tasks/cv/ai-result", new { level = "junior", paper = "letter", languages = new[] { "es", "en" }, name = "CV prueba", json }))
+        {
+            Assert.Equal(HttpStatusCode.OK, imported.StatusCode);
+            using var outcome = JsonDocument.Parse(await imported.Content.ReadAsStringAsync());
+            Assert.Equal(2, outcome.RootElement.GetProperty("accepted").GetInt32());
+            Assert.Equal(2, outcome.RootElement.GetProperty("versionIds").GetArrayLength());
+            Assert.Contains(outcome.RootElement.GetProperty("rejected").EnumerateArray(), r => r.GetString()!.Contains("999", StringComparison.Ordinal));
+        }
+
+        using (var anonymous = await QaSupport.SendAsync(NewAnonymous(), HttpMethod.Post, "/api/huella/tasks/cv/ai-package", new { level = "junior", languages = new[] { "es" } }))
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        }
+
+        using (var unknown = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/tasks/inventada/ai-package", new { }))
+        {
+            Assert.Equal(HttpStatusCode.NotFound, unknown.StatusCode);
+        }
+
+        // Perfil público: sección de experiencia en los dos idiomas; el resumen editado en español deja su inglés pendiente.
+        var profileJson = JsonSerializer.Serialize(new
+        {
+            sections = new
+            {
+                experience = new[]
+                {
+                    new
+                    {
+                        id = experienceId,
+                        role = new { es = "Ingeniería de calidad", en = "Quality Engineer" },
+                        bullets = new[] { new { es = "Automaticé 140 pruebas y bajé la regresión de 2 días a 3 horas.", en = "Automated 140 tests and cut regression from 2 days to 3 hours." } },
+                    },
+                },
+            },
+        });
+        using (var generated = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/tasks/profile/ai-result", new { sections = new[] { "experience" }, json = profileJson }))
+        {
+            Assert.Equal(HttpStatusCode.OK, generated.StatusCode);
+        }
+
+        using (var content = await QaSupport.SendAsync(owner, HttpMethod.Get, "/api/huella/profile/content"))
+        {
+            using var doc = JsonDocument.Parse(await content.Content.ReadAsStringAsync());
+            Assert.Equal("Empresa Compose", doc.RootElement.GetProperty("es").GetProperty("experience")[0].GetProperty("company").GetString());
+            Assert.Equal("Quality Engineer", doc.RootElement.GetProperty("en").GetProperty("experience")[0].GetProperty("role").GetString());
+            Assert.Equal("ready", doc.RootElement.GetProperty("sections").EnumerateArray().First(s => s.GetProperty("id").GetString() == "experience").GetProperty("status").GetString());
+        }
+
+        using (var edited = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/profile/content/overview", new { headline = "QA Engineer", summary = "Resumen editado." }))
+        {
+            Assert.Equal(HttpStatusCode.OK, edited.StatusCode);
+            using var doc = JsonDocument.Parse(await edited.Content.ReadAsStringAsync());
+            Assert.Equal("stale", doc.RootElement.GetProperty("sections").EnumerateArray().First(s => s.GetProperty("id").GetString() == "overview").GetProperty("status").GetString());
+        }
+    }
+
     private sealed class FakeGemini : IAiProvider
     {
         public string? LastKey { get; private set; }

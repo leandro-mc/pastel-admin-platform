@@ -20,6 +20,8 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
 
     public DbSet<PrivateNote> PrivateNotes => Set<PrivateNote>();
 
+    public DbSet<ProfileContent> ProfileContents => Set<ProfileContent>();
+
     public DbSet<Experience> Experiences => Set<Experience>();
 
     public DbSet<Project> Projects => Set<Project>();
@@ -91,6 +93,18 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();
         });
 
+        modelBuilder.Entity<ProfileContent>(e =>
+        {
+            e.ToTable("profile_contents");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.EsJson).HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.EnJson).HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.StateJson).HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.Version).IsRowVersion();
+            e.HasIndex(x => x.ProfileId).IsUnique();
+            e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();
+        });
+
         modelBuilder.Entity<PrivateNote>(e =>
         {
             e.ToTable("private_notes");
@@ -103,7 +117,6 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.Property(x => x.WorkAuthorization).HasMaxLength(160).IsRequired();
             e.Property(x => x.SalaryExpectation).HasMaxLength(120).IsRequired();
             e.Property(x => x.Avoid).HasMaxLength(400).IsRequired();
-            e.Property(x => x.PreferredLanguage).HasMaxLength(2).IsRequired();
             e.Property(x => x.PreferredPaper).HasMaxLength(8).IsRequired();
             e.Property(x => x.ExtraBannedPhrases).HasMaxLength(600).IsRequired();
             e.Property(x => x.Version).IsRowVersion();
