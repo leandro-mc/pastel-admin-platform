@@ -54,7 +54,7 @@ Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (r
 
 ### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política: `docs/TESTING.md` §1; **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. Anónimo abre `/huella/p/<token-vigente>` publicado → 200 y contenido de la **última versión publicada**; sin sesión ni cookie de sesión. Token aleatorio de alta entropía; almacenamiento solo de hash.
 2. Se edita el borrador después de publicar → la página pública **no cambia** hasta publicar de nuevo.

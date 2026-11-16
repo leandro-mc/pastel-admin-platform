@@ -22,7 +22,7 @@ Login local opcional y Google OAuth/OIDC opcional (código + PKCE); Google requi
 
 ## Fixtures de QA locales
 
-Cuando `TESTING_SEED_ENABLED=true`, Compose local solicita al sembrador de Identity que cree `test.owner@pastel.local`, `test.admin@pastel.local` y `test.member@pastel.local`. Son cuentas sintéticas con claves públicas fijas, exclusivamente para Development/Testing. Production falla si la opción permanece activa. No deben utilizarse en entornos compartidos.
+Cuentas, contraseñas y protección: `docs/TESTING.md` §5 y `docs/SECURITY.md`, «Cuentas de prueba locales».
 
 ## Fuera de alcance o pendiente
 

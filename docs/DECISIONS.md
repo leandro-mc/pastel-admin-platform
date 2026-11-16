@@ -6,6 +6,10 @@ Decisiones vigentes de arquitectura y del propietario, en una línea cada una. E
 | Decisión | Resumen y motivo |
 |---|---|
 | **Monolito modular** | Un host .NET y un módulo por aplicación (proyecto propio, esquema propio), con frontera verificada por pruebas de arquitectura. Permite escindir una app más adelante sin reescribir. |
+| **Módulo = un proyecto .NET** | Carpetas internas (`Domain/`, `Features/`, `Persistence/`) en vez de un proyecto por capa: menos proyectos y saltos; un cambio toca una sola carpeta. |
+| **Minimal APIs por módulo** | `/api/<modulo>/...` con una carpeta por caso de uso: menos código ceremonial que los controladores. |
+| **Descubrimiento automático de módulos** | Atributo de ensamblado y globs de MSBuild: agregar o quitar un módulo no edita archivos compartidos. |
+| **Descartado** | Microservicios (operación excesiva), Clean Architecture por módulo (ceremonial para módulos CRUD), Next.js/Remix (sin necesidad de SSR; `docs/ARCHITECTURE.md` §9.1) y capas horizontales (cada cambio tocaba cuatro proyectos). |
 | **Esquemas y migraciones por módulo** | Un esquema PostgreSQL y un historial de migraciones por módulo; sin claves foráneas ni joins entre esquemas. Propietario de datos claro y extracción futura posible. |
 | **Stack** | .NET 10 / ASP.NET Core, EF Core + Npgsql, React 19 + TypeScript + Vite, React Router 7 (rutas enlazables por módulo), TanStack Query, React Aria Components, React Hook Form + Zod, Tailwind 4; pruebas con Vitest y Playwright. Rutas enlazables en lugar de pantallas en estado local. |
 | **Compilación por subconjunto de módulos** | `PASTEL_MODULES` decide qué apps se compilan (API y web); Identity siempre. Imágenes mínimas por despliegue. |

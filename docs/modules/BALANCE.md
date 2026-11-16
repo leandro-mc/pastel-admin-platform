@@ -64,7 +64,7 @@ Pagos reales o integración bancaria, conversión de divisas en vivo, notificaci
 
 ### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política: `docs/TESTING.md` §1; **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 1. **Casos dorados:** el 100 % de los ≥ 25 casos de `docs/requirements/balance/INVENTARIO-BALANCE.md` §9 producen exactamente los saldos y liquidaciones esperados (§9.2 de SaldApp donde no hay cambio; §9.3 de Balance donde las decisiones aprobadas lo cambian).
 2. Redondeo: reparto de ₡100,00 entre 3 personas → partes `33,34 / 33,33 / 33,33` (suman exactamente ₡100,00); el centavo sobrante va al primer participante por orden de alta (inventario §12.1). En yenes, ¥100 entre 3 → `34 / 33 / 33`.
