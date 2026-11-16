@@ -35,7 +35,13 @@ El rol `Administrator` no recibe estos permisos al sincronizar el catálogo; sol
 
 | Método y ruta | Permiso | Nota |
 |---|---|---|
-| `GET /api/cosecha/ping` | `cosecha.access` | Comprobación del esqueleto; se retira con la primera funcionalidad real |
+Rutas bajo `/api/cosecha`. Los cambios de registros editables reciben `version` (el `xmin` leído); si otra edición lo cambió antes responden 409 `platform.concurrency_conflict`.
+
+| Método y ruta | Permiso | Nota |
+|---|---|---|
+| `GET /products`, `POST /products`, `PUT /products/{id}` | `catalog.read` / `catalog.manage` | Productos (unidad kg) |
+| `GET /seasons`, `POST /seasons`, `PUT /seasons/{id}`, `POST /seasons/{id}/status` | `catalog.read` / `catalog.manage` | Temporadas; cerrar y reabrir queda en auditoría; el cambio de precio base va al registro de cambios |
+| `GET /policy`, `POST /policy/payment`, `POST /policy/claims` | `catalog.read` / `catalog.manage` | Parámetros de pago y de reclamos como configuración versionada: nada sembrado, vigencia desde hoy, ratificación exige nota |
 
 ## Datos
 
@@ -58,8 +64,16 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 
 | Código | Estado | Cuándo |
 |---|---|---|
-| `cosecha.resource.not_found` | 404 | El recurso pedido no existe |
+| `cosecha.resource.not_found` | 404 | El recurso no existe (o no es visible para la persona: no se distingue) |
+| `cosecha.product.invalid`, `cosecha.season.invalid`, `cosecha.policy.invalid` | 400 | Validación por campo |
+| `cosecha.product.name_taken`, `cosecha.season.name_taken` | 409 | Nombre repetido (sin distinguir mayúsculas ni espacios) |
+| `cosecha.policy.backdated`, `cosecha.policy.ratification_note_required` | 400 | Vigencia anterior a hoy; ratificado sin acuerdo |
+| `cosecha.documents.unavailable` | 503 | Costura de PDF sin motor (CCR-2); ninguna ruta la expone todavía |
+
+## Documentos PDF (CCR-2)
+
+`Documents/ICosechaDocuments` es la costura para cotizaciones, fichas de producto y recibos; `UnavailableCosechaDocuments` responde «no disponible» hasta que `Pastel.Documents` esté en `dev`. Solo ese tipo cambia al integrarlo.
 
 ## Pendiente
 
-Todo lo funcional de la ficha de producto, empezando por el inventario de migración si aplica.
+Productores, compradores, pedidos, envíos, liquidación y reportes (siguientes commits de la rama).

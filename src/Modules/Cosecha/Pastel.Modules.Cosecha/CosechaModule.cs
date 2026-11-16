@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Pastel.Modules.Cosecha.Features.Ping;
+using Pastel.Modules.Cosecha.Features;
 using Pastel.Modules.Cosecha.Persistence;
 using Pastel.Platform.Modules;
 using Pastel.Platform.Persistence;
 
 namespace Pastel.Modules.Cosecha;
 
-/// <summary>Módulo Cosecha (marcador). Ver <c>MODULE.md</c> y <c>docs/modules/</c> para el alcance de producto.</summary>
+/// <summary>Módulo Cosecha: planear envíos de una asociación de productores a varios compradores. Ver <c>MODULE.md</c> y <c>docs/modules/COSECHA.md</c>.</summary>
 internal sealed class CosechaModule : IPastelModule
 {
     public string Code => CosechaPermissions.Code;
@@ -44,9 +44,9 @@ internal sealed class CosechaModule : IPastelModule
     ];
 
     public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
-        services.AddPastelDbContext<CosechaDbContext>(configuration, CosechaDbContext.Schema);
+        services.AddPastelDbContext<CosechaDbContext>(configuration, CosechaDbContext.Schema).AddCosechaFeatures();
 
-    public void MapEndpoints(IEndpointRouteBuilder api) => PingEndpoint.Map(api);
+    public void MapEndpoints(IEndpointRouteBuilder api) => CosechaEndpoints.Map(api);
 
     public Task MigrateAsync(IServiceProvider services, CancellationToken cancellationToken) =>
         PastelDbContextExtensions.MigrateModuleAsync<CosechaDbContext>(services, cancellationToken);

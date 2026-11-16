@@ -10,6 +10,22 @@ internal static class CosechaErrors
 {
     public static readonly Error NotFound = Error.NotFound("cosecha.resource.not_found", "No encontramos lo que busca.");
 
+    public static readonly Error ProductNameTaken = Error.Conflict(
+        "cosecha.product.name_taken", "Ya existe un producto con ese nombre.",
+        new Dictionary<string, string[]> { ["name"] = ["Ya existe un producto con ese nombre."] });
+
+    public static readonly Error SeasonNameTaken = Error.Conflict(
+        "cosecha.season.name_taken", "Ya existe una temporada con ese nombre.",
+        new Dictionary<string, string[]> { ["name"] = ["Ya existe una temporada con ese nombre."] });
+
+    public static readonly Error PolicyBackdated = Error.Validation(
+        "cosecha.policy.backdated", "La vigencia no puede ser anterior a hoy: cambiaría pagos que ya se calcularon.",
+        new Dictionary<string, string[]> { ["effectiveFrom"] = ["Indique hoy o una fecha posterior."] });
+
+    public static readonly Error PolicyRatificationNoteRequired = Error.Validation(
+        "cosecha.policy.ratification_note_required", "Para marcar los valores como ratificados indique el acuerdo de asamblea.",
+        new Dictionary<string, string[]> { ["note"] = ["Indique la referencia del acta o del acuerdo."] });
+
     public static readonly Error SeasonClosed = Error.Conflict(
         "cosecha.season.closed", "La temporada está cerrada. Reábrala para registrar pedidos o envíos nuevos.");
 
