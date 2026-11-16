@@ -53,6 +53,26 @@ internal static class CosechaErrors
     public static readonly Error DeliveryHasReception = Error.Conflict(
         "cosecha.delivery.has_reception", "La entrega de este productor ya tiene recepción registrada y no se puede quitar.");
 
+    public static readonly Error ShipmentNotDeletable = Error.Conflict(
+        "cosecha.shipment.not_deletable", "Solo se puede eliminar un envío planificado que todavía no tiene recepciones ni entregas registradas.");
+
+    public static readonly Error ShipmentOrderDelivered = Error.Conflict(
+        "cosecha.shipment.order_delivered", "El pedido ya tiene una entrega registrada en este envío y no se puede quitar.");
+
+    public static readonly Error ShipmentOrderDraft = Error.Validation(
+        "cosecha.shipment.order_draft", "Confirme el pedido antes de incluirlo en un envío.",
+        new Dictionary<string, string[]> { ["orders"] = ["Hay pedidos en borrador: confírmelos primero."] });
+
+    public static readonly Error ShipmentOrderOtherSeason = Error.Validation(
+        "cosecha.shipment.order_other_season", "El pedido es de otra temporada.",
+        new Dictionary<string, string[]> { ["orders"] = ["Todos los pedidos deben ser de la temporada del envío."] });
+
+    public static readonly Error DeliveryInvalidTransition = Error.Conflict(
+        "cosecha.delivery.invalid_transition", "Ese cambio de estado de la entrega no está permitido.");
+
+    public static readonly Error DeliveryBelowPaid = Error.Conflict(
+        "cosecha.delivery.below_paid", "El monto de la entrega no puede quedar por debajo de lo que ya se le pagó al productor.");
+
     public static readonly Error PaymentExceedsBalance = Error.Conflict(
         "cosecha.payment.exceeds_balance", "El pago supera lo que se le debe al productor.");
 
