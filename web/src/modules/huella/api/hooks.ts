@@ -111,6 +111,16 @@ export const usePreview = () =>
       api.get(`${base}/publication/preview`, previewSchema, { signal }),
   });
 
+/** CV público del borrador, para la vista previa de la persona dueña. */
+export const usePreviewCv = (enabled: boolean) =>
+  useQuery({
+    queryKey: [...huellaKeys.preview, "cv"],
+    enabled,
+    retry: false,
+    queryFn: ({ signal }) =>
+      api.get(`${base}/publication/preview/cv`, cvDocumentSchema, { signal }),
+  });
+
 /** Vista pública: el token viaja en una cabecera, nunca en la ruta de la API. */
 export const usePublicProfile = (token: string) =>
   useQuery({

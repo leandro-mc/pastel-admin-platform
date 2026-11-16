@@ -10,9 +10,10 @@ internal sealed record PublicationStatus(
     DateTimeOffset? LinkCreatedAt,
     bool HasUnpublishedChanges,
     bool CanPublish,
-    string? BlockedReason);
+    string? BlockedReason,
+    string? Token);
 
 internal sealed record PublicationPreview(PublicProfileDocument Profile, string Seed, bool HasCv);
 
-/// <summary>Resultado de publicar o regenerar el enlace. <c>Token</c> solo viaja cuando se acaba de crear: no se puede volver a leer.</summary>
+/// <summary>Resultado de publicar o regenerar el enlace. <c>Token</c> viaja al crearlo; también se puede leer después en <see cref="PublicationStatus.Token"/>.</summary>
 internal sealed record PublicationResult(PublicationStatus Status, string? Token);

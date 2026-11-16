@@ -37,6 +37,9 @@ internal sealed class Profile
 
     public DateTimeOffset? PublicTokenCreatedAt { get; set; }
 
+    /// <summary>Token del enlace cifrado (AES-GCM, ver <c>AiKeyProtector</c>) para que el propietario pueda copiarlo de nuevo. Nulo en enlaces creados antes de existir esta columna: hay que regenerarlos.</summary>
+    public string? PublicTokenCipher { get; set; }
+
     public bool IsPublished { get; set; }
 
     public int? PublishedVersion { get; set; }

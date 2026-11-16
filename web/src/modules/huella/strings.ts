@@ -28,7 +28,31 @@ export const strings = {
     visible: "Visible en el perfil",
     yes: "Sí",
     none: "Sin dato",
-    unsaved: "Hay cambios sin guardar.",
+  },
+  list: {
+    search: "Buscar",
+    noResults: "Nada coincide con su búsqueda.",
+  },
+  autosave: {
+    saving: "Guardando…",
+    saved: "Guardado",
+    incomplete: (missing: string) =>
+      `Se guardará solo cuando complete ${missing}.`,
+  },
+  confirm: {
+    removeTitle: (what: string) => `¿Quitar ${what}?`,
+    removeMessage: (name: string) =>
+      `«${name}» se borra y no se puede deshacer.`,
+    what: {
+      experience: "esta experiencia",
+      project: "este proyecto",
+      skill: "esta habilidad",
+      education: "este estudio",
+      certification: "esta certificación",
+      language: "este idioma",
+      achievement: "este logro",
+      link: "este enlace",
+    },
   },
   bank: {
     title: "Banco de información",
@@ -77,7 +101,8 @@ export const strings = {
         "Escriba en prosa: qué hacía, con qué y qué cambió. De este relato salen los logros.",
       companyContext: "Contexto de la empresa (opcional)",
       teamSize: "Personas en el equipo",
-      saveFirst: "Guarde la experiencia para agregar sus logros.",
+      search: "Buscar en experiencia",
+      readyHint: "el cargo, la empresa y el mes de inicio",
     },
     project: {
       title: "Proyectos",
@@ -90,7 +115,8 @@ export const strings = {
       stack: "Tecnologías",
       startYear: "Año de inicio",
       endYear: "Año de fin",
-      saveFirst: "Guarde el proyecto para agregar sus logros.",
+      search: "Buscar en proyectos",
+      readyHint: "el nombre",
     },
     skill: {
       title: "Habilidades",
@@ -107,6 +133,8 @@ export const strings = {
           ? "Sin logros que la respalden"
           : `${n} logro${n === 1 ? "" : "s"}`,
       noEvidence: "Sin respaldo",
+      search: "Buscar en habilidades",
+      readyHint: "el nombre",
     },
     education: {
       title: "Educación",
@@ -117,6 +145,8 @@ export const strings = {
       startYear: "Año de inicio",
       endYear: "Año de fin",
       note: "Nota (opcional)",
+      search: "Buscar en educación",
+      readyHint: "el título y la institución",
     },
     certification: {
       title: "Certificaciones",
@@ -127,6 +157,8 @@ export const strings = {
       issuedYear: "Año",
       expiresYear: "Vence",
       url: "Enlace de la credencial (https)",
+      search: "Buscar en certificaciones",
+      readyHint: "el nombre",
     },
     language: {
       title: "Idiomas",
@@ -135,9 +167,15 @@ export const strings = {
       language: "Idioma",
       level: "Nivel",
       evidence: "Evidencia (certificado, años de uso…)",
+      search: "Buscar en idiomas",
+      readyHint: "el idioma",
     },
     achievements: {
       title: "Logros",
+      count: (n: number) => `Logros (${n})`,
+      newAchievement: "Logro nuevo",
+      readyHint: "las dos versiones del texto",
+      impactType: "Tipo de impacto",
       description:
         "Cada logro es una cosa que usted hizo, con su resultado. De aquí salen las viñetas del CV y las líneas del perfil.",
       empty: "Sin logros todavía. Derívelos del relato o escríbalos.",
@@ -152,6 +190,13 @@ export const strings = {
       visibility: "Dónde se muestra",
       verified: "Verifiqué esta cifra",
       skills: "Habilidades que demuestra",
+      skillSearch: "Buscar una habilidad para agregar",
+      addSkill: (name: string) => `Agregar ${name}`,
+      removeSkill: "Quitar habilidad",
+      noSkills: "Ninguna agregada todavía.",
+      noSkillMatches: "Ninguna habilidad de su banco coincide.",
+      bankHasNoSkills:
+        "Primero agregue habilidades en la pestaña Habilidades del banco.",
       proposals: "Propuestas",
       accept: "Agregar al banco",
       needsFigure: "Sin cifra: agréguela si la tiene.",
@@ -209,6 +254,7 @@ export const strings = {
       text: "Texto de la oferta",
       company: "Empresa (opcional)",
       titleField: "Título (opcional)",
+      createdAt: "Guardada el",
       url: "Enlace de la oferta (opcional)",
       analyze: "Analizar oferta",
       analyzing: "Analizando…",
@@ -245,6 +291,7 @@ export const strings = {
         "Para generar un CV necesita al menos un logro en el banco. Agregue experiencia y derive sus logros.",
     },
     versions: {
+      createdAt: "Creada el",
       title: "Versiones",
       empty: "Aún no generó CV.",
       open: "Abrir",
@@ -396,11 +443,14 @@ export const strings = {
     link: {
       title: "Enlace",
       description:
-        "El enlace es largo y aleatorio. Solo se muestra una vez al crearlo: cópielo ahora.",
-      created: "Su enlace nuevo",
+        "Es largo y aleatorio: solo lo conoce quien usted se lo comparta. Puede copiarlo las veces que necesite.",
+      current: "Su enlace",
       none: "Aún no tiene enlace. Se crea al publicar.",
-      exists: (when: string) =>
-        `Enlace creado el ${when}. No se puede volver a mostrar.`,
+      createdOn: (when: string) => `Creado el ${when}.`,
+      notPublished: "Todavía no funciona: publique el perfil para activarlo.",
+      lost: (when: string) =>
+        `Este enlace se creó el ${when}, antes de que pudiera volver a mostrarse. Cree uno nuevo para verlo y copiarlo.`,
+      open: "Abrir enlace en una pestaña nueva",
       regenerate: "Crear enlace nuevo",
       regenerateTitle: "Crear enlace nuevo",
       regenerateMessage:
@@ -409,8 +459,13 @@ export const strings = {
       copied: "Enlace copiado",
     },
     preview: {
-      title: "Vista previa del borrador",
-      description: "Así se vería si publicara ahora.",
+      title: "Vista previa",
+      description:
+        "Ábrala en una pestaña nueva para ver su perfil como lo ve quien recibe el enlace. La vista previa muestra su borrador actual; el enlace público muestra lo ya publicado.",
+      open: "Abrir vista previa del borrador",
+      banner:
+        "Vista previa de su borrador. Solo usted la ve; así se verá en el enlace cuando publique.",
+      loadFailed: "No pudimos cargar la vista previa. Cierre esta pestaña e inténtelo de nuevo.",
     },
   },
   public: {

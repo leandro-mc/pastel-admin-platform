@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNotify } from "@/core/notifications";
 import { Alert, Badge, Button, ConfirmDialog, Panel } from "@/core/ui";
+import { secondaryButton } from "@/core/ui/styles";
 import {
   usePublicationStatus,
   usePublish,
@@ -8,15 +9,13 @@ import {
   useUnpublish,
 } from "../api/hooks";
 import type { PublicationStatus } from "../api/schemas";
+import { formatDate } from "../lib/format";
 import { strings } from "../strings";
 import { ErrorNotice, Loaded } from "./Form";
 
 const t = strings.publication;
 
-const formatDate = (iso: string) =>
-  new Intl.DateTimeFormat("es", { dateStyle: "long" }).format(new Date(iso));
-
-/** Estado, publicación y enlace. El token solo se ve al crearlo: aquí se guarda en memoria y se pierde al salir. */
+/** Estado, publicación y enlace. El enlace se muestra siempre que exista, para copiarlo cuando haga falta. */
 export function PublicationPanel({ hasCv }: { hasCv: boolean }) {
   const status = usePublicationStatus();
   return (
@@ -37,15 +36,14 @@ function Body({
   const publish = usePublish();
   const unpublish = useUnpublish();
   const regenerate = useRegenerateLink();
-  const [token, setToken] = useState<string | null>(null);
   const [confirm, setConfirm] = useState<"unpublish" | "regenerate" | null>(
     null,
   );
 
-  const url = token ? `${window.location.origin}/huella/p/${token}` : null;
-  const showToken = (result: { token: string | null }) => {
-    if (result.token) setToken(result.token);
-  };
+  // El servidor devuelve el enlace guardado cifrado: se puede copiar las veces que haga falta.
+  const url = status.token
+    ? `${window.location.origin}/huella/p/${status.token}`
+    : null;
 
   return (
     <Panel
@@ -89,10 +87,7 @@ function Body({
             loadingLabel={t.status.publishing}
             onClick={() =>
               publish.mutate(undefined, {
-                onSuccess: (result) => {
-                  showToken(result);
-                  notify(strings.common.saved);
-                },
+                onSuccess: () => notify(strings.common.saved),
               })
             }
           >
@@ -115,15 +110,28 @@ function Body({
           <p className="text-sm text-muted">{t.link.description}</p>
           {url ? (
             <div className="flex flex-col gap-2 rounded-lg border border-line-strong p-3">
-              <p className="text-sm font-medium text-fg">{t.link.created}</p>
+              <label
+                htmlFor="huella-link"
+                className="text-sm font-medium text-fg"
+              >
+                {t.link.current}
+              </label>
               <input
+                id="huella-link"
                 readOnly
-                aria-label={t.link.created}
                 value={url}
                 onFocus={(e) => e.currentTarget.select()}
                 className="w-full rounded-md border border-line bg-surface px-3 py-2 font-mono text-sm text-fg"
               />
-              <div>
+              {status.linkCreatedAt ? (
+                <p className="text-sm text-muted">
+                  {t.link.createdOn(formatDate(status.linkCreatedAt))}
+                </p>
+              ) : null}
+              {!status.isPublished ? (
+                <p className="text-sm text-muted">{t.link.notPublished}</p>
+              ) : null}
+              <div className="flex flex-wrap gap-2">
                 <Button
                   variant="secondary"
                   type="button"
@@ -135,11 +143,19 @@ function Body({
                 >
                   {t.link.copy}
                 </Button>
+                <a
+                  className={`${secondaryButton} no-underline`}
+                  href={url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t.link.open}
+                </a>
               </div>
             </div>
           ) : status.hasLink && status.linkCreatedAt ? (
             <p className="text-sm text-fg">
-              {t.link.exists(formatDate(status.linkCreatedAt))}
+              {t.link.lost(formatDate(status.linkCreatedAt))}
             </p>
           ) : (
             <p className="text-sm text-muted">{t.link.none}</p>
@@ -169,10 +185,7 @@ function Body({
           onClose={() => setConfirm(null)}
           onConfirm={() =>
             unpublish.mutate(undefined, {
-              onSuccess: () => {
-                setToken(null);
-                setConfirm(null);
-              },
+              onSuccess: () => setConfirm(null),
             })
           }
         />
@@ -187,10 +200,7 @@ function Body({
           onClose={() => setConfirm(null)}
           onConfirm={() =>
             regenerate.mutate(undefined, {
-              onSuccess: (result) => {
-                showToken(result);
-                setConfirm(null);
-              },
+              onSuccess: () => setConfirm(null),
             })
           }
         />

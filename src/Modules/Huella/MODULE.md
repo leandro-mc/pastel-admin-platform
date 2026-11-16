@@ -24,13 +24,13 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 | `POST …/{id}/ai-package` · `/ai-run` · `/ai-result` | Redacción con IA: prompt para una IA externa, ejecución con el proveedor configurado o importación del JSON; todo pasa por el guardián, nunca Typst |
 | `GET …/{id}/pdf` | PDF del CV con Typst (`Pastel.Documents`); `503 huella.cv.renderer_unavailable` si el motor no está instalado |
 | `GET /ai/settings` · `PUT/DELETE /ai/settings/{gemini\|openai\|anthropic}` · `POST …/{provider}/models` | IA automática: proveedor, modelo y clave (escritura; la clave nunca se devuelve) |
-| `GET /publication` · `/publication/preview` | Estado y vista previa del borrador |
+| `GET /publication` · `/publication/preview` · `/publication/preview/cv` | Estado (incluye el enlace para el propietario), vista previa del borrador y su CV público |
 | `POST /publication/publish` · `/unpublish` · `/link` | Publicar, retirar, regenerar enlace (el token solo viaja en esa respuesta) |
 | `GET /public/profile` · `/public/cv` | **Anónimas**; token en la cabecera `X-Huella-Token` |
 
 ## Reglas que no se rompen
 
-- **Token:** 32 bytes aleatorios, Base64URL (43 car.); en BD solo SHA-256. No va en rutas de API, logs ni auditoría. Regenerar invalida el anterior al instante.
+- **Token:** 32 bytes aleatorios, Base64URL (43 car.). En BD: SHA-256 (búsqueda) y el valor **cifrado** con AES-GCM (`AiKeyProtector`, etiqueta `public-link`) para que el propietario lo recupere en `GET /publication` (campo `token`, solo con `huella.access`). Nunca en claro en BD, rutas de API, logs ni auditoría. Los enlaces creados antes de `AddHuellaPublicLinkCipher` no son recuperables: se regeneran. Regenerar invalida el anterior al instante.
 - **404 uniforme** `huella.public.not_found` (ausente, mal formado, despublicado, revocado) con `X-Robots-Tag: noindex, nofollow, noarchive` y `Referrer-Policy: no-referrer`. Límite `huella-public`: 30/min por IP.
 - **Publicación:** `PublishedSnapshot` congelado (se conservan 5); lo editado después no aparece hasta publicar de nuevo. `ContentHash` detecta cambios sin publicar. La semilla de la huella son 8 bytes del hash.
 - **Perfil público:** lista blanca (`PublicProfileBuilder`); solo logros `public|both`; sin notas privadas, ofertas ni versiones no públicas.
@@ -42,7 +42,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 ## Datos (esquema `huella`)
 
 `Profile` (único por `OwnerUserId`, `PublicTokenHash` único) · `ProfileLink` · `PrivateNote` · `Experience` · `Project` · `Skill` · `Education` · `Certification` · `LanguageSkill` · `Achievement` + `AchievementSkill` (el logro es la unidad: de ahí salen CV, perfil y futuras funciones) · `JobOffer` · `CvVersion` · `PublishedSnapshot` · `AiCredential` (una fila por proveedor; clave cifrada, `KeyHint`, `IsActive`).
-Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel` y `AddHuellaAiCredentials` (esta con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
+Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials` y `AddHuellaPublicLinkCipher` (esta con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
 
 ## Códigos de error
 

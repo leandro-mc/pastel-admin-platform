@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
-import { useNotify } from "@/core/notifications";
+import { useState } from "react";
 import {
   Badge,
   Button,
   CheckboxField,
+  ConfirmDialog,
   SelectField,
   TextField,
 } from "@/core/ui";
@@ -18,14 +18,16 @@ import {
 import type { Achievement, Derivation, Proposal, Skill } from "../api/schemas";
 import { strings } from "../strings";
 import { AiWorkbench } from "./AiWorkbench";
-import { ErrorNotice, fieldError } from "./Form";
+import { Collapsible } from "./Collapsible";
+import { ErrorNotice } from "./Form";
+import { SaveStatus } from "./SaveStatus";
 import { newKey } from "./SectionEditor";
+import { SkillPicker } from "./SkillPicker";
+import { useAutosaveRows, type Row } from "./useAutosaveRows";
 
 const text = strings.bank.achievements;
 
-type AchievementRow = {
-  key: string;
-  id?: string;
+type AchievementRow = Row & {
   shortText: string;
   longText: string;
   rawText: string;
@@ -119,6 +121,9 @@ const strengthOptions = [1, 2, 3, 4, 5].map((n) => ({
   label: String(n),
 }));
 
+const isReady = (r: AchievementRow) =>
+  r.shortText.trim() !== "" && r.longText.trim() !== "";
+
 type Props = {
   kind: ParentKind;
   parentId: string;
@@ -126,204 +131,224 @@ type Props = {
   skills: readonly Skill[];
 };
 
-/** Logros de una experiencia o de un proyecto: derivarlos del relato, escribirlos o validarlos con IA manual. */
+/**
+ * Logros de una experiencia o de un proyecto: derivarlos del relato, escribirlos o pedirlos a una IA. El bloque y cada
+ * logro llegan cerrados, y todo se guarda solo (un logro nuevo, al tener sus dos textos).
+ */
 export function AchievementsEditor({
   kind,
   parentId,
   achievements,
   skills,
 }: Props) {
-  const notify = useNotify();
   const save = useSaveAchievements(kind, parentId);
   const derive = useDerive(kind, parentId);
-  const [rows, setRows] = useState<AchievementRow[]>(() =>
-    achievements.map(toRow),
-  );
-  const [dirty, setDirty] = useState(false);
+  const list = useAutosaveRows<Achievement, AchievementRow>({
+    source: achievements,
+    toRow,
+    toPayload,
+    isReady,
+    save: (items) =>
+      save
+        .mutateAsync(items)
+        .then(
+          (bank) =>
+            (kind === "projects" ? bank.projects : bank.experiences).find(
+              (p) => p.id === parentId,
+            )?.achievements ?? [],
+        ),
+  });
   const [derivation, setDerivation] = useState<Derivation | null>(null);
+  const [blockOpen, setBlockOpen] = useState(false);
+  const [open, setOpen] = useState<ReadonlySet<string>>(new Set());
+  const [toRemove, setToRemove] = useState<AchievementRow | null>(null);
 
-  useEffect(() => {
-    if (!dirty) setRows(achievements.map(toRow));
-  }, [achievements, dirty]);
-
-  const update = (index: number, patch: Partial<AchievementRow>) => {
-    setRows((current) =>
-      current.map((r, i) => (i === index ? { ...r, ...patch } : r)),
-    );
-    setDirty(true);
-  };
-  const add = (added: AchievementRow[]) => {
-    setRows((current) => [...current, ...added]);
-    setDirty(true);
-  };
-  const submit = async () => {
-    try {
-      await save.mutateAsync(rows.map(toPayload));
-      setDirty(false);
-      notify(strings.common.saved);
-    } catch {
-      /* el error se muestra bajo la lista */
-    }
+  const toggle = (key: string) =>
+    setOpen((current) => {
+      const next = new Set(current);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+  const add = (rows: AchievementRow[]) => {
+    setBlockOpen(true);
+    setOpen((current) => new Set([...current, ...rows.map((r) => r.key)]));
+    list.add(...rows);
   };
 
   return (
-    <section
-      className="flex flex-col gap-4 border-t border-line pt-4"
-      aria-label={text.title}
+    <Collapsible
+      heading="h4"
+      title={text.count(list.rows.length)}
+      expanded={blockOpen}
+      onToggle={() => setBlockOpen((v) => !v)}
+      actions={<SaveStatus state={list.state} />}
     >
-      <div>
-        <h4 className="text-base font-semibold text-fg">{text.title}</h4>
-        <p className="mt-1 text-sm text-muted">{text.description}</p>
-      </div>
-
-      {rows.length === 0 ? (
-        <p className="text-sm text-muted">{text.empty}</p>
-      ) : null}
-      {rows.map((row, index) => {
-        const err = (field: string) =>
-          fieldError(save.error, `items[${index}].${field}`);
-        return (
-          <div
-            key={row.key}
-            className="flex flex-col gap-3 rounded-lg border border-line bg-surface-raised p-3"
-          >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <TextField
-                label={text.shortText}
-                value={row.shortText}
-                error={err("shortText")}
-                onChange={(e) => update(index, { shortText: e.target.value })}
-              />
-              <TextField
-                label={text.longText}
-                value={row.longText}
-                error={err("longText")}
-                onChange={(e) => update(index, { longText: e.target.value })}
-              />
-              <TextField
-                label={text.resultValue}
-                value={row.resultValue}
-                error={err("resultValue")}
-                onChange={(e) => update(index, { resultValue: e.target.value })}
-              />
-              <TextField
-                label={text.resultUnit}
-                value={row.resultUnit}
-                error={err("resultUnit")}
-                onChange={(e) => update(index, { resultUnit: e.target.value })}
-              />
-              <SelectField
-                label={text.strength}
-                options={strengthOptions}
-                value={row.strength}
-                onChange={(e) => update(index, { strength: e.target.value })}
-              />
-              <SelectField
-                label={text.visibility}
-                options={visibilityOptions}
-                value={row.visibility}
-                onChange={(e) => update(index, { visibility: e.target.value })}
-              />
-              <SelectField
-                label="Tipo de impacto"
-                options={impactOptions}
-                value={row.impactType}
-                onChange={(e) => update(index, { impactType: e.target.value })}
-              />
-              <CheckboxField
-                label={text.verified}
-                checked={row.verified}
-                onChange={(e) => update(index, { verified: e.target.checked })}
-              />
-            </div>
-            {skills.length > 0 ? (
-              <fieldset className="flex flex-col gap-2">
-                <legend className="text-sm font-medium text-fg">
-                  {text.skills}
-                </legend>
-                <div className="flex flex-wrap gap-x-4 gap-y-1">
-                  {skills.map((skill) => (
-                    <label
-                      key={skill.id}
-                      className="inline-flex min-h-8 items-center gap-2 text-sm text-fg"
-                    >
-                      <input
-                        type="checkbox"
-                        className="size-4 accent-accent-strong"
-                        checked={row.skillIds.includes(skill.id)}
-                        onChange={(e) =>
-                          update(index, {
-                            skillIds: e.target.checked
-                              ? [...row.skillIds, skill.id]
-                              : row.skillIds.filter((s) => s !== skill.id),
-                          })
-                        }
-                      />
-                      {skill.name}
-                    </label>
-                  ))}
+      <div className="flex flex-col gap-4">
+        <p className="text-sm text-muted">{text.description}</p>
+        {list.rows.length === 0 ? (
+          <p className="text-sm text-muted">{text.empty}</p>
+        ) : null}
+        {list.rows.map((row) => {
+          const err = (field: string) => list.errorOf(row.key, field);
+          const label = row.shortText.trim() || text.newAchievement;
+          return (
+            <Collapsible
+              key={row.key}
+              heading="h5"
+              title={label}
+              expanded={open.has(row.key)}
+              onToggle={() => toggle(row.key)}
+              actions={
+                <>
+                  <Badge>
+                    {text.visibilityOptions[
+                      row.visibility as keyof typeof text.visibilityOptions
+                    ] ?? row.visibility}
+                  </Badge>
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    aria-label={`${strings.common.remove}: ${label}`}
+                    onClick={() => setToRemove(row)}
+                  >
+                    {strings.common.remove}
+                  </Button>
+                </>
+              }
+            >
+              <div className="flex flex-col gap-3">
+                {!row.id && !isReady(row) ? (
+                  <p className="text-sm text-muted">
+                    {strings.autosave.incomplete(text.readyHint)}
+                  </p>
+                ) : null}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <TextField
+                    label={text.shortText}
+                    value={row.shortText}
+                    error={err("shortText")}
+                    onChange={(e) =>
+                      list.update(row.key, { shortText: e.target.value })
+                    }
+                  />
+                  <TextField
+                    label={text.longText}
+                    value={row.longText}
+                    error={err("longText")}
+                    onChange={(e) =>
+                      list.update(row.key, { longText: e.target.value })
+                    }
+                  />
+                  <TextField
+                    label={text.resultValue}
+                    value={row.resultValue}
+                    error={err("resultValue")}
+                    onChange={(e) =>
+                      list.update(row.key, { resultValue: e.target.value })
+                    }
+                  />
+                  <TextField
+                    label={text.resultUnit}
+                    value={row.resultUnit}
+                    error={err("resultUnit")}
+                    onChange={(e) =>
+                      list.update(row.key, { resultUnit: e.target.value })
+                    }
+                  />
+                  <SelectField
+                    label={text.strength}
+                    options={strengthOptions}
+                    value={row.strength}
+                    onChange={(e) =>
+                      list.update(row.key, { strength: e.target.value })
+                    }
+                  />
+                  <SelectField
+                    label={text.visibility}
+                    options={visibilityOptions}
+                    value={row.visibility}
+                    onChange={(e) =>
+                      list.update(row.key, { visibility: e.target.value })
+                    }
+                  />
+                  <SelectField
+                    label={text.impactType}
+                    options={impactOptions}
+                    value={row.impactType}
+                    onChange={(e) =>
+                      list.update(row.key, { impactType: e.target.value })
+                    }
+                  />
+                  <CheckboxField
+                    label={text.verified}
+                    checked={row.verified}
+                    onChange={(e) =>
+                      list.update(row.key, { verified: e.target.checked })
+                    }
+                  />
                 </div>
-              </fieldset>
-            ) : null}
-            <div>
-              <Button
-                variant="ghost"
-                type="button"
-                onClick={() => {
-                  setRows((current) => current.filter((_, i) => i !== index));
-                  setDirty(true);
-                }}
-              >
-                {strings.common.remove}
-              </Button>
-            </div>
-          </div>
-        );
-      })}
+                <SkillPicker
+                  skills={skills}
+                  selectedIds={row.skillIds}
+                  onChange={(ids) => list.update(row.key, { skillIds: ids })}
+                />
+              </div>
+            </Collapsible>
+          );
+        })}
 
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          variant="secondary"
-          type="button"
-          loading={derive.isPending}
-          loadingLabel={text.deriving}
-          onClick={() => derive.mutate(undefined, { onSuccess: setDerivation })}
-        >
-          {text.derive}
-        </Button>
-        <Button
-          variant="secondary"
-          type="button"
-          onClick={() => add([blank()])}
-        >
-          {text.addManual}
-        </Button>
-        <Button
-          variant="primary"
-          type="button"
-          disabled={!dirty}
-          loading={save.isPending}
-          loadingLabel={strings.common.saving}
-          onClick={() => void submit()}
-        >
-          {strings.common.save}
-        </Button>
+        <div className="flex flex-wrap items-center gap-3">
+          <Button
+            variant="secondary"
+            type="button"
+            loading={derive.isPending}
+            loadingLabel={text.deriving}
+            onClick={() =>
+              derive.mutate(undefined, { onSuccess: setDerivation })
+            }
+          >
+            {text.derive}
+          </Button>
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={() => add([blank()])}
+          >
+            {text.addManual}
+          </Button>
+        </div>
+        <ErrorNotice error={list.error ?? derive.error} />
+
+        {derivation ? (
+          <Proposals
+            derivation={derivation}
+            skills={skills}
+            onAccept={(proposal) =>
+              add([fromProposal(proposal, derivation.source)])
+            }
+            onClose={() => setDerivation(null)}
+          />
+        ) : null}
+
+        <AiManual kind={kind} parentId={parentId} onResult={setDerivation} />
       </div>
-      <ErrorNotice error={save.error ?? derive.error} />
 
-      {derivation ? (
-        <Proposals
-          derivation={derivation}
-          skills={skills}
-          onAccept={(proposal) =>
-            add([fromProposal(proposal, derivation.source)])
-          }
-          onClose={() => setDerivation(null)}
+      {toRemove ? (
+        <ConfirmDialog
+          title={strings.confirm.removeTitle(strings.confirm.what.achievement)}
+          message={strings.confirm.removeMessage(
+            toRemove.shortText.trim() || text.newAchievement,
+          )}
+          confirmLabel={strings.common.remove}
+          cancelLabel={strings.common.cancel}
+          onClose={() => setToRemove(null)}
+          onConfirm={() => {
+            list.remove(toRemove.key);
+            setToRemove(null);
+          }}
         />
       ) : null}
-
-      <AiManual kind={kind} parentId={parentId} onResult={setDerivation} />
-    </section>
+    </Collapsible>
   );
 }
 

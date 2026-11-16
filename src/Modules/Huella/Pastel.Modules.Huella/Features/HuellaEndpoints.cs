@@ -116,6 +116,7 @@ internal static class HuellaEndpoints
         var publication = api.MapGroup("/publication");
         publication.MapGet("/", async (PublicationHandler h, HttpContext http, CancellationToken ct) => (await h.GetStatusAsync(ct)).ToResponse(http)).RequirePermission(read);
         publication.MapGet("/preview", async (PublicationHandler h, HttpContext http, CancellationToken ct) => (await h.PreviewAsync(ct)).ToResponse(http)).RequirePermission(read);
+        publication.MapGet("/preview/cv", async (PublicationHandler h, HttpContext http, CancellationToken ct) => (await h.PreviewCvAsync(ct)).ToResponse(http)).RequirePermission(read);
         publication.MapPost("/publish", async (PublicationHandler h, HttpContext http, CancellationToken ct) => (await h.PublishAsync(ct)).ToResponse(http)).RequirePermission(write);
         publication.MapPost("/unpublish", async (PublicationHandler h, HttpContext http, CancellationToken ct) => (await h.UnpublishAsync(ct)).ToResponse(http)).RequirePermission(write);
         publication.MapPost("/link", async (PublicationHandler h, HttpContext http, CancellationToken ct) => (await h.RegenerateLinkAsync(ct)).ToResponse(http)).RequirePermission(write);

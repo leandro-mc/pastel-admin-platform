@@ -21,7 +21,7 @@ Permisos: `huella.access` (entrar al panel), `huella.profile.manage` (editar y p
 Los logros son la capa que reutilizarán las futuras funciones (carta de recomendación, historial de postulaciones, preparación de entrevistas) sin cambiar el modelo: cada una referencia `Achievement`, `JobOffer` y `CvVersion`.
 
 - **Borrador vs publicado:** el propietario edita el borrador. **Publicar** crea un `PublishedSnapshot`; la página pública lee siempre el último snapshot, nunca el borrador. "Despublicar" retira el perfil público. Vista previa del borrador solo para el propietario.
-- **Token de enlace público:** generar al menos 32 bytes criptográficamente aleatorios y codificar con Base64URL. Almacenar solo el hash del token; nunca guardar ni derivar el token de un nombre, correo, slug o ID. La URL pública será `/huella/p/:token`. El token es una capacidad de lectura: cualquier persona que lo posea puede acceder a la última publicación sin login.
+- **Token de enlace público:** generar al menos 32 bytes criptográficamente aleatorios y codificar con Base64URL. La búsqueda usa el hash; el valor se guarda además **cifrado** (nunca en claro) para que el propietario pueda volver a copiar su enlace las veces que necesite; nunca derivar el token de un nombre, correo, slug o ID. La URL pública será `/huella/p/:token`. El token es una capacidad de lectura: cualquier persona que lo posea puede acceder a la última publicación sin login.
 - **Revocación/regeneración:** al regenerar, generar un token nuevo, almacenar el nuevo hash y hacer que el token previo falle inmediatamente. No registrar el token en logs, analítica o telemetría.
 
 ## 4. Pantallas
@@ -30,8 +30,9 @@ Los logros son la capa que reutilizarán las futuras funciones (carta de recomen
 |---|---|---|
 | `/huella/p/:token` | **Perfil público mediante enlace secreto** | Móvil y escritorio, solo versión publicada; enlaces externos con `rel="noopener noreferrer"`; resaltador de evidencia, impresión y «Ver CV» si la publicación lo incluye; token válido obligatorio y sin login |
 | `/huella` | Entrada | Lleva al banco |
-| `/huella/banco` | Banco de información | Notas privadas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas; logros por experiencia/proyecto (por reglas, a mano o con IA) |
+| `/huella/banco` | Banco de información | Notas privadas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas; logros por experiencia/proyecto (por reglas, a mano o con IA). **Sin botón guardar** (autoguardado); cada sección con buscador, elementos colapsados (solo nombre, visibilidad y quitar) y confirmación al quitar |
 | `/huella/cv` | Crear CV | Oferta → mapa de evidencia y filtros duros → generar → versiones → edición validada, reporte, texto ATS, IA, PDF, marcar CV público |
+| `/huella/vista-previa` | Vista previa real del borrador | Pestaña nueva con sesión: mismos componentes que el enlace público (CV e impresión incluidos) y un aviso arriba que no se imprime |
 | `/huella/ia` | Configurar IA | Proveedor (Gemini, OpenAI o Anthropic), clave de la cuenta del propietario y modelo elegido de la lista real del proveedor |
 | `/huella/perfil` | Perfil público | Datos, enlaces, interruptores de contacto, vista previa, publicar/despublicar, enlace (se muestra una vez) |
 | `/huella/pronto/:item` | En preparación | Carta de recomendación, historial de postulaciones, preparación de entrevistas |

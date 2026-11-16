@@ -6,9 +6,9 @@ namespace Pastel.Modules.Huella.Domain;
 
 /// <summary>
 /// Token del enlace público (<c>/huella/p/:token</c>). Es una capacidad de lectura: 32 bytes aleatorios de
-/// <see cref="RandomNumberGenerator"/> en Base64URL (43 caracteres). Solo se guarda su SHA-256; el token en claro se
-/// muestra una única vez al propietario y nunca se escribe en la base, en logs ni en la auditoría. No se deriva de
-/// nombres, correos ni identificadores.
+/// <see cref="RandomNumberGenerator"/> en Base64URL (43 caracteres). La búsqueda usa su SHA-256; el valor además se guarda
+/// cifrado (AES-GCM) para que el propietario lo copie de nuevo, y nunca en claro en la base, en logs ni en la auditoría.
+/// No se deriva de nombres, correos ni identificadores.
 /// </summary>
 internal static class PublicLinkToken
 {

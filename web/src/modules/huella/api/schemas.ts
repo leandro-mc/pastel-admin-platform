@@ -378,6 +378,8 @@ export const statusSchema = z.object({
   hasUnpublishedChanges: z.boolean(),
   canPublish: z.boolean(),
   blockedReason: maybe,
+  /** Token del enlace público; solo lo recibe la persona dueña autenticada. */
+  token: maybe,
 });
 
 export const previewSchema = z.object({

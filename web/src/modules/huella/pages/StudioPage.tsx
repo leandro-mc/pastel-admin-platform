@@ -20,7 +20,11 @@ import {
 import { CvEditor } from "../components/CvEditor";
 import { ErrorNotice, Loaded } from "../components/Form";
 import { EvidenceMap, OfferPanel } from "../components/OfferPanel";
+import { formatDateTime } from "../lib/format";
 import { strings } from "../strings";
+
+/** Nivel de CV que viene elegido al abrir «Crear CV». */
+const DEFAULT_LEVEL = "mid";
 
 const g = strings.studio.generate;
 const v = strings.studio.versions;
@@ -64,7 +68,7 @@ function GeneratePanel({
   const bank = useBank();
   const generate = useGenerateCv();
   const [focus, setFocus] = useState("");
-  const [level, setLevel] = useState("mid");
+  const [level, setLevel] = useState(DEFAULT_LEVEL);
   const [paper, setPaper] = useState<string | null>(null);
   const [language, setLanguage] = useState<string | null>(null);
   const [name, setName] = useState("");
@@ -193,6 +197,12 @@ function VersionsPanel({
                         item.linesUsed,
                         item.lineBudget,
                       )}
+                    </p>
+                    <p className="text-sm text-muted">
+                      {v.createdAt}{" "}
+                      <time dateTime={item.createdAt}>
+                        {formatDateTime(item.createdAt)}
+                      </time>
                     </p>
                   </div>
                   <div className="flex flex-wrap items-center gap-2">

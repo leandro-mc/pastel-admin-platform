@@ -182,7 +182,7 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
         }
     }
 
-    // Criterio 8: el token no se guarda en claro ni llega a la auditoría; regenerar queda auditado.
+    // Criterio 8: el token no se guarda en claro (hash para buscar y texto cifrado para que el propietario lo copie) ni llega a la auditoría; regenerar queda auditado.
     [Trait("RequirementId", "HUELLA-E1-6")]
     [RequiresPostgresFact]
     public async Task Link_token_is_stored_only_as_a_hash_and_never_audited()
@@ -190,9 +190,15 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
         var owner = await OwnerAsync();
         var token = await NewLinkAsync(owner);
 
+        // El propietario puede volver a copiar su enlace; un anónimo no lo recibe de ningún modo.
         using (var status = await QaSupport.SendAsync(owner, HttpMethod.Get, "/api/huella/publication"))
         {
-            Assert.DoesNotContain(token, await status.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+            Assert.Contains(token, await status.Content.ReadAsStringAsync(), StringComparison.Ordinal);
+        }
+
+        using (var anonymousStatus = await QaSupport.SendAsync(NewAnonymous(), HttpMethod.Get, "/api/huella/publication"))
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, anonymousStatus.StatusCode);
         }
 
         await using var scope = _factory.Services.CreateAsyncScope();
@@ -201,6 +207,9 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
         Assert.NotEmpty(hashes);
         Assert.All(hashes, hash => Assert.Equal(32, hash.Length));
         Assert.DoesNotContain(hashes, hash => hash.SequenceEqual(Encoding.UTF8.GetBytes(token)));
+        var ciphers = await huella.Profiles.AsNoTracking().Where(p => p.PublicTokenCipher != null).Select(p => p.PublicTokenCipher!).ToListAsync();
+        Assert.NotEmpty(ciphers);
+        Assert.All(ciphers, cipher => Assert.DoesNotContain(token, cipher, StringComparison.Ordinal));
 
         var identity = scope.ServiceProvider.GetRequiredService<IdentityDbContext>();
         var audit = await identity.AuditLogs.AsNoTracking().Where(a => a.Module == "huella").ToListAsync();

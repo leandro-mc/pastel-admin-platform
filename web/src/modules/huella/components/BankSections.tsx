@@ -1,12 +1,4 @@
-import { useEffect, useState } from "react";
-import { useNotify } from "@/core/notifications";
-import {
-  Button,
-  CheckboxField,
-  Panel,
-  SelectField,
-  TextField,
-} from "@/core/ui";
+import { Panel, SelectField, TextField } from "@/core/ui";
 import { useSaveNotes, useSaveSection } from "../api/hooks";
 import type {
   Bank,
@@ -21,7 +13,9 @@ import type {
 import { strings } from "../strings";
 import { AchievementsEditor } from "./AchievementsEditor";
 import { ErrorNotice, TextAreaField, fieldError } from "./Form";
+import { SaveStatus } from "./SaveStatus";
 import { SectionEditor, newKey, type Row } from "./SectionEditor";
+import { useAutosaveValue } from "./useAutosaveValue";
 
 const t = strings.bank;
 const optional = (value: string) => (value.trim() === "" ? null : value.trim());
@@ -29,48 +23,23 @@ const toInt = (value: string) =>
   value.trim() === "" ? null : Number.parseInt(value, 10);
 const str = (value: string | number | null) =>
   value === null ? "" : String(value);
+const filled = (value: string) => value.trim() !== "";
 const options = (map: Record<string, string>) =>
   Object.entries(map).map(([value, label]) => ({ value, label }));
 
 // ───────────────────────── Notas privadas ─────────────────────────
 export function NotesSection({ notes }: { notes: Notes }) {
-  const notify = useNotify();
   const save = useSaveNotes();
-  const [draft, setDraft] = useState<Notes>(notes);
-  const [dirty, setDirty] = useState(false);
-  useEffect(() => {
-    if (!dirty) setDraft(notes);
-  }, [notes, dirty]);
-  const set = (patch: Partial<Notes>) => {
-    setDraft((d) => ({ ...d, ...patch }));
-    setDirty(true);
-  };
-  const err = (field: string) => fieldError(save.error, field);
-  const submit = async () => {
-    try {
-      await save.mutateAsync(draft);
-      setDirty(false);
-      notify(strings.common.saved);
-    } catch {
-      /* se muestra abajo */
-    }
-  };
+  const { value: draft, set, state, error } = useAutosaveValue<Notes>(
+    notes,
+    (value) => save.mutateAsync(value),
+  );
+  const err = (field: string) => fieldError(error, field);
   return (
     <Panel
       title={t.notes.title}
       description={t.notes.description}
-      actions={
-        <Button
-          variant="primary"
-          type="button"
-          disabled={!dirty}
-          loading={save.isPending}
-          loadingLabel={strings.common.saving}
-          onClick={() => void submit()}
-        >
-          {strings.common.save}
-        </Button>
-      }
+      actions={<SaveStatus state={state} />}
     >
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
@@ -149,7 +118,7 @@ export function NotesSection({ notes }: { notes: Notes }) {
         </div>
       </div>
       <div className="mt-4">
-        <ErrorNotice error={save.error} />
+        <ErrorNotice error={error} />
       </div>
     </Panel>
   );
@@ -178,6 +147,9 @@ export function ExperienceSection({ bank }: { bank: Bank }) {
       title={t.experience.title}
       empty={t.experience.empty}
       addLabel={t.experience.add}
+      searchLabel={t.experience.search}
+      removeWhat={strings.confirm.what.experience}
+      readyHint={t.experience.readyHint}
       source={bank.experiences}
       toRow={(e) => ({
         key: e.id,
@@ -225,12 +197,12 @@ export function ExperienceSection({ bank }: { bank: Bank }) {
         teamSize: toInt(r.teamSize),
         isVisible: r.isVisible,
       })}
-      save={(items) => save.mutateAsync(items)}
-      saving={save.isPending}
-      error={save.error}
-      heading={(r) =>
-        [r.role, r.company].filter(Boolean).join(" · ") || t.experience.add
+      isReady={(r) =>
+        filled(r.role) && filled(r.company) && /^\d{4}-\d{2}$/.test(r.start)
       }
+      save={(items) => save.mutateAsync(items).then((b) => b.experiences)}
+      heading={(r) => [r.role, r.company].filter(Boolean).join(" - ")}
+      searchText={(r) => `${r.marketRole} ${r.location} ${r.start}`}
       fields={(r, set, err) => (
         <>
           <TextField
@@ -312,13 +284,6 @@ export function ExperienceSection({ bank }: { bank: Bank }) {
               onChange={(e) => set({ narrative: e.target.value })}
             />
           </div>
-          <div className="sm:col-span-2">
-            <CheckboxField
-              label={strings.common.visible}
-              checked={r.isVisible}
-              onChange={(e) => set({ isVisible: e.target.checked })}
-            />
-          </div>
         </>
       )}
       extra={(r) =>
@@ -331,9 +296,7 @@ export function ExperienceSection({ bank }: { bank: Bank }) {
             }
             skills={bank.skills}
           />
-        ) : (
-          <p className="text-sm text-muted">{t.experience.saveFirst}</p>
-        )
+        ) : null
       }
     />
   );
@@ -358,6 +321,9 @@ export function ProjectSection({ bank }: { bank: Bank }) {
       title={t.project.title}
       empty={t.project.empty}
       addLabel={t.project.add}
+      searchLabel={t.project.search}
+      removeWhat={strings.confirm.what.project}
+      readyHint={t.project.readyHint}
       source={bank.projects}
       toRow={(p) => ({
         key: p.id,
@@ -393,10 +359,10 @@ export function ProjectSection({ bank }: { bank: Bank }) {
         endYear: toInt(r.endYear),
         isVisible: r.isVisible,
       })}
-      save={(items) => save.mutateAsync(items)}
-      saving={save.isPending}
-      error={save.error}
-      heading={(r) => r.name || t.project.add}
+      isReady={(r) => filled(r.name)}
+      save={(items) => save.mutateAsync(items).then((b) => b.projects)}
+      heading={(r) => r.name}
+      searchText={(r) => `${r.stack} ${r.summary}`}
       fields={(r, set, err) => (
         <>
           <TextField
@@ -451,13 +417,6 @@ export function ProjectSection({ bank }: { bank: Bank }) {
               onChange={(e) => set({ approach: e.target.value })}
             />
           </div>
-          <div className="sm:col-span-2">
-            <CheckboxField
-              label={strings.common.visible}
-              checked={r.isVisible}
-              onChange={(e) => set({ isVisible: e.target.checked })}
-            />
-          </div>
         </>
       )}
       extra={(r) =>
@@ -470,9 +429,7 @@ export function ProjectSection({ bank }: { bank: Bank }) {
             }
             skills={bank.skills}
           />
-        ) : (
-          <p className="text-sm text-muted">{t.project.saveFirst}</p>
-        )
+        ) : null
       }
     />
   );
@@ -487,7 +444,6 @@ type SkillRow = Row & {
   lastUsedYear: string;
   why: string;
   isVisible: boolean;
-  evidence: number;
 };
 
 export function SkillSection({ bank }: { bank: Bank }) {
@@ -497,6 +453,9 @@ export function SkillSection({ bank }: { bank: Bank }) {
       title={t.skill.title}
       empty={t.skill.empty}
       addLabel={t.skill.add}
+      searchLabel={t.skill.search}
+      removeWhat={strings.confirm.what.skill}
+      readyHint={t.skill.readyHint}
       maxItems={150}
       source={bank.skills}
       toRow={(s) => ({
@@ -509,7 +468,6 @@ export function SkillSection({ bank }: { bank: Bank }) {
         lastUsedYear: str(s.lastUsedYear),
         why: s.why,
         isVisible: s.isVisible,
-        evidence: s.evidence,
       })}
       blank={() => ({
         key: newKey(),
@@ -520,7 +478,6 @@ export function SkillSection({ bank }: { bank: Bank }) {
         lastUsedYear: "",
         why: "",
         isVisible: true,
-        evidence: 0,
       })}
       toPayload={(r) => ({
         id: r.id,
@@ -532,10 +489,10 @@ export function SkillSection({ bank }: { bank: Bank }) {
         why: r.why,
         isVisible: r.isVisible,
       })}
-      save={(items) => save.mutateAsync(items)}
-      saving={save.isPending}
-      error={save.error}
-      heading={(r) => r.name || t.skill.add}
+      isReady={(r) => filled(r.name)}
+      save={(items) => save.mutateAsync(items).then((b) => b.skills)}
+      heading={(r) => r.name}
+      searchText={(r) => `${r.category} ${r.aliases}`}
       fields={(r, set, err) => (
         <>
           <TextField
@@ -580,16 +537,11 @@ export function SkillSection({ bank }: { bank: Bank }) {
               onChange={(e) => set({ why: e.target.value })}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
-            <CheckboxField
-              label={strings.common.visible}
-              checked={r.isVisible}
-              onChange={(e) => set({ isVisible: e.target.checked })}
-            />
-            <span className="text-sm text-muted">
-              {t.skill.evidence(r.evidence)}
-            </span>
-          </div>
+          <p className="text-sm text-muted sm:col-span-2">
+            {t.skill.evidence(
+              bank.skills.find((s) => s.id === r.id)?.evidence ?? 0,
+            )}
+          </p>
         </>
       )}
     />
@@ -613,6 +565,9 @@ export function EducationSection({ bank }: { bank: Bank }) {
       title={t.education.title}
       empty={t.education.empty}
       addLabel={t.education.add}
+      searchLabel={t.education.search}
+      removeWhat={strings.confirm.what.education}
+      readyHint={t.education.readyHint}
       source={bank.educations}
       toRow={(e) => ({
         key: e.id,
@@ -642,10 +597,10 @@ export function EducationSection({ bank }: { bank: Bank }) {
         note: optional(r.note),
         isVisible: r.isVisible,
       })}
-      save={(items) => save.mutateAsync(items)}
-      saving={save.isPending}
-      error={save.error}
-      heading={(r) => r.degree || t.education.add}
+      isReady={(r) => filled(r.degree) && filled(r.institution)}
+      save={(items) => save.mutateAsync(items).then((b) => b.educations)}
+      heading={(r) => r.degree}
+      searchText={(r) => r.institution}
       fields={(r, set, err) => (
         <>
           <TextField
@@ -682,13 +637,6 @@ export function EducationSection({ bank }: { bank: Bank }) {
               onChange={(e) => set({ note: e.target.value })}
             />
           </div>
-          <div className="sm:col-span-2">
-            <CheckboxField
-              label={strings.common.visible}
-              checked={r.isVisible}
-              onChange={(e) => set({ isVisible: e.target.checked })}
-            />
-          </div>
         </>
       )}
     />
@@ -711,6 +659,9 @@ export function CertificationSection({ bank }: { bank: Bank }) {
       title={t.certification.title}
       empty={t.certification.empty}
       addLabel={t.certification.add}
+      searchLabel={t.certification.search}
+      removeWhat={strings.confirm.what.certification}
+      readyHint={t.certification.readyHint}
       source={bank.certifications}
       toRow={(c) => ({
         key: c.id,
@@ -740,10 +691,10 @@ export function CertificationSection({ bank }: { bank: Bank }) {
         credentialUrl: optional(r.credentialUrl),
         isVisible: r.isVisible,
       })}
-      save={(items) => save.mutateAsync(items)}
-      saving={save.isPending}
-      error={save.error}
-      heading={(r) => r.name || t.certification.add}
+      isReady={(r) => filled(r.name)}
+      save={(items) => save.mutateAsync(items).then((b) => b.certifications)}
+      heading={(r) => r.name}
+      searchText={(r) => r.issuer}
       fields={(r, set, err) => (
         <>
           <TextField
@@ -780,13 +731,6 @@ export function CertificationSection({ bank }: { bank: Bank }) {
               onChange={(e) => set({ credentialUrl: e.target.value })}
             />
           </div>
-          <div className="sm:col-span-2">
-            <CheckboxField
-              label={strings.common.visible}
-              checked={r.isVisible}
-              onChange={(e) => set({ isVisible: e.target.checked })}
-            />
-          </div>
         </>
       )}
     />
@@ -807,6 +751,9 @@ export function LanguageSection({ bank }: { bank: Bank }) {
       title={t.language.title}
       empty={t.language.empty}
       addLabel={t.language.add}
+      searchLabel={t.language.search}
+      removeWhat={strings.confirm.what.language}
+      readyHint={t.language.readyHint}
       maxItems={15}
       source={bank.languages}
       toRow={(l) => ({
@@ -831,10 +778,10 @@ export function LanguageSection({ bank }: { bank: Bank }) {
         evidence: optional(r.evidence),
         isVisible: r.isVisible,
       })}
-      save={(items) => save.mutateAsync(items)}
-      saving={save.isPending}
-      error={save.error}
-      heading={(r) => r.language || t.language.add}
+      isReady={(r) => filled(r.language)}
+      save={(items) => save.mutateAsync(items).then((b) => b.languages)}
+      heading={(r) => (r.language ? `${r.language} (${r.level})` : "")}
+      searchText={(r) => r.evidence}
       fields={(r, set, err) => (
         <>
           <TextField
@@ -856,13 +803,6 @@ export function LanguageSection({ bank }: { bank: Bank }) {
               value={r.evidence}
               error={err("evidence")}
               onChange={(e) => set({ evidence: e.target.value })}
-            />
-          </div>
-          <div className="sm:col-span-2">
-            <CheckboxField
-              label={strings.common.visible}
-              checked={r.isVisible}
-              onChange={(e) => set({ isVisible: e.target.checked })}
             />
           </div>
         </>

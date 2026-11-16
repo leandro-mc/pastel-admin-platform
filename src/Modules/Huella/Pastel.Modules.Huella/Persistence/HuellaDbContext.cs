@@ -58,6 +58,7 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.Property(x => x.Availability).HasMaxLength(80);
             e.Property(x => x.ContactEmail).HasMaxLength(254);
             e.Property(x => x.ContactPhone).HasMaxLength(32);
+            e.Property(x => x.PublicTokenCipher).HasMaxLength(256);
             e.Property(x => x.Version).IsRowVersion();
             e.HasIndex(x => x.OwnerUserId).IsUnique();
             e.HasIndex(x => x.PublicTokenHash).IsUnique();

@@ -3,6 +3,7 @@ import { useNotify } from "@/core/notifications";
 import {
   Button,
   CheckboxField,
+  ConfirmDialog,
   Panel,
   SelectField,
   TextField,
@@ -58,6 +59,7 @@ export function ProfileForm({ profile }: { profile: Profile }) {
   const save = useSaveProfile();
   const [draft, setDraft] = useState<Draft>(() => toDraft(profile));
   const [dirty, setDirty] = useState(false);
+  const [linkToRemove, setLinkToRemove] = useState<number | null>(null);
 
   useEffect(() => {
     if (!dirty) setDraft(toDraft(profile));
@@ -229,9 +231,8 @@ export function ProfileForm({ profile }: { profile: Profile }) {
               <Button
                 variant="ghost"
                 type="button"
-                onClick={() =>
-                  set({ links: draft.links.filter((_, i) => i !== index) })
-                }
+                aria-label={`${strings.common.remove}: ${link.label || link.url || t.linkLabel}`}
+                onClick={() => setLinkToRemove(index)}
               >
                 {strings.common.remove}
               </Button>
@@ -265,6 +266,23 @@ export function ProfileForm({ profile }: { profile: Profile }) {
       <div className="mt-4">
         <ErrorNotice error={save.error} />
       </div>
+      {linkToRemove !== null ? (
+        <ConfirmDialog
+          title={strings.confirm.removeTitle(strings.confirm.what.link)}
+          message={strings.confirm.removeMessage(
+            draft.links[linkToRemove]?.label ||
+              draft.links[linkToRemove]?.url ||
+              t.linkLabel,
+          )}
+          confirmLabel={strings.common.remove}
+          cancelLabel={strings.common.cancel}
+          onClose={() => setLinkToRemove(null)}
+          onConfirm={() => {
+            set({ links: draft.links.filter((_, i) => i !== linkToRemove) });
+            setLinkToRemove(null);
+          }}
+        />
+      ) : null}
     </Panel>
   );
 }

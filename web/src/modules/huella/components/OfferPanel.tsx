@@ -3,6 +3,7 @@ import { useNotify } from "@/core/notifications";
 import { Badge, Button, ConfirmDialog, Panel, TextField } from "@/core/ui";
 import { useCreateOffer, useDeleteOffer, useOffers } from "../api/hooks";
 import type { Evidence, Offer } from "../api/schemas";
+import { formatDateTime } from "../lib/format";
 import { strings } from "../strings";
 import { ErrorNotice, Loaded, TextAreaField, fieldError } from "./Form";
 
@@ -108,6 +109,12 @@ export function OfferPanel({ selectedId, onSelect }: Props) {
                         {offer.company ? (
                           <p className="text-sm text-muted">{offer.company}</p>
                         ) : null}
+                        <p className="text-sm text-muted">
+                          {t.createdAt}{" "}
+                          <time dateTime={offer.createdAt}>
+                            {formatDateTime(offer.createdAt)}
+                          </time>
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button

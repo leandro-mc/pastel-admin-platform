@@ -1,8 +1,8 @@
 import { PageHeader, Panel } from "@/core/ui";
+import { secondaryButton } from "@/core/ui/styles";
 import { usePreview, useProfile } from "../api/hooks";
 import { Loaded } from "../components/Form";
 import { ProfileForm } from "../components/ProfileForm";
-import { PublicProfileView } from "../components/PublicProfileView";
 import { PublicationPanel } from "../components/PublicationPanel";
 import { strings } from "../strings";
 
@@ -19,25 +19,22 @@ export function Component() {
         description={strings.publication.description}
       />
       <PublicationPanel hasCv={preview.data?.hasCv ?? false} />
-      <Loaded query={profile}>
-        {(data) => <ProfileForm profile={data} />}
-      </Loaded>
       <Panel
         title={strings.publication.preview.title}
         description={strings.publication.preview.description}
       >
-        <Loaded query={preview}>
-          {(data) => (
-            <div className="overflow-hidden rounded-xl border border-line">
-              <PublicProfileView
-                profile={data.profile}
-                seed={data.seed}
-                preview
-              />
-            </div>
-          )}
-        </Loaded>
+        <a
+          className={`${secondaryButton} no-underline`}
+          href="/huella/vista-previa"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {strings.publication.preview.open}
+        </a>
       </Panel>
+      <Loaded query={profile}>
+        {(data) => <ProfileForm profile={data} />}
+      </Loaded>
     </div>
   );
 }

@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Pastel.Modules.Huella.Ai;
 using Pastel.Modules.Huella.Cv;
 using Pastel.Modules.Huella.Domain;
 using Pastel.Modules.Huella.Persistence;
@@ -10,12 +11,13 @@ namespace Pastel.Modules.Huella.Features.Publication;
 
 /// <summary>
 /// Publicación del perfil. Publicar congela una copia (<c>PublishedSnapshot</c>) de lo que verá el visitante; lo que se
-/// edita después queda como borrador hasta la siguiente publicación. El enlace es una capacidad: solo se guarda su hash
-/// y el valor en claro se entrega una única vez.
+/// edita después queda como borrador hasta la siguiente publicación. El enlace es una capacidad: se busca por su hash y
+/// el valor se guarda además cifrado para que el propietario (solo él) pueda copiarlo cuando lo necesite.
 /// </summary>
-internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, IAuditTrail audit, ICurrentUser currentUser, IClock clock)
+internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, AiKeyProtector protector, IAuditTrail audit, ICurrentUser currentUser, IClock clock)
 {
     private const int SnapshotsKept = 5;
+    private const string TokenLabel = "public-link";
 
     public async Task<Result<PublicationStatus>> GetStatusAsync(CancellationToken cancellationToken)
     {
@@ -34,6 +36,20 @@ internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owner
 
         var (document, cvJson) = await BuildAsync(profile.Value, cancellationToken);
         return new PublicationPreview(document, Seed(PublicProfileBuilder.Hash(HuellaJson.Serialize(document) + (cvJson ?? string.Empty))), document.HasCv);
+    }
+
+    /// <summary>CV público del borrador actual, para la vista previa del propietario (lo que verá el visitante si publica ahora).</summary>
+    public async Task<Result<CvDocument>> PreviewCvAsync(CancellationToken cancellationToken)
+    {
+        var profile = await owners.GetOrCreateAsync(cancellationToken);
+        if (profile.IsFailure)
+        {
+            return profile.Error;
+        }
+
+        var (_, cvJson) = await BuildAsync(profile.Value, cancellationToken);
+        var cv = HuellaJson.Deserialize<CvDocument>(cvJson);
+        return cv is null ? HuellaErrors.PublicCvMissing : cv;
     }
 
     public async Task<Result<PublicationResult>> PublishAsync(CancellationToken cancellationToken)
@@ -60,6 +76,7 @@ internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owner
             var (value, hash) = PublicLinkToken.Generate();
             token = value;
             p.PublicTokenHash = hash;
+            p.PublicTokenCipher = protector.Protect(value, p.Id, TokenLabel);
             p.PublicTokenCreatedAt = now;
         }
 
@@ -117,6 +134,7 @@ internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owner
         var p = profile.Value;
         var (token, hash) = PublicLinkToken.Generate();
         p.PublicTokenHash = hash;
+        p.PublicTokenCipher = protector.Protect(token, p.Id, TokenLabel);
         p.PublicTokenCreatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
         await WriteAuditAsync("huella.link.regenerated", null, cancellationToken);
@@ -146,7 +164,8 @@ internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owner
             p.PublicTokenCreatedAt,
             changes,
             publishable,
-            publishable ? null : "Complete su nombre y su titular antes de publicar.");
+            publishable ? null : "Complete su nombre y su titular antes de publicar.",
+            protector.TryUnprotect(p.PublicTokenCipher, p.Id, TokenLabel, out var link) ? link : null);
     }
 
     /// <summary>Documento público y CV público del borrador actual. El CV pierde cualquier dato de contacto que el perfil no haya activado.</summary>

@@ -83,6 +83,11 @@ export default {
   ],
   platformRoutes: [
     {
+      path: "/huella/vista-previa",
+      session: true,
+      lazy: () => import("./pages/PreviewPage"),
+    },
+    {
       path: "/huella/p/:token",
       session: false,
       lazy: () => import("./pages/PublicPage"),
