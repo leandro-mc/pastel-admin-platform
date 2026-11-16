@@ -25,6 +25,8 @@ public sealed class CvCompetenciesTests
         var practice = Exp("Desarrolladora", "Ministerio Y", new(2025, 8, 1), new(2025, 11, 1));
         var project = Exp("Desarrolladora y Scrum Master", "Ministerio Y", new(2024, 3, 1), new(2025, 7, 1));
         var other = Exp("Analista", "Otra Empresa", new(2023, 1, 1), new(2023, 6, 1));
+        practice.EmploymentType = "internship";
+        project.EmploymentType = "internship";
         var achievement = new Achievement
         {
             Id = Guid.CreateVersion7(), ExperienceId = current.Id, ShortText = "Apoyo al equipo de TI con pruebas y nuevas funcionalidades.",
@@ -138,7 +140,8 @@ public sealed class CvCompetenciesTests
     }
 
     // Integridad de la presentación: los datos administrativos (remuneración, horas, «no es empleo formal») nunca llegan al
-    // CV aunque la IA los escriba, y una competencia marcada «siempre en el CV» aparece aunque la IA no la elija.
+    // CV aunque la IA los escriba (un cargo que no es práctica va sin contexto) y una competencia marcada «siempre en el CV»
+    // aparece aunque la IA no la elija.
     [Fact]
     public void AdministrativeDetailsAreStrippedAndPinnedCompetenciesAlwaysAppear()
     {
@@ -169,7 +172,7 @@ public sealed class CvCompetenciesTests
         var (versions, _) = CvAiCompose.Parse(json, f.Bank, new CvComposeRequest("junior", "letter", ["es"], CvFormats.Competencies));
 
         var doc = Assert.Single(versions).Document;
-        Assert.Equal("Asistencia", doc.Experience[0].Context);
+        Assert.Null(doc.Experience[0].Context);
         var personal = Assert.Single(doc.Competencies, g => g.Kind == CompetencyKinds.Personal);
         Assert.Equal(f.Personal.Id, Assert.Single(personal.Items).Id);
     }

@@ -526,7 +526,9 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var c = context.Value;
-        var (composed, rejected) = CvAiCompose.Parse(raw, c.Bank, c.Request);
+        var analysisText = c.Offer?.RawText ?? c.Focus ?? string.Empty;
+        var analysis = OfferAnalyzer.Analyze(analysisText, isFocus: c.Offer is null, c.Bank.Data);
+        var (composed, rejected) = CvAiCompose.Parse(raw, c.Bank, c.Request, analysis);
         if (composed.Count == 0)
         {
             return rejected.Count == 0 ? invalid : new AiTaskOutcome("cv", 0, rejected, [], []);
@@ -542,8 +544,6 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var limits = CvLimits.For(c.Request.Level, c.Request.Paper, c.Request.Format);
-        var analysisText = c.Offer?.RawText ?? c.Focus ?? string.Empty;
-        var analysis = OfferAnalyzer.Analyze(analysisText, isFocus: c.Offer is null, c.Bank.Data);
         var now = clock.UtcNow;
         var defaultName = c.Offer is not null ? $"{c.Offer.Title}{(c.Offer.Company is null ? string.Empty : " · " + c.Offer.Company)}" : (c.Focus ?? "CV general");
         if (c.Request.IsCompetencies)

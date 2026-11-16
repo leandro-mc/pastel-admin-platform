@@ -57,9 +57,10 @@ internal static class CvAiCompose
         sb.AppendLine();
         sb.AppendLine("## Reglas de verdad");
         sb.AppendLine("1. El BANCO es material en bruto: no copies sus frases tal cual; reescríbelas con redacción profesional y concisa.");
-        sb.AppendLine("2. Usa SOLO hechos del BANCO. No inventes cifras, empresas, fechas, títulos, herramientas, integraciones ni logros. Toda cifra que escribas debe aparecer en el texto de la experiencia o del proyecto de donde sale. No escribas cifras que solo estén en la OFERTA (p. ej. «Java 17+» o «2 años»): usa la versión o la cifra que respalde el banco. Las estimaciones del banco se dicen como tales: «aprox.» o «(estimado)», nunca como medición formal.");
+        sb.AppendLine("2. Usa SOLO hechos del BANCO. No inventes cifras, empresas, fechas, títulos ni logros. Puedes describir con otras palabras lo que el banco implica (por ejemplo, integrar un módulo a un sistema existente implica trabajar con su base de datos), pero no agregues tecnologías, sistemas ni resultados que no se deduzcan del banco. Toda cifra que escribas debe aparecer en el texto de la experiencia o del proyecto de donde sale. No escribas cifras que solo estén en la OFERTA (p. ej. «Java 17+» o «2 años»): usa la versión o la cifra que respalde el banco. Las estimaciones del banco se dicen como tales: «aprox.» o «(estimado)», nunca como medición formal.");
         sb.AppendLine("3. Tú eliges qué experiencias" + (competencies ? string.Empty : " y proyectos") + " incluir según la OFERTA (o el ENFOQUE). Cita cada una con su id exacto del banco. SIEMPRE incluye el cargo vigente (`current: true`), con al menos una viñeta.");
-        sb.AppendLine("4. Si dos experiencias son de la MISMA organización y son continuas o con menos de tres meses entre una y otra, puedes unirlas en una sola entrada cuando eso ahorre espacio o cuente mejor la historia: pon el id de la más reciente en `id` y los demás en `alsoIds`; el servidor une las fechas. El presupuesto de líneas se cuenta por entrada ya unida.");
+        var merged = limits.EntryLines.Count >= 3 ? $"[{limits.EntryLines[0]}, {limits.EntryLines[1] + limits.EntryLines[2]}]" : "más líneas";
+        sb.AppendLine(CultureInfo.InvariantCulture, $"4. Si dos experiencias son de la MISMA organización y son continuas o con menos de tres meses entre una y otra, DECIDE tú si conviene unirlas en una sola entrada según la oferta: pon el id de la más reciente en `id` y los demás en `alsoIds`; el servidor une las fechas y su contexto. Al unirlas se ahorra una cabecera y la entrada unida recibe también el presupuesto de líneas de la que desaparece (con [{string.Join(", ", limits.EntryLines.Take(limits.Entries))}], pasa a {merged}). Únelas cuando eso te deje sumar viñetas de impacto o un proyecto relevante para la oferta; déjalas separadas si cada etapa aporta por sí sola algo que la oferta pide.");
         sb.AppendLine("5. Para cada término de <TERMINOS_DETECTADOS> con `mustHave: true` que el BANCO respalde, usa su escritura exacta al menos una vez (titular, perfil, habilidades o viñetas), incluida su grafía («Fullstack» o «full-stack», «servicios web», «integración de sistemas», «pruebas», «seguridad»), porque los sistemas ATS comparan palabras. Si el banco no lo respalda, no lo menciones ni lo insinúes.");
         sb.AppendLine("6. Respeta la voz de <VOZ>, lo que indique <EVITAR> y no uses nada de `doNotUse` del banco. Evita las frases de <PROHIBIDAS>.");
         sb.AppendLine("7. Herramientas heredadas o de nicho que el banco use solo en un contexto institucional (lo que <EVITAR> señale): menciónalas con naturalidad pero sin protagonismo; nunca en el titular ni abriendo el perfil, y como mucho una vez por experiencia. Da el peso a lo que la oferta pide.");
@@ -73,7 +74,9 @@ internal static class CvAiCompose
         sb.AppendLine("- Viñetas (`bullets`): cada una es un LOGRO, no una lista de tareas. Fórmula: verbo de acción fuerte + qué + cómo (tecnología o método que la oferta valora) + resultado (cifra del banco, alcance o efecto concreto para las personas usuarias o el negocio). Verbos fuertes: Desarrollé, Diseñé, Implementé, Automaticé, Integré, Lideré, Reduje, Coordiné, Levanté, Documenté, Probé (en presente para el cargo vigente: Desarrollo, Mantengo, Implemento). PROHIBIDO empezar con verbos débiles o de estado: «Fui», «Soy», «Era», «Trabajo en», «Trabajé en», «Participé», «Apoyo», «Apoyé», «Ayudé», «Encargado de», «Responsable de». Cada viñeta dice algo distinto: no repitas el mismo hecho en dos viñetas ni en el perfil.");
         sb.AppendLine("  - Débil: «Fui Scrum Master de un equipo de seis.» Fuerte: «Lideré como Scrum Master a cinco desarrolladores durante cinco sprints y coordiné reuniones semanales con las jefaturas de RR. HH. y TI.»");
         sb.AppendLine("  - Débil: «Trabajo sobre sistemas existentes y ejecuto pruebas.» Fuerte (si el banco lo respalda): «Desarrollo nuevas funcionalidades y pruebas en sistemas web en producción, coordinando requerimientos con distintas áreas.»");
+        sb.AppendLine("- Claridad: escribe para alguien que no conoce la organización. Si nombras un sistema o un área interna (p. ej. «sistema de Protocolo»), di en pocas palabras qué es; no uses siglas internas sin explicarlas. Nivel junior: no escribas «domino», «experto» ni «sénior».");
         sb.AppendLine("- `degree` (educación): el título EXACTO del banco (traducido solo si el idioma es otro); nunca le agregues la institución.");
+        sb.AppendLine("- `level` (idiomas): en palabras y con el marco común si el banco lo trae, p. ej. «Intermedio (B1)».");
         sb.AppendLine();
         sb.AppendLine("## Idioma");
         sb.AppendLine(CultureInfo.InvariantCulture, $"Genera una versión por cada idioma pedido: {string.Join(" y ", languageNames)}. Cada versión se escribe COMPLETA en su idioma, sin mezclar. Si el banco está en otro idioma, tradúcelo con fidelidad; los nombres de empresas, productos y tecnologías no se traducen.");
@@ -85,7 +88,7 @@ internal static class CvAiCompose
         if (competencies)
         {
             sb.AppendLine("- Este CV lo leen personas de recursos humanos y agencias de empleo que NO son de TI: explica cada experiencia en lenguaje claro (qué se necesitaba, qué hizo la persona y qué cambió). Nombra tecnologías solo cuando aporten (máximo dos por viñeta) y no uses siglas sin explicarlas. Da peso a la gestión, el trabajo en equipo, la planificación, la coordinación y la comunicación.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre 4 y {limits.PersonalCompetencies} personales y entre 4 y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). Las que tienen `alwaysInclude: true` van SIEMPRE. Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión. `note` es OBLIGATORIA: una frase de máximo {CvLimits.CompetencyNoteMax} caracteres con un hecho concreto tomado de su `evidence` (qué hizo, dónde o con qué resultado), que no repita las palabras del nombre y que no reutilice un hecho ya usado en otra competencia. Si no hay un hecho concreto para una competencia, no la elijas: mejor menos que relleno.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre 4 y {limits.PersonalCompetencies} personales y entre 4 y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). Las que tienen `alwaysInclude: true` van SIEMPRE. Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión. `note` es OBLIGATORIA: una frase de máximo {CvLimits.CompetencyNoteMax} caracteres con un hecho concreto tomado de su `evidence` (qué hizo, dónde o con qué resultado), que no repita las palabras del nombre y que no reutilice un hecho ya usado en otra competencia. La nota solo puede referirse a experiencias que aparecen en ESTE CV (por su organización): nunca nombres proyectos, sistemas ni personas que el CV no muestra, porque quien lo lee se pierde. Si no hay un hecho concreto para una competencia, no la elijas: mejor menos que relleno.");
         }
         else
         {
@@ -125,7 +128,7 @@ internal static class CvAiCompose
     }
 
     /// <summary>Lee la respuesta (propia o importada) y arma un CV por idioma pedido. Lo que no pasa el guardián se descarta con su motivo.</summary>
-    public static (IReadOnlyList<ComposedCv> Versions, IReadOnlyList<string> Rejected) Parse(string? raw, AiBank bank, CvComposeRequest request)
+    public static (IReadOnlyList<ComposedCv> Versions, IReadOnlyList<string> Rejected) Parse(string? raw, AiBank bank, CvComposeRequest request, OfferAnalysis? analysis = null)
     {
         var rejected = new List<string>();
         using var json = CvAiResult.TryParse(raw);
@@ -155,7 +158,7 @@ internal static class CvAiCompose
             }
 
             var warnings = new List<string>();
-            var doc = Assemble(item, language, bank, request, warnings);
+            var doc = Assemble(item, language, bank, request, warnings, analysis);
             rejected.AddRange(warnings.Select(w => $"{language.ToUpperInvariant()} · {w}"));
             if (doc is not null)
             {
@@ -166,7 +169,7 @@ internal static class CvAiCompose
         return (result, rejected);
     }
 
-    private static CvDocument? Assemble(JsonElement item, string language, AiBank bank, CvComposeRequest request, List<string> warnings)
+    private static CvDocument? Assemble(JsonElement item, string language, AiBank bank, CvComposeRequest request, List<string> warnings, OfferAnalysis? analysis = null)
     {
         var limits = CvLimits.For(request.Level, request.Paper, request.Format);
         var labels = CvLabels.For(language == "en");
@@ -223,7 +226,8 @@ internal static class CvAiCompose
         }
 
         doc.Skills = Skills(item, bank, limits, warnings);
-        doc.Competencies = request.IsCompetencies ? Competencies(item, bank, limits, labels, warnings) : [];
+        CompleteSkills(doc, bank, limits, analysis, warnings);
+        doc.Competencies = request.IsCompetencies ? Competencies(item, bank, limits, labels, doc.Projects.Select(p => p.Title).ToList(), warnings) : [];
 
         var seenEducation = new HashSet<Guid>();
         foreach (var entry in Items(item, "education"))
@@ -271,7 +275,7 @@ internal static class CvAiCompose
 
             var name = TextInput.CleanLine(Str(entry, "language"));
             var level = TextInput.CleanLine(Str(entry, "level"));
-            spoken.Add($"{(name.Length is > 0 and <= 60 ? name : spokenLanguage.Language)}: {(level.Length is > 0 and <= 24 ? level : spokenLanguage.Level)}");
+            spoken.Add($"{(name.Length is > 0 and <= 60 ? name : spokenLanguage.Language)}: {LevelText(level.Length is > 0 and <= 24 ? level : spokenLanguage.Level, language)}");
         }
 
         doc.Extras = [.. certificationLines];
@@ -353,7 +357,7 @@ internal static class CvAiCompose
                 Title = TitleOf(title, latest.Role),
                 Subtitle = latest.Company,
                 Location = latest.Location,
-                Context = ContextOf(ordered, Str(entry, "context"), language, bank),
+                Context = ordered.All(e => e.EmploymentType == "internship") ? ContextOf(ordered, Str(entry, "context"), language, bank) : null,
                 Dates = MonthDate.CvRange(start, end, language),
                 Bullets = Bullets(entry, group.Select(g => g.Id).ToList(), $"{latest.Company} · {latest.Role}", bank, limits, warnings),
             };
@@ -394,6 +398,12 @@ internal static class CvAiCompose
         for (var i = 0; i < ranked.Count; i++)
         {
             ranked[i].LineBudget = i < limits.EntryLines.Count ? limits.EntryLines[i] : 0;
+        }
+
+        // Con menos entradas que el máximo (p. ej. dos etapas unidas), las líneas que sobran pasan a la segunda entrada.
+        if (ranked.Count > 0 && ranked.Count < limits.Entries)
+        {
+            ranked[Math.Min(1, ranked.Count - 1)].LineBudget += limits.EntryLines.Skip(ranked.Count).Take(limits.Entries - ranked.Count).Sum();
         }
 
         return ranked;
@@ -504,7 +514,7 @@ internal static class CvAiCompose
     /// Competencias elegidas del catálogo del banco por su id (nunca una inventada), de cada tipo hasta su tope. El nombre puede
     /// venir traducido y la nota es una frase corta de evidencia; las dos pasan por el guardián.
     /// </summary>
-    private static List<CvCompetencyGroup> Competencies(JsonElement item, AiBank bank, CvLimits limits, CvLabels labels, List<string> warnings)
+    private static List<CvCompetencyGroup> Competencies(JsonElement item, AiBank bank, CvLimits limits, CvLabels labels, IReadOnlyCollection<string> shownProjects, List<string> warnings)
     {
         var result = new List<CvCompetencyGroup>();
         var root = item.ValueKind == JsonValueKind.Object && item.TryGetProperty("competencies", out var found) && found.ValueKind == JsonValueKind.Object
@@ -548,13 +558,17 @@ internal static class CvAiCompose
                     {
                         warnings.Add($"Competencia «{competency.Name}»: {reason}");
                     }
+                    else if (HiddenProject(written, bank, shownProjects) is { } hidden)
+                    {
+                        warnings.Add($"Competencia «{competency.Name}»: la nota nombra «{hidden}», que este CV no muestra; se usa la del banco.");
+                    }
                     else
                     {
                         note = written;
                     }
                 }
 
-                group.Items.Add(new CvCompetency { Id = id, Name = name, Note = note });
+                group.Items.Add(new CvCompetency { Id = id, Name = name, Note = note ?? BankNote(competency, bank, shownProjects) });
             }
 
             // Las que el banco marca «siempre en el CV» entran aunque la IA no las haya elegido (desplazan a la última).
@@ -570,9 +584,9 @@ internal static class CvAiCompose
                     group.Items.RemoveAt(group.Items.Count - 1);
                 }
 
-                group.Items.Add(new CvCompetency { Id = pinned.Id, Name = pinned.Name });
+                group.Items.Add(new CvCompetency { Id = pinned.Id, Name = pinned.Name, Note = BankNote(pinned, bank, shownProjects) });
                 seen.Add(pinned.Id);
-                warnings.Add($"Competencia «{pinned.Name}»: va siempre en el CV; se agregó sin nota porque la IA no la eligió.");
+                warnings.Add($"Competencia «{pinned.Name}»: va siempre en el CV; se agregó con la nota del banco porque la IA no la eligió.");
             }
 
             if (group.Items.Count > 0)
@@ -582,6 +596,118 @@ internal static class CvAiCompose
         }
 
         return result;
+    }
+
+    /// <summary>
+    /// Nota de respaldo de una competencia: la primera frase de su evidencia en el banco, si es corta, pasa el guardián y no
+    /// nombra proyectos que el CV no muestra. Por eso las evidencias del catálogo empiezan con una frase breve y autosuficiente.
+    /// </summary>
+    private static string? BankNote(Competency competency, AiBank bank, IReadOnlyCollection<string> shownProjects)
+    {
+        // Primera frase: corta en un punto seguido de espacio (no en «.NET») o en «:» o «;».
+        var first = TextInput.CleanLine(System.Text.RegularExpressions.Regex.Split(competency.Evidence, @"\.(?:\s|$)|[:;]")[0]);
+        return first.Length is > 0 and <= CvLimits.CompetencyNoteMax
+            && CvGuardian.ValidateWritten(first, CvLimits.CompetencyNoteMax, bank.Numbers, bank.Data) is null
+            && HiddenProject(first, bank, shownProjects) is null
+                ? first
+                : null;
+    }
+
+    /// <summary>El nombre de un proyecto del banco que el texto menciona y que el CV no muestra (quien lee no sabría qué es).</summary>
+    private static string? HiddenProject(string text, AiBank bank, IReadOnlyCollection<string> shownProjects)
+    {
+        foreach (var project in bank.Records.Projects.Where(p => !shownProjects.Contains(p.Name)))
+        {
+            var full = project.Name.Split(" (")[0].Trim();
+            var first = full.Split(' ')[0];
+            foreach (var token in new[] { full, first }.Where(t => t.Length >= 4).Distinct())
+            {
+                if (System.Text.RegularExpressions.Regex.IsMatch(text, $@"(?<![\p{{L}}\p{{N}}]){System.Text.RegularExpressions.Regex.Escape(token)}(?![\p{{L}}\p{{N}}])"))
+                {
+                    return token;
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Nivel de idioma en palabras con su marco común («Intermedio (B1)»), si la IA o el banco solo traen el código.</summary>
+    internal static string LevelText(string level, string language)
+    {
+        var code = level.Trim().ToUpperInvariant();
+        var en = language == "en";
+        var words = code switch
+        {
+            "A1" or "A2" => en ? "Basic" : "Básico",
+            "B1" => en ? "Intermediate" : "Intermedio",
+            "B2" => en ? "Upper intermediate" : "Intermedio alto",
+            "C1" => en ? "Advanced" : "Avanzado",
+            "C2" => en ? "Proficient" : "Dominio pleno",
+            _ => null,
+        };
+        return words is null ? level : $"{words} ({code})";
+    }
+
+    /// <summary>
+    /// Completa las habilidades del CV propio con las del banco que pide la oferta y con las tecnologías de los proyectos que
+    /// muestra el CV: son las palabras que compara el ATS y la IA a veces entrega pocas. Solo habilidades visibles del banco,
+    /// dentro de los topes del nivel; se agregan al grupo de su categoría, a uno con espacio o a uno nuevo.
+    /// </summary>
+    private static void CompleteSkills(CvDocument doc, AiBank bank, CvLimits limits, OfferAnalysis? analysis, List<string> warnings)
+    {
+        if (limits.SkillGroups == 0)
+        {
+            return;
+        }
+
+        var skills = bank.Data.Skills;
+        BankSkill? Find(string term)
+        {
+            var folded = TermMatcher.Fold(term);
+            return folded.Length == 0 ? null : skills.FirstOrDefault(s => TermMatcher.Fold(s.Name) == folded || s.Aliases.Any(a => TermMatcher.Fold(a) == folded));
+        }
+
+        var present = doc.Skills.SelectMany(g => g.Items).Select(i => Find(i)?.Name ?? i).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var candidates = (analysis?.Terms ?? []).OrderByDescending(t => t.Weight).Select(t => Find(t.Term))
+            .Concat(doc.Projects.SelectMany(p => p.Subtitle.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)).Select(Find))
+            .OfType<BankSkill>()
+            .DistinctBy(s => s.Name)
+            .Where(s => !present.Contains(s.Name))
+            .ToList();
+        var total = doc.Skills.Sum(g => g.Items.Count);
+        var added = new List<string>();
+        bool Fits(CvSkillGroup g, string name) => new CvSkillGroup { Label = g.Label, Items = [.. g.Items, name] }.Line.Length <= limits.SkillLineChars;
+        foreach (var skill in candidates)
+        {
+            if (total >= limits.SkillsTotal)
+            {
+                break;
+            }
+
+            var group = doc.Skills.FirstOrDefault(g => TermMatcher.Fold(g.Label) == TermMatcher.Fold(skill.Category) && Fits(g, skill.Name));
+            if (group is null && doc.Skills.Count < limits.SkillGroups)
+            {
+                group = new CvSkillGroup { Label = skill.Category.Length > 24 ? skill.Category[..24].TrimEnd() : skill.Category };
+                doc.Skills.Add(group);
+            }
+
+            group ??= doc.Skills.Where(g => Fits(g, skill.Name)).OrderBy(g => g.Line.Length).FirstOrDefault();
+
+            if (group is null)
+            {
+                continue;
+            }
+
+            group.Items.Add(skill.Name);
+            added.Add(skill.Name);
+            total++;
+        }
+
+        if (added.Count > 0)
+        {
+            warnings.Add($"Habilidades: se agregaron del banco las que pide la oferta o usan los proyectos mostrados ({string.Join(", ", added)}).");
+        }
     }
 
     /// <summary>Tecnologías del proyecto: las que eligió la IA (solo las que el banco menciona, hasta 90 caracteres); si no, las primeras del banco.</summary>
