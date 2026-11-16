@@ -89,7 +89,8 @@ internal static class CvAiCompose
         if (competencies)
         {
             sb.AppendLine("- Este CV lo leen personas de recursos humanos y agencias de empleo que NO son de TI: explica cada experiencia en lenguaje claro (qué se necesitaba, qué hizo la persona y qué cambió). Nombra tecnologías solo cuando aporten (máximo dos por viñeta) y no uses siglas sin explicarlas. Da peso a la gestión, el trabajo en equipo, la planificación, la coordinación y la comunicación.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre 4 y {limits.PersonalCompetencies} personales y entre 4 y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). Las que tienen `alwaysInclude: true` van SIEMPRE. Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión. `note` es OBLIGATORIA: una frase de máximo {CvLimits.CompetencyNoteMax} caracteres con un hecho concreto tomado de su `evidence` (qué hizo, dónde o con qué resultado), que no repita las palabras del nombre y que no reutilice un hecho ya usado en otra competencia. La nota solo puede referirse a experiencias que aparecen en ESTE CV (por su organización): nunca nombres proyectos, sistemas ni personas que el CV no muestra, porque quien lo lee se pierde. Si no hay un hecho concreto para una competencia, no la elijas: mejor menos que relleno.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre 4 y {limits.PersonalCompetencies} personales y entre 4 y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). Las que tienen `alwaysInclude: true` van SIEMPRE. El catálogo llega en orden aleatorio: el orden no indica importancia. Elige con criterio según la OFERTA o el ENFOQUE, no siempre las mismas, y considera TODO el catálogo. Las personales deben equilibrar tres tipos: al menos una de pensamiento (analítico y crítico, resolución de problemas), una de relación con otras personas (comunicación, trabajo en equipo, liderazgo) y una de autogestión (adaptabilidad, iniciativa y toma de decisiones, gestión del tiempo, aprendizaje). Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- `note` es OBLIGATORIA en TODAS (o todas llevan nota o ninguna): una frase propia de máximo {CvLimits.CompetencyNoteMax} caracteres con el hecho de su `evidence` que MEJOR respalda esa competencia para esta oferta o enfoque. NO copies la primera frase de la evidencia: elige y redacta. No repitas las palabras del nombre, no reutilices un hecho ya usado en otra competencia y no apoyes más de dos notas en la misma experiencia: reparte entre las distintas experiencias del CV. La nota solo puede referirse a experiencias que aparecen en ESTE CV (por su organización): nunca nombres proyectos, sistemas ni personas que el CV no muestra. Si no hay un hecho concreto para una competencia, no la elijas: mejor menos que relleno.");
         }
         else
         {
@@ -120,7 +121,7 @@ internal static class CvAiCompose
             sb.AppendLine("No hay oferta ni enfoque: redacta un CV general que muestre lo más sólido de la trayectoria.");
         }
 
-        sb.AppendLine("<BANCO>").AppendLine(bank.ContextJson(AiPurpose.Cv, withCompetencies: competencies)).AppendLine("</BANCO>");
+        sb.AppendLine("<BANCO>").AppendLine(bank.ContextJson(AiPurpose.Cv, withCompetencies: competencies, competencySeed: offerText ?? focus ?? string.Empty)).AppendLine("</BANCO>");
         sb.AppendLine();
         sb.AppendLine("## ESQUEMA DE SALIDA");
         var schema = competencies ? CompetenciesSchema : Schema;
@@ -594,6 +595,34 @@ internal static class CvAiCompose
             {
                 result.Add(group);
             }
+        }
+
+        // Uniformes: o todas llevan nota o ninguna. Primero se retiran las que no la tienen (salvo las fijas); si aún queda
+        // alguna fija sin nota, se quitan todas las notas.
+        var all = result.SelectMany(g => g.Items).ToList();
+        if (all.Any(c => c.Note is null) && all.Any(c => c.Note is not null))
+        {
+            var pinnedIds = bank.Records.Competencies.Where(c => c.AlwaysInclude).Select(c => c.Id).ToHashSet();
+            foreach (var group in result)
+            {
+                foreach (var bare in group.Items.Where(c => c.Note is null && !pinnedIds.Contains(c.Id)).ToList())
+                {
+                    group.Items.Remove(bare);
+                    warnings.Add($"Competencia «{bare.Name}»: sin nota con un hecho concreto; se retira para que todas vayan igual.");
+                }
+            }
+
+            if (result.SelectMany(g => g.Items).Any(c => c.Note is null))
+            {
+                foreach (var competency in result.SelectMany(g => g.Items))
+                {
+                    competency.Note = null;
+                }
+
+                warnings.Add("Competencias: una competencia fija no tiene nota; se muestran todas sin nota para que vayan igual.");
+            }
+
+            result.RemoveAll(g => g.Items.Count == 0);
         }
 
         return result;

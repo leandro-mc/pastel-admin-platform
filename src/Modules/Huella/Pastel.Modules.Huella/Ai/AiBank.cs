@@ -151,12 +151,12 @@ internal sealed class AiBank
         purpose == AiPurpose.Cv ? a.Visibility is "cv" or "both" : a.Visibility is "public" or "both";
 
     /// <summary>JSON del banco para el prompt. Mismo contenido para el proveedor configurado y para una IA externa.</summary>
-    public string ContextJson(AiPurpose purpose, bool withCompetencies = false)
+    public string ContextJson(AiPurpose purpose, bool withCompetencies = false, string? competencySeed = null)
     {
         var json = string.Empty;
         foreach (var cap in NarrativeCaps)
         {
-            json = JsonSerializer.Serialize(Context(purpose, cap, withCompetencies), HuellaJson.Options);
+            json = JsonSerializer.Serialize(Context(purpose, cap, withCompetencies, competencySeed), HuellaJson.Options);
             if (json.Length <= ContextBudgetChars)
             {
                 break;
@@ -166,7 +166,7 @@ internal sealed class AiBank
         return json;
     }
 
-    private object Context(AiPurpose purpose, int olderNarrativeCap, bool withCompetencies)
+    private object Context(AiPurpose purpose, int olderNarrativeCap, bool withCompetencies, string? competencySeed)
     {
         var records = Records;
         var forProfile = purpose == AiPurpose.Profile;
@@ -223,7 +223,9 @@ internal sealed class AiBank
             .ToList();
 
         var competencies = withCompetencies
-            ? records.Competencies.Where(c => c.IsVisible).Select(c => new { id = c.Id, kind = c.Kind, name = c.Name, meaning = c.Description, evidence = c.Evidence, alwaysInclude = c.AlwaysInclude }).ToList()
+            ? records.Competencies.Where(c => c.IsVisible)
+                .OrderBy(c => SeededOrder(competencySeed ?? string.Empty, c.Id))
+                .Select(c => new { id = c.Id, kind = c.Kind, name = c.Name, meaning = c.Description, evidence = c.Evidence, alwaysInclude = c.AlwaysInclude }).ToList()
             : null;
 
         return new
@@ -278,6 +280,21 @@ internal sealed class AiBank
         }
 
         return months;
+    }
+
+    /// <summary>
+    /// Orden del catálogo de competencias para el prompt: pseudoaleatorio pero estable para la misma oferta o enfoque (FNV-1a),
+    /// para que la IA no elija siempre las primeras de la lista y el prompt descargado sea el mismo que el ejecutado.
+    /// </summary>
+    private static uint SeededOrder(string seed, Guid id)
+    {
+        var hash = 2166136261u;
+        foreach (var c in seed + id.ToString("N"))
+        {
+            hash = (hash ^ c) * 16777619u;
+        }
+
+        return hash;
     }
 
     private static string? Result(Achievement a) =>
