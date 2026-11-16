@@ -1,68 +1,76 @@
 # AGENTS.md — Reglas operativas de Pastel
 
-Pastel es un monolito modular (.NET 10 + React 19) con un módulo por aplicación. Este archivo es la **única fuente de reglas** para todos los agentes; el resto de `docs/` describe el sistema, no el proceso. Léelo completo antes de empezar.
+Pastel es un monolito modular (.NET 10 + React 19) con un módulo por aplicación. Este archivo es la **puerta de entrada de todo agente**: contiene las reglas de proceso y dice **qué más leer, y solo eso**, según la tarea. Léalo completo; el resto, no.
 
-## 0. Prioridad de la etapa actual
-**Etapa 1: construir las cinco aplicaciones (Ágora, Brisa, Balance, Cosecha y Huella) funcionales, completas y utilizables.** Concéntrate en entregar funcionalidad. Las pruebas exhaustivas, la automatización adicional, el QA profundo y las revisiones visuales sistemáticas son de la **Etapa 2**, que empieza cuando haya una primera versión funcional de las cinco (la declara el propietario). **Lo diferido no bloquea ninguna entrega.** Lo que no se negocia en ninguna etapa: seguridad del backend, autorización real, aislamiento entre usuarios y módulos, integridad de datos, protección de secretos y las reglas duras de diseño (sin morado ni iconografía de IA).
+## 0. Etapa actual
+**Etapa 1: construir las cinco aplicaciones (Ágora, Brisa, Balance, Cosecha y Huella) funcionales.** Pruebas exhaustivas, QA profundo y revisiones visuales sistemáticas son de la Etapa 2 (la declara el propietario) y no bloquean entregas. No se negocian en ninguna etapa: seguridad del backend, autorización real, aislamiento entre usuarios y módulos, integridad de datos, protección de secretos y las reglas duras de diseño (§7).
 
-## 1. Ruta de lectura (en este orden, solo lo que toque tu tarea)
-1. `README.md` (qué es y cómo se ejecuta) y este archivo.
-2. `docs/PROGRESS.md`: estado actual, pendientes y backlog. Es el único estado vigente.
-3. `docs/ARCHITECTURE.md` y, según el área, `docs/SECURITY.md`, `docs/DESIGN_SYSTEM.md`, `docs/ERROR_HANDLING_AND_LOGGING.md`.
-4. Tu módulo: `docs/modules/<MODULO>.md` y los `MODULE.md` de `src/Modules/<M>/` y `web/src/modules/<m>/`.
-5. `docs/GIT_WORKFLOW.md` (commits, ramas, PR, CI) y `docs/TESTING.md` (qué probar y cómo). `docs/DECISIONS.md` solo si necesitas el porqué de una decisión.
+## 1. Cómo cargar contexto (ahorro de tokens)
+1. **Lea solo la fila de su tarea en §2.** No abra otros documentos «por si acaso», ni los de otra aplicación.
+2. **Lea por secciones, no por archivos.** Cuando §2 indica `§N`, lea solo esa sección: liste los encabezados (`grep -n "^#" archivo`) y lea el rango (`sed -n 'a,bp'` o `Read` con `offset`/`limit`). Para un dato puntual, busque (`grep`) en vez de leer.
+3. **El código es la fuente de verdad.** Si un documento discrepa del código, gana el código y corrige el documento (solo esa línea).
+4. **No lea por defecto:** `docs/requirements/**` (investigación y prototipos), `docs/design/**`, `docs/requests/**`, `docs/HISTORY.md` ni el progreso de otras aplicaciones. Ábralos solo si su tarea los nombra o si la ficha de su módulo no responde una duda, y entonces busque la sección concreta.
+5. **No relea** lo que ya cargó en la sesión ni lo que acaba de escribir.
 
-Contrasta siempre la documentación con el código vigente; si discrepan, gana el código y corriges el documento.
+## 2. Qué leer según la tarea
+`<M>` = módulo (p. ej. `HUELLA`, `Huella`, `huella`). Lo marcado con `§` se lee por sección. Todas las rutas incluyen este archivo.
 
-## 2. Roles
-- **Dev:** implementa en el área de su módulo (backend y frontend). Compila y escribe las pocas pruebas esenciales de lo que toca si su entorno lo permite; si no, lo declara.
-- **Build/QA (combinado):** tiene Docker/.NET; compila, corrige, escribe las pocas pruebas esenciales, ejecuta y reporta con evidencia real. Cuando no puede ejecutar algo, el propietario corre los comandos en PowerShell y devuelve la salida. El QA profundo es de la Etapa 2.
-- **Investigación/Documentación:** produce documentos o prototipos; no toca código de producto.
-Todos los agentes trabajan igual: **commits lógicos por unidad de trabajo** (sección 4). No existen tipos de agente por cadencia de commits.
+| Tarea | Leer |
+|---|---|
+| Módulo · backend | `docs/progress/<M>.md` · `docs/modules/<M>.md` · `src/Modules/<M>/MODULE.md` · `docs/ARCHITECTURE.md §4 §5 §7` · `docs/ERROR_HANDLING_AND_LOGGING.md §2` · `docs/TESTING.md §3` |
+| Módulo · frontend | `docs/progress/<M>.md` · `docs/modules/<M>.md` · `web/src/modules/<m>/MODULE.md` · `docs/ARCHITECTURE.md §9.4` · `docs/DESIGN_SYSTEM.md §1 §4 §6` · `docs/TESTING.md §3` |
+| Módulo · ambas capas | Unión de las dos filas anteriores |
+| Seguridad, autenticación o permisos | `docs/PROGRESS.md` · `docs/SECURITY.md` · `docs/ARCHITECTURE.md §2` · `docs/ERROR_HANDLING_AND_LOGGING.md §4` · `docs/TESTING.md §3` |
+| Arquitectura o zona compartida de backend (`src/BuildingBlocks`, `src/Host`) | `docs/PROGRESS.md` · `docs/ARCHITECTURE.md §2 §3 §4 §6` · `docs/TESTING.md §3` |
+| Shell o `web/src/core` | `docs/PROGRESS.md` · `docs/DESIGN_SYSTEM.md §1 §9` · `docs/ARCHITECTURE.md §9.3` · `docs/TESTING.md §3` |
+| Infraestructura (Docker, nginx, CI, scripts) | `docs/PROGRESS.md` · `docs/OPERATIONS.md` · `docs/GIT_WORKFLOW.md §3` · `docs/TESTING.md §3` |
+| Investigación o prototipos | `docs/requirements/README.md` · `docs/requirements/METODO-DE-TRABAJO.md` · la carpeta de su app en `docs/requirements/` |
+| Solo documentación | Los documentos que va a cambiar (§9) |
 
-## 3. Flujo
-1. Una rama corta por tarea (`feat/`, `fix/`, `docs/`, `chore/`), creada desde `dev`. **Un agente por rama.**
-2. Trabaja y valida en local; haz commit **cuando la unidad esté completa**.
-3. Entrega: PR hacia `dev` con resumen, validación realizada y lo no verificado.
-4. El propietario aprueba; **el CI básico corre al aprobar** (sección 6) y el propietario integra. Nadie integra en `dev` ni `main` ni abre/fusiona PR sin autorización expresa; `main` solo por promoción del propietario.
-5. Base de trabajo: `dev` (desde el 2026-11-15). Cada aplicación se desarrolla en su propia rama corta `feat/<modulo>-<tema>` creada desde `dev`, con un solo agente por rama.
+Solo si lo necesita: el porqué de una decisión → `docs/DECISIONS.md`; una duda de commits o PR que §3 no resuelve → `docs/GIT_WORKFLOW.md §2`; la política de pruebas al escribir una → `docs/TESTING.md §1`; un CCR que su tarea nombra → `docs/requests/`.
 
-## 4. Commits (resumen; reglas completas y motivos en `docs/GIT_WORKFLOW.md`)
-- **Un commit = una unidad completa y coherente** (funcionalidad, arreglo con su prueba, cambio de documentación) que un revisor entienda y pueda revertir sola. Código, prueba y documentación de esa unidad van **juntos**.
-- **Prohibido** commitear por tiempo, por archivo, como punto de control o para «registrar avance». Prohibidos mensajes como `wip`, `checkpoint`, `record`, `docs: registrar…` aislados.
-- Tus propios arreglos no publicados se integran en su commit (`--amend` o rebase interactivo local) **antes** de empujar. Sin cadenas `fix`/`fix`/`fix`.
-- Valida antes de commitear. Si algo no pudo verificarse, se declara **una vez** en el cuerpo del commit y en `docs/PROGRESS.md`.
-- Mensaje: `tipo(ámbito): resumen en imperativo` ≤ 72 caracteres, en español; cuerpo con qué, por qué y cómo se verificó. Tipos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `style` (solo formato masivo, aislado).
-- Usa `git` local para commits de varios archivos. Una herramienta que solo crea commits de un archivo (API de contenidos) **no se usa** para trabajo multi-archivo.
-- Sincroniza con `git pull --rebase`; no hagas merges de sincronización. No reescribas historia compartida sin autorización del propietario.
+## 3. Flujo, ramas y commits
+- Una rama corta por tarea desde `dev` (`feat/<modulo>-<tema>`, `fix/`, `docs/`, `chore/`); **un agente por rama**; sincronice con `git pull --rebase` (sin merges de sincronización).
+- **Un commit = una unidad completa** (código + prueba + documentación de esa unidad), que un revisor entienda y pueda revertir sola. Prohibido commitear por tiempo, por archivo, como punto de control o para «registrar avance» (`wip`, `checkpoint`, `docs: registrar…`).
+- Valide antes de commitear; sus arreglos no publicados se integran en su commit antes de empujar. Lo no verificado se declara una vez, en el cuerpo del commit y en el progreso de su app.
+- Mensaje: `tipo(ámbito): resumen en imperativo` (≤ 72 caracteres, español) y cuerpo con qué, por qué y cómo se verificó. Tipos: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`, `ci`, `style`.
+- Entrega por PR hacia `dev`. **Nadie integra en `dev` ni `main`, ni abre o fusiona un PR, sin autorización expresa del propietario**; `main` solo por promoción. No reescriba historia compartida.
 
-## 5. Pruebas: por etapas y solo lo esencial
-- **Etapa 1 (ahora): aplicaciones funcionales.** Solo se escriben pruebas que protegen **seguridad del backend, autorización, aislamiento (entre usuarios y entre módulos), integridad de datos, reglas de negocio críticas (dinero, fechas) y secretos**, además de que compile y las reglas duras de diseño. Pocas: una por defecto concreto, sin matrices ni permutaciones.
-- **No se exige ahora** (queda para la Etapa 2 y no bloquea entregas ni PR): E2E, pruebas visuales, accesibilidad sistemática por pantalla, matrices por rol, exhaustividad de cálculos, aislamiento por módulo con `PASTEL_MODULES`, QA profundo.
-- Antes de escribir una prueba responde: ¿qué defecto concreto detecta?, ¿por qué no lo cubre ya otra? Sin respuesta, no se escribe. **Las pruebas existentes se conservan.**
-- Nada se declara aprobado sin evidencia de ejecución real; lo no ejecutado se marca «por verificar». Cero fallos y cero omitidas de lo que se ejecuta.
-- Lo diferido se anota en `docs/PROGRESS.md` (backlog de la Etapa 2). Ver `docs/TESTING.md`.
+## 4. Pruebas (Etapa 1)
+Solo se escriben pruebas que protegen seguridad del backend, autorización, aislamiento, integridad de datos, reglas de negocio críticas (dinero, fechas) y secretos: pocas, una por defecto concreto. Antes de escribir una: ¿qué defecto detecta y por qué no lo cubre otra? Las existentes se conservan. Nada se declara aprobado sin ejecución real (cero fallos, cero omitidas); lo no ejecutado es «por verificar». Comandos: `docs/TESTING.md §3`.
 
-## 6. CI en GitHub (minutos limitados)
-- **Nunca** corre por commit, push ni por abrir/actualizar un PR. Solo al **aprobar un PR hacia `dev`** (revisión aprobada, o etiqueta `ci:basico`) y a mano (`workflow_dispatch`).
-- **Solo lo básico** (backend: formato, build y pruebas unitarias; frontend: formato, lint, build y pruebas de componentes). Los trabajos pesados (PostgreSQL, contenedores, aislamiento por módulo, CodeQL) corren únicamente si el propietario lo indica (etiqueta `ci:completo` o ejecución manual con alcance «completo»).
-- No se despacha CI manual durante la depuración. Detalle en `docs/GIT_WORKFLOW.md`.
+## 5. CI
+Nunca por commit, push ni PR abierto: solo al aprobar un PR hacia `dev` (o etiqueta `ci:basico`/`ci:completo`) y a mano. No se despacha CI durante la depuración. Detalle: `docs/GIT_WORKFLOW.md §3`.
+
+## 6. Roles
+**Dev** implementa en su módulo y compila; **Build/QA** compila, corrige, escribe las pruebas esenciales y reporta con evidencia (si no puede ejecutar algo, el propietario corre el comando y devuelve la salida); **Investigación** produce documentos o prototipos sin tocar código de producto.
 
 ## 7. Diseño
-- **Reglas duras:** no usar morado ni sus derivados, ni lo habitual del diseño generado por IA (colores, elementos, iconos de destellos/robot/varita, emojis como adorno, símbolos de IA). `scripts/check-design.mjs` verifica solo esas dos reglas (morado e iconos o emojis de IA); no restringe colores literales ni tokens.
-- La **identidad visual de cada aplicación (paletas, acentos, tipografía propia) no está definida**: se determinará con la investigación y los prototipos en curso. No inventes ni fijes paletas por módulo; no hay restricciones de color por subapp más allá de las reglas duras. Ver `docs/DESIGN_SYSTEM.md`.
-- Accesibilidad como objetivo de calidad (WCAG AA; usa los componentes de `@/core/ui` y no dependas solo del color); su revisión sistemática es de la Etapa 2. Textos preferiblemente en `strings.ts`. Español de Costa Rica con trato de usted por defecto; el voseo y el tuteo se permiten cuando la ficha o el propietario lo pidan.
-- **Shell compartido** (`web/src/app/shell`, `shell*.css`): antes de tocarlo lee `docs/DESIGN_SYSTEM.md` §9 y aplica su prueba de eliminación. El shell no define colores ni paletas: lee los tokens de cada app. No añadas tarjetas, textos tranquilizadores, estados no consultados ni mayúsculas espaciadas, y no sustituyas una plantilla genérica por otra. Tras cambiarlo, conviene ejecutar `node scripts/shell-visual.mjs audit` (verificación visual manual; no bloquea en la Etapa 1).
-- **Jerarquía de reglas:** cada módulo (subproyecto) puede tener sus propias reglas de **diseño del frontend** (tono y textos, paleta y tokens, patrones de interfaz) en su ficha `docs/modules/<M>.md` o su `MODULE.md`, y **prevalecen sobre las guías generales de diseño** de este archivo y de `DESIGN_SYSTEM.md`, que solo aplican en lo que el módulo no regula. **Esto vale únicamente para el diseño del frontend:** arquitectura, backend, seguridad, errores y logs, flujo de trabajo y pruebas se rigen siempre por las reglas generales. Tampoco se relajan las **reglas duras** de `DESIGN_SYSTEM.md` §1 (morado y símbolos de IA) ni, en el shell compartido, el §9. Las excepciones de un módulo se escriben en su ficha.
+Reglas duras (todas las etapas): **sin morado ni sus derivados** y **sin lo típico del diseño generado por IA** (destellos, robots, varitas, emojis como adorno); las verifica `scripts/check-design.mjs`. La identidad visual por aplicación aún no está definida: no invente paletas. Las reglas de diseño de frontend de un módulo (su ficha o su `MODULE.md`) prevalecen sobre las guías generales, sin relajar las reglas duras ni `docs/DESIGN_SYSTEM.md §9` (shell). Detalle y jerarquía: `docs/DESIGN_SYSTEM.md`.
 
-## 8. Arquitectura y seguridad (límites que no se cruzan)
-- Módulo = un proyecto .NET; un esquema y un historial de migraciones por módulo; sin claves foráneas ni joins entre esquemas. Un módulo no referencia el interior de otro; `web/src/modules/<m>` solo importa de `@/core/*`. Detalle y pruebas de arquitectura en `docs/ARCHITECTURE.md`.
-- Autorización siempre en el backend, denegar por defecto. Jamás secretos, tokens ni `.env` en el repositorio, en logs ni en commits. Ver `docs/SECURITY.md`.
-- **Zonas compartidas** (requieren autorización expresa del propietario en la tarea; si no la tienes, deja la propuesta en el PR): `src/BuildingBlocks/**`, `src/Host/**`, `src/Modules/Identity/**`, `web/src/core/**`, `web/src/app/**`, `compose*.yaml`, `deploy/**`, `.github/**`, `Directory.*.props`, `global.json`, dependencias y lockfiles, `AGENTS.md` y `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/DESIGN_SYSTEM.md`.
-- **Modo desarrollador** (`platform.developer.mode`, vista previa por rol): es solo visual y transversal. Los módulos no importan `@/core/devmode` ni deciden nada según la vista previa; el cliente nunca envía el rol simulado y el servidor autoriza con la sesión real. Detalle en `docs/SECURITY.md`.
+## 8. Arquitectura, seguridad y zonas compartidas
+- Módulo = un proyecto .NET con su esquema y sus migraciones; sin claves foráneas ni joins entre esquemas; un módulo no usa el interior de otro y `web/src/modules/<m>` solo importa de `@/core/*` (`docs/ARCHITECTURE.md §2`).
+- Autorización siempre en el backend, denegar por defecto. Jamás secretos, tokens ni `.env` en el repositorio, en logs ni en commits. El modo desarrollador es solo visual: los módulos no importan `@/core/devmode` (`docs/SECURITY.md`).
+- **Zonas compartidas** (requieren autorización expresa del propietario en la tarea; si no la tiene, deje la propuesta en el PR): `src/BuildingBlocks/**`, `src/Host/**`, `src/Modules/Identity/**`, `web/src/core/**`, `web/src/app/**`, `compose*.yaml`, `deploy/**`, `.github/**`, `Directory.*.props`, `global.json`, dependencias y lockfiles, `AGENTS.md`, `docs/PROGRESS.md`, `docs/ARCHITECTURE.md`, `docs/SECURITY.md`, `docs/DESIGN_SYSTEM.md`.
 
-## 9. Comandos esenciales (Windows PowerShell, Docker Desktop)
-`.\scripts\test-backend.ps1` · `.\scripts\test-database.ps1` · `.\scripts\test-frontend.ps1` · `.\scripts\test-all.ps1` · `.\scripts\format-backend.ps1` / `format-frontend.ps1` · `.\scripts\install-hooks.ps1` (una vez por clon: formato y secretos en cada commit) · `.\scripts\qa-phase0-stack.ps1` (stack aislado). Detalle en `docs/TESTING.md`.
+## 9. Documentación: una fuente por tipo de información
+| Información | Única fuente |
+|---|---|
+| Reglas de proceso y qué leer | `AGENTS.md` |
+| Estado general, pendientes transversales y backlog de la Etapa 2 | `docs/PROGRESS.md` (corto; sin detalle por app) |
+| Estado de una aplicación (hecho, validado, por verificar, decisiones pendientes) | `docs/progress/<M>.md` (`PLATAFORMA.md` para Identity, shell e infraestructura) |
+| Alcance de producto, roles y criterios de aceptación de un módulo | `docs/modules/<M>.md` |
+| Cómo está implementado un módulo (endpoints, errores, estructura) | `src/Modules/<M>/MODULE.md` y `web/src/modules/<m>/MODULE.md` |
+| Arquitectura, seguridad, errores y logs, diseño, operación, pruebas, Git y CI | Su documento en `docs/` (uno por tema) |
+| El porqué de las decisiones | `docs/DECISIONS.md` |
+| Historia ya cerrada | `docs/HISTORY.md` (archivo: no se lee ni se amplía salvo pedido del propietario) |
+
+**Mantenimiento** (en el mismo commit de la unidad):
+- Actualice **solo** lo que su cambio vuelve falso o incompleto, editando la sección afectada; no reescriba ni reformatee documentos ajenos a su tarea.
+- Su progreso va en `docs/progress/<M>.md`: **refleja el estado actual, no un diario**. Reemplace lo que quedó obsoleto en vez de añadir entradas; manténgalo bajo ~60 líneas (git conserva la historia).
+- Toque `docs/PROGRESS.md` solo si cambia algo transversal (etapa, CCR, decisión que afecta a varias apps, backlog de la Etapa 2) y solo en su línea.
+- No copie reglas ni datos de otro documento: enlácelo con su sección (`docs/X.md §N`). Si encuentra una duplicación, deje una sola fuente.
+- Si cambia la ruta de §2 o la estructura de `docs/`, mida el efecto con `node scripts/context-budget.mjs`.
 
 ## 10. Entrega
-Al terminar una unidad: qué hiciste, qué ejecutaste y con qué resultado real, qué queda sin verificar y qué decisión necesitas del propietario (lo diferido a la Etapa 2 no cuenta como «sin verificar»). Actualiza `docs/PROGRESS.md` (una vez, en el mismo commit de la unidad).
+Al terminar una unidad, informe: qué hizo, qué ejecutó y con qué resultado real, qué queda sin verificar y qué decisión necesita del propietario. Comandos: `docs/TESTING.md §3`.

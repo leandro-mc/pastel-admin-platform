@@ -129,7 +129,7 @@ export function commitMessageProblems(message) {
     problems.push("No se commitea por punto de control ni a medias (wip, checkpoint, tmp): agrupe el trabajo en una unidad completa.");
   }
   if (PROGRESS_ONLY_SUBJECT.test(subject)) {
-    problems.push("No se registra el avance en commits aparte: actualice docs/PROGRESS.md dentro del commit de la unidad.");
+    problems.push("No se registra el avance en commits aparte: actualice el progreso de su app (docs/progress/<APP>.md) dentro del commit de la unidad.");
   }
   return problems;
 }
