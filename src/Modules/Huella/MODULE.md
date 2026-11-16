@@ -46,7 +46,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 ## Datos (esquema `huella`)
 
 `Profile` (único por `OwnerUserId`, `PublicTokenHash` único) · `ProfileLink` · `PrivateNote` · `Experience` · `Project` · `Skill` · `Education` · `Certification` · `LanguageSkill` · `Achievement` + `AchievementSkill` (el logro es la unidad: de ahí salen CV, perfil y futuras funciones) · `JobOffer` · `CvVersion` · `PublishedSnapshot` · `AiCredential` (una fila por proveedor; clave cifrada, `KeyHint`, `IsActive`).
-Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials`, `AddHuellaPublicLinkCipher` y `AddHuellaLinkIcon`, `AddHuellaApplicationTracking` (seguimiento en `job_offers` y `SentAt` en `cv_versions`), `AddHuellaCoverLetters` (tabla `cover_letters`), `AddHuellaPublicContent` (tabla `profile_contents`; quita `PreferredLanguage` de las notas: no hay idioma global) (estas con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
+Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials`, `AddHuellaPublicLinkCipher` y `AddHuellaLinkIcon`, `AddHuellaApplicationTracking` (seguimiento en `job_offers` y `SentAt` en `cv_versions`), `AddHuellaCoverLetters` (tabla `cover_letters`), `ExtendHuellaBankLimits` (resumen y enfoque de proyecto a 3000, stack a 480 y «qué evitar» a 1200; `HuellaLimits` y las columnas coinciden), `AddHuellaPublicContent` (tabla `profile_contents`; quita `PreferredLanguage` de las notas: no hay idioma global) (estas con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
 
 ## Códigos de error
 

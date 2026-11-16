@@ -31,7 +31,7 @@ internal static class HuellaLimits
         public const int Availability = 120;
         public const int WorkAuthorization = 160;
         public const int SalaryExpectation = 120;
-        public const int Avoid = 400;
+        public const int Avoid = 1200;
         public const int PreferredPaper = 8;
         public const int ExtraBannedPhrases = 600;
     }
@@ -52,9 +52,9 @@ internal static class HuellaLimits
     {
         public const int Name = 120;
         public const int Url = 2048;
-        public const int Summary = 1500;
-        public const int Approach = 1500;
-        public const int Stack = 240;
+        public const int Summary = 3000;
+        public const int Approach = 3000;
+        public const int Stack = 480;
     }
 
     public static class Achievement

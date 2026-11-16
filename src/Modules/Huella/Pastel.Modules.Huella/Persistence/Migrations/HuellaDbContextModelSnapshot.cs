@@ -662,8 +662,8 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
 
                     b.Property<string>("Avoid")
                         .IsRequired()
-                        .HasMaxLength(400)
-                        .HasColumnType("character varying(400)");
+                        .HasMaxLength(1200)
+                        .HasColumnType("character varying(1200)");
 
                     b.Property<string>("ExtraBannedPhrases")
                         .IsRequired()
@@ -906,8 +906,8 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
 
                     b.Property<string>("Approach")
                         .IsRequired()
-                        .HasMaxLength(1500)
-                        .HasColumnType("character varying(1500)");
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -930,16 +930,16 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("Stack")
-                        .HasMaxLength(240)
-                        .HasColumnType("character varying(240)");
+                        .HasMaxLength(480)
+                        .HasColumnType("character varying(480)");
 
                     b.Property<int?>("StartYear")
                         .HasColumnType("integer");
 
                     b.Property<string>("Summary")
                         .IsRequired()
-                        .HasMaxLength(1500)
-                        .HasColumnType("character varying(1500)");
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
 
                     b.Property<DateTimeOffset>("UpdatedAt")
                         .HasColumnType("timestamp with time zone");

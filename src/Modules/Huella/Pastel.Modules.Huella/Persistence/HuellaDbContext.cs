@@ -120,7 +120,7 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.Property(x => x.Availability).HasMaxLength(120).IsRequired();
             e.Property(x => x.WorkAuthorization).HasMaxLength(160).IsRequired();
             e.Property(x => x.SalaryExpectation).HasMaxLength(120).IsRequired();
-            e.Property(x => x.Avoid).HasMaxLength(400).IsRequired();
+            e.Property(x => x.Avoid).HasMaxLength(1200).IsRequired();
             e.Property(x => x.PreferredPaper).HasMaxLength(8).IsRequired();
             e.Property(x => x.ExtraBannedPhrases).HasMaxLength(600).IsRequired();
             e.Property(x => x.Version).IsRowVersion();
@@ -151,9 +151,9 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).HasMaxLength(120).IsRequired();
             e.Property(x => x.Url).HasMaxLength(2048);
-            e.Property(x => x.Summary).HasMaxLength(1500).IsRequired();
-            e.Property(x => x.Approach).HasMaxLength(1500).IsRequired();
-            e.Property(x => x.Stack).HasMaxLength(240);
+            e.Property(x => x.Summary).HasMaxLength(3000).IsRequired();
+            e.Property(x => x.Approach).HasMaxLength(3000).IsRequired();
+            e.Property(x => x.Stack).HasMaxLength(480);
             e.Property(x => x.Version).IsRowVersion();
             e.HasIndex(x => x.ProfileId);
             e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();
