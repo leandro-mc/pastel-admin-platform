@@ -212,8 +212,8 @@ internal static class CvGuardian
 
         if (doc.Format == CvFormats.Competencies)
         {
-            Competencies();
             Experience();
+            Competencies();
             Education();
             Extras();
         }

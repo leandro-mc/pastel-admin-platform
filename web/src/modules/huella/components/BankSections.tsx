@@ -1,4 +1,4 @@
-import { Panel, SelectField, TextField } from "@/core/ui";
+import { CheckboxField, Panel, SelectField, TextField } from "@/core/ui";
 import { useSaveNotes, useSaveSection } from "../api/hooks";
 import type {
   Bank,
@@ -811,6 +811,7 @@ type CompetencyRow = Row & {
   kind: string;
   description: string;
   evidence: string;
+  alwaysInclude: boolean;
   isVisible: boolean;
 };
 
@@ -834,6 +835,7 @@ export function CompetencySection({ bank }: { bank: Bank }) {
         kind: c.kind,
         description: c.description,
         evidence: c.evidence,
+        alwaysInclude: c.alwaysInclude,
         isVisible: c.isVisible,
       })}
       blank={() => ({
@@ -842,6 +844,7 @@ export function CompetencySection({ bank }: { bank: Bank }) {
         kind: "personal",
         description: "",
         evidence: "",
+        alwaysInclude: false,
         isVisible: true,
       })}
       toPayload={(r) => ({
@@ -850,6 +853,7 @@ export function CompetencySection({ bank }: { bank: Bank }) {
         kind: r.kind,
         description: r.description,
         evidence: r.evidence,
+        alwaysInclude: r.alwaysInclude,
         isVisible: r.isVisible,
       })}
       isReady={(r) => filled(r.name)}
@@ -888,6 +892,14 @@ export function CompetencySection({ bank }: { bank: Bank }) {
               value={r.evidence}
               error={err("evidence")}
               onChange={(e) => set({ evidence: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <CheckboxField
+              label={t.competency.alwaysInclude}
+              description={t.competency.alwaysIncludeHint}
+              checked={r.alwaysInclude}
+              onChange={(e) => set({ alwaysInclude: e.target.checked })}
             />
           </div>
         </>

@@ -96,7 +96,7 @@ internal sealed class BankLoader(HuellaDbContext db)
                 r.AchievementsOf(e).Where(ForCv).Select(Map).ToList())).ToList(),
             r.Projects.Select(p => new BankProject(p.Id, p.Name, p.Stack ?? string.Empty,
                 r.AchievementsOf(p).Where(ForCv).Select(Map).ToList())).ToList(),
-            r.Skills.Select(s => new BankSkill(
+            r.Skills.Where(s => s.IsVisible).Select(s => new BankSkill(
                 s.Name,
                 s.Category,
                 (s.Aliases ?? string.Empty).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),

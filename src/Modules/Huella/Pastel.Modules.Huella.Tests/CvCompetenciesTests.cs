@@ -136,4 +136,41 @@ public sealed class CvCompetenciesTests
         var checks = CvGuardian.Checks(doc, f.Bank.Data, CvLimits.For("junior", "letter", CvFormats.Competencies), "es");
         Assert.Contains(checks, c => c.Label.StartsWith("Toda competencia", StringComparison.Ordinal) && c.Passed);
     }
+
+    // Integridad de la presentación: los datos administrativos (remuneración, horas, «no es empleo formal») nunca llegan al
+    // CV aunque la IA los escriba, y una competencia marcada «siempre en el CV» aparece aunque la IA no la elija.
+    [Fact]
+    public void AdministrativeDetailsAreStrippedAndPinnedCompetenciesAlwaysAppear()
+    {
+        Assert.Equal("Asistencia universitaria", CvAiCompose.CleanContext("Asistencia universitaria remunerada, 15 horas semanales; no es empleo formal"));
+        Assert.Equal("Práctica profesional supervisada", CvAiCompose.CleanContext("Práctica profesional supervisada no remunerada de la Universidad Nacional"));
+        Assert.Null(CvAiCompose.CleanContext("Remunerada, 15 horas semanales"));
+
+        var f = Build();
+        f.Personal.AlwaysInclude = true;
+        var json = JsonSerializer.Serialize(new
+        {
+            versions = new[]
+            {
+                new
+                {
+                    language = "es",
+                    headline = "Desarrolladora",
+                    summary = "Desarrolladora con experiencia en coordinación.",
+                    competencies = new { personal = Array.Empty<object>(), technical = new object[] { new { id = f.Technical.Id, name = "Pruebas de software", note = "Pruebas en cada entrega." } } },
+                    experience = new object[]
+                    {
+                        new { id = f.Current.Id, alsoIds = Array.Empty<Guid>(), title = "Asistente de TI", context = "Asistencia remunerada de 15 horas semanales", bullets = new[] { "Desarrollo nuevas funcionalidades y pruebas en sistemas existentes." } },
+                    },
+                },
+            },
+        });
+
+        var (versions, _) = CvAiCompose.Parse(json, f.Bank, new CvComposeRequest("junior", "letter", ["es"], CvFormats.Competencies));
+
+        var doc = Assert.Single(versions).Document;
+        Assert.Equal("Asistencia", doc.Experience[0].Context);
+        var personal = Assert.Single(doc.Competencies, g => g.Kind == CompetencyKinds.Personal);
+        Assert.Equal(f.Personal.Id, Assert.Single(personal.Items).Id);
+    }
 }

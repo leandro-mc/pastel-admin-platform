@@ -58,7 +58,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
             r.Educations.Select(e => new EducationView(e.Id, e.Degree, e.Institution, e.StartYear, e.EndYear, e.Note, e.IsVisible)).ToList(),
             r.Certifications.Select(c => new CertificationView(c.Id, c.Name, c.Issuer, c.IssuedYear, c.ExpiresYear, c.CredentialUrl, c.IsVisible)).ToList(),
             r.Languages.Select(l => new LanguageView(l.Id, l.Language, l.Level, l.Evidence, l.IsVisible)).ToList(),
-            r.Competencies.Select(c => new CompetencyView(c.Id, c.Name, c.Kind, c.Description, c.Evidence, c.IsVisible)).ToList());
+            r.Competencies.Select(c => new CompetencyView(c.Id, c.Name, c.Kind, c.Description, c.Evidence, c.AlwaysInclude, c.IsVisible)).ToList());
     }
 
     // ───────────────────────────── Notas privadas ─────────────────────────────
@@ -276,6 +276,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                     x.Kind = kind;
                     x.Description = description;
                     x.Evidence = evidence;
+                    x.AlwaysInclude = item.AlwaysInclude ?? false;
                     x.IsVisible = item.IsVisible ?? true;
                     x.SortOrder = order;
                     x.UpdatedAt = now;

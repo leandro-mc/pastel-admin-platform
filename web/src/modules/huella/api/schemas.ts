@@ -126,6 +126,8 @@ export const competencySchema = z.object({
   kind: text,
   description: text,
   evidence: text,
+  /** Va siempre en el CV de competencias. */
+  alwaysInclude: z.boolean().default(false),
   isVisible: z.boolean(),
 });
 

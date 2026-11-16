@@ -223,7 +223,7 @@ internal sealed class AiBank
             .ToList();
 
         var competencies = withCompetencies
-            ? records.Competencies.Where(c => c.IsVisible).Select(c => new { id = c.Id, kind = c.Kind, name = c.Name, meaning = c.Description, evidence = c.Evidence }).ToList()
+            ? records.Competencies.Where(c => c.IsVisible).Select(c => new { id = c.Id, kind = c.Kind, name = c.Name, meaning = c.Description, evidence = c.Evidence, alwaysInclude = c.AlwaysInclude }).ToList()
             : null;
 
         return new
@@ -241,8 +241,8 @@ internal sealed class AiBank
             experiences,
             projects,
             competencies,
-            skills = records.Skills.Where(s => !forProfile || s.IsVisible)
-                .Select(s => new { name = s.Name, category = s.Category, firstUsed = s.FirstUsedYear, lastUsed = s.LastUsedYear }),
+            skills = records.Skills.Where(s => s.IsVisible)
+                .Select(s => new { name = s.Name, aliases = s.Aliases, category = s.Category, firstUsed = s.FirstUsedYear, lastUsed = s.LastUsedYear }),
             education = records.Educations.Where(e => !forProfile || e.IsVisible)
                 .Select(e => new { id = e.Id, degree = e.Degree, institution = e.Institution, years = Years(e.StartYear, e.EndYear), note = e.Note }),
             certifications = records.Certifications.Where(c => !forProfile || c.IsVisible)

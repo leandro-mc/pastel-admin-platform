@@ -23,7 +23,6 @@
   line(length: 100%, stroke: 0.7pt + luma(70)),
 ))
 
-#let joined(items, sep: "  |  ") = items.filter(x => x != "").join(sep)
 
 // Una línea «título … fechas»: el título a la izquierda y las fechas a la derecha.
 #let titled(left, dates) = grid(columns: (1fr, auto), column-gutter: 1em, left, align(top + right, text(fill: muted, dates)))
@@ -84,12 +83,20 @@
 }
 
 // ───────── Encabezado (centrado) ─────────
-#align(center, {
-  text(size: 21pt, weight: "bold", d.name)
-  if d.headline != "" { v(0.1em); text(size: 11.5pt, d.headline) }
-  if d.contact1.len() > 0 { v(0.35em); text(fill: muted, joined(d.contact1)) }
-  if d.contact2.len() > 0 { v(0.2em); text(fill: muted, joined(d.contact2)) }
-})
+// Compacto: renglones con espacio fijo (stack), sin el espaciado de párrafo. El correo y los enlaces son vínculos reales;
+// el texto visible no cambia (los ATS leen lo mismo). Un enlace se guarda sin «https://»: se le antepone al vincularlo.
+#let contact-item(x) = if x.contains("@") and not x.contains(" ") {
+  link("mailto:" + x, x)
+} else { x }
+#let link-item(x) = if x.contains(" ") { x } else {
+  link(if x.starts-with("http") { x } else { "https://" + x }, x)
+}
+#let sep = [#h(0.55em)|#h(0.55em)]
+#let header-lines = (pad(bottom: 0.25em, text(size: 20pt, weight: "bold", d.name)),)
+#if d.headline != "" { header-lines.push(text(size: 11pt, d.headline)) }
+#if d.contact1.len() > 0 { header-lines.push(text(fill: muted, d.contact1.filter(x => x != "").map(contact-item).join(sep))) }
+#if d.contact2.len() > 0 { header-lines.push(text(fill: muted, d.contact2.filter(x => x != "").map(link-item).join(sep))) }
+#align(center, stack(dir: ttb, spacing: 0.8em, ..header-lines))
 
 #let summary-section() = if d.summary != "" {
   heading(level: 2, d.labels.summary)
@@ -137,9 +144,10 @@
 }
 
 #if competencies {
+  // Las competencias van tras la experiencia, en el mismo lugar que las habilidades del CV propio.
   summary-section()
-  competencies-sections()
   experience-section()
+  competencies-sections()
   education-section()
   extras-section()
 } else {

@@ -8,7 +8,7 @@ Backend: `src/Modules/Huella/MODULE.md`. Producto: `docs/modules/HUELLA.md`.
 | Ruta                   | Página                                                                                                         | Acceso                        |
 | ---------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------- |
 | `/huella`              | Redirige a `banco`                                                                                             | Owner con permiso             |
-| `/huella/banco`        | Banco de información: notas, experiencia, proyectos, habilidades, competencias, educación, certificaciones, idiomas y logros | Owner                         |
+| `/huella/banco`        | Banco de información: notas, experiencia, proyectos, habilidades, competencias (con «Siempre en el CV de competencias»), educación, certificaciones, idiomas y logros | Owner                         |
 | `/huella/cv`           | Crear CV y carta en tres pestañas (Ofertas, Generar, Documentos) con barra de contexto fija; el lugar vive en `?oferta=&vista=&doc=&tipo=` (`lib/studioState.ts`) | Owner                         |
 | `/huella/historial`    | Historial de postulaciones: estado, fechas, seguimiento y notas por oferta, con los documentos enviados                                         | Owner                         |
 | `/huella/perfil`       | Contenido del perfil (`ContentPanel`: español editable, inglés sincronizado), datos y enlaces con icono, vista previa, publicar/despublicar, enlace | Owner                         |

@@ -21,6 +21,9 @@ internal sealed class Competency : IProfileOwned
 
     public string Evidence { get; set; } = string.Empty;
 
+    /// <summary>Siempre va en el CV de competencias, aunque la IA no la elija (p. ej. «Adaptabilidad»).</summary>
+    public bool AlwaysInclude { get; set; }
+
     public bool IsVisible { get; set; }
 
     public int SortOrder { get; set; }

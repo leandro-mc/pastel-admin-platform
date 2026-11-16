@@ -45,6 +45,13 @@ internal sealed record BankData(
         return numbers;
     }
 
+    /// <summary>¿El término es una habilidad visible del banco, por su nombre o por uno de sus «también se escribe»? (sin tildes ni mayúsculas)</summary>
+    public bool IsSkill(string term)
+    {
+        var folded = TermMatcher.Fold(term);
+        return folded.Length > 0 && Skills.Any(s => TermMatcher.Fold(s.Name) == folded || s.Aliases.Any(a => TermMatcher.Fold(a) == folded));
+    }
+
     /// <summary>¿El banco menciona el término (una habilidad, una herramienta)? Se busca en todo el texto en bruto, sin tildes.</summary>
     public bool Mentions(string term)
     {

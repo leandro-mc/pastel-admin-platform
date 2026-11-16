@@ -258,8 +258,8 @@ internal static class CvComposer
 /// <summary>Presupuesto de líneas (LU) de un CV y escalera de ajuste a la página (§6 y §7.6).</summary>
 internal static class CvLayout
 {
-    /// <summary>Encabezado centrado: nombre, titular y dos líneas de contacto.</summary>
-    public const double HeaderLu = 5.8;
+    /// <summary>Encabezado centrado y compacto: nombre, titular y dos líneas de contacto.</summary>
+    public const double HeaderLu = 4.6;
 
     /// <summary>Título de sección con su línea y el aire que lo separa de lo anterior.</summary>
     private const double SectionLu = 2.1;
@@ -326,14 +326,33 @@ internal static class CvLayout
             }
         }
 
-        var guard = 60;
+        // Si aún no cabe, se prefiere amplitud a profundidad: primero las viñetas que pasan de dos por entrada, luego las de
+        // proyectos, después un proyecto entero y, al final, las habilidades (son las palabras que lee el ATS: lo último que se toca).
+        var guard = 80;
         while (Total(doc, limits) > limits.CapacityLu && guard-- > 0)
         {
-            if (doc.Projects.Count > 1)
+            if (Lowest(doc.Experience.Concat(doc.Projects), 2) is { } deep)
             {
-                var project = doc.Projects[^1];
+                RemoveLowest(deep, log, "para caber en el cupo");
+            }
+            else if (Lowest(doc.Projects, 1) is { } project)
+            {
+                RemoveLowest(project, log, "para caber en el cupo");
+            }
+            else if (doc.Competencies.Where(g => g.Items.Count > 4).OrderByDescending(g => g.Items.Count).FirstOrDefault() is { } wide)
+            {
+                wide.Items.RemoveAt(wide.Items.Count - 1);
+                log.Add($"Paso 3 · se recorta la última competencia de «{wide.Label}».");
+            }
+            else if (doc.Projects.Count > 1)
+            {
+                var last = doc.Projects[^1];
                 doc.Projects.RemoveAt(doc.Projects.Count - 1);
-                log.Add($"Paso 3 · se retira el proyecto «{project.Title}».");
+                log.Add($"Paso 3 · se retira el proyecto «{last.Title}».");
+            }
+            else if (Lowest(doc.Experience, 1) is { } entry)
+            {
+                RemoveLowest(entry, log, "para caber en el cupo");
             }
             else if (doc.Skills.LastOrDefault(g => g.Items.Count > 3) is { } group)
             {
@@ -344,12 +363,6 @@ internal static class CvLayout
             {
                 competencies.Items.RemoveAt(competencies.Items.Count - 1);
                 log.Add($"Paso 3 · se recorta la última competencia de «{competencies.Label}».");
-            }
-            else if (doc.Experience.Where(e => e.Bullets.Count > 1).OrderBy(e => e.Bullets.Min(b => b.Score)).FirstOrDefault() is { } entry)
-            {
-                var removed = entry.Bullets.OrderBy(b => b.Score).First();
-                entry.Bullets.Remove(removed);
-                log.Add($"Paso 2 · {Name(entry)}: se retira la viñeta menos relevante para caber en el cupo.");
             }
             else
             {
@@ -362,6 +375,17 @@ internal static class CvLayout
             ? $"Paso 5 · Aún excede el cupo por {Fmt(total - limits.CapacityLu)} LU: quite contenido del banco o elija otro nivel. No se reduce la fuente bajo 10 pt."
             : $"Resultado: {Fmt(total)} LU de {limits.CapacityLu} LU. Cupo garantizado{(log.Count == 1 ? " sin ajustes" : string.Empty)}.");
         return log;
+    }
+
+    /// <summary>La entrada con más de <paramref name="keep"/> viñetas cuya viñeta menos relevante es la más baja de todas.</summary>
+    private static CvEntry? Lowest(IEnumerable<CvEntry> entries, int keep) =>
+        entries.Where(e => e.Bullets.Count > keep).OrderBy(e => e.Bullets.Min(b => b.Score)).FirstOrDefault();
+
+    private static void RemoveLowest(CvEntry entry, List<string> log, string why)
+    {
+        var removed = entry.Bullets.OrderBy(b => b.Score).First();
+        entry.Bullets.Remove(removed);
+        log.Add($"Paso 2 · {Name(entry)}: se retira la viñeta menos relevante {why}.");
     }
 
     /// <summary>Empresa en una experiencia (tiene fechas); nombre en un proyecto.</summary>

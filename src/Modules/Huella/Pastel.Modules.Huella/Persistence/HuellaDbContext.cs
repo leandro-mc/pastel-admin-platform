@@ -184,6 +184,7 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.Property(x => x.Kind).HasMaxLength(12).IsRequired();
             e.Property(x => x.Description).HasMaxLength(300).IsRequired();
             e.Property(x => x.Evidence).HasMaxLength(700).IsRequired();
+            e.Property(x => x.AlwaysInclude).HasDefaultValue(false);
             e.Property(x => x.Version).IsRowVersion();
             e.HasIndex(x => new { x.ProfileId, x.Kind, x.NormalizedName }).IsUnique();
             e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();

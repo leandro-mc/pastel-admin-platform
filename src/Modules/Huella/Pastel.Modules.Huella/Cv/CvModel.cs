@@ -190,9 +190,9 @@ internal sealed record CvLimits(
         var a4 = paper == "a4";
         var limits = level switch
         {
-            "junior" => new CvLimits("junior", 1, 300, 3, 90, 16, 3, [3, 6, 3], 170, 2, [2, 2], 2, 2, a4 ? 58 : 55, a4 ? 90 : 93, a4 ? 88 : 91),
-            "senior" => new CvLimits("senior", 2, 380, 5, 180, 32, 6, [11, 9, 7, 5, 3, 0], 180, 1, [3], 2, 5, a4 ? 117 : 110, a4 ? 95 : 98, a4 ? 92 : 95),
-            _ => new CvLimits("mid", 2, 300, 5, 180, 26, 5, [9, 8, 6, 4, 2], 175, 2, [3, 3], 2, 4, a4 ? 113 : 106, a4 ? 90 : 93, a4 ? 88 : 91),
+            "junior" => new CvLimits("junior", 1, 300, 4, 95, 24, 3, [3, 5, 3], 170, 2, [2, 2], 2, 2, a4 ? 59 : 56, a4 ? 90 : 93, a4 ? 88 : 91),
+            "senior" => new CvLimits("senior", 2, 380, 6, 180, 36, 6, [11, 9, 7, 5, 3, 0], 180, 1, [3], 2, 5, a4 ? 118 : 111, a4 ? 95 : 98, a4 ? 92 : 95),
+            _ => new CvLimits("mid", 2, 300, 5, 180, 30, 5, [9, 8, 6, 4, 2], 175, 2, [3, 3], 2, 4, a4 ? 114 : 107, a4 ? 90 : 93, a4 ? 88 : 91),
         };
         if (format != CvFormats.Competencies)
         {
@@ -200,7 +200,7 @@ internal sealed record CvLimits(
         }
 
         // Formato de competencias: sin proyectos ni habilidades sueltas; las competencias (personales y técnicas) ocupan su lugar.
-        var (personal, technical) = level == "junior" ? (6, 5) : (8, 7);
+        var (personal, technical) = level == "junior" ? (5, 5) : (7, 7);
         return limits with { ProjectCount = 0, ProjectLines = [], SkillGroups = 0, SkillsTotal = 0, PersonalCompetencies = personal, TechnicalCompetencies = technical, CertificationCount = level == "junior" ? 1 : limits.CertificationCount };
     }
 

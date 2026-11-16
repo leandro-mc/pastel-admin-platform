@@ -74,7 +74,7 @@ internal sealed record CertificationView(Guid Id, string Name, string? Issuer, i
 
 internal sealed record LanguageView(Guid Id, string Language, string Level, string? Evidence, bool IsVisible);
 
-internal sealed record CompetencyView(Guid Id, string Name, string Kind, string Description, string Evidence, bool IsVisible);
+internal sealed record CompetencyView(Guid Id, string Name, string Kind, string Description, string Evidence, bool AlwaysInclude, bool IsVisible);
 
 // ── Escritura (cada sección se guarda completa; un elemento sin Id es nuevo) ──
 internal sealed record NotesInput(
@@ -114,7 +114,7 @@ internal sealed record CertificationInput(Guid? Id, string? Name, string? Issuer
 
 internal sealed record LanguageInput(Guid? Id, string? Language, string? Level, string? Evidence, bool? IsVisible);
 
-internal sealed record CompetencyInput(Guid? Id, string? Name, string? Kind, string? Description, string? Evidence, bool? IsVisible);
+internal sealed record CompetencyInput(Guid? Id, string? Name, string? Kind, string? Description, string? Evidence, bool? AlwaysInclude, bool? IsVisible);
 
 internal sealed record AchievementInput(
     Guid? Id,

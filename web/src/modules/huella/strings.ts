@@ -156,6 +156,9 @@ export const strings = {
       kinds: { personal: "Personal", technical: "Técnica" },
       description_: "Qué significa en el trabajo",
       evidence: "Cómo la demuestra (con hechos de su banco)",
+      alwaysInclude: "Siempre en el CV de competencias",
+      alwaysIncludeHint:
+        "Aparece en todo CV de competencias aunque la IA no la elija (por ejemplo, Adaptabilidad).",
       search: "Buscar en competencias",
       readyHint: "el nombre",
     },

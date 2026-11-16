@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.IO.Compression;
 using System.Text;
 using System.Xml;
@@ -15,6 +16,7 @@ internal static class CvDocx
     public const string ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
     private const string W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
+    private const string R = "http://schemas.openxmlformats.org/officeDocument/2006/relationships";
     internal const string Muted = "555555";
 
     /// <summary>Texto principal del CV como archivo .docx (bytes del zip).</summary>
@@ -41,13 +43,37 @@ internal static class CvDocx
             body.Append(Paragraph("Subtitle", Run(doc.Header.Headline)));
         }
 
+        // Contacto: el correo y los enlaces son vínculos reales (relaciones externas del paquete); el texto visible no cambia.
+        var links = new List<(string Id, string Url)>();
         foreach (var line in new[] { doc.Header.ContactLine1, doc.Header.ContactLine2 })
         {
-            var joined = string.Join("  |  ", line.Where(x => x.Length > 0));
-            if (joined.Length > 0)
+            var items = line.Where(x => x.Length > 0).ToList();
+            if (items.Count == 0)
             {
-                body.Append(Paragraph("Contact", Run(joined, color: Muted)));
+                continue;
             }
+
+            var runs = new StringBuilder();
+            for (var i = 0; i < items.Count; i++)
+            {
+                if (i > 0)
+                {
+                    runs.Append(Run("  |  ", color: Muted));
+                }
+
+                if (ContactHref(items[i], line == doc.Header.ContactLine2) is { } href)
+                {
+                    var id = $"rIdL{links.Count + 1}";
+                    links.Add((id, href));
+                    runs.Append(CultureInfo.InvariantCulture, $"<w:hyperlink r:id=\"{id}\">{Run(items[i], color: Muted)}</w:hyperlink>");
+                }
+                else
+                {
+                    runs.Append(Run(items[i], color: Muted));
+                }
+            }
+
+            body.Append(Paragraph("Contact", runs.ToString()));
         }
 
         void Summary()
@@ -116,8 +142,8 @@ internal static class CvDocx
         Summary();
         if (doc.Format == CvFormats.Competencies)
         {
-            Competencies();
             AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
+            Competencies();
             Education();
             Extras();
         }
@@ -130,14 +156,34 @@ internal static class CvDocx
             Extras();
         }
 
-        return Package(body.ToString(), pageWidth, pageHeight, marginTop, marginSide, marginBottom, $"{labels.DocumentTitle} — {doc.Header.Name}", doc.Header.Name, en, "Arial", 20);
+        return Package(body.ToString(), pageWidth, pageHeight, marginTop, marginSide, marginBottom, $"{labels.DocumentTitle} — {doc.Header.Name}", doc.Header.Name, en, "Arial", 20, links);
+    }
+
+    /// <summary>
+    /// Destino de un dato de contacto: <c>mailto:</c> para el correo y <c>https://</c> para un enlace (se guarda sin el esquema).
+    /// Solo se vinculan textos sin espacios con forma de correo o de dominio; lo demás queda como texto.
+    /// </summary>
+    internal static string? ContactHref(string text, bool isLink)
+    {
+        if (text.Contains(' ', StringComparison.Ordinal) || text.Length > 200)
+        {
+            return null;
+        }
+
+        if (!isLink)
+        {
+            return text.Contains('@', StringComparison.Ordinal) ? "mailto:" + text : null;
+        }
+
+        var url = text.StartsWith("https://", StringComparison.OrdinalIgnoreCase) ? text : "https://" + text;
+        return Uri.TryCreate(url, UriKind.Absolute, out var uri) && uri.Scheme == Uri.UriSchemeHttps && uri.Host.Contains('.', StringComparison.Ordinal) ? uri.AbsoluteUri : null;
     }
 
     /// <summary>Arma el paquete .docx (zip con las partes fijas) alrededor del cuerpo ya escrito; lo comparten el CV y la carta.</summary>
-    internal static byte[] Package(string body, int pageWidth, int pageHeight, int marginTop, int marginSide, int marginBottom, string title, string author, bool en, string font = "Calibri", int halfPoints = 21)
+    internal static byte[] Package(string body, int pageWidth, int pageHeight, int marginTop, int marginSide, int marginBottom, string title, string author, bool en, string font = "Calibri", int halfPoints = 21, IReadOnlyList<(string Id, string Url)>? links = null)
     {
         var document =
-            $"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="{W}"><w:body>{body}<w:sectPr><w:pgSz w:w="{pageWidth}" w:h="{pageHeight}"/><w:pgMar w:top="{marginTop}" w:right="{marginSide}" w:bottom="{marginBottom}" w:left="{marginSide}" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>""";
+            $"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="{W}" xmlns:r="{R}"><w:body>{body}<w:sectPr><w:pgSz w:w="{pageWidth}" w:h="{pageHeight}"/><w:pgMar w:top="{marginTop}" w:right="{marginSide}" w:bottom="{marginBottom}" w:left="{marginSide}" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>""";
 
         using var stream = new MemoryStream();
         using (var zip = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
@@ -146,7 +192,7 @@ internal static class CvDocx
             Add(zip, "_rels/.rels", RootRelsXml);
             Add(zip, "docProps/core.xml", CoreXml(title, author, en));
             Add(zip, "word/document.xml", document);
-            Add(zip, "word/_rels/document.xml.rels", DocumentRelsXml);
+            Add(zip, "word/_rels/document.xml.rels", DocumentRelsXml(links ?? []));
             Add(zip, "word/styles.xml", StylesXml(en, font, halfPoints));
             Add(zip, "word/numbering.xml", NumberingXml);
         }
@@ -311,8 +357,13 @@ internal static class CvDocx
     private const string RootRelsXml =
         """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/package/2006/relationships/metadata/core-properties" Target="docProps/core.xml"/></Relationships>""";
 
-    private const string DocumentRelsXml =
-        """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/></Relationships>""";
+    private static string DocumentRelsXml(IReadOnlyList<(string Id, string Url)> links)
+    {
+        var external = string.Concat(links.Select(l =>
+            $"<Relationship Id=\"{l.Id}\" Type=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships/hyperlink\" Target=\"{Escape(l.Url)}\" TargetMode=\"External\"/>"));
+        return """<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/numbering" Target="numbering.xml"/>"""
+            + external + "</Relationships>";
+    }
 
     private static string CoreXml(string title, string author, bool en) =>
         $"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><cp:coreProperties xmlns:cp="http://schemas.openxmlformats.org/package/2006/metadata/core-properties" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:dcterms="http://purl.org/dc/terms/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><dc:title>{Escape(title)}</dc:title><dc:creator>{Escape(author)}</dc:creator><dc:language>{(en ? "en-US" : "es-ES")}</dc:language></cp:coreProperties>""";
@@ -321,7 +372,7 @@ internal static class CvDocx
     {
         var lang = en ? "en-US" : "es-ES";
         return $"""
-            <?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="{W}"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="{font}" w:hAnsi="{font}" w:eastAsia="{font}" w:cs="{font}"/><w:sz w:val="{halfPoints}"/><w:szCs w:val="{halfPoints}"/><w:lang w:val="{lang}" w:eastAsia="{lang}" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="252" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:after="40"/><w:jc w:val="center"/></w:pPr><w:rPr><w:b/><w:sz w:val="42"/><w:szCs w:val="42"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="60"/><w:jc w:val="center"/></w:pPr><w:rPr><w:sz w:val="23"/><w:szCs w:val="23"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Contact"><w:name w:val="Contact"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="20"/><w:jc w:val="center"/></w:pPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="2" w:color="464646"/></w:pBdr><w:spacing w:before="260" w:after="120"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="ListBullet"><w:name w:val="List Bullet"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="50"/></w:pPr></w:style></w:styles>
+            <?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="{W}"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="{font}" w:hAnsi="{font}" w:eastAsia="{font}" w:cs="{font}"/><w:sz w:val="{halfPoints}"/><w:szCs w:val="{halfPoints}"/><w:lang w:val="{lang}" w:eastAsia="{lang}" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="252" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr><w:rPr><w:b/><w:sz w:val="40"/><w:szCs w:val="42"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="40" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr><w:rPr><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Contact"><w:name w:val="Contact"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="0" w:line="240" w:lineRule="auto"/><w:jc w:val="center"/></w:pPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="2" w:color="464646"/></w:pBdr><w:spacing w:before="260" w:after="120"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="ListBullet"><w:name w:val="List Bullet"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="50"/></w:pPr></w:style></w:styles>
             """;
     }
 
