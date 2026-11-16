@@ -23,7 +23,8 @@ internal sealed record AiTaskInput(
     Guid? VersionId,
     IReadOnlyList<string>? Sections,
     string? Json,
-    string? Tone = null);
+    string? Tone = null,
+    string? Today = null);
 
 /// <summary>El prompt completo de una tarea y el nombre sugerido para guardarlo. Es el mismo texto que recibe el proveedor configurado.</summary>
 internal sealed record AiTaskPackage(string Kind, string Title, string FileName, string Prompt, string Schema);

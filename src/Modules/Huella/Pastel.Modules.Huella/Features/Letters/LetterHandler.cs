@@ -22,8 +22,15 @@ internal sealed record LetterSummary(
 
 internal sealed record LetterView(LetterSummary Summary, LetterDoc Document, bool PdfAvailable);
 
-/// <summary>Edición del texto de una carta: asunto, saludo, párrafos y despedida. Nombre y contacto salen del banco.</summary>
-internal sealed record LetterEditInput(string? Subject, string? Greeting, IReadOnlyList<string>? Paragraphs, string? Closing);
+/// <summary>Edición de una carta: asunto, saludo, párrafos, despedida, fecha (<c>AAAA-MM-DD</c>), destinatario y tipo de letra. Nombre y contacto salen del banco.</summary>
+internal sealed record LetterEditInput(
+    string? Subject,
+    string? Greeting,
+    IReadOnlyList<string>? Paragraphs,
+    string? Closing,
+    string? Date = null,
+    IReadOnlyList<string>? Recipient = null,
+    string? Font = null);
 
 /// <summary>
 /// Cartas de presentación: redacción con IA desde el banco en crudo y la oferta (las mismas tres vías que el CV), edición
@@ -77,6 +84,38 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             paragraphs.Add(errors.RequiredLine($"paragraphs[{i}]", source[i], LetterLimits.Paragraph));
         }
 
+        var date = document.Date;
+        if (!string.IsNullOrWhiteSpace(input.Date))
+        {
+            if (DateOnly.TryParseExact(input.Date.Trim(), "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var parsed) && parsed.Year is >= 2000 and <= 2100)
+            {
+                date = parsed.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                errors.Add("date", "Escriba una fecha válida.");
+            }
+        }
+
+        var font = errors.OneOf("font", input.Font, LetterLimits.Fonts.ToArray(), document.Font);
+        var recipient = document.Recipient;
+        if (input.Recipient is not null)
+        {
+            recipient = [];
+            if (input.Recipient.Count > LetterLimits.RecipientLines)
+            {
+                errors.Add("recipient", $"El destinatario lleva como máximo {LetterLimits.RecipientLines} líneas.");
+            }
+
+            for (var i = 0; i < Math.Min(input.Recipient.Count, LetterLimits.RecipientLines); i++)
+            {
+                if (errors.OptionalLine($"recipient[{i}]", input.Recipient[i], LetterLimits.RecipientLine) is { } line)
+                {
+                    recipient.Add(line);
+                }
+            }
+        }
+
         if (paragraphs.Sum(p => p.Length) > LetterLimits.Total)
         {
             errors.Add("paragraphs", $"La carta excede una página ({LetterLimits.Total} caracteres entre todos los párrafos).");
@@ -111,6 +150,9 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         document.Greeting = greeting;
         document.Paragraphs = paragraphs;
         document.Closing = closing;
+        document.Date = date;
+        document.Font = font;
+        document.Recipient = recipient;
         letter.ContentJson = HuellaJson.Serialize(document);
         letter.Source = "manual";
         letter.UpdatedAt = clock.UtcNow;
@@ -197,7 +239,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     }
 
     // ───────────────────────────── IA: redactar la carta ─────────────────────────────
-    private sealed record Prepared(Profile Profile, AiBank Bank, JobOffer Offer, LetterRequest Request, CoverLetter? Existing, string? Name);
+    private sealed record Prepared(Profile Profile, AiBank Bank, JobOffer Offer, LetterRequest Request, CoverLetter? Existing, string? Name, DateOnly Today);
 
     private async Task<Result<Prepared>> PrepareAsync(AiTaskInput input, CancellationToken cancellationToken)
     {
@@ -250,7 +292,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var offer = await db.JobOffers.SingleOrDefaultAsync(o => o.Id == offerId && o.ProfileId == profile.Value.Id, cancellationToken);
         return offer is null
             ? HuellaErrors.NotFound
-            : new Prepared(profile.Value, bank, offer, new LetterRequest(languages, tone), existing, name);
+            : new Prepared(profile.Value, bank, offer, new LetterRequest(languages, tone), existing, name, TodayOf(input.Today));
     }
 
     /// <summary>Prompt de la carta: la oferta y el banco en crudo. Es el mismo texto para el proveedor configurado y para una IA externa.</summary>
@@ -279,7 +321,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var p = prepared.Value;
-        var (composed, rejected) = LetterAi.Parse(raw, p.Bank, p.Offer.RawText, p.Offer.Title, p.Request);
+        var (composed, rejected) = LetterAi.Parse(raw, p.Bank, p.Offer.RawText, p.Offer.Title, p.Offer.Company, p.Today, p.Request);
         if (composed.Count == 0)
         {
             return rejected.Count == 0 ? invalid : new AiTaskOutcome(AiTaskHandler.Letter, 0, rejected, [], []);
@@ -341,6 +383,17 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             return HuellaErrors.NotFound;
         }
 
+        // Cartas anteriores al formato formal: la fecha es la de su creación y el tipo de letra, Times New Roman.
+        if (document.Date.Length == 0)
+        {
+            document.Date = DateOnly.FromDateTime(letter.CreatedAt.UtcDateTime).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        if (!LetterLimits.Fonts.Contains(document.Font))
+        {
+            document.Font = "times";
+        }
+
         return (letter, document);
     }
 
@@ -349,6 +402,19 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var profile = await owners.GetOrCreateAsync(cancellationToken);
         var notes = profile.IsSuccess ? await owners.GetNotesAsync(profile.Value, cancellationToken) : null;
         return notes is { PreferredPaper.Length: > 0 } ? notes.PreferredPaper : "letter";
+    }
+
+    /// <summary>
+    /// La fecha de la carta es la de hoy de quien la pide (el navegador la envía, porque el servidor trabaja en UTC y de noche
+    /// en Costa Rica ya sería «mañana»); si no llega o se aleja más de un día de UTC, se usa la de UTC.
+    /// </summary>
+    private DateOnly TodayOf(string? hint)
+    {
+        var utc = DateOnly.FromDateTime(clock.UtcNow.UtcDateTime);
+        return DateOnly.TryParseExact(hint, "yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var local)
+            && Math.Abs(local.DayNumber - utc.DayNumber) <= 1
+            ? local
+            : utc;
     }
 
     private LetterView ViewOf(CoverLetter letter, LetterDoc document) => new(SummaryOf(letter), document, renderer.IsAvailable);

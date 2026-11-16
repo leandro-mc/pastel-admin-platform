@@ -523,6 +523,16 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
         using var outcome = JsonDocument.Parse(await imported.Content.ReadAsStringAsync());
         var letterId = outcome.RootElement.GetProperty("versionIds")[0].GetString();
 
+        // Forma de carta formal: fecha, destinatario (equipo y empresa de la oferta) y tipo de letra.
+        using (var read = await QaSupport.SendAsync(owner, HttpMethod.Get, $"/api/huella/studio/letters/{letterId}"))
+        {
+            using var doc = JsonDocument.Parse(await read.Content.ReadAsStringAsync());
+            var letter = doc.RootElement.GetProperty("document");
+            Assert.Matches(@"^\d{4}-\d{2}-\d{2}$", letter.GetProperty("date").GetString());
+            Assert.Equal("Acme", letter.GetProperty("recipient")[1].GetString());
+            Assert.Equal("times", letter.GetProperty("font").GetString());
+        }
+
         // Editar: una cifra que no está en el banco ni en la oferta se rechaza.
         using (var bad = await QaSupport.SendAsync(owner, HttpMethod.Put, $"/api/huella/studio/letters/{letterId}/content", new
         {

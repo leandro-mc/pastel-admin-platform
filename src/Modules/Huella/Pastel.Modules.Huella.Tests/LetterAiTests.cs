@@ -34,14 +34,26 @@ public sealed class LetterAiTests
             },
         });
 
-        var (letters, rejected) = LetterAi.Parse(json, bank, offer, "QA", new LetterRequest(["es", "en"], "formal"));
+        var (letters, rejected) = LetterAi.Parse(json, bank, offer, "QA", "Acme", new DateOnly(2026, 11, 16), new LetterRequest(["es", "en"], "formal"));
 
         var letter = Assert.Single(letters);
         Assert.Equal("es", letter.Language);
         Assert.Equal("Ana Pérez", letter.Document.Signature);
         Assert.Equal(["ana@correo.test"], letter.Document.Contact);
         Assert.Equal(2, letter.Document.Paragraphs.Count);
+        Assert.Equal("2026-11-16", letter.Document.Date);
+        Assert.Equal(["Equipo de selección", "Acme"], letter.Document.Recipient);
+        Assert.Equal("times", letter.Document.Font);
         Assert.Contains(rejected, r => r.Contains("999", StringComparison.Ordinal));
         Assert.Contains(rejected, r => r.StartsWith("EN", StringComparison.Ordinal));
+    }
+
+    // La fecha de la carta sale con el nombre del mes escrito aquí: no depende de la cultura (ni de ICU) del servidor.
+    [Fact]
+    public void LetterDateIsWrittenOutInEachLanguage()
+    {
+        Assert.Equal("16 de noviembre de 2026", LetterFormat.DateText("2026-11-16", "es"));
+        Assert.Equal("November 16, 2026", LetterFormat.DateText("2026-11-16", "en"));
+        Assert.Equal(string.Empty, LetterFormat.DateText("no es una fecha", "es"));
     }
 }

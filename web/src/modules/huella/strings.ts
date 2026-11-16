@@ -344,7 +344,15 @@ export const strings = {
         },
         title: "Texto de la carta",
         description:
-          "Su nombre y contacto salen del banco. Lo que escriba o cambie no puede traer cifras que su banco o la oferta no tengan.",
+          "La carta sigue la forma de una carta formal: remitente, fecha, destinatario, asunto, saludo, cuerpo con sangría y texto justificado, despedida y firma. Su nombre y contacto salen del banco; lo que escriba no puede traer cifras que su banco o la oferta no tengan.",
+        sender: "Remitente",
+        font: "Tipo de letra",
+        fonts: { times: "Times New Roman", arial: "Arial" },
+        date: "Fecha de la carta",
+        today: "Usar la de hoy",
+        recipient: "Destinatario",
+        recipientHint:
+          "Una línea por renglón (por ejemplo «Equipo de selección» y la empresa). Déjelo vacío para omitirlo.",
         subject: "Asunto del correo",
         greeting: "Saludo",
         paragraph: (n: number) => `Párrafo ${n}`,

@@ -1,23 +1,44 @@
 // Plantilla fija de la carta de presentación de Huella (CCR-2). Los datos llegan SOLO por data.json: cada cadena se imprime
-// como texto y nunca se evalúa como marcado ni código. Una página, texto real y el contacto en el cuerpo.
+// como texto y nunca se evalúa como marcado ni código. Forma de carta formal: remitente, fecha, destinatario, asunto,
+// saludo, cuerpo con sangría y texto justificado, despedida y firma, con un renglón en blanco entre bloques. Times New Roman
+// o Arial (en el PDF, sus equivalentes libres con las mismas medidas: Liberation Serif y Liberation Sans).
 #let d = json("data.json")
-#let muted = luma(80)
 
 #set document(title: d.title, author: d.signature)
 #set page(
   paper: if d.paper == "a4" { "a4" } else { "us-letter" },
-  margin: (x: 2.2cm, top: 2cm, bottom: 2cm),
+  margin: (x: 2.5cm, y: 2.5cm),
 )
-#set text(font: "Source Sans 3", size: 11pt, lang: d.lang, ligatures: false, hyphenate: false)
-#set par(justify: false, leading: 0.72em, spacing: 1.3em)
+#set text(font: d.font, size: d.size * 1pt, lang: d.lang, ligatures: false, hyphenate: false)
+// Entre renglones y entre bloques hay la misma distancia, así un «renglón en blanco» mide exactamente un renglón.
+#set par(leading: 0.65em, spacing: 0.65em, justify: false)
 
-#block(below: 1.8em)[
-  #text(size: 17pt, weight: "bold", d.signature)
-  #if d.contact.len() > 0 [ \ #text(fill: muted, d.contact.join("  ·  ")) ]
-]
-#if d.subject != "" { block(below: 1.3em, text(weight: "semibold", d.subject)) }
+#let blank = par[~]
+
+// Remitente: nombre y datos de contacto, una línea cada uno.
+#par(text(weight: "bold", d.signature))
+#for line in d.contact { par(line) }
+
+// Fecha y destinatario.
+#if d.date != "" { blank; par(d.date) }
+#if d.recipient.len() > 0 { blank; for line in d.recipient { par(line) } }
+
+// Asunto y saludo.
+#if d.subject != "" { blank; par(text(weight: "bold", d.subjectLabel + " " + d.subject)) }
+#blank
 #par(d.greeting)
-#for p in d.paragraphs { par(p) }
+#blank
+
+// Cuerpo: sangría de primera línea en todos los párrafos y texto justificado.
+#block[
+  #set par(justify: true, first-line-indent: (amount: 1.25cm, all: true), spacing: 1.1em)
+  #for p in d.paragraphs { par(p) }
+]
+
+// Despedida y firma, con un renglón en blanco antes de la despedida y espacio para firmar.
+#blank
 #par(d.closing)
-#v(0.4em)
-#text(weight: "semibold", d.signature)
+#blank
+#blank
+#blank
+#par(text(weight: "bold", d.signature))

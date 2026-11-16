@@ -299,6 +299,11 @@ export const letterDocSchema = z.object({
   language: text,
   signature: text,
   contact: z.array(text),
+  /** Fecha de la carta (`AAAA-MM-DD`). */
+  date: text,
+  recipient: z.array(text),
+  /** `times` (Times New Roman) o `arial`. */
+  font: text,
   subject: text,
   greeting: text,
   paragraphs: z.array(text),

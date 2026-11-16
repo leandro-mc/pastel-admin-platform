@@ -366,6 +366,8 @@ export type AiTaskInput = {
   sections?: string[];
   /** Tono de la carta: `formal` o `cercano`. */
   tone?: string;
+  /** Fecha de hoy en el navegador (`AAAA-MM-DD`): la de la carta, porque el servidor trabaja en UTC. */
+  today?: string;
 };
 
 /** Tareas: `cv` (redacta el CV desde el banco), `profile` (redacta secciones del perfil) y `profile-translate` (reescribe el inglés). */

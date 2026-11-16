@@ -3,6 +3,7 @@ import { Button, Panel, SelectField, TextField } from "@/core/ui";
 import { focusClass } from "@/core/ui/styles";
 import { useBank, useGenerateCv, useOffer } from "../api/hooks";
 import type { DocKind } from "../lib/studioState";
+import { inDays } from "../lib/tracking";
 import { strings } from "../strings";
 import { AiTaskPanel } from "./AiTaskPanel";
 import { ErrorNotice, Loaded } from "./Form";
@@ -273,6 +274,7 @@ function LetterForm({ offerId, onGenerated, onPickOffer }: Props) {
               languages: [...languages],
               tone,
               name: name || null,
+              today: inDays(0),
             })}
             runLabel={(label, model) => l.run(label, model)}
             externalHint={l.externalHint}

@@ -5,6 +5,7 @@ import {
   Button,
   ConfirmDialog,
   Panel,
+  SelectField,
   Tab,
   TabList,
   TabPanel,
@@ -19,6 +20,7 @@ import {
 } from "../api/hooks";
 import type { Letter } from "../api/schemas";
 import { formatDateTime } from "../lib/format";
+import { inDays } from "../lib/tracking";
 import { strings } from "../strings";
 import { AiTaskPanel } from "./AiTaskPanel";
 import { ErrorNotice, TextAreaField, fieldError } from "./Form";
@@ -79,6 +81,9 @@ function ContentForm({ letter }: { letter: Letter }) {
   const [greeting, setGreeting] = useState(doc.greeting);
   const [paragraphs, setParagraphs] = useState(doc.paragraphs);
   const [closing, setClosing] = useState(doc.closing);
+  const [date, setDate] = useState(doc.date);
+  const [recipient, setRecipient] = useState(doc.recipient.join("\n"));
+  const [font, setFont] = useState(doc.font);
   const [remove, setRemove] = useState<number | null>(null);
   const err = (path: string) => fieldError(save.error, path);
   const total = paragraphs.reduce((n, p) => n + p.length, 0);
@@ -86,6 +91,9 @@ function ContentForm({ letter }: { letter: Letter }) {
     subject !== doc.subject ||
     greeting !== doc.greeting ||
     closing !== doc.closing ||
+    date !== doc.date ||
+    font !== doc.font ||
+    recipient !== doc.recipient.join("\n") ||
     JSON.stringify(paragraphs) !== JSON.stringify(doc.paragraphs);
 
   return (
@@ -130,11 +138,41 @@ function ContentForm({ letter }: { letter: Letter }) {
         <ErrorNotice error={rename.error} />
 
         <div className="rounded-lg border border-line bg-surface-raised p-4">
-          <p className="text-lg font-semibold text-fg">{doc.signature}</p>
-          {doc.contact.length > 0 ? (
-            <p className="text-sm text-muted">{doc.contact.join(" · ")}</p>
-          ) : null}
+          <p className="text-sm text-muted">{t.sender}</p>
+          <p className="text-base font-semibold text-fg">{doc.signature}</p>
+          {doc.contact.map((line) => (
+            <p key={line} className="text-sm text-fg-secondary">
+              {line}
+            </p>
+          ))}
         </div>
+
+        <div className="grid items-end gap-4 sm:grid-cols-[1fr_auto_1fr]">
+          <TextField
+            type="date"
+            label={t.date}
+            value={date}
+            error={err("date")}
+            onChange={(e) => setDate(e.target.value)}
+          />
+          <Button variant="secondary" type="button" onClick={() => setDate(inDays(0))}>
+            {t.today}
+          </Button>
+          <SelectField
+            label={t.font}
+            options={Object.entries(t.fonts).map(([value, label]) => ({ value, label }))}
+            value={font}
+            onChange={(e) => setFont(e.target.value)}
+          />
+        </div>
+        <TextAreaField
+          label={t.recipient}
+          hint={t.recipientHint}
+          rows={3}
+          value={recipient}
+          error={err("recipient") ?? err("recipient[0]")}
+          onChange={(e) => setRecipient(e.target.value)}
+        />
 
         <TextField
           label={t.subject}
@@ -209,7 +247,21 @@ function ContentForm({ letter }: { letter: Letter }) {
             loadingLabel={strings.common.saving}
             onClick={() =>
               save.mutate(
-                { id: summary.id, vars: { subject, greeting, paragraphs, closing } },
+                {
+                  id: summary.id,
+                  vars: {
+                    subject,
+                    greeting,
+                    paragraphs,
+                    closing,
+                    date,
+                    font,
+                    recipient: recipient
+                      .split("\n")
+                      .map((line) => line.trim())
+                      .filter(Boolean),
+                  },
+                },
                 { onSuccess: () => notify(strings.common.saved) },
               )
             }
@@ -242,7 +294,7 @@ function SendPanel({ letter }: { letter: Letter }) {
   const { summary, document: doc } = letter;
   const [pending, setPending] = useState<"pdf" | "docx" | null>(null);
   const [error, setError] = useState<unknown>(null);
-  const plain = [doc.subject, "", doc.greeting, "", ...doc.paragraphs.flatMap((p) => [p, ""]), doc.closing, doc.signature].join("\n");
+  const plain = letterText(doc);
 
   const download = (format: "pdf" | "docx") => {
     setPending(format);
@@ -321,4 +373,33 @@ function SendPanel({ letter }: { letter: Letter }) {
       </div>
     </Panel>
   );
+}
+
+/** «16 de noviembre de 2026» / «November 16, 2026», sin depender de la zona horaria del navegador. */
+function longDate(iso: string, language: string): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  if (!y || !m || !d) return "";
+  return new Intl.DateTimeFormat(language === "en" ? "en-US" : "es", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(y, m - 1, d)));
+}
+
+/** La carta como texto, con la forma de una carta formal (un renglón en blanco entre bloques), para pegarla en un formulario. */
+function letterText(doc: Letter["document"]): string {
+  const subject = doc.language === "en" ? "Subject:" : "Asunto:";
+  const date = longDate(doc.date, doc.language);
+  const blocks = [
+    [doc.signature, ...doc.contact],
+    date ? [date] : [],
+    doc.recipient,
+    doc.subject ? [`${subject} ${doc.subject}`] : [],
+    [doc.greeting],
+    doc.paragraphs,
+    [doc.closing],
+    [doc.signature],
+  ].filter((b) => b.length > 0);
+  return blocks.map((b) => b.join("\n")).join("\n\n");
 }

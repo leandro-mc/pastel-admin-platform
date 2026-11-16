@@ -6,14 +6,28 @@ using Pastel.Modules.Huella.Domain;
 
 namespace Pastel.Modules.Huella.Cv;
 
-/// <summary>Contenido de una carta de presentación. Nombre y contacto salen del banco; el resto lo redacta la IA o la persona.</summary>
+/// <summary>
+/// Contenido de una carta de presentación, con la estructura de una carta formal: remitente (nombre y datos de contacto, una
+/// línea cada uno), fecha, destinatario, asunto, saludo, cuerpo, despedida y firma. Nombre y contacto salen del banco; el resto
+/// lo redacta la IA o la persona.
+/// </summary>
 internal sealed class LetterDoc
 {
     public string Language { get; set; } = "es";
 
     public string Signature { get; set; } = string.Empty;
 
+    /// <summary>Datos del remitente, una línea cada uno (país o ciudad, correo, teléfono).</summary>
     public List<string> Contact { get; set; } = [];
+
+    /// <summary>Fecha de la carta (<c>AAAA-MM-DD</c>); la persona puede cambiarla antes de enviar.</summary>
+    public string Date { get; set; } = string.Empty;
+
+    /// <summary>Destinatario, una línea cada uno (por ejemplo «Equipo de selección» y la empresa).</summary>
+    public List<string> Recipient { get; set; } = [];
+
+    /// <summary>Tipo de letra: <c>times</c> (Times New Roman) o <c>arial</c> (Arial).</summary>
+    public string Font { get; set; } = "times";
 
     public string Subject { get; set; } = string.Empty;
 
@@ -35,8 +49,48 @@ internal static class LetterLimits
     public const int Paragraph = 800;
     public const int Total = 2400;
     public const int Name = 120;
+    public const int RecipientLines = 4;
+    public const int RecipientLine = 80;
 
     public static readonly IReadOnlyList<string> Tones = ["formal", "cercano"];
+
+    /// <summary>Tipos de letra de la carta (en el PDF se usan sus equivalentes libres, con las mismas medidas).</summary>
+    public static readonly IReadOnlyList<string> Fonts = ["times", "arial"];
+}
+
+/// <summary>Formato de carta formal que comparten el PDF, el Word y el texto copiado.</summary>
+internal static class LetterFormat
+{
+    private static readonly string[] SpanishMonths = ["enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre"];
+    private static readonly string[] EnglishMonths = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+    /// <summary>«16 de noviembre de 2026» o «November 16, 2026». Los nombres de los meses van aquí: no dependen de la cultura del servidor.</summary>
+    public static string DateText(string iso, string language)
+    {
+        if (!DateOnly.TryParseExact(iso, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
+        {
+            return string.Empty;
+        }
+
+        return language == "en"
+            ? $"{EnglishMonths[date.Month - 1]} {date.Day.ToString(CultureInfo.InvariantCulture)}, {date.Year.ToString(CultureInfo.InvariantCulture)}"
+            : $"{date.Day.ToString(CultureInfo.InvariantCulture)} de {SpanishMonths[date.Month - 1]} de {date.Year.ToString(CultureInfo.InvariantCulture)}";
+    }
+
+    public static string SubjectLabel(string language) => language == "en" ? "Subject:" : "Asunto:";
+
+    /// <summary>Tipo de letra en Word, tal como lo reconocen Word, Google Docs y LibreOffice.</summary>
+    public static string WordFont(string font) => font == "arial" ? "Arial" : "Times New Roman";
+
+    /// <summary>Equivalente libre (SIL OFL) con las mismas medidas, incluido con la aplicación para el PDF.</summary>
+    public static string PdfFont(string font) => font == "arial" ? "Liberation Sans" : "Liberation Serif";
+
+    /// <summary>Tamaño en puntos: Times 12, Arial 11 (ven igual de grandes).</summary>
+    public static int Size(string font) => font == "arial" ? 11 : 12;
+
+    /// <summary>Destinatario por omisión: el equipo de selección y la empresa de la oferta.</summary>
+    public static List<string> DefaultRecipient(string language, string? company) =>
+        string.IsNullOrWhiteSpace(company) ? [] : [language == "en" ? "Hiring Team" : "Equipo de selección", company.Trim()];
 }
 
 /// <summary>Qué carta se pide: idiomas (una carta por idioma) y tono.</summary>
@@ -91,7 +145,7 @@ internal static class LetterAi
     }
 
     /// <summary>Lee la respuesta (propia o importada) y arma una carta por idioma pedido; lo que no pasa el guardián se descarta con su motivo.</summary>
-    public static (IReadOnlyList<ComposedLetter> Letters, IReadOnlyList<string> Rejected) Parse(string? raw, AiBank bank, string offerText, string title, LetterRequest request)
+    public static (IReadOnlyList<ComposedLetter> Letters, IReadOnlyList<string> Rejected) Parse(string? raw, AiBank bank, string offerText, string title, string? company, DateOnly today, LetterRequest request)
     {
         var rejected = new List<string>();
         using var json = CvAiResult.TryParse(raw);
@@ -123,7 +177,7 @@ internal static class LetterAi
             }
 
             var warnings = new List<string>();
-            var doc = Assemble(item, language, bank, known, title, warnings);
+            var doc = Assemble(item, language, bank, known, title, company, today, warnings);
             rejected.AddRange(warnings.Select(w => $"{language.ToUpperInvariant()} · {w}"));
             if (doc is not null)
             {
@@ -134,7 +188,7 @@ internal static class LetterAi
         return (result, rejected);
     }
 
-    private static LetterDoc? Assemble(JsonElement item, string language, AiBank bank, IReadOnlySet<string> known, string title, List<string> warnings)
+    private static LetterDoc? Assemble(JsonElement item, string language, AiBank bank, IReadOnlySet<string> known, string title, string? company, DateOnly today, List<string> warnings)
     {
         var en = language == "en";
         var doc = new LetterDoc
@@ -142,6 +196,8 @@ internal static class LetterAi
             Language = language,
             Signature = bank.Data.Header.Name,
             Contact = [.. bank.Data.Header.ContactLine1],
+            Date = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+            Recipient = LetterFormat.DefaultRecipient(language, company),
         };
 
         string Field(string name, int max, string fallback)
