@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
+using Pastel.Modules.Huella.Cv;
 using Pastel.Modules.Huella.Features.AiSettings;
 using Pastel.Modules.Huella.Features.Bank;
 using Pastel.Modules.Huella.Features.Common;
@@ -103,6 +104,11 @@ internal static class HuellaEndpoints
         {
             var pdf = await h.RenderPdfAsync(versionId, ct);
             return pdf.IsFailure ? PastelProblem.From(pdf.Error, http) : Results.File(pdf.Value, "application/pdf", "cv.pdf");
+        }).RequirePermission(read);
+        studio.MapGet("/versions/{versionId:guid}/docx", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) =>
+        {
+            var docx = await h.RenderDocxAsync(versionId, ct);
+            return docx.IsFailure ? PastelProblem.From(docx.Error, http) : Results.File(docx.Value, CvDocx.ContentType, "cv.docx");
         }).RequirePermission(read);
 
         // IA automática: la clave entra una vez, se guarda cifrada y nunca se devuelve. Solo quien edita el perfil la gestiona.

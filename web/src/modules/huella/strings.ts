@@ -316,8 +316,11 @@ export const strings = {
       publicHint:
         "El CV público se publica junto con el perfil; sus datos de contacto siguen lo que usted activó en el perfil.",
       pdf: "Descargar PDF",
+      docx: "Descargar Word (.docx)",
+      docxHint:
+        "El archivo Word se abre en Word, Google Docs y LibreOffice, y lo puede seguir editando.",
       pdfUnavailable:
-        "La descarga de PDF aún no está disponible en este servidor. Mientras tanto puede copiar el texto ATS.",
+        "La descarga de PDF aún no está disponible en este servidor. Puede descargar el Word o copiar el texto ATS.",
       ats: "Texto que lee un sistema ATS",
       atsDescription: "Es el CV en texto plano, en orden de lectura.",
       checks: "Comprobaciones",
@@ -331,7 +334,7 @@ export const strings = {
       accepted: (n: number) =>
         `${n} línea${n === 1 ? "" : "s"} aplicada${n === 1 ? "" : "s"}.`,
       savedPdf:
-        "La versión quedó guardada con los cambios. Ya puede descargar el PDF.",
+        "La versión quedó guardada con los cambios. Ya puede descargar el PDF o el Word.",
     },
   },
   aiSettings: {
@@ -415,6 +418,29 @@ export const strings = {
       linkLabel: "Texto",
       linkUrl: "Dirección (https)",
       linkPublic: "Público",
+      linkIcon: "Icono",
+      iconAuto: "Automático",
+      iconAutoHint: "Según el tipo de enlace",
+      iconChange: (current: string) => `Icono: ${current}. Cambiar`,
+      iconPick: "Elija el icono del enlace",
+      icons: {
+        globe: "Sitio web",
+        linkedin: "LinkedIn",
+        github: "GitHub",
+        gitlab: "GitLab",
+        twitter: "X (Twitter)",
+        youtube: "YouTube",
+        instagram: "Instagram",
+        facebook: "Facebook",
+        figma: "Figma",
+        dribbble: "Dribbble",
+        briefcase: "Portafolio",
+        code: "Código",
+        file: "Documento",
+        book: "Blog o artículos",
+        mail: "Correo",
+        link: "Enlace genérico",
+      },
       kinds: {
         github: "GitHub",
         linkedin: "LinkedIn",

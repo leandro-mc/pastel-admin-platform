@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNotify } from "@/core/notifications";
 import { Badge, Button, Panel, TextField } from "@/core/ui";
 import {
+  downloadCvDocx,
   downloadCvPdf,
   useCvAiPackage,
   useCvAiResult,
@@ -345,7 +346,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
             >
               {summary.isPublic ? t.removePublic : t.makePublic}
             </Button>
-            <PdfButton version={version} />
+            <DownloadButtons version={version} />
           </div>
           <p className="text-sm text-muted">{t.publicHint}</p>
           <ErrorNotice error={setPublic.error} />
@@ -412,32 +413,51 @@ function fileName(name: string) {
   return safe.length > 0 ? safe : "cv";
 }
 
-/** Descarga el PDF con la sesión vigente (no un enlace directo: el token de acceso puede haber vencido). */
-function PdfButton({ version }: { version: CvVersion }) {
-  const [pending, setPending] = useState(false);
+/**
+ * Descarga el CV como PDF o como Word (.docx) con la sesión vigente (no un enlace directo: el token de acceso puede haber
+ * vencido). El Word no depende del motor del PDF, así que siempre se ofrece.
+ */
+function DownloadButtons({ version }: { version: CvVersion }) {
+  const [pending, setPending] = useState<"pdf" | "docx" | null>(null);
   const [error, setError] = useState<unknown>(null);
-  if (!version.pdfAvailable) {
-    return <p className="text-sm text-muted">{t.pdfUnavailable}</p>;
-  }
+  const download = (
+    format: "pdf" | "docx",
+    run: (id: string, name: string) => Promise<void>,
+  ) => {
+    setPending(format);
+    setError(null);
+    run(version.summary.id, `${fileName(version.summary.name)}.${format}`)
+      .catch(setError)
+      .finally(() => setPending(null));
+  };
   return (
     <div className="flex flex-col gap-2">
-      <Button
-        variant="secondary"
-        type="button"
-        loading={pending}
-        onClick={() => {
-          setPending(true);
-          setError(null);
-          downloadCvPdf(
-            version.summary.id,
-            `${fileName(version.summary.name)}.pdf`,
-          )
-            .catch(setError)
-            .finally(() => setPending(false));
-        }}
-      >
-        {t.pdf}
-      </Button>
+      <div className="flex flex-wrap gap-2">
+        {version.pdfAvailable ? (
+          <Button
+            variant="secondary"
+            type="button"
+            loading={pending === "pdf"}
+            disabled={pending !== null}
+            onClick={() => download("pdf", downloadCvPdf)}
+          >
+            {t.pdf}
+          </Button>
+        ) : null}
+        <Button
+          variant="secondary"
+          type="button"
+          loading={pending === "docx"}
+          disabled={pending !== null}
+          onClick={() => download("docx", downloadCvDocx)}
+        >
+          {t.docx}
+        </Button>
+      </div>
+      {version.pdfAvailable ? null : (
+        <p className="text-sm text-muted">{t.pdfUnavailable}</p>
+      )}
+      <p className="text-sm text-muted">{t.docxHint}</p>
       <ErrorNotice error={error} />
     </div>
   );
@@ -489,7 +509,7 @@ function AiRewrite({ version }: { version: CvVersion }) {
           applied ? (
             <div className="flex flex-col gap-2 rounded-lg border border-line p-3">
               <p className="text-sm text-fg">{strings.studio.ai.savedPdf}</p>
-              <PdfButton version={version} />
+              <DownloadButtons version={version} />
             </div>
           ) : null
         }

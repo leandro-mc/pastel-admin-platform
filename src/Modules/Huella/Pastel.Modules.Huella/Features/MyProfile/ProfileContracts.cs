@@ -1,6 +1,6 @@
 namespace Pastel.Modules.Huella.Features.MyProfile;
 
-internal sealed record ProfileLinkView(Guid Id, string Kind, string Label, string Url, bool IsPublic);
+internal sealed record ProfileLinkView(Guid Id, string Kind, string Label, string Url, bool IsPublic, string? Icon);
 
 internal sealed record ProfileView(
     string DisplayName,
@@ -18,7 +18,7 @@ internal sealed record ProfileView(
     bool IsPublished,
     DateTimeOffset UpdatedAt);
 
-internal sealed record ProfileLinkInput(Guid? Id, string? Kind, string? Label, string? Url, bool? IsPublic);
+internal sealed record ProfileLinkInput(Guid? Id, string? Kind, string? Label, string? Url, bool? IsPublic, string? Icon = null);
 
 internal sealed record ProfileInput(
     string? DisplayName,

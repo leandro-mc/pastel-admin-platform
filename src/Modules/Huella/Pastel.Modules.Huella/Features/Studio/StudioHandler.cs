@@ -440,6 +440,20 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         return await renderer.RenderPdfAsync(document, new CvRequestOptions(version.Level, version.Paper, version.Language), cancellationToken);
     }
 
+    // ───────────────────────────── Word (.docx) ─────────────────────────────
+    /// <summary>El mismo CV como archivo Word. No depende del motor del PDF: siempre está disponible.</summary>
+    public async Task<Result<byte[]>> RenderDocxAsync(Guid versionId, CancellationToken cancellationToken)
+    {
+        var loaded = await LoadVersionAsync(versionId, cancellationToken);
+        if (loaded.IsFailure)
+        {
+            return loaded.Error;
+        }
+
+        var (version, document) = loaded.Value;
+        return CvDocx.Build(document, new CvRequestOptions(version.Level, version.Paper, version.Language));
+    }
+
     // ───────────────────────────── Apoyo ─────────────────────────────
     private sealed record LoadedBank(BankData Data);
 

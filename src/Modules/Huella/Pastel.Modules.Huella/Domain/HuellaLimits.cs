@@ -17,6 +17,7 @@ internal static class HuellaLimits
     public static class ProfileLink
     {
         public const int Kind = 24;
+        public const int Icon = 24;
         public const int Label = 60;
         public const int Url = 2048;
     }

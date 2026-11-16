@@ -744,6 +744,10 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("Icon")
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
                     b.Property<bool>("IsPublic")
                         .HasColumnType("boolean");
 

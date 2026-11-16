@@ -369,7 +369,15 @@ export async function downloadCvPdf(id: string, fileName: string) {
   saveFile(blob, fileName);
 }
 
-/** Entrega un archivo generado en el navegador (PDF o el prompt para una IA externa). */
+/** Descarga el CV de una versión como archivo Word (.docx), que también abre Google Docs. */
+export async function downloadCvDocx(id: string, fileName: string) {
+  const blob = await api.blob(`${base}/studio/versions/${id}/docx`, {
+    retries: 0,
+  });
+  saveFile(blob, fileName);
+}
+
+/** Entrega un archivo generado en el navegador (PDF, Word o el prompt para una IA externa). */
 export function saveFile(blob: Blob, fileName: string) {
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");

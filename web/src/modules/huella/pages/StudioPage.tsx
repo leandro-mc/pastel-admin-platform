@@ -24,7 +24,7 @@ import { formatDateTime } from "../lib/format";
 import { strings } from "../strings";
 
 /** Nivel de CV que viene elegido al abrir «Crear CV». */
-const DEFAULT_LEVEL = "mid";
+const DEFAULT_LEVEL = "junior";
 
 const g = strings.studio.generate;
 const v = strings.studio.versions;

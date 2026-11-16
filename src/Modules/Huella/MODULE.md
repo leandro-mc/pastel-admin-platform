@@ -14,7 +14,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 
 | Ruta | Para qué |
 |---|---|
-| `GET/PUT /profile` | Perfil y enlaces (máx. 8; solo `https`); contacto, ubicación y disponibilidad con interruptor, ocultos por defecto |
+| `GET/PUT /profile` | Perfil y enlaces (máx. 8; solo `https`; cada uno con `icon` opcional del catálogo cerrado `LinkIcons.Keys`, `null` = el del tipo; otro valor → 400); contacto, ubicación y disponibilidad con interruptor, ocultos por defecto |
 | `GET /bank` · `PUT /bank/{notes\|experiences\|projects\|skills\|education\|certifications\|languages}` | Banco completo / reemplazo de una sección |
 | `PUT /bank/{experiences\|projects}/{id}/achievements` | Logros de una experiencia o proyecto |
 | `POST …/{id}/derive` · `…/ai-package` · `…/ai-run` · `…/ai-result` | Logros por reglas; prompt para una IA externa; propuestas del proveedor configurado; validación del JSON importado |
@@ -23,6 +23,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 | `PUT …/{id}/name` · `/line` · `/public?isPublic=` | Renombrar, editar una línea (pasa por el guardián), marcar CV público |
 | `POST …/{id}/ai-package` · `/ai-run` · `/ai-result` | Redacción con IA: prompt para una IA externa, ejecución con el proveedor configurado o importación del JSON; todo pasa por el guardián, nunca Typst |
 | `GET …/{id}/pdf` | PDF del CV con Typst (`Pastel.Documents`); `503 huella.cv.renderer_unavailable` si el motor no está instalado |
+| `GET …/{id}/docx` | El mismo CV en Word (`Cv/CvDocx.cs`: paquete Open XML escrito a mano, sin dependencias ni motor externo, siempre disponible; abre en Word, Google Docs y LibreOffice) |
 | `GET /ai/settings` · `PUT/DELETE /ai/settings/{gemini\|openai\|anthropic}` · `POST …/{provider}/models` | IA automática: proveedor, modelo y clave (escritura; la clave nunca se devuelve) |
 | `GET /publication` · `/publication/preview` · `/publication/preview/cv` | Estado (incluye el enlace para el propietario), vista previa del borrador y su CV público |
 | `POST /publication/publish` · `/unpublish` · `/link` | Publicar, retirar, regenerar enlace (el token solo viaja en esa respuesta) |
@@ -42,7 +43,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 ## Datos (esquema `huella`)
 
 `Profile` (único por `OwnerUserId`, `PublicTokenHash` único) · `ProfileLink` · `PrivateNote` · `Experience` · `Project` · `Skill` · `Education` · `Certification` · `LanguageSkill` · `Achievement` + `AchievementSkill` (el logro es la unidad: de ahí salen CV, perfil y futuras funciones) · `JobOffer` · `CvVersion` · `PublishedSnapshot` · `AiCredential` (una fila por proveedor; clave cifrada, `KeyHint`, `IsActive`).
-Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials` y `AddHuellaPublicLinkCipher` (esta con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
+Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials`, `AddHuellaPublicLinkCipher` y `AddHuellaLinkIcon` (esta con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
 
 ## Códigos de error
 

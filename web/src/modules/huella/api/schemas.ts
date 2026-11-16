@@ -12,6 +12,8 @@ export const linkSchema = z.object({
   label: text,
   url: text,
   isPublic: z.boolean(),
+  /** Icono elegido; `null` = el que corresponde al tipo. */
+  icon: maybe,
 });
 
 export const profileSchema = z.object({
@@ -308,7 +310,9 @@ export const publicProfileSchema = z.object({
   location: maybe,
   availability: maybe,
   contact: z.object({ email: maybe, phone: maybe }),
-  links: z.array(z.object({ kind: text, label: text, url: text })),
+  links: z.array(
+    z.object({ kind: text, label: text, url: text, icon: maybe.optional() }),
+  ),
   facts: z.object({
     yearsOfExperience: z.number(),
     currentRole: maybe,

@@ -1,6 +1,7 @@
 import { createContext, useContext, useId, useMemo, useState } from "react";
 import type { PublicProfile } from "../api/schemas";
 import { countEvidence, parseTerms, segments } from "../lib/highlight";
+import { LinkGlyph } from "../lib/linkIcons";
 import { strings } from "../strings";
 import { Fingerprint } from "./Fingerprint";
 import "./public-profile.css";
@@ -466,7 +467,10 @@ export function PublicProfileView({
                   ) : null}
                   {profile.links.map((l, i) => (
                     <li key={i}>
-                      <span className="hp-yr">{l.label}</span>
+                      <span className="hp-yr hp-linklabel">
+                        <LinkGlyph kind={l.kind} icon={l.icon} />
+                        {l.label}
+                      </span>
                       <ExternalLink url={l.url}>{l.url}</ExternalLink>
                     </li>
                   ))}

@@ -31,10 +31,10 @@ Los logros son la capa que reutilizarán las futuras funciones (carta de recomen
 | `/huella/p/:token` | **Perfil público mediante enlace secreto** | Móvil y escritorio, solo versión publicada; enlaces externos con `rel="noopener noreferrer"`; resaltador de evidencia, impresión y «Ver CV» si la publicación lo incluye; token válido obligatorio y sin login |
 | `/huella` | Entrada | Lleva al banco |
 | `/huella/banco` | Banco de información | Notas privadas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas; logros por experiencia/proyecto (por reglas, a mano o con IA). **Sin botón guardar** (autoguardado); cada sección con buscador, elementos colapsados (solo nombre, visibilidad y quitar) y confirmación al quitar |
-| `/huella/cv` | Crear CV | Oferta → mapa de evidencia y filtros duros → generar → versiones → edición validada, reporte, texto ATS, IA, PDF, marcar CV público |
+| `/huella/cv` | Crear CV | Oferta → mapa de evidencia y filtros duros → generar → versiones → edición validada, reporte, texto ATS, IA, descarga en PDF o Word (.docx), marcar CV público; el nivel inicial es Junior |
 | `/huella/vista-previa` | Vista previa real del borrador | Pestaña nueva con sesión: mismos componentes que el enlace público (CV e impresión incluidos) y un aviso arriba que no se imprime |
 | `/huella/ia` | Configurar IA | Proveedor (Gemini, OpenAI o Anthropic), clave de la cuenta del propietario y modelo elegido de la lista real del proveedor |
-| `/huella/perfil` | Perfil público | Datos, enlaces, interruptores de contacto, vista previa, publicar/despublicar, enlace (se muestra una vez) |
+| `/huella/perfil` | Perfil público | Datos, enlaces (cada uno con un icono: el del tipo —sitio web, LinkedIn, GitHub u otro— o uno elegido de un catálogo cerrado), interruptores de contacto, vista previa, publicar/despublicar, enlace siempre visible para copiar |
 | `/huella/pronto/:item` | En preparación | Carta de recomendación, historial de postulaciones, preparación de entrevistas |
 
 ## 5. Reglas y detalles

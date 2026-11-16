@@ -41,7 +41,7 @@ internal static class PublicProfileBuilder
             profile.ShowLocation ? profile.Location : null,
             profile.ShowAvailability ? profile.Availability : null,
             new PublicContact(profile.ShowContactEmail ? profile.ContactEmail : null, profile.ShowContactPhone ? profile.ContactPhone : null),
-            r.Links.Where(l => l.IsPublic).Select(l => new PublicLink(l.Kind, l.Label, l.Url)).ToList(),
+            r.Links.Where(l => l.IsPublic).Select(l => new PublicLink(l.Kind, l.Label, l.Url, l.Icon)).ToList(),
             new PublicFacts(
                 professional.Count == 0 ? 0 : Math.Max(0, currentYear - professional.Min()),
                 current?.Role,

@@ -50,12 +50,13 @@ internal sealed class ProfileHandler(HuellaDbContext db, OwnerProfiles owners, I
             errors.Add("links", $"Puede guardar como máximo {MaxLinks} enlaces.");
         }
 
-        var cleaned = new List<(ProfileLinkInput Input, string Kind, string Label, string Url)>();
+        var cleaned = new List<(ProfileLinkInput Input, string Kind, string? Icon, string Label, string Url)>();
         for (var i = 0; i < Math.Min(links.Count, MaxLinks); i++)
         {
             var link = links[i];
             var prefix = $"links[{i}].";
             var kind = errors.OneOf(prefix + "kind", link.Kind, LinkKinds, "other");
+            var icon = string.IsNullOrWhiteSpace(link.Icon) ? null : errors.OneOf(prefix + "icon", link.Icon, LinkIcons.Keys, "link");
             var label = errors.RequiredLine(prefix + "label", link.Label, HuellaLimits.ProfileLink.Label);
             var url = errors.OptionalLink(prefix + "url", link.Url);
             if (url is null && string.IsNullOrWhiteSpace(link.Url))
@@ -63,7 +64,7 @@ internal sealed class ProfileHandler(HuellaDbContext db, OwnerProfiles owners, I
                 errors.Add(prefix + "url", "Escriba una dirección https válida.");
             }
 
-            cleaned.Add((link, kind, label, url ?? string.Empty));
+            cleaned.Add((link, kind, icon, label, url ?? string.Empty));
         }
 
         if (errors.Any)
@@ -96,7 +97,7 @@ internal sealed class ProfileHandler(HuellaDbContext db, OwnerProfiles owners, I
 
         for (var i = 0; i < cleaned.Count; i++)
         {
-            var (item, kind, label, url) = cleaned[i];
+            var (item, kind, icon, label, url) = cleaned[i];
             var entity = item.Id is { } id ? byId[id] : new ProfileLink { Id = Guid.CreateVersion7(), ProfileId = p.Id };
             if (item.Id is null)
             {
@@ -104,6 +105,7 @@ internal sealed class ProfileHandler(HuellaDbContext db, OwnerProfiles owners, I
             }
 
             entity.Kind = kind;
+            entity.Icon = icon;
             entity.Label = label;
             entity.Url = url;
             entity.IsPublic = item.IsPublic ?? true;
@@ -122,7 +124,7 @@ internal sealed class ProfileHandler(HuellaDbContext db, OwnerProfiles owners, I
         return new ProfileView(
             p.DisplayName, p.Headline, p.Summary, p.Location, p.Availability, p.ContactEmail, p.ContactPhone,
             p.ShowContactEmail, p.ShowContactPhone, p.ShowLocation, p.ShowAvailability,
-            links.Select(l => new ProfileLinkView(l.Id, l.Kind, l.Label, l.Url, l.IsPublic)).ToList(),
+            links.Select(l => new ProfileLinkView(l.Id, l.Kind, l.Label, l.Url, l.IsPublic, l.Icon)).ToList(),
             p.IsPublished, p.UpdatedAt);
     }
 }

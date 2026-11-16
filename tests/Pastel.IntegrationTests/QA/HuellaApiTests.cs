@@ -180,6 +180,13 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
             using var response = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/profile", body);
             await QaSupport.AssertProblemAsync(response, HttpStatusCode.BadRequest);
         }
+
+        // El icono de un enlace es solo una clave del catálogo: cualquier otro valor se rechaza y nunca se guarda.
+        var badIcon = ProfileBody(headline: "QA Engineer", links: [new { kind = "website", label = "Sitio", url = "https://ejemplo.com", isPublic = true, icon = "<img src=x onerror=alert(1)>" }]);
+        using (var response = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/profile", badIcon))
+        {
+            await QaSupport.AssertProblemAsync(response, HttpStatusCode.BadRequest);
+        }
     }
 
     // Criterio 8: el token no se guarda en claro (hash para buscar y texto cifrado para que el propietario lo copie) ni llega a la auditoría; regenerar queda auditado.

@@ -36,25 +36,18 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
     internal static string DataJson(CvDocument doc, CvRequestOptions options)
     {
         var en = options.Language == "en";
+        var l = CvLabels.For(en);
         var data = new
         {
             lang = en ? "en" : "es",
             paper = options.Paper == "a4" ? "a4" : "letter",
-            title = (en ? "Resume — " : "CV — ") + doc.Header.Name,
+            title = l.DocumentTitle + " — " + doc.Header.Name,
             name = doc.Header.Name,
             headline = doc.Header.Headline,
             contact1 = doc.Header.ContactLine1,
             contact2 = doc.Header.ContactLine2,
             summary = doc.Summary,
-            labels = new
-            {
-                summary = en ? "Summary" : "Perfil profesional",
-                skills = en ? "Skills" : "Habilidades técnicas",
-                experience = en ? "Experience" : "Experiencia laboral",
-                projects = en ? "Projects" : "Proyectos",
-                education = en ? "Education" : "Educación",
-                extras = en ? "Certifications and languages" : "Certificaciones e idiomas",
-            },
+            labels = new { summary = l.Summary, skills = l.Skills, experience = l.Experience, projects = l.Projects, education = l.Education, extras = l.Extras },
             skills = doc.Skills.Select(g => new { label = g.Label, items = g.Items }),
             experience = doc.Experience.Select(Entry),
             projects = doc.Projects.Select(Entry),
@@ -81,4 +74,13 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();
     }
+}
+
+/// <summary>Títulos de sección del CV en el idioma elegido; los usan el PDF y el Word para decir lo mismo.</summary>
+internal sealed record CvLabels(string DocumentTitle, string Summary, string Skills, string Experience, string Projects, string Education, string Extras)
+{
+    public static CvLabels For(bool en) =>
+        en
+            ? new("Resume", "Summary", "Skills", "Experience", "Projects", "Education", "Certifications and languages")
+            : new("CV", "Perfil profesional", "Habilidades técnicas", "Experiencia laboral", "Proyectos", "Educación", "Certificaciones e idiomas");
 }

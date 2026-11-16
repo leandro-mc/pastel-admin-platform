@@ -25,7 +25,7 @@ internal sealed record PublicProfileDocument(
 
 internal sealed record PublicContact(string? Email, string? Phone);
 
-internal sealed record PublicLink(string Kind, string Label, string Url);
+internal sealed record PublicLink(string Kind, string Label, string Url, string? Icon = null);
 
 internal sealed record PublicFacts(int YearsOfExperience, string? CurrentRole, string? CurrentCompany, string? CurrentSince, string? PreviousRole, string? PreviousCompany, string? PreviousYears);
 

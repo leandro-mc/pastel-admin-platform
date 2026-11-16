@@ -84,6 +84,7 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.ToTable("profile_links");
             e.HasKey(x => x.Id);
             e.Property(x => x.Kind).HasMaxLength(24).IsRequired();
+            e.Property(x => x.Icon).HasMaxLength(24);
             e.Property(x => x.Label).HasMaxLength(60).IsRequired();
             e.Property(x => x.Url).HasMaxLength(2048).IsRequired();
             e.HasIndex(x => x.ProfileId);
