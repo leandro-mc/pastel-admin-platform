@@ -130,7 +130,7 @@ Mapas incrustados y rutas optimizadas, vistas para transportistas, comprobante d
 
 ### Pruebas esenciales — Etapa 1 (las únicas obligatorias ahora)
 
-Política de `docs/TESTING.md`: solo seguridad, autorización, aislamiento, integridad de datos y reglas de negocio críticas; una prueba por defecto concreto, sin matrices ni permutaciones, y **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
+Política: `docs/TESTING.md` §1; **no se amplía sin decisión del propietario**. Los resultados esperados se calculan desde esta ficha, no desde el código.
 
 
 **Reparto proporcional (sección 5)**

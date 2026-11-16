@@ -22,7 +22,7 @@ El rol `Administrator` no recibe los permisos de esta app al sincronizar el cat�
 
 - Cada persona ve y modifica solo sus pendientes (filtro por usuario en el servidor).
 - Diseño preparado para sincronización móvil futura (no se implementa ahora): `UpdatedAt`, borrado lógico (`DeletedAt`), token de concurrencia y escrituras idempotentes con identificador de cliente (`docs/ARCHITECTURE.md` §5 y §7).
-- No se agrega compartir ni grupos sin decisión del propietario; el inventario funcional es `docs/migration/brisa-inventory.md` (está en la rama `docs/brisa-inventory`, aún sin integrar).
+- No se agrega compartir ni grupos sin decisión del propietario; el inventario funcional es `docs/requirements/brisa/INVENTARIO-BRISA.md`.
 
 ## Endpoints
 

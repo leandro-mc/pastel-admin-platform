@@ -75,13 +75,10 @@ Los scripts trabajan sobre una copia temporal del repositorio dentro de contened
 - Administrator sin rol Owner: `test.admin@pastel.local` / `Local-Only-Test-Admin-2026!`
 - Member: `test.member@pastel.local` / `Local-Only-Test-Member-2026!`
 
-Son sintéticas y solo funcionan en `Development`/`Testing`: en `Production` configurar el sembrador provoca un fallo deliberado de arranque. Desactívelo (`TESTING_SEED_ENABLED=false`) en todo entorno compartido.
+Solo para `Development`/`Testing`; protección y uso: `docs/SECURITY.md`, «Cuentas de prueba locales».
 
 ## 6. Verificación manual de Google
 Requiere cuenta real; la hace el propietario. Preparar OAuth: `docs/OPERATIONS.md`. Para probar sin el factor de reiniciar la base: `.\scripts\qa-phase0-stack.ps1 -KeepRunning -SkipFaultInjection`, abrir `http://localhost:18080/ingresar` (registrar `http://localhost:18080/api/auth/google/callback` en Google) y pulsar «Continuar con Google»:
 1. **Cuenta nueva:** entra como `Member`, sin contraseña.
 2. **Vincular al administrador de arranque:** con `$env:BOOTSTRAP_ADMIN_EMAIL` igual al correo de Google, entra a la cuenta de arranque (Administrator y Owner/Superuser) y su contraseña de arranque queda invalidada. Diagnóstico con `qa-inspect-identity.ps1`; compare los correos carácter por carácter.
 Limpieza: el script imprime el comando `docker compose -p pastel-fase0-qa … down -v` (solo afecta al proyecto de QA).
-
-## 7. CI
-Resumen: nunca por commit; solo al aprobar un PR hacia `dev` y solo lo básico (backend + frontend), salvo `ci:completo` o ejecución manual con alcance «completo» (propio de la Etapa 2). Detalle en `docs/GIT_WORKFLOW.md` §3.
