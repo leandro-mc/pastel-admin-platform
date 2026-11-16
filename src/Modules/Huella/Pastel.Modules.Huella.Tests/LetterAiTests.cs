@@ -34,7 +34,7 @@ public sealed class LetterAiTests
             },
         });
 
-        var (letters, rejected) = LetterAi.Parse(json, bank, offer, "QA", "Acme", new DateOnly(2026, 11, 16), new LetterRequest(["es", "en"], "formal"));
+        var (letters, rejected) = LetterAi.Parse(json, bank, offer, "QA", "Acme", new DateOnly(2026, 11, 16), "letter", new LetterRequest(["es", "en"], "formal"));
 
         var letter = Assert.Single(letters);
         Assert.Equal("es", letter.Language);
@@ -55,5 +55,75 @@ public sealed class LetterAiTests
         Assert.Equal("16 de noviembre de 2026", LetterFormat.DateText("2026-11-16", "es"));
         Assert.Equal("November 16, 2026", LetterFormat.DateText("2026-11-16", "en"));
         Assert.Equal(string.Empty, LetterFormat.DateText("no es una fecha", "es"));
+    }
+
+    // Regla de una sola página (como el cupo de un CV): un párrafo que no cabe se omite con su motivo, la carta nunca se encoge
+    // y lo que se conserva siempre entra en la hoja, en cualquiera de los dos tipos de letra.
+    [Fact]
+    public void LetterNeverExceedsOnePage()
+    {
+        var (bank, _, _) = CvAiComposeTests.Bank();
+        var long800 = string.Join(' ', Enumerable.Repeat("Aporto experiencia práctica en pruebas automatizadas con Playwright y mejoro la calidad de las entregas.", 8))[..790];
+        var json = JsonSerializer.Serialize(new
+        {
+            letters = new[]
+            {
+                new
+                {
+                    language = "es",
+                    subject = "Postulación a QA",
+                    greeting = "Estimado equipo de Acme:",
+                    closing = "Atentamente,",
+                    paragraphs = new[] { long800, long800, long800, long800, long800 },
+                },
+            },
+        });
+
+        var (letters, rejected) = LetterAi.Parse(json, bank, "Buscamos QA.", "QA", "Acme", new DateOnly(2026, 11, 16), "letter", new LetterRequest(["es"], "formal"));
+
+        var letter = Assert.Single(letters);
+        Assert.InRange(letter.Document.Paragraphs.Count, LetterLimits.MinParagraphs, LetterLimits.MaxParagraphs - 1);
+        Assert.Contains(rejected, r => r.Contains("no cabe en una página", StringComparison.Ordinal));
+        foreach (var font in LetterLimits.Fonts)
+        {
+            Assert.True(LetterLayout.Fit(letter.Document, font, "letter").Fits);
+        }
+    }
+
+    // El presupuesto que se le pide a la IA cabe en cualquier tipo de letra y papel, y crece con el papel más alto.
+    [Fact]
+    public void BodyBudgetFitsEveryFontAndPaper()
+    {
+        foreach (var paper in new[] { "letter", "a4" })
+        {
+            var budget = LetterLayout.BodyBudget(paper);
+            Assert.InRange(budget, 1500, LetterLimits.MaxTotal);
+            foreach (var font in LetterLimits.Fonts)
+            {
+                var doc = new LetterDoc
+                {
+                    Location = "Costa Rica",
+                    Contact = ["correo@ejemplo.com  ·  8888 8888"],
+                    Recipient = ["Equipo de selección", "Empresa"],
+                    Subject = new string('a', 75),
+                    Greeting = "Estimado equipo de la empresa:",
+                    Paragraphs = [new string('a', budget / 3), new string('a', budget / 3), new string('a', budget / 3)],
+                    Closing = "Atentamente,",
+                };
+                Assert.True(LetterLayout.Fit(doc, font, paper).Fits, $"{font} en {paper}");
+            }
+        }
+    }
+
+    // Cartas anteriores al formato compacto guardaban país, correo y teléfono juntos: el país pasa arriba y el resto queda al pie.
+    [Fact]
+    public void OlderLettersMoveTheCountryUnderTheName()
+    {
+        var doc = new LetterDoc { Contact = ["Costa Rica", "ana@correo.test", "+506 8888 0000"] };
+
+        LetterFormat.Normalize(doc);
+
+        Assert.Equal("Costa Rica", doc.Location);
+        Assert.Equal(["ana@correo.test", "+506 8888 0000"], doc.Contact);
     }
 }

@@ -20,7 +20,7 @@ internal sealed record LetterSummary(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt);
 
-internal sealed record LetterView(LetterSummary Summary, LetterDoc Document, bool PdfAvailable);
+internal sealed record LetterView(LetterSummary Summary, LetterDoc Document, bool PdfAvailable, LetterFit Fit);
 
 /// <summary>Edición de una carta: asunto, saludo, párrafos, despedida, fecha (<c>AAAA-MM-DD</c>), destinatario y tipo de letra. Nombre y contacto salen del banco.</summary>
 internal sealed record LetterEditInput(
@@ -56,7 +56,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     public async Task<Result<LetterView>> GetAsync(Guid id, CancellationToken cancellationToken)
     {
         var loaded = await LoadAsync(id, cancellationToken);
-        return loaded.IsFailure ? loaded.Error : ViewOf(loaded.Value.Letter, loaded.Value.Document);
+        return loaded.IsFailure ? loaded.Error : await ViewAsync(loaded.Value.Letter, loaded.Value.Document, cancellationToken);
     }
 
     public async Task<Result<LetterView>> SaveAsync(Guid id, LetterEditInput input, CancellationToken cancellationToken)
@@ -116,9 +116,23 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             }
         }
 
-        if (paragraphs.Sum(p => p.Length) > LetterLimits.Total)
+        // Regla de una sola página: la carta nunca se encoge, así que si no cabe se pide acortar el texto.
+        var paper = await PaperAsync(cancellationToken);
+        var candidate = new LetterDoc
         {
-            errors.Add("paragraphs", $"La carta excede una página ({LetterLimits.Total} caracteres entre todos los párrafos).");
+            Language = document.Language,
+            Location = document.Location,
+            Contact = document.Contact,
+            Recipient = recipient,
+            Subject = subject,
+            Greeting = greeting,
+            Paragraphs = paragraphs,
+            Closing = closing,
+        };
+        if (!errors.Any && !LetterLayout.Fit(candidate, font, paper).Fits)
+        {
+            var fit = LetterLayout.Fit(candidate, font, paper);
+            errors.Add("paragraphs", $"La carta no cabe en una página con este tipo de letra: ocupa {fit.Used:0.#} de {fit.Capacity} renglones. Acorte el texto (hasta unos {fit.BodyMax} caracteres entre todos los párrafos) o quite un párrafo.");
         }
 
         if (!errors.Any)
@@ -157,7 +171,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         letter.Source = "manual";
         letter.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(letter, document);
+        return await ViewAsync(letter, document, cancellationToken);
     }
 
     public async Task<Result<LetterView>> RenameAsync(Guid id, RenameInput input, CancellationToken cancellationToken)
@@ -178,7 +192,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         loaded.Value.Letter.Name = name;
         loaded.Value.Letter.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(loaded.Value.Letter, loaded.Value.Document);
+        return await ViewAsync(loaded.Value.Letter, loaded.Value.Document, cancellationToken);
     }
 
     /// <summary>Marca la carta como enviada (o la desmarca). Enviarla a una oferta guardada la pasa a «postulada».</summary>
@@ -199,7 +213,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(letter, loaded.Value.Document);
+        return await ViewAsync(letter, loaded.Value.Document, cancellationToken);
     }
 
     public async Task<Result> DeleteAsync(Guid id, CancellationToken cancellationToken)
@@ -239,7 +253,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     }
 
     // ───────────────────────────── IA: redactar la carta ─────────────────────────────
-    private sealed record Prepared(Profile Profile, AiBank Bank, JobOffer Offer, LetterRequest Request, CoverLetter? Existing, string? Name, DateOnly Today);
+    private sealed record Prepared(Profile Profile, AiBank Bank, JobOffer Offer, LetterRequest Request, CoverLetter? Existing, string? Name, DateOnly Today, string Paper);
 
     private async Task<Result<Prepared>> PrepareAsync(AiTaskInput input, CancellationToken cancellationToken)
     {
@@ -292,7 +306,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var offer = await db.JobOffers.SingleOrDefaultAsync(o => o.Id == offerId && o.ProfileId == profile.Value.Id, cancellationToken);
         return offer is null
             ? HuellaErrors.NotFound
-            : new Prepared(profile.Value, bank, offer, new LetterRequest(languages, tone), existing, name, TodayOf(input.Today));
+            : new Prepared(profile.Value, bank, offer, new LetterRequest(languages, tone), existing, name, TodayOf(input.Today), notes.PreferredPaper.Length > 0 ? notes.PreferredPaper : "letter");
     }
 
     /// <summary>Prompt de la carta: la oferta y el banco en crudo. Es el mismo texto para el proveedor configurado y para una IA externa.</summary>
@@ -306,7 +320,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
 
         var p = prepared.Value;
         var analysis = OfferAnalyzer.Analyze(p.Offer.RawText, isFocus: false, p.Bank.Data);
-        var package = LetterAi.BuildPackage(p.Bank, analysis, p.Offer.RawText, p.Offer.Title, p.Offer.Company, p.Request);
+        var package = LetterAi.BuildPackage(p.Bank, analysis, p.Offer.RawText, p.Offer.Title, p.Offer.Company, p.Paper, p.Request);
         var languages = string.Join("-", p.Request.Languages);
         return new AiTaskPackage(AiTaskHandler.Letter, $"Carta de presentación ({string.Join(" + ", p.Request.Languages.Select(l => l.ToUpperInvariant()))})", $"huella-carta-{languages}", package.Prompt, package.Schema);
     }
@@ -321,7 +335,7 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var p = prepared.Value;
-        var (composed, rejected) = LetterAi.Parse(raw, p.Bank, p.Offer.RawText, p.Offer.Title, p.Offer.Company, p.Today, p.Request);
+        var (composed, rejected) = LetterAi.Parse(raw, p.Bank, p.Offer.RawText, p.Offer.Title, p.Offer.Company, p.Today, p.Paper, p.Request);
         if (composed.Count == 0)
         {
             return rejected.Count == 0 ? invalid : new AiTaskOutcome(AiTaskHandler.Letter, 0, rejected, [], []);
@@ -394,6 +408,8 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             document.Font = "times";
         }
 
+        LetterFormat.Normalize(document);
+
         return (letter, document);
     }
 
@@ -417,7 +433,8 @@ internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             : utc;
     }
 
-    private LetterView ViewOf(CoverLetter letter, LetterDoc document) => new(SummaryOf(letter), document, renderer.IsAvailable);
+    private async Task<LetterView> ViewAsync(CoverLetter letter, LetterDoc document, CancellationToken cancellationToken) =>
+        new(SummaryOf(letter), document, renderer.IsAvailable, LetterLayout.Fit(document, document.Font, await PaperAsync(cancellationToken)));
 
     private static LetterSummary SummaryOf(CoverLetter l) =>
         new(l.Id, l.Name, l.Language, l.Tone, l.Source, l.SentAt, l.JobOfferId, l.CreatedAt, l.UpdatedAt);

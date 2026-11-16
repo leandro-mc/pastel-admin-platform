@@ -344,8 +344,8 @@ export const strings = {
         },
         title: "Texto de la carta",
         description:
-          "La carta sigue la forma de una carta formal: remitente, fecha, destinatario, asunto, saludo, cuerpo con sangría y texto justificado, despedida y firma. Su nombre y contacto salen del banco; lo que escriba no puede traer cifras que su banco o la oferta no tengan.",
-        sender: "Remitente",
+          "Carta formal compacta: arriba su nombre con la fecha a la derecha y su país; después destinatario, asunto, saludo, cuerpo con sangría y texto justificado y despedida; al pie, bajo su nombre, el correo y el teléfono. Su nombre y datos salen del banco; lo que escriba no puede traer cifras que su banco o la oferta no tengan.",
+        sender: "Remitente (del banco)",
         font: "Tipo de letra",
         fonts: { times: "Times New Roman", arial: "Arial" },
         date: "Fecha de la carta",
@@ -360,7 +360,13 @@ export const strings = {
         addParagraph: "Agregar párrafo",
         counter: (n: number, max: number) => `${n} de ${max} caracteres`,
         total: (n: number, max: number) =>
-          `${n} de ${max} caracteres en total (una página)`,
+          `${n} de unos ${max} caracteres entre todos los párrafos`,
+        fits: (used: number, capacity: number) =>
+          `Cabe en una página: ocupa ${used.toString().replace(".", ",")} de ${capacity} renglones.`,
+        overflows: (used: number, capacity: number) =>
+          `No cabe en una página: ocupa ${used.toString().replace(".", ",")} de ${capacity} renglones. Acorte el texto o quite un párrafo.`,
+        onePageRule:
+          "La carta siempre debe entrar en una sola página: no se encoge, se acorta.",
         save: "Guardar cambios",
         removeParagraph: "este párrafo",
         sendTitle: "Envío y descarga",

@@ -26,7 +26,7 @@ import { AiTaskPanel } from "./AiTaskPanel";
 import { ErrorNotice, TextAreaField, fieldError } from "./Form";
 
 const t = strings.studio.letter.editor;
-const MAX = { subject: 120, greeting: 120, closing: 60, paragraph: 800, total: 2400, paragraphs: 5, min: 2 } as const;
+const MAX = { subject: 120, greeting: 120, closing: 60, paragraph: 800, paragraphs: 5, min: 2 } as const;
 
 function fileName(name: string) {
   const safe = name
@@ -140,11 +140,12 @@ function ContentForm({ letter }: { letter: Letter }) {
         <div className="rounded-lg border border-line bg-surface-raised p-4">
           <p className="text-sm text-muted">{t.sender}</p>
           <p className="text-base font-semibold text-fg">{doc.signature}</p>
-          {doc.contact.map((line) => (
-            <p key={line} className="text-sm text-fg-secondary">
-              {line}
-            </p>
-          ))}
+          {doc.location ? (
+            <p className="text-sm text-fg-secondary">{doc.location}</p>
+          ) : null}
+          {doc.contact.length > 0 ? (
+            <p className="text-sm text-muted">{doc.contact.join(" · ")}</p>
+          ) : null}
         </div>
 
         <div className="grid items-end gap-4 sm:grid-cols-[1fr_auto_1fr]">
@@ -226,10 +227,21 @@ function ContentForm({ letter }: { letter: Letter }) {
           >
             {t.addParagraph}
           </Button>
-          <span className={`text-sm ${total > MAX.total ? "text-danger" : "text-muted"}`}>
-            {t.total(total, MAX.total)}
+          <span
+            className={`text-sm ${total > letter.fit.bodyMax ? "text-danger" : "text-muted"}`}
+          >
+            {t.total(total, letter.fit.bodyMax)}
           </span>
         </div>
+        <p
+          role="status"
+          className={`text-sm ${letter.fit.used > letter.fit.capacity ? "text-danger" : "text-muted"}`}
+        >
+          {letter.fit.used > letter.fit.capacity
+            ? t.overflows(letter.fit.used, letter.fit.capacity)
+            : t.fits(letter.fit.used, letter.fit.capacity)}{" "}
+          {t.onePageRule}
+        </p>
         {err("paragraphs") ? <p className="text-sm text-danger">{err("paragraphs")}</p> : null}
         <TextField
           label={t.closing}
@@ -387,19 +399,19 @@ function longDate(iso: string, language: string): string {
   }).format(new Date(Date.UTC(y, m - 1, d)));
 }
 
-/** La carta como texto, con la forma de una carta formal (un renglón en blanco entre bloques), para pegarla en un formulario. */
+/** La carta como texto, con la forma de una carta formal compacta (un renglón en blanco entre bloques), para pegarla en un formulario. */
 function letterText(doc: Letter["document"]): string {
   const subject = doc.language === "en" ? "Subject:" : "Asunto:";
   const date = longDate(doc.date, doc.language);
   const blocks = [
-    [doc.signature, ...doc.contact],
+    [doc.signature, ...(doc.location ? [doc.location] : [])],
     date ? [date] : [],
     doc.recipient,
     doc.subject ? [`${subject} ${doc.subject}`] : [],
     [doc.greeting],
     doc.paragraphs,
     [doc.closing],
-    [doc.signature],
+    [doc.signature, ...(doc.contact.length > 0 ? [doc.contact.join(" · ")] : [])],
   ].filter((b) => b.length > 0);
   return blocks.map((b) => b.join("\n")).join("\n\n");
 }

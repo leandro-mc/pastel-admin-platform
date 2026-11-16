@@ -531,6 +531,21 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
             Assert.Matches(@"^\d{4}-\d{2}-\d{2}$", letter.GetProperty("date").GetString());
             Assert.Equal("Acme", letter.GetProperty("recipient")[1].GetString());
             Assert.Equal("times", letter.GetProperty("font").GetString());
+            var fit = doc.RootElement.GetProperty("fit");
+            Assert.True(fit.GetProperty("used").GetDouble() <= fit.GetProperty("capacity").GetInt32());
+        }
+
+        // Regla de una sola página: una carta que no cabe se rechaza (nunca se encoge).
+        var paragraph = string.Join(' ', Enumerable.Repeat("Aporto experiencia práctica en pruebas automatizadas con Playwright.", 14))[..790];
+        using (var tooLong = await QaSupport.SendAsync(owner, HttpMethod.Put, $"/api/huella/studio/letters/{letterId}/content", new
+        {
+            subject = "Postulación a QA",
+            greeting = "Estimado equipo:",
+            closing = "Atentamente,",
+            paragraphs = new[] { paragraph, paragraph, paragraph, paragraph, paragraph },
+        }))
+        {
+            await QaSupport.AssertProblemAsync(tooLong, HttpStatusCode.BadRequest);
         }
 
         // Editar: una cifra que no está en el banco ni en la oferta se rechaza.

@@ -298,6 +298,9 @@ export const letterSummarySchema = z.object({
 export const letterDocSchema = z.object({
   language: text,
   signature: text,
+  /** País o ciudad: va bajo el nombre, arriba. */
+  location: text,
+  /** Correo y teléfono: van al pie, bajo el nombre de la firma. */
   contact: z.array(text),
   /** Fecha de la carta (`AAAA-MM-DD`). */
   date: text,
@@ -314,6 +317,13 @@ export const letterSchema = z.object({
   summary: letterSummarySchema,
   document: letterDocSchema,
   pdfAvailable: z.boolean(),
+  /** Cupo de una página: renglones usados y disponibles, y caracteres de cuerpo (usados y máximos con este encabezado). */
+  fit: z.object({
+    used: z.number(),
+    capacity: z.number(),
+    bodyChars: z.number(),
+    bodyMax: z.number(),
+  }),
 });
 
 export const versionSchema = z.object({

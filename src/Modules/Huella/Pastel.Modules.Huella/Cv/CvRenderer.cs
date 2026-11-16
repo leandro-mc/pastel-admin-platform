@@ -50,6 +50,7 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
             paper = paper == "a4" ? "a4" : "letter",
             title = (en ? "Cover letter — " : "Carta de presentación — ") + letter.Signature,
             signature = letter.Signature,
+            location = letter.Location,
             contact = letter.Contact,
             font = LetterFormat.PdfFont(letter.Font),
             size = LetterFormat.Size(letter.Font),
