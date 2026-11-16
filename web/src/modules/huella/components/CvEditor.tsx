@@ -13,6 +13,7 @@ import {
 import {
   downloadCvDocx,
   downloadCvPdf,
+  fetchCvPdf,
   useEditLine,
   useRenameVersion,
   useSetPublicVersion,
@@ -24,6 +25,7 @@ import { AiTaskPanel } from "./AiTaskPanel";
 import { formatDateTime } from "../lib/format";
 import { ErrorNotice, TextAreaField } from "./Form";
 import { EvidenceList } from "./OfferPanel";
+import { PdfPreview } from "./PdfPreview";
 
 const t = strings.studio.editor;
 
@@ -192,6 +194,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
     <Tabs defaultSelectedKey="content">
       <TabList aria-label={t.tabs.label}>
         <Tab id="content">{t.tabs.content}</Tab>
+        <Tab id="preview">{t.tabs.preview}</Tab>
         <Tab id="send">{t.tabs.send}</Tab>
         <Tab id="review">
           {t.tabs.review}
@@ -377,6 +380,15 @@ export function CvEditor({ version }: { version: CvVersion }) {
 
         </div>
       </Panel>
+      </TabPanel>
+
+      <TabPanel id="preview">
+        <PdfPreview
+          title={strings.studio.preview.cvFrame}
+          load={() => fetchCvPdf(summary.id)}
+          version={`${summary.id}-${summary.updatedAt}`}
+          available={version.pdfAvailable}
+        />
       </TabPanel>
 
       <TabPanel id="send">

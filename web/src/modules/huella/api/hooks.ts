@@ -501,6 +501,16 @@ export async function downloadLetter(
   saveFile(blob, fileName);
 }
 
+/** El PDF de una versión del CV (para la vista previa), pedido con la sesión vigente. */
+export function fetchCvPdf(id: string) {
+  return api.blob(`${base}/studio/versions/${id}/pdf`, { retries: 0 });
+}
+
+/** El PDF de una carta (para la vista previa), pedido con la sesión vigente. */
+export function fetchLetterPdf(id: string) {
+  return api.blob(`${base}/studio/letters/${id}/pdf`, { retries: 0 });
+}
+
 /** Descarga el PDF de una versión con la sesión vigente y lo entrega al navegador como archivo. */
 export async function downloadCvPdf(id: string, fileName: string) {
   const blob = await api.blob(`${base}/studio/versions/${id}/pdf`, {

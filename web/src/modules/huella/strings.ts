@@ -358,6 +358,7 @@ export const strings = {
         tabs: {
           label: "Secciones de la carta",
           content: "Contenido",
+          preview: "Vista previa",
           send: "Enviar y descargar",
           redo: "Volver a redactar",
         },
@@ -545,10 +546,23 @@ export const strings = {
       deleteMessage: "Esta versión del CV se eliminará de forma permanente.",
       rename: "Nombre",
     },
+    preview: {
+      title: "Vista previa del PDF",
+      description:
+        "El mismo PDF que se descarga, tal como lo verá quien lo reciba. Se actualiza cuando edita o vuelve a redactar el documento.",
+      cvFrame: "Vista previa del CV en PDF",
+      letterFrame: "Vista previa de la carta en PDF",
+      openTab: "Abrir en pestaña nueva",
+      loading: "Preparando el PDF…",
+      retry: "Reintentar",
+      unavailable:
+        "El motor de PDF no está instalado en este servidor: use el Word o el texto para revisarlo.",
+    },
     editor: {
       tabs: {
         label: "Secciones del CV",
         content: "Contenido",
+        preview: "Vista previa",
         send: "Enviar y descargar",
         review: "Revisión ATS",
         redo: "Volver a redactar",

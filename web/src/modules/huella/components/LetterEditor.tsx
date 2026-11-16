@@ -14,6 +14,7 @@ import {
 } from "@/core/ui";
 import {
   downloadLetter,
+  fetchLetterPdf,
   useRenameLetter,
   useSaveLetter,
   useSetSentLetter,
@@ -24,6 +25,7 @@ import { inDays } from "../lib/tracking";
 import { strings } from "../strings";
 import { AiTaskPanel } from "./AiTaskPanel";
 import { ErrorNotice, TextAreaField, fieldError } from "./Form";
+import { PdfPreview } from "./PdfPreview";
 
 const t = strings.studio.letter.editor;
 const MAX = { subject: 120, greeting: 120, closing: 60, paragraph: 800, paragraphs: 5, min: 2 } as const;
@@ -45,12 +47,21 @@ export function LetterEditor({ letter }: { letter: Letter }) {
     <Tabs defaultSelectedKey="content">
       <TabList aria-label={t.tabs.label}>
         <Tab id="content">{t.tabs.content}</Tab>
+        <Tab id="preview">{t.tabs.preview}</Tab>
         <Tab id="send">{t.tabs.send}</Tab>
         <Tab id="redo">{t.tabs.redo}</Tab>
       </TabList>
       <TabPanel id="content">
         {/* La clave reinicia el borrador cuando el texto cambia en el servidor (guardado o IA). */}
         <ContentForm key={summary.updatedAt} letter={letter} />
+      </TabPanel>
+      <TabPanel id="preview">
+        <PdfPreview
+          title={strings.studio.preview.letterFrame}
+          load={() => fetchLetterPdf(summary.id)}
+          version={`${summary.id}-${summary.updatedAt}`}
+          available={letter.pdfAvailable}
+        />
       </TabPanel>
       <TabPanel id="send">
         <SendPanel letter={letter} />
