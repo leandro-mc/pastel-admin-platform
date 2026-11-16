@@ -82,7 +82,7 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
             contact1 = doc.Header.ContactLine1,
             contact2 = doc.Header.ContactLine2,
             summary = doc.Summary,
-            labels = new { summary = l.Summary, skills = l.Skills, experience = l.Experience, projects = l.Projects, education = l.Education, extras = doc.ExtrasLabel ?? l.Extras },
+            labels = new { summary = l.Summary, skills = l.Skills, experience = l.Experience, projects = l.Projects, education = l.Education, extras = doc.ExtrasLabel ?? l.Extras, competencies = l.Competencies },
             skills = doc.Skills.Select(g => new { label = g.Label, items = g.Items }),
             competencies = doc.Competencies.Select(g => new { label = g.Label, items = g.Items.Select(c => new { name = c.Name, note = c.Note }) }),
             experience = doc.Experience.Select(Entry),
@@ -125,10 +125,13 @@ internal sealed record CvLabels(
     string Languages,
     string Certifications,
     string PersonalCompetencies,
-    string TechnicalCompetencies)
+    string TechnicalCompetencies,
+    string Competencies,
+    string PersonalShort,
+    string TechnicalShort)
 {
     public static CvLabels For(bool en) =>
         en
-            ? new("Resume", "Summary", "Skills", "Experience", "Projects", "Education", "Certifications and languages", "Languages", "Certifications", "Personal competencies", "Technical competencies")
-            : new("CV", "Perfil profesional", "Habilidades técnicas", "Experiencia laboral", "Proyectos", "Educación", "Certificaciones e idiomas", "Idiomas", "Certificaciones", "Competencias personales", "Competencias técnicas");
+            ? new("Resume", "Summary", "Skills", "Experience", "Projects", "Education", "Certifications and languages", "Languages", "Certifications", "Personal competencies", "Technical competencies", "Competencies", "Personal", "Technical")
+            : new("CV", "Perfil profesional", "Habilidades técnicas", "Experiencia laboral", "Proyectos", "Educación", "Certificaciones e idiomas", "Idiomas", "Certificaciones", "Competencias personales", "Competencias técnicas", "Competencias", "Personales", "Técnicas");
 }

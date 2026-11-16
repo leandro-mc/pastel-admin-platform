@@ -12,6 +12,7 @@ Backend: `src/Modules/Huella/MODULE.md`. Producto: `docs/modules/HUELLA.md`.
 | `/huella/cv`           | Crear CV y carta en tres pestañas (Ofertas, Generar, Documentos) con barra de contexto fija; el lugar vive en `?oferta=&vista=&doc=&tipo=` (`lib/studioState.ts`) | Owner                         |
 | `/huella/historial`    | Historial de postulaciones: estado, fechas, seguimiento y notas por oferta, con los documentos enviados                                         | Owner                         |
 | `/huella/perfil`       | Contenido del perfil (`ContentPanel`: español editable, inglés sincronizado), datos y enlaces con icono, vista previa, publicar/despublicar, enlace | Owner                         |
+| `/huella/pdf/:tipo/:id` | PDF de un CV (`cv`) o una carta (`carta`) a pantalla completa (`platformRoutes`, `session: true`, `bare`), pedido con la sesión y mostrado desde una URL `blob:`; lo abre «Abrir PDF» en Documentos en una pestaña nueva | Owner |
 | `/huella/vista-previa` | **Vista previa real** del borrador (`platformRoutes`, `session: true`, `bare`, pestaña nueva) con los mismos componentes que el enlace público | Owner |
 | `/huella/ia`           | Configurar IA: proveedor (Gemini, OpenAI, Anthropic), clave y modelo cargado desde el proveedor                | Owner                         |
 | `/huella/pronto/:item` | «En preparación»: entrevistas (sin acciones falsas); `postulaciones` y `recomendacion` redirigen a Historial y Crear CV                          | Owner                         |

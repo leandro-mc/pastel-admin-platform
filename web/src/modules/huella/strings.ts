@@ -555,6 +555,10 @@ export const strings = {
       openTab: "Abrir en pestaña nueva",
       loading: "Preparando el PDF…",
       retry: "Reintentar",
+      openPdf: "Abrir PDF",
+      openPdfLabel: (name: string) => `Abrir el PDF de «${name}» en una pestaña nueva`,
+      loadFailed:
+        "No se pudo abrir el PDF. Revise que la sesión siga abierta o que el motor de PDF esté instalado en el servidor.",
       unavailable:
         "El motor de PDF no está instalado en este servidor: use el Word o el texto para revisarlo.",
     },

@@ -88,10 +88,10 @@ public sealed class CvCompetenciesTests
         Assert.DoesNotContain(doc.Experience, e => e.Subtitle == "Otra Empresa");
     }
 
-    // Aislamiento de la verdad: el CV de competencias solo usa competencias del catálogo del banco; el tipo debe coincidir y
-    // una nota con cifras ajenas al banco se descarta sin tirar la competencia.
+    // Aislamiento de la verdad: el CV de competencias solo usa competencias del catálogo del banco y el tipo debe coincidir.
+    // Van solo con su nombre: una nota que traiga la IA (aunque tenga cifras ajenas) nunca llega al CV.
     [Fact]
-    public void CompetenciesComeOnlyFromTheBankCatalogAndNotesPassTheGuardian()
+    public void CompetenciesComeOnlyFromTheBankCatalogAndCarryNoNotes()
     {
         var f = Build();
         var json = JsonSerializer.Serialize(new
@@ -134,7 +134,8 @@ public sealed class CvCompetenciesTests
         var technical = Assert.Single(doc.Competencies, g => g.Kind == CompetencyKinds.Technical);
         var item = Assert.Single(technical.Items);
         Assert.Null(item.Note);
-        Assert.Contains(rejected, r => r.Contains("999", StringComparison.Ordinal));
+        Assert.All(doc.Competencies.SelectMany(g => g.Items), c => Assert.Null(c.Note));
+        Assert.DoesNotContain(rejected, r => r.Contains("999", StringComparison.Ordinal));
         var checks = CvGuardian.Checks(doc, f.Bank.Data, CvLimits.For("junior", "letter", CvFormats.Competencies), "es");
         Assert.Contains(checks, c => c.Label.StartsWith("Toda competencia", StringComparison.Ordinal) && c.Passed);
     }

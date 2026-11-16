@@ -38,7 +38,7 @@ internal static class CvAiCompose
 
     private const string CompetenciesSchema =
         "{\"versions\":[{\"language\":\"es|en\",\"headline\":\"string\",\"summary\":\"string\","
-        + "\"competencies\":{\"personal\":[{\"id\":\"uuid\",\"name\":\"string\",\"note\":\"string|null\"}],\"technical\":[{\"id\":\"uuid\",\"name\":\"string\",\"note\":\"string|null\"}]},"
+        + "\"competencies\":{\"personal\":[{\"id\":\"uuid\",\"name\":\"string\"}],\"technical\":[{\"id\":\"uuid\",\"name\":\"string\"}]},"
         + ExperienceSchema + ","
         + TailSchema;
 
@@ -84,13 +84,14 @@ internal static class CvAiCompose
         sb.AppendLine("## Nivel y límites");
         sb.AppendLine(CultureInfo.InvariantCulture, $"- Nivel {limits.Level}: máximo {limits.Pages} página(s), papel {request.Paper}. Una viñeta ocupa ceil(caracteres / {limits.BulletCharsPerLine}) líneas. El cupo es de {limits.CapacityLu} líneas en total y no se puede pasar: si te pasas, el servidor retira viñetas o proyectos. Respeta los presupuestos de cada sección y úsalos completos.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"- headline: máximo {HeadlineMax} caracteres. summary: máximo {limits.SummaryMax} caracteres.");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- experience: como máximo {limits.Entries}. Presupuesto de LÍNEAS (no de viñetas) por entrada, de la más reciente a la más antigua: [{string.Join(", ", limits.EntryLines.Take(limits.Entries))}]. Una viñeta de hasta {limits.BulletCharsPerLine} caracteres ocupa 1 línea; una más larga (máximo {limits.BulletMax}) ocupa 2. Ejemplo: con 3 líneas caben tres viñetas de una línea, o una de dos y una de una; si escribes viñetas de dos líneas, solo cabe una y el servidor retira las demás. Cuando el enfoque o la oferta pidan desarrollar la experiencia, prefiere VARIAS viñetas de una línea a pocas largas.");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- Cada viñeta (de experiencia y de proyectos) es un objeto {{\"text\", \"short\"}}: `text` es la versión completa ({BulletMin} a {limits.BulletMax} caracteres) y `short` la MISMA idea en una sola línea (máximo {limits.BulletCharsPerLine} caracteres, con las mismas cifras o menos). El servidor usa `short` cuando la versión completa no cabe, en vez de quitar la viñeta.");
+        var bulletCounts = string.Join(", ", limits.EntryLines.Take(limits.Entries).Select(l => (l + 1) / 2));
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- experience: como máximo {limits.Entries}. Presupuesto de LÍNEAS por entrada, de la más reciente a la más antigua: [{string.Join(", ", limits.EntryLines.Take(limits.Entries))}]. Una viñeta de hasta {limits.BulletCharsPerLine} caracteres ocupa 1 línea; una más larga (máximo {limits.BulletMax}) ocupa 2. CALIDAD ANTES QUE CANTIDAD: escribe unas [{bulletCounts}] viñetas por entrada, cada una COMPLETA (acción + cómo + resultado); la primera, la más fuerte, puede ocupar dos líneas. Nunca partas una idea en viñetas cortas que no dicen el resultado: mejor dos viñetas que digan algo que cuatro que se quedan cortas. No te pases del presupuesto: lo que sobra se retira, empezando por la viñeta menos importante.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- Cada viñeta (de experiencia y de proyectos) es un objeto {{\"text\", \"short\"}}: `text` es la versión completa ({BulletMin} a {limits.BulletMax} caracteres) y `short` la misma idea en una línea (máximo {limits.BulletCharsPerLine} caracteres) CONSERVANDO el resultado o la cifra; si no se puede sin perderlo, repite `text`. `short` es solo un último recurso del servidor: nunca se usa en la viñeta principal de una entrada.");
         if (competencies)
         {
             sb.AppendLine("- Este CV lo leen personas de recursos humanos y agencias de empleo que NO son de TI: explica cada experiencia en lenguaje claro (qué se necesitaba, qué hizo la persona y qué cambió). Nombra tecnologías solo cuando aporten (máximo dos por viñeta) y no uses siglas sin explicarlas. Da peso a la gestión, el trabajo en equipo, la planificación, la coordinación y la comunicación.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre 4 y {limits.PersonalCompetencies} personales y entre 4 y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). Las que tienen `alwaysInclude: true` van SIEMPRE. El catálogo llega en orden aleatorio: el orden no indica importancia. Elige con criterio según la OFERTA o el ENFOQUE, no siempre las mismas, y considera TODO el catálogo. Las personales deben equilibrar tres tipos: al menos una de pensamiento (analítico y crítico, resolución de problemas), una de relación con otras personas (comunicación, trabajo en equipo, liderazgo) y una de autogestión (adaptabilidad, iniciativa y toma de decisiones, gestión del tiempo, aprendizaje). Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"- `note` es OBLIGATORIA en TODAS (o todas llevan nota o ninguna): una frase propia de máximo {CvLimits.CompetencyNoteMax} caracteres con el hecho de su `evidence` que MEJOR respalda esa competencia para esta oferta o enfoque. NO copies la primera frase de la evidencia: elige y redacta. No repitas las palabras del nombre, no reutilices un hecho ya usado en otra competencia y no apoyes más de dos notas en la misma experiencia: reparte entre las distintas experiencias del CV. La nota solo puede referirse a experiencias que aparecen en ESTE CV (por su organización): nunca nombres proyectos, sistemas ni personas que el CV no muestra. Si no hay un hecho concreto para una competencia, no la elijas: mejor menos que relleno.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre 5 y {limits.PersonalCompetencies} personales y entre 5 y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). SOLO el nombre, sin notas: se muestran en dos renglones y la evidencia la dan las viñetas de experiencia. Las que tienen `alwaysInclude: true` van SIEMPRE. El catálogo llega en orden aleatorio: el orden no indica importancia. Elige con criterio según la OFERTA o el ENFOQUE, no siempre las mismas, y considera TODO el catálogo. Las personales deben equilibrar tres tipos: al menos una de pensamiento (analítico y crítico, resolución de problemas), una de relación con otras personas (comunicación, trabajo en equipo, liderazgo) y una de autogestión (adaptabilidad, iniciativa y toma de decisiones, gestión del tiempo, aprendizaje). Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión.");
+            sb.AppendLine("- Las viñetas de experiencia deben DEMOSTRAR con hechos las competencias elegidas, sin nombrarlas: que cada competencia personal quede respaldada por al menos una viñeta.");
         }
         else
         {
@@ -229,7 +230,7 @@ internal static class CvAiCompose
 
         doc.Skills = Skills(item, bank, limits, warnings);
         CompleteSkills(doc, bank, limits, analysis, warnings);
-        doc.Competencies = request.IsCompetencies ? Competencies(item, bank, limits, labels, doc.Projects.Select(p => p.Title).ToList(), warnings) : [];
+        doc.Competencies = request.IsCompetencies ? Competencies(item, bank, limits, labels, warnings) : [];
 
         var seenEducation = new HashSet<Guid>();
         foreach (var entry in Items(item, "education"))
@@ -513,20 +514,20 @@ internal static class CvAiCompose
     }
 
     /// <summary>
-    /// Competencias elegidas del catálogo del banco por su id (nunca una inventada), de cada tipo hasta su tope. El nombre puede
-    /// venir traducido y la nota es una frase corta de evidencia; las dos pasan por el guardián.
+    /// Competencias elegidas del catálogo del banco por su id (nunca una inventada), de cada tipo hasta su tope, solo con su
+    /// nombre: la evidencia la dan las viñetas de experiencia. El nombre puede venir traducido y pasa por el guardián; las
+    /// marcadas «siempre en el CV» entran aunque la IA no las elija (desplazan a la última).
     /// </summary>
-    private static List<CvCompetencyGroup> Competencies(JsonElement item, AiBank bank, CvLimits limits, CvLabels labels, IReadOnlyCollection<string> shownProjects, List<string> warnings)
+    private static List<CvCompetencyGroup> Competencies(JsonElement item, AiBank bank, CvLimits limits, CvLabels labels, List<string> warnings)
     {
         var result = new List<CvCompetencyGroup>();
         var root = item.ValueKind == JsonValueKind.Object && item.TryGetProperty("competencies", out var found) && found.ValueKind == JsonValueKind.Object
             ? found
             : default;
-
         var kinds = new[]
         {
-            (Kind: CompetencyKinds.Personal, Property: "personal", Label: labels.PersonalCompetencies, Max: limits.PersonalCompetencies),
-            (Kind: CompetencyKinds.Technical, Property: "technical", Label: labels.TechnicalCompetencies, Max: limits.TechnicalCompetencies),
+            (Kind: CompetencyKinds.Personal, Property: "personal", Label: labels.PersonalShort, Max: limits.PersonalCompetencies),
+            (Kind: CompetencyKinds.Technical, Property: "technical", Label: labels.TechnicalShort, Max: limits.TechnicalCompetencies),
         };
         foreach (var (kind, property, label, max) in kinds)
         {
@@ -552,28 +553,9 @@ internal static class CvAiCompose
                     name = competency.Name;
                 }
 
-                string? note = null;
-                var written = TextInput.CleanLine(Str(entry, "note"));
-                if (written.Length > 0)
-                {
-                    if (CvGuardian.ValidateWritten(written, CvLimits.CompetencyNoteMax, bank.Numbers, bank.Data) is { } reason)
-                    {
-                        warnings.Add($"Competencia «{competency.Name}»: {reason}");
-                    }
-                    else if (HiddenProject(written, bank, shownProjects) is { } hidden)
-                    {
-                        warnings.Add($"Competencia «{competency.Name}»: la nota nombra «{hidden}», que este CV no muestra; se usa la del banco.");
-                    }
-                    else
-                    {
-                        note = written;
-                    }
-                }
-
-                group.Items.Add(new CvCompetency { Id = id, Name = name, Note = note ?? BankNote(competency, bank, shownProjects) });
+                group.Items.Add(new CvCompetency { Id = id, Name = name });
             }
 
-            // Las que el banco marca «siempre en el CV» entran aunque la IA no las haya elegido (desplazan a la última).
             foreach (var pinned in bank.Records.Competencies.Where(c => c.Kind == kind && c.IsVisible && c.AlwaysInclude && !seen.Contains(c.Id)))
             {
                 if (max <= 0)
@@ -586,9 +568,9 @@ internal static class CvAiCompose
                     group.Items.RemoveAt(group.Items.Count - 1);
                 }
 
-                group.Items.Add(new CvCompetency { Id = pinned.Id, Name = pinned.Name, Note = BankNote(pinned, bank, shownProjects) });
+                group.Items.Add(new CvCompetency { Id = pinned.Id, Name = pinned.Name });
                 seen.Add(pinned.Id);
-                warnings.Add($"Competencia «{pinned.Name}»: va siempre en el CV; se agregó con la nota del banco porque la IA no la eligió.");
+                warnings.Add($"Competencia «{pinned.Name}»: va siempre en el CV; se agregó porque la IA no la eligió.");
             }
 
             if (group.Items.Count > 0)
@@ -597,69 +579,7 @@ internal static class CvAiCompose
             }
         }
 
-        // Uniformes: o todas llevan nota o ninguna. Primero se retiran las que no la tienen (salvo las fijas); si aún queda
-        // alguna fija sin nota, se quitan todas las notas.
-        var all = result.SelectMany(g => g.Items).ToList();
-        if (all.Any(c => c.Note is null) && all.Any(c => c.Note is not null))
-        {
-            var pinnedIds = bank.Records.Competencies.Where(c => c.AlwaysInclude).Select(c => c.Id).ToHashSet();
-            foreach (var group in result)
-            {
-                foreach (var bare in group.Items.Where(c => c.Note is null && !pinnedIds.Contains(c.Id)).ToList())
-                {
-                    group.Items.Remove(bare);
-                    warnings.Add($"Competencia «{bare.Name}»: sin nota con un hecho concreto; se retira para que todas vayan igual.");
-                }
-            }
-
-            if (result.SelectMany(g => g.Items).Any(c => c.Note is null))
-            {
-                foreach (var competency in result.SelectMany(g => g.Items))
-                {
-                    competency.Note = null;
-                }
-
-                warnings.Add("Competencias: una competencia fija no tiene nota; se muestran todas sin nota para que vayan igual.");
-            }
-
-            result.RemoveAll(g => g.Items.Count == 0);
-        }
-
         return result;
-    }
-
-    /// <summary>
-    /// Nota de respaldo de una competencia: la primera frase de su evidencia en el banco, si es corta, pasa el guardián y no
-    /// nombra proyectos que el CV no muestra. Por eso las evidencias del catálogo empiezan con una frase breve y autosuficiente.
-    /// </summary>
-    private static string? BankNote(Competency competency, AiBank bank, IReadOnlyCollection<string> shownProjects)
-    {
-        // Primera frase: corta en un punto seguido de espacio (no en «.NET») o en «:» o «;».
-        var first = TextInput.CleanLine(System.Text.RegularExpressions.Regex.Split(competency.Evidence, @"\.(?:\s|$)|[:;]")[0]);
-        return first.Length is > 0 and <= CvLimits.CompetencyNoteMax
-            && CvGuardian.ValidateWritten(first, CvLimits.CompetencyNoteMax, bank.Numbers, bank.Data) is null
-            && HiddenProject(first, bank, shownProjects) is null
-                ? first
-                : null;
-    }
-
-    /// <summary>El nombre de un proyecto del banco que el texto menciona y que el CV no muestra (quien lee no sabría qué es).</summary>
-    private static string? HiddenProject(string text, AiBank bank, IReadOnlyCollection<string> shownProjects)
-    {
-        foreach (var project in bank.Records.Projects.Where(p => !shownProjects.Contains(p.Name)))
-        {
-            var full = project.Name.Split(" (")[0].Trim();
-            var first = full.Split(' ')[0];
-            foreach (var token in new[] { full, first }.Where(t => t.Length >= 4).Distinct())
-            {
-                if (System.Text.RegularExpressions.Regex.IsMatch(text, $@"(?<![\p{{L}}\p{{N}}]){System.Text.RegularExpressions.Regex.Escape(token)}(?![\p{{L}}\p{{N}}])"))
-                {
-                    return token;
-                }
-            }
-        }
-
-        return null;
     }
 
     /// <summary>Nivel de idioma en palabras con su marco común («Intermedio (B1)»), si la IA o el banco solo traen el código.</summary>

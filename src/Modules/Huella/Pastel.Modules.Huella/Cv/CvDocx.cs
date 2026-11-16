@@ -101,13 +101,15 @@ internal static class CvDocx
 
         void Competencies()
         {
+            if (doc.Competencies.Count == 0)
+            {
+                return;
+            }
+
+            body.Append(Paragraph("Heading1", Run(labels.Competencies)));
             foreach (var group in doc.Competencies)
             {
-                body.Append(Paragraph("Heading1", Run(group.Label)));
-                foreach (var competency in group.Items)
-                {
-                    body.Append(Bullet(Run(competency.Name, bold: true) + (string.IsNullOrEmpty(competency.Note) ? string.Empty : Run(": " + competency.Note))));
-                }
+                body.Append(Paragraph(null, Run(group.Label + ": ", bold: true) + Run(string.Join(", ", group.Items.Select(c => c.Name))), spaceAfter: 40));
             }
         }
 

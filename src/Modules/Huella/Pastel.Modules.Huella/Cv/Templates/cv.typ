@@ -120,13 +120,12 @@
   for e in d.projects { project-entry(e) }
 }
 
-// Competencias: una lista por tipo, con el nombre en negrita y, si la hay, la frase de evidencia.
-#let competencies-sections() = for g in d.competencies {
-  heading(level: 2, g.label)
-  list(..g.items.map(c => {
-    text(weight: "bold", c.name)
-    if c.at("note", default: none) not in (none, "") { [: ]; c.note }
-  }))
+// Competencias: una sola sección con un renglón por tipo («Personales: a, b, c»), como las habilidades del CV propio.
+#let competencies-sections() = if d.competencies.len() > 0 {
+  heading(level: 2, d.labels.at("competencies", default: "Competencias"))
+  for g in d.competencies {
+    block(below: 0.5em, { text(weight: "bold", g.label + ": "); g.items.map(c => c.name).join(", ") })
+  }
 }
 
 #let education-section() = if d.education.len() > 0 {

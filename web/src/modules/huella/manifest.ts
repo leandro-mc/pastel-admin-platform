@@ -82,6 +82,12 @@ export default {
       lazy: () => import("./pages/PreviewPage"),
     },
     {
+      path: "/huella/pdf/:tipo/:id",
+      session: true,
+      bare: true,
+      lazy: () => import("./pages/PdfPage"),
+    },
+    {
       path: "/huella/p/:token",
       session: false,
       bare: true,

@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useNotify } from "@/core/notifications";
 import { Badge, Button, ConfirmDialog, Panel, SelectField } from "@/core/ui";
+import { secondaryButton } from "@/core/ui/styles";
 import {
   useDeleteLetter,
   useDeleteVersion,
@@ -231,6 +232,15 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
                         >
                           {t.open}
                         </Button>
+                        <a
+                          className={`${secondaryButton} no-underline`}
+                          href={`/huella/pdf/${doc.kind === "cv" ? "cv" : "carta"}/${doc.id}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          aria-label={strings.studio.preview.openPdfLabel(doc.name)}
+                        >
+                          {strings.studio.preview.openPdf}
+                        </a>
                         <Button
                           variant="secondary"
                           type="button"

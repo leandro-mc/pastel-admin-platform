@@ -281,15 +281,13 @@ internal static class CvLayout
     {
         var summary = SectionLu + CvComposer.Lines(doc.Summary.Length, limits.CharsPerLine);
         var skills = doc.Skills.Count == 0 ? 0 : SectionLu + doc.Skills.Sum(g => CvComposer.Lines(g.Line.Length, limits.CharsPerLine) + 0.1);
-        var competencies = doc.Competencies.Sum(g => SectionLu + g.Items.Sum(c => CvComposer.Lines(CompetencyLength(c), limits.CharsPerLine) + 0.4));
+        var competencies = doc.Competencies.Count == 0 ? 0 : SectionLu + doc.Competencies.Sum(g => CvComposer.Lines(g.Label.Length + 2 + g.Items.Sum(c => c.Name.Length + 2), limits.CharsPerLine) + 0.1);
         var experience = SectionLu + doc.Experience.Sum(e => ExperienceHead(e) + EntryLines(e, limits));
         var projects = doc.Projects.Count == 0 ? 0 : SectionLu + doc.Projects.Sum(p => (p.Subtitle.Length > 0 ? 2.4 : 1.6) + EntryLines(p, limits));
         var education = SectionLu + doc.Education.Sum(e => 1.25 + (e.Detail is null ? 0 : CvComposer.Lines(e.Detail.Length, limits.CharsPerLine)));
         var extras = doc.Extras.Count == 0 ? 0 : SectionLu + doc.Extras.Sum(x => CvComposer.Lines(x.Length, limits.CharsPerLine) + 0.05);
         return HeaderLu + summary + skills + competencies + experience + projects + education + extras;
     }
-
-    private static int CompetencyLength(CvCompetency c) => c.Name.Length + (string.IsNullOrEmpty(c.Note) ? 0 : 2 + c.Note.Length);
 
     /// <summary>Páginas estimadas a partir del presupuesto (el conteo real lo da el compilador cuando exista el motor de PDF).</summary>
     public static int EstimatedPages(CvDocument doc, CvLimits limits) =>
@@ -310,51 +308,54 @@ internal static class CvLayout
         }
 
         // El presupuesto de cada entrada guía a la IA; aquí se admite una holgura de EntryLineSlack líneas porque el tope real
-        // es la página (el ajuste global de abajo), y así no se retiran viñetas cuando sobra espacio.
+        // es la página. Calidad antes que cantidad: se retiran las viñetas que pasan de tres, luego se acorta una viñeta que no
+        // sea la principal y, si aún no cabe, se retira la menos relevante. La viñeta principal solo se acorta como último recurso.
         foreach (var entry in doc.Experience.Concat(doc.Projects))
         {
             while (EntryLines(entry, limits) > entry.LineBudget + EntryLineSlack && entry.Bullets.Count > 0)
             {
-                var lowest = entry.Bullets.OrderBy(b => b.Score).ToList();
-                var shorter = lowest.FirstOrDefault(b => b.ShortText is { } s && s != b.Text
-                    && CvComposer.Lines(s.Length, limits.BulletCharsPerLine) < CvComposer.Lines(b.Text.Length, limits.BulletCharsPerLine));
-                if (shorter is not null)
+                if (entry.Bullets.Count > 3)
                 {
-                    log.Add($"Paso 1 · {Name(entry)}: variante corta de una viñeta.");
-                    shorter.Text = shorter.ShortText!;
-                    continue;
+                    RemoveLowest(entry, log, "(pasa de tres)");
                 }
-
-                var removed = lowest[0];
-                entry.Bullets.Remove(removed);
-                log.Add($"Paso 2 · {Name(entry)}: se retira la viñeta menos relevante (puntuación {Fmt(removed.Score)}).");
+                else if (Shortenable(entry, limits, includeTop: false).FirstOrDefault() is { } secondary)
+                {
+                    Shorten(entry, secondary, log);
+                }
+                else if (entry.Bullets.Count > 1)
+                {
+                    RemoveLowest(entry, log, "para respetar su presupuesto");
+                }
+                else if (Shortenable(entry, limits, includeTop: true).FirstOrDefault() is { } top)
+                {
+                    Shorten(entry, top, log);
+                }
+                else
+                {
+                    RemoveLowest(entry, log, "para respetar su presupuesto");
+                }
             }
         }
 
-        // Si aún no cabe, se prefiere amplitud a profundidad: primero las viñetas que pasan de dos por entrada, luego las de
-        // proyectos, después un proyecto entero y, al final, las habilidades (son las palabras que lee el ATS: lo último que se toca).
+        // Si aún no cabe la página: primero las viñetas que pasan de dos por entrada, luego acortar las secundarias, las de
+        // proyectos, un proyecto entero, las que pasan de una y, al final, las habilidades (las palabras que lee el ATS).
         var guard = 80;
         while (Total(doc, limits) > limits.CapacityLu && guard-- > 0)
         {
-            // Antes de retirar nada, la versión corta (de una línea) de la viñeta menos relevante que la tenga.
-            if (doc.Experience.Concat(doc.Projects).SelectMany(e => e.Bullets.Select(b => (Entry: e, Bullet: b)))
-                    .Where(x => x.Bullet.ShortText is { } s && s != x.Bullet.Text
-                        && CvComposer.Lines(s.Length, limits.BulletCharsPerLine) < CvComposer.Lines(x.Bullet.Text.Length, limits.BulletCharsPerLine))
-                    .OrderBy(x => x.Bullet.Score)
-                    .FirstOrDefault() is { Entry: not null } shorten)
-            {
-                shorten.Bullet.Text = shorten.Bullet.ShortText!;
-                log.Add($"Paso 1 · {Name(shorten.Entry)}: variante corta de una viñeta para caber en el cupo.");
-            }
-            else if (Lowest(doc.Experience.Concat(doc.Projects), 2) is { } deep)
+            var all = doc.Experience.Concat(doc.Projects).ToList();
+            if (Lowest(all, 2) is { } deep)
             {
                 RemoveLowest(deep, log, "para caber en el cupo");
+            }
+            else if (all.SelectMany(e => Shortenable(e, limits, includeTop: false).Select(b => (Entry: e, Bullet: b))).OrderBy(x => x.Bullet.Score).FirstOrDefault() is { Entry: not null } secondary)
+            {
+                Shorten(secondary.Entry, secondary.Bullet, log);
             }
             else if (Lowest(doc.Projects, 1) is { } project)
             {
                 RemoveLowest(project, log, "para caber en el cupo");
             }
-            else if (doc.Competencies.Where(g => g.Items.Count > 4).OrderByDescending(g => g.Items.Count).FirstOrDefault() is { } wide)
+            else if (doc.Competencies.Where(g => g.Items.Count > 5).OrderByDescending(g => g.Items.Count).FirstOrDefault() is { } wide)
             {
                 wide.Items.RemoveAt(wide.Items.Count - 1);
                 log.Add($"Paso 3 · se recorta la última competencia de «{wide.Label}».");
@@ -368,6 +369,10 @@ internal static class CvLayout
             else if (Lowest(doc.Experience, 1) is { } entry)
             {
                 RemoveLowest(entry, log, "para caber en el cupo");
+            }
+            else if (all.SelectMany(e => Shortenable(e, limits, includeTop: true).Select(b => (Entry: e, Bullet: b))).FirstOrDefault() is { Entry: not null } top)
+            {
+                Shorten(top.Entry, top.Bullet, log);
             }
             else if (doc.Skills.LastOrDefault(g => g.Items.Count > 3) is { } group)
             {
@@ -390,6 +395,22 @@ internal static class CvLayout
             ? $"Paso 5 · Aún excede el cupo por {Fmt(total - limits.CapacityLu)} LU: quite contenido del banco o elija otro nivel. No se reduce la fuente bajo 10 pt."
             : $"Resultado: {Fmt(total)} LU de {limits.CapacityLu} LU. Cupo garantizado{(log.Count == 1 ? " sin ajustes" : string.Empty)}.");
         return log;
+    }
+
+    /// <summary>Viñetas de la entrada con una variante corta que ahorra líneas, de la menos a la más relevante; sin la principal salvo que se pida.</summary>
+    private static IEnumerable<CvBullet> Shortenable(CvEntry entry, CvLimits limits, bool includeTop)
+    {
+        var top = entry.Bullets.OrderByDescending(b => b.Score).FirstOrDefault();
+        return entry.Bullets
+            .Where(b => (includeTop || !ReferenceEquals(b, top)) && b.ShortText is { } s && s != b.Text
+                && CvComposer.Lines(s.Length, limits.BulletCharsPerLine) < CvComposer.Lines(b.Text.Length, limits.BulletCharsPerLine))
+            .OrderBy(b => b.Score);
+    }
+
+    private static void Shorten(CvEntry entry, CvBullet bullet, List<string> log)
+    {
+        bullet.Text = bullet.ShortText!;
+        log.Add($"Paso 1 · {Name(entry)}: versión corta de una viñeta secundaria.");
     }
 
     /// <summary>La entrada con más de <paramref name="keep"/> viñetas cuya viñeta menos relevante es la más baja de todas.</summary>

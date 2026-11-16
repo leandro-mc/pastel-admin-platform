@@ -141,13 +141,15 @@ internal static class CvGuardian
 
         void Competencies()
         {
+            if (doc.Competencies.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine().AppendLine(labels.Competencies);
             foreach (var g in doc.Competencies)
             {
-                sb.AppendLine().AppendLine(g.Label);
-                foreach (var c in g.Items)
-                {
-                    sb.AppendLine(string.IsNullOrEmpty(c.Note) ? $"• {c.Name}" : $"• {c.Name}: {c.Note}");
-                }
+                sb.AppendLine($"{g.Label}: {string.Join(", ", g.Items.Select(c => c.Name))}");
             }
         }
 

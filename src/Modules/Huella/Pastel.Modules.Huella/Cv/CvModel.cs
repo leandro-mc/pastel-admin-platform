@@ -200,8 +200,10 @@ internal sealed record CvLimits(
         }
 
         // Formato de competencias: sin proyectos ni habilidades sueltas; las competencias (personales y técnicas) ocupan su lugar.
-        var (personal, technical) = level == "junior" ? (5, 5) : (7, 7);
-        return limits with { ProjectCount = 0, ProjectLines = [], SkillGroups = 0, SkillsTotal = 0, PersonalCompetencies = personal, TechnicalCompetencies = technical, CertificationCount = level == "junior" ? 1 : limits.CertificationCount };
+        var (personal, technical) = level == "junior" ? (6, 6) : (8, 8);
+        // Sin proyectos y con las competencias en dos renglones, la experiencia recibe más líneas.
+        IReadOnlyList<int> entryLines = level == "junior" ? [4, 6, 4] : limits.EntryLines;
+        return limits with { EntryLines = entryLines, ProjectCount = 0, ProjectLines = [], SkillGroups = 0, SkillsTotal = 0, PersonalCompetencies = personal, TechnicalCompetencies = technical, CertificationCount = level == "junior" ? 1 : limits.CertificationCount };
     }
 
     /// <summary>Nivel sugerido por años de experiencia profesional (§6.1): Junior 0-3, Mid 3-8, Senior 8+.</summary>
