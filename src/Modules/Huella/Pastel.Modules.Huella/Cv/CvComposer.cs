@@ -261,6 +261,9 @@ internal static class CvLayout
     /// <summary>Encabezado centrado y compacto: nombre, titular y dos líneas de contacto.</summary>
     public const double HeaderLu = 4.6;
 
+    /// <summary>Líneas que una entrada puede pasarse de su presupuesto si la página aún tiene espacio.</summary>
+    public const int EntryLineSlack = 2;
+
     /// <summary>Título de sección con su línea y el aire que lo separa de lo anterior.</summary>
     private const double SectionLu = 2.1;
 
@@ -306,9 +309,11 @@ internal static class CvLayout
             log.Add($"Paso 1 · Perfil comprimido de {before} a {doc.Summary.Length} caracteres (tope {limits.SummaryMax}).");
         }
 
+        // El presupuesto de cada entrada guía a la IA; aquí se admite una holgura de EntryLineSlack líneas porque el tope real
+        // es la página (el ajuste global de abajo), y así no se retiran viñetas cuando sobra espacio.
         foreach (var entry in doc.Experience.Concat(doc.Projects))
         {
-            while (EntryLines(entry, limits) > entry.LineBudget && entry.Bullets.Count > 0)
+            while (EntryLines(entry, limits) > entry.LineBudget + EntryLineSlack && entry.Bullets.Count > 0)
             {
                 var lowest = entry.Bullets.OrderBy(b => b.Score).ToList();
                 var shorter = lowest.FirstOrDefault(b => b.ShortText is { } s && s != b.Text
@@ -331,7 +336,17 @@ internal static class CvLayout
         var guard = 80;
         while (Total(doc, limits) > limits.CapacityLu && guard-- > 0)
         {
-            if (Lowest(doc.Experience.Concat(doc.Projects), 2) is { } deep)
+            // Antes de retirar nada, la versión corta (de una línea) de la viñeta menos relevante que la tenga.
+            if (doc.Experience.Concat(doc.Projects).SelectMany(e => e.Bullets.Select(b => (Entry: e, Bullet: b)))
+                    .Where(x => x.Bullet.ShortText is { } s && s != x.Bullet.Text
+                        && CvComposer.Lines(s.Length, limits.BulletCharsPerLine) < CvComposer.Lines(x.Bullet.Text.Length, limits.BulletCharsPerLine))
+                    .OrderBy(x => x.Bullet.Score)
+                    .FirstOrDefault() is { Entry: not null } shorten)
+            {
+                shorten.Bullet.Text = shorten.Bullet.ShortText!;
+                log.Add($"Paso 1 · {Name(shorten.Entry)}: variante corta de una viñeta para caber en el cupo.");
+            }
+            else if (Lowest(doc.Experience.Concat(doc.Projects), 2) is { } deep)
             {
                 RemoveLowest(deep, log, "para caber en el cupo");
             }

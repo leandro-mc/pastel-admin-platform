@@ -26,14 +26,14 @@ internal static class CvAiCompose
     public const int HeadlineMax = 100;
     public const int TitleMax = 120;
     public const int BulletMin = 25;
-    private const string ExperienceSchema = "\"experience\":[{\"id\":\"uuid\",\"alsoIds\":[\"uuid\"],\"title\":\"string\",\"context\":\"string|null\",\"bullets\":[\"string\"]}]";
+    private const string ExperienceSchema = "\"experience\":[{\"id\":\"uuid\",\"alsoIds\":[\"uuid\"],\"title\":\"string\",\"context\":\"string|null\",\"bullets\":[{\"text\":\"string\",\"short\":\"string\"}]}]";
     private const string TailSchema =
         "\"education\":[{\"id\":\"uuid\",\"degree\":\"string\",\"detail\":\"string|null\"}],\"certifications\":[{\"id\":\"uuid\",\"name\":\"string\"}],"
         + "\"languages\":[{\"id\":\"uuid\",\"language\":\"string\",\"level\":\"string\"}]}]}";
 
     private const string Schema =
         "{\"versions\":[{\"language\":\"es|en\",\"headline\":\"string\",\"summary\":\"string\",\"skills\":[{\"label\":\"string\",\"items\":[\"string\"]}],"
-        + ExperienceSchema + ",\"projects\":[{\"id\":\"uuid\",\"stack\":\"string\",\"bullets\":[\"string\"]}],"
+        + ExperienceSchema + ",\"projects\":[{\"id\":\"uuid\",\"stack\":\"string\",\"bullets\":[{\"text\":\"string\",\"short\":\"string\"}]}],"
         + TailSchema;
 
     private const string CompetenciesSchema =
@@ -84,7 +84,8 @@ internal static class CvAiCompose
         sb.AppendLine("## Nivel y límites");
         sb.AppendLine(CultureInfo.InvariantCulture, $"- Nivel {limits.Level}: máximo {limits.Pages} página(s), papel {request.Paper}. Una viñeta ocupa ceil(caracteres / {limits.BulletCharsPerLine}) líneas. El cupo es de {limits.CapacityLu} líneas en total y no se puede pasar: si te pasas, el servidor retira viñetas o proyectos. Respeta los presupuestos de cada sección y úsalos completos.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"- headline: máximo {HeadlineMax} caracteres. summary: máximo {limits.SummaryMax} caracteres.");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- experience: como máximo {limits.Entries}. Presupuesto de líneas de viñetas por entrada, de la más reciente a la más antigua: [{string.Join(", ", limits.EntryLines.Take(limits.Entries))}]. Cada viñeta entre {BulletMin} y {limits.BulletMax} caracteres.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- experience: como máximo {limits.Entries}. Presupuesto de LÍNEAS (no de viñetas) por entrada, de la más reciente a la más antigua: [{string.Join(", ", limits.EntryLines.Take(limits.Entries))}]. Una viñeta de hasta {limits.BulletCharsPerLine} caracteres ocupa 1 línea; una más larga (máximo {limits.BulletMax}) ocupa 2. Ejemplo: con 3 líneas caben tres viñetas de una línea, o una de dos y una de una; si escribes viñetas de dos líneas, solo cabe una y el servidor retira las demás. Cuando el enfoque o la oferta pidan desarrollar la experiencia, prefiere VARIAS viñetas de una línea a pocas largas.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- Cada viñeta (de experiencia y de proyectos) es un objeto {{\"text\", \"short\"}}: `text` es la versión completa ({BulletMin} a {limits.BulletMax} caracteres) y `short` la MISMA idea en una sola línea (máximo {limits.BulletCharsPerLine} caracteres, con las mismas cifras o menos). El servidor usa `short` cuando la versión completa no cabe, en vez de quitar la viñeta.");
         if (competencies)
         {
             sb.AppendLine("- Este CV lo leen personas de recursos humanos y agencias de empleo que NO son de TI: explica cada experiencia en lenguaje claro (qué se necesitaba, qué hizo la persona y qué cambió). Nombra tecnologías solo cuando aporten (máximo dos por viñeta) y no uses siglas sin explicarlas. Da peso a la gestión, el trabajo en equipo, la planificación, la coordinación y la comunicación.");
@@ -738,8 +739,15 @@ internal static class CvAiCompose
                 continue;
             }
 
+            // Variante corta de una línea: la usa el ajuste a página antes de retirar la viñeta. Pasa el mismo guardián.
+            var shortText = raw.ValueKind == JsonValueKind.Object ? TextInput.CleanLine(Str(raw, "short")) : string.Empty;
+            string? variant = shortText.Length >= BulletMin && shortText.Length < text.Length
+                && CvGuardian.ValidateWritten(shortText, limits.BulletCharsPerLine, known, bank.Data) is null
+                    ? shortText
+                    : null;
+
             // La IA entrega las viñetas por importancia: la primera es la última en retirarse al ajustar a la página.
-            bullets.Add(new CvBullet { Text = text, SourceIds = [.. sourceIds], Score = Math.Round(10.0 - position, 2) });
+            bullets.Add(new CvBullet { Text = text, ShortText = variant, SourceIds = [.. sourceIds], Score = Math.Round(10.0 - position, 2) });
             position++;
         }
 
