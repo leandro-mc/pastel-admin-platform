@@ -34,6 +34,9 @@ internal static class HuellaErrors
     public static readonly Error CvRequiresContent = Error.Validation(
         "huella.cv.empty_bank", "Su banco aún no tiene experiencias ni proyectos. Cuéntelos (sin cuidar el formato) antes de generar un CV.");
 
+    public static readonly Error LetterRequiresContent = Error.Validation(
+        "huella.letter.empty_bank", "Su banco aún no tiene experiencias ni proyectos. Cuéntelos (sin cuidar el formato) antes de generar una carta.");
+
     public static readonly Error ProfileRequiresContent = Error.Validation(
         "huella.profile.empty_bank", "Su banco aún no tiene experiencias ni proyectos. Cuéntelos (sin cuidar el formato) antes de generar su perfil.");
 

@@ -464,6 +464,98 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
         }
     }
 
+    // La carta de presentación se redacta para una oferta con las mismas vías que el CV, pasa por el guardián de verdad al
+    // editarla, se puede descargar en Word y, al enviarla, la oferta pasa a «postulada».
+    [Trait("RequirementId", "HUELLA-E1-10")]
+    [RequiresPostgresFact]
+    public async Task Cover_letter_is_written_for_an_offer_validated_and_updates_the_history_when_sent()
+    {
+        var owner = await OwnerAsync();
+        using var bank = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/bank/experiences", new
+        {
+            items = new[] { new { role = "QA Engineer", company = "Empresa Carta", start = "2022-03", isVisible = true, narrative = "Automaticé 140 pruebas con Playwright y bajé la regresión de 2 días a 3 horas." } },
+        });
+        Assert.Equal(HttpStatusCode.OK, bank.StatusCode);
+
+        using var created = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/studio/offers", new
+        {
+            title = "QA para carta",
+            company = "Acme",
+            rawText = "Buscamos QA con Playwright para un equipo de 12 personas. Se valora experiencia en pruebas de API.",
+        });
+        using var offerJson = JsonDocument.Parse(await created.Content.ReadAsStringAsync());
+        var offerId = offerJson.RootElement.GetProperty("id").GetString();
+
+        // Sin oferta no hay carta.
+        using (var noOffer = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/tasks/letter/ai-package", new { languages = new[] { "es" } }))
+        {
+            await QaSupport.AssertProblemAsync(noOffer, HttpStatusCode.BadRequest);
+        }
+
+        using (var package = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/tasks/letter/ai-package", new { offerId, languages = new[] { "es" }, tone = "formal" }))
+        {
+            var text = await package.Content.ReadAsStringAsync();
+            Assert.Equal(HttpStatusCode.OK, package.StatusCode);
+            Assert.Contains("Buscamos QA con Playwright", text, StringComparison.Ordinal);
+            Assert.DoesNotContain(OwnerEmail, text, StringComparison.OrdinalIgnoreCase);
+        }
+
+        var json = JsonSerializer.Serialize(new
+        {
+            letters = new[]
+            {
+                new
+                {
+                    language = "es",
+                    subject = "Postulación a QA",
+                    greeting = "Estimado equipo de Acme:",
+                    closing = "Atentamente,",
+                    paragraphs = new[]
+                    {
+                        "Me interesa el puesto porque busca automatizar con Playwright, algo que hice en mi último cargo.",
+                        "Automaticé 140 pruebas y bajé la regresión de 2 días a 3 horas; aportaría ese enfoque a un equipo de 12 personas.",
+                    },
+                },
+            },
+        });
+        using var imported = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/tasks/letter/ai-result", new { offerId, languages = new[] { "es" }, tone = "formal", json });
+        Assert.Equal(HttpStatusCode.OK, imported.StatusCode);
+        using var outcome = JsonDocument.Parse(await imported.Content.ReadAsStringAsync());
+        var letterId = outcome.RootElement.GetProperty("versionIds")[0].GetString();
+
+        // Editar: una cifra que no está en el banco ni en la oferta se rechaza.
+        using (var bad = await QaSupport.SendAsync(owner, HttpMethod.Put, $"/api/huella/studio/letters/{letterId}/content", new
+        {
+            subject = "Postulación a QA",
+            greeting = "Estimado equipo:",
+            closing = "Atentamente,",
+            paragraphs = new[] { "Primer párrafo sin cifras.", "Aumenté la cobertura 999 % en un mes." },
+        }))
+        {
+            await QaSupport.AssertProblemAsync(bad, HttpStatusCode.BadRequest);
+        }
+
+        using (var docx = await QaSupport.SendAsync(owner, HttpMethod.Get, $"/api/huella/studio/letters/{letterId}/docx"))
+        {
+            Assert.Equal(HttpStatusCode.OK, docx.StatusCode);
+            Assert.Equal("application/vnd.openxmlformats-officedocument.wordprocessingml.document", docx.Content.Headers.ContentType?.MediaType);
+        }
+
+        using (var sent = await QaSupport.SendAsync(owner, HttpMethod.Put, $"/api/huella/studio/letters/{letterId}/sent?sent=true"))
+        {
+            Assert.Equal(HttpStatusCode.OK, sent.StatusCode);
+        }
+
+        using var offers = await QaSupport.SendAsync(owner, HttpMethod.Get, "/api/huella/studio/offers");
+        using var list = JsonDocument.Parse(await offers.Content.ReadAsStringAsync());
+        Assert.Equal("applied", list.RootElement.EnumerateArray().First(o => o.GetProperty("id").GetString() == offerId).GetProperty("status").GetString());
+
+        using (var anonymous = await QaSupport.SendAsync(NewAnonymous(), HttpMethod.Get, $"/api/huella/studio/letters/{letterId}"))
+        {
+            Assert.Equal(HttpStatusCode.Unauthorized, anonymous.StatusCode);
+        }
+    }
+
     private sealed class FakeGemini : IAiProvider
     {
         public string? LastKey { get; private set; }

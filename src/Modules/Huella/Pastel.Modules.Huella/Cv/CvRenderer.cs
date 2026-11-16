@@ -13,11 +13,14 @@ internal interface ICvRenderer
     bool IsAvailable { get; }
 
     Task<Result<byte[]>> RenderPdfAsync(CvDocument document, CvRequestOptions options, CancellationToken cancellationToken);
+
+    Task<Result<byte[]>> RenderLetterPdfAsync(LetterDoc letter, string paper, CancellationToken cancellationToken);
 }
 
 internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
 {
-    private static readonly Lazy<string> Template = new(LoadTemplate);
+    private static readonly Lazy<string> Template = new(() => LoadTemplate("cv.typ"));
+    private static readonly Lazy<string> LetterTemplate = new(() => LoadTemplate("letter.typ"));
 
     public bool IsAvailable => documents.IsAvailable;
 
@@ -29,6 +32,31 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
         }
 
         var pdf = await documents.RenderAsync(new DocumentRequest(Template.Value, DataJson(document, options), DocumentFormat.Pdf), cancellationToken);
+        return pdf.IsFailure && pdf.Error.Code == DocumentErrors.Unavailable.Code ? HuellaErrors.RendererUnavailable : pdf;
+    }
+
+    /// <summary>La carta de presentación en PDF con su plantilla fija (los datos viajan como JSON, nunca como código).</summary>
+    public async Task<Result<byte[]>> RenderLetterPdfAsync(LetterDoc letter, string paper, CancellationToken cancellationToken)
+    {
+        if (!documents.IsAvailable)
+        {
+            return HuellaErrors.RendererUnavailable;
+        }
+
+        var en = letter.Language == "en";
+        var data = new
+        {
+            lang = en ? "en" : "es",
+            paper = paper == "a4" ? "a4" : "letter",
+            title = (en ? "Cover letter — " : "Carta de presentación — ") + letter.Signature,
+            signature = letter.Signature,
+            contact = letter.Contact,
+            subject = letter.Subject,
+            greeting = letter.Greeting,
+            paragraphs = letter.Paragraphs,
+            closing = letter.Closing,
+        };
+        var pdf = await documents.RenderAsync(new DocumentRequest(LetterTemplate.Value, HuellaJson.Serialize(data), DocumentFormat.Pdf), cancellationToken);
         return pdf.IsFailure && pdf.Error.Code == DocumentErrors.Unavailable.Code ? HuellaErrors.RendererUnavailable : pdf;
     }
 
@@ -66,10 +94,10 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
         bullets = e.Bullets.Select(b => b.Text),
     };
 
-    private static string LoadTemplate()
+    private static string LoadTemplate(string file)
     {
         var assembly = typeof(TypstCvRenderer).Assembly;
-        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith("Templates.cv.typ", StringComparison.Ordinal));
+        var name = assembly.GetManifestResourceNames().Single(n => n.EndsWith("Templates." + file, StringComparison.Ordinal));
         using var stream = assembly.GetManifestResourceStream(name)!;
         using var reader = new StreamReader(stream);
         return reader.ReadToEnd();

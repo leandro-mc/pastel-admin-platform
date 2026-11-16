@@ -9,7 +9,13 @@ import {
   SelectField,
   TextField,
 } from "@/core/ui";
-import { useCreateOffer, useDeleteOffer, useOffers, useVersions } from "../api/hooks";
+import {
+  useCreateOffer,
+  useDeleteOffer,
+  useLetters,
+  useOffers,
+  useVersions,
+} from "../api/hooks";
 import type { OfferSummary } from "../api/schemas";
 import { formatDateTime } from "../lib/format";
 import {
@@ -58,6 +64,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
   const notify = useNotify();
   const offers = useOffers();
   const versions = useVersions();
+  const letters = useLetters();
   const remove = useDeleteOffer();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
@@ -118,7 +125,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
             ) : (
               <ul className="flex flex-col gap-3">
                 {paging.slice.map((offer) => {
-                  const { docs, sent } = documentsOf(offer.id, versions.data ?? []);
+                  const { docs, sent } = documentsOf(offer.id, versions.data ?? [], letters.data ?? []);
                   const follow = needsFollowUp(offer) ? followUpState(offer.followUpAt) : null;
                   const isSelected = selectedId === offer.id;
                   return (

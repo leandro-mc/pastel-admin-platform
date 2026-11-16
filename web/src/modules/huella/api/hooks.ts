@@ -14,6 +14,8 @@ import {
   aiTaskPackageSchema,
   bankSchema,
   contentViewSchema,
+  letterSchema,
+  letterSummarySchema,
   cvDocumentSchema,
   derivationSchema,
   offerSchema,
@@ -38,6 +40,8 @@ export const huellaKeys = {
   offers: ["huella", "offers"] as const,
   offer: (id: string) => ["huella", "offer", id] as const,
   versions: ["huella", "versions"] as const,
+  letters: ["huella", "letters"] as const,
+  letter: (id: string) => ["huella", "letter", id] as const,
   version: (id: string) => ["huella", "version", id] as const,
   status: ["huella", "publication"] as const,
   preview: ["huella", "preview"] as const,
@@ -357,12 +361,15 @@ export type AiTaskInput = {
   paper?: string;
   languages?: string[];
   name?: string | null;
+  /** Versión del CV (o carta) que se vuelve a redactar. */
   versionId?: string | null;
   sections?: string[];
+  /** Tono de la carta: `formal` o `cercano`. */
+  tone?: string;
 };
 
 /** Tareas: `cv` (redacta el CV desde el banco), `profile` (redacta secciones del perfil) y `profile-translate` (reescribe el inglés). */
-export type AiTaskKind = "cv" | "profile" | "profile-translate";
+export type AiTaskKind = "cv" | "letter" | "profile" | "profile-translate";
 
 const taskPath = (kind: AiTaskKind, action: "ai-package" | "ai-run" | "ai-result") =>
   `${base}/tasks/${kind}/${action}`;
@@ -387,6 +394,8 @@ export const importAiTask = (
 /** Tras una tarea de IA se refrescan los CV y el contenido del perfil. */
 export function refreshAfterAiTask(client: QueryClient) {
   void client.invalidateQueries({ queryKey: huellaKeys.versions });
+  void client.invalidateQueries({ queryKey: huellaKeys.letters });
+  void client.invalidateQueries({ queryKey: huellaKeys.offers });
   void client.invalidateQueries({ queryKey: huellaKeys.content });
   void client.invalidateQueries({ queryKey: huellaKeys.profile });
   refreshDerived(client);
@@ -411,6 +420,80 @@ export function useSaveContentSection() {
       refreshDerived(client);
     },
   });
+}
+
+// ───────── Cartas de presentación ─────────
+export const useLetters = () =>
+  useQuery({
+    queryKey: huellaKeys.letters,
+    queryFn: ({ signal }) =>
+      api.get(`${base}/studio/letters`, z.array(letterSummarySchema), { signal }),
+  });
+
+export const useLetter = (id: string | null) =>
+  useQuery({
+    queryKey: huellaKeys.letter(id ?? ""),
+    enabled: id !== null,
+    queryFn: ({ signal }) =>
+      api.get(`${base}/studio/letters/${id}`, letterSchema, { signal }),
+  });
+
+/** Mutaciones que devuelven la carta completa y la dejan en caché. */
+function useLetterMutation<TVars>(
+  request: (id: string, vars: TVars) => Promise<z.infer<typeof letterSchema>>,
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, vars }: { id: string; vars: TVars }) => request(id, vars),
+    onSuccess: (data) => {
+      client.setQueryData(huellaKeys.letter(data.summary.id), data);
+      void client.invalidateQueries({ queryKey: huellaKeys.letters });
+      // Marcar un envío puede pasar la oferta a «postulada».
+      void client.invalidateQueries({ queryKey: huellaKeys.offers });
+    },
+  });
+}
+
+export const useSaveLetter = () =>
+  useLetterMutation<unknown>((id, body) =>
+    api.put(`${base}/studio/letters/${id}/content`, letterSchema, body),
+  );
+
+export const useRenameLetter = () =>
+  useLetterMutation<string>((id, name) =>
+    api.put(`${base}/studio/letters/${id}/name`, letterSchema, { name }),
+  );
+
+export const useSetSentLetter = () =>
+  useLetterMutation<boolean>((id, sent) =>
+    api.put(
+      `${base}/studio/letters/${id}/sent?sent=${sent ? "true" : "false"}`,
+      letterSchema,
+    ),
+  );
+
+export function useDeleteLetter() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.send("DELETE", `${base}/studio/letters/${id}`),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: huellaKeys.letters });
+      void client.invalidateQueries({ queryKey: huellaKeys.offers });
+    },
+  });
+}
+
+/** Descarga la carta como PDF o Word (.docx) con la sesión vigente. */
+export async function downloadLetter(
+  id: string,
+  format: "pdf" | "docx",
+  fileName: string,
+) {
+  const blob = await api.blob(`${base}/studio/letters/${id}/${format}`, {
+    retries: 0,
+  });
+  saveFile(blob, fileName);
 }
 
 /** Descarga el PDF de una versión con la sesión vigente y lo entrega al navegador como archivo. */

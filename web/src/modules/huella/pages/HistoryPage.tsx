@@ -4,11 +4,17 @@ import { useNotify } from "@/core/notifications";
 import { Badge, Button, PageHeader, Panel, SelectField, TextField } from "@/core/ui";
 import { focusClass, secondaryButton } from "@/core/ui/styles";
 import {
+  useLetters,
   useOffers,
   useUpdateTracking,
   useVersions,
 } from "../api/hooks";
-import type { OfferStatus, OfferSummary, VersionSummary } from "../api/schemas";
+import type {
+  LetterSummary,
+  OfferStatus,
+  OfferSummary,
+  VersionSummary,
+} from "../api/schemas";
 import { offerStatusValues } from "../api/schemas";
 import { ErrorNotice, Loaded, TextAreaField } from "../components/Form";
 import { Pager } from "../components/Pager";
@@ -65,6 +71,7 @@ const matchesFilter = (offer: OfferSummary, filter: Filter) =>
 export function Component() {
   const offers = useOffers();
   const versions = useVersions();
+  const letters = useLetters();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
   const [filter, setFilter] = useState<Filter>("all");
@@ -146,6 +153,7 @@ export function Component() {
                       key={offer.id}
                       offer={offer}
                       versions={versions.data ?? []}
+                      letters={letters.data ?? []}
                     />
                   ))}
                 </ul>
@@ -174,12 +182,14 @@ function FollowUpBadge({ offer }: { offer: OfferSummary }) {
 function HistoryRow({
   offer,
   versions,
+  letters,
 }: {
   offer: OfferSummary;
   versions: readonly VersionSummary[];
+  letters: readonly LetterSummary[];
 }) {
   const [open, setOpen] = useState(false);
-  const { docs, sent } = documentsOf(offer.id, versions);
+  const { docs, sent } = documentsOf(offer.id, versions, letters);
   const sentDocs = docs.filter((d) => d.sentAt !== null);
   const url = offer.sourceUrl ? safeHref(offer.sourceUrl) : null;
   const target = `/huella/cv?oferta=${offer.id}`;
@@ -224,7 +234,8 @@ function HistoryRow({
         <ul className="flex flex-col gap-1 text-sm text-fg-secondary">
           {sentDocs.map((d) => (
             <li key={d.id}>
-              <span className="font-medium text-fg">{d.name}</span> · {d.language.toUpperCase()} ·{" "}
+              <span className="font-medium text-fg">{d.name}</span> ·{" "}
+              {d.kind === "cv" ? strings.studio.docs.cvKind : strings.studio.docs.letterKind} · {d.language.toUpperCase()} ·{" "}
               {formatDateTime(d.sentAt ?? d.createdAt)}
             </li>
           ))}

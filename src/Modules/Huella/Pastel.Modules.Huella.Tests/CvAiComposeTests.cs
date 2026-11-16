@@ -9,7 +9,7 @@ namespace Pastel.Modules.Huella.Tests;
 
 public sealed class CvAiComposeTests
 {
-    private static (AiBank Bank, Guid ExperienceId, Guid ProjectId) Bank()
+    internal static (AiBank Bank, Guid ExperienceId, Guid ProjectId) Bank()
     {
         var profileId = Guid.CreateVersion7();
         var profile = new Profile { Id = profileId, DisplayName = "Ana Pérez", Headline = "QA Engineer", ContactEmail = "ana@correo.test" };

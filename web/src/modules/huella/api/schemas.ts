@@ -283,6 +283,34 @@ export const versionSummarySchema = z.object({
   updatedAt: text,
 });
 
+export const letterSummarySchema = z.object({
+  id,
+  name: text,
+  language: text,
+  tone: text,
+  source: text,
+  sentAt: maybe,
+  offerId: z.string().nullable(),
+  createdAt: text,
+  updatedAt: text,
+});
+
+export const letterDocSchema = z.object({
+  language: text,
+  signature: text,
+  contact: z.array(text),
+  subject: text,
+  greeting: text,
+  paragraphs: z.array(text),
+  closing: text,
+});
+
+export const letterSchema = z.object({
+  summary: letterSummarySchema,
+  document: letterDocSchema,
+  pdfAvailable: z.boolean(),
+});
+
 export const versionSchema = z.object({
   summary: versionSummarySchema,
   document: cvDocumentSchema,
@@ -511,6 +539,8 @@ export type OfferSummary = z.infer<typeof offerSummarySchema>;
 export type Offer = z.infer<typeof offerSchema>;
 export type Evidence = z.infer<typeof evidenceSchema>;
 export type CvVersion = z.infer<typeof versionSchema>;
+export type LetterSummary = z.infer<typeof letterSummarySchema>;
+export type Letter = z.infer<typeof letterSchema>;
 export type VersionSummary = z.infer<typeof versionSummarySchema>;
 export type CvDocument = z.infer<typeof cvDocumentSchema>;
 export type PublicProfile = z.infer<typeof publicProfileSchema>;

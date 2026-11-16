@@ -1,24 +1,28 @@
 import { Button, PageHeader, Tab, TabList, TabPanel, Tabs } from "@/core/ui";
-import { useVersion, useVersions } from "../api/hooks";
+import { useLetter, useLetters, useVersion, useVersions } from "../api/hooks";
 import { CvEditor } from "../components/CvEditor";
 import { DocumentsList } from "../components/DocumentsList";
 import { Loaded } from "../components/Form";
 import { GenerateWorkspace } from "../components/GenerateWorkspace";
+import { LetterEditor } from "../components/LetterEditor";
 import { OfferList } from "../components/OfferList";
 import { StudioContextBar } from "../components/StudioContextBar";
-import { useStudioState, type StudioTab } from "../lib/studioState";
+import { useStudioState, type DocKind, type StudioTab } from "../lib/studioState";
 import { strings } from "../strings";
 
 const tabs = strings.studio.tabs;
 
 /**
- * Crear CV, en tres pestañas con una barra fija que dice con qué oferta se trabaja: Ofertas (elegir), Generar (pedir el
- * documento) y Documentos (lo generado, con su estado de envío). El lugar queda en la dirección: se puede recargar, volver
- * atrás y llegar desde el historial directo a los documentos de una oferta.
+ * Crear CV y carta, en tres pestañas con una barra fija que dice con qué oferta se trabaja: Ofertas (elegir), Generar (pedir
+ * el CV o la carta) y Documentos (lo generado, con su estado de envío). El lugar queda en la dirección: se puede recargar,
+ * volver atrás y llegar desde el historial directo a los documentos de una oferta.
  */
 export function Component() {
-  const { offerId, docId, tab, go } = useStudioState();
+  const { offerId, docId, docKind, tab, go } = useStudioState();
   const versions = useVersions();
+  const letters = useLetters();
+  const count =
+    versions.data && letters.data ? versions.data.length + letters.data.length : null;
   return (
     <div
       data-module="huella"
@@ -44,7 +48,7 @@ export function Component() {
           <Tab id="generar">{tabs.generate}</Tab>
           <Tab id="documentos">
             {tabs.documents}
-            {versions.data ? ` (${versions.data.length})` : ""}
+            {count !== null ? ` (${count})` : ""}
           </Tab>
         </TabList>
         <TabPanel id="ofertas">
@@ -59,18 +63,22 @@ export function Component() {
           <GenerateWorkspace
             offerId={offerId}
             onPickOffer={() => go({ vista: "ofertas" })}
-            onGenerated={(id) => go({ vista: "documentos", doc: id })}
+            onGenerated={(kind, id) => go({ vista: "documentos", doc: id, tipo: kind })}
           />
         </TabPanel>
         <TabPanel id="documentos">
           {docId ? (
-            <OpenDocument id={docId} onBack={() => go({ doc: null })} />
+            <OpenDocument
+              kind={docKind}
+              id={docId}
+              onBack={() => go({ doc: null, tipo: null })}
+            />
           ) : (
             <DocumentsList
               offerId={offerId}
-              onOpen={(id) => go({ doc: id })}
-              onDeleted={(id) => {
-                if (id === docId) go({ doc: null });
+              onOpen={(kind, id) => go({ doc: id, tipo: kind })}
+              onDeleted={(_kind, id) => {
+                if (id === docId) go({ doc: null, tipo: null });
               }}
             />
           )}
@@ -81,8 +89,15 @@ export function Component() {
 }
 
 /** Un documento abierto: reemplaza a la lista (no se apila debajo) y se vuelve con un botón. */
-function OpenDocument({ id, onBack }: { id: string; onBack: () => void }) {
-  const version = useVersion(id);
+function OpenDocument({
+  kind,
+  id,
+  onBack,
+}: {
+  kind: DocKind;
+  id: string;
+  onBack: () => void;
+}) {
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -90,7 +105,17 @@ function OpenDocument({ id, onBack }: { id: string; onBack: () => void }) {
           {strings.studio.docs.back}
         </Button>
       </div>
-      <Loaded query={version}>{(data) => <CvEditor version={data} />}</Loaded>
+      {kind === "carta" ? <OpenLetter id={id} /> : <OpenCv id={id} />}
     </div>
   );
+}
+
+function OpenCv({ id }: { id: string }) {
+  const version = useVersion(id);
+  return <Loaded query={version}>{(data) => <CvEditor version={data} />}</Loaded>;
+}
+
+function OpenLetter({ id }: { id: string }) {
+  const letter = useLetter(id);
+  return <Loaded query={letter}>{(data) => <LetterEditor letter={data} />}</Loaded>;
 }

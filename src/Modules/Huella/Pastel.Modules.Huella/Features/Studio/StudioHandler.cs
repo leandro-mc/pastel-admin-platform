@@ -12,7 +12,7 @@ namespace Pastel.Modules.Huella.Features.Studio;
 /// Estudio de CV: ofertas, generación determinista desde el banco, edición validada por el guardián de verdad,
 /// versiones, y la redacción del CV con IA (la IA solo devuelve JSON; nada de lo que llega se guarda sin validar).
 /// </summary>
-internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, IClock clock)
+internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, OfferTracking tracking, IClock clock)
 {
     public const int MaxOffers = 50;
     public const int MaxVersions = 60;
@@ -77,31 +77,6 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         return new OfferSummary(
             o.Id, o.Title, o.Company, o.SourceUrl, o.CreatedAt, o.Status, o.StatusUpdatedAt, o.AppliedAt, o.FollowUpAt, o.Notes,
             new OfferCoverage(must.Count(e => e.Status != "gap"), must.Count));
-    }
-
-    /// <summary>
-    /// Al enviar un documento a una oferta guardada, la oferta pasa a «postulada» con la fecha de hoy y un seguimiento a 7 días
-    /// (si la persona no los había puesto): el historial queda al día sin trabajo extra.
-    /// </summary>
-    private async Task MarkOfferAppliedAsync(Guid? offerId, Guid profileId, CancellationToken cancellationToken)
-    {
-        if (offerId is null)
-        {
-            return;
-        }
-
-        var offer = await db.JobOffers.SingleOrDefaultAsync(o => o.Id == offerId && o.ProfileId == profileId, cancellationToken);
-        if (offer is null || offer.Status != OfferStatus.Saved)
-        {
-            return;
-        }
-
-        var now = clock.UtcNow;
-        offer.Status = OfferStatus.Applied;
-        offer.StatusUpdatedAt = now;
-        offer.AppliedAt ??= now;
-        offer.FollowUpAt ??= DateOnly.FromDateTime(now.UtcDateTime).AddDays(7);
-        offer.UpdatedAt = now;
     }
 
     public async Task<Result<OfferView>> CreateOfferAsync(OfferInput input, CancellationToken cancellationToken)
@@ -425,7 +400,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         version.UpdatedAt = clock.UtcNow;
         if (sent)
         {
-            await MarkOfferAppliedAsync(version.JobOfferId, version.ProfileId, cancellationToken);
+            await tracking.MarkAppliedAsync(version.JobOfferId, version.ProfileId, cancellationToken);
         }
 
         await db.SaveChangesAsync(cancellationToken);

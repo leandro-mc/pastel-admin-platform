@@ -239,6 +239,66 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.ToTable("certifications", "huella");
                 });
 
+            modelBuilder.Entity("Pastel.Modules.Huella.Domain.CoverLetter", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ContentJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid?>("JobOfferId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(2)
+                        .HasColumnType("character varying(2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Source")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("character varying(24)");
+
+                    b.Property<string>("Tone")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("JobOfferId");
+
+                    b.HasIndex("ProfileId", "UpdatedAt");
+
+                    b.ToTable("cover_letters", "huella");
+                });
+
             modelBuilder.Entity("Pastel.Modules.Huella.Domain.CvVersion", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1039,6 +1099,20 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
 
             modelBuilder.Entity("Pastel.Modules.Huella.Domain.Certification", b =>
                 {
+                    b.HasOne("Pastel.Modules.Huella.Domain.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pastel.Modules.Huella.Domain.CoverLetter", b =>
+                {
+                    b.HasOne("Pastel.Modules.Huella.Domain.JobOffer", null)
+                        .WithMany()
+                        .HasForeignKey("JobOfferId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
                     b.HasOne("Pastel.Modules.Huella.Domain.Profile", null)
                         .WithMany()
                         .HasForeignKey("ProfileId")

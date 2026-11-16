@@ -23,7 +23,8 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 | `PUT /studio/offers/{id}/tracking` | Seguimiento: estado (`saved`, `applied`, `interview`, `offer`, `rejected`, `no_response`, `discarded`), fecha de postulación, día de seguimiento y notas (≤ 1000). Volver a `saved` borra la fecha de postulación |
 | `GET/POST /studio/versions` · `GET/DELETE …/{id}` | Versiones de CV (máx. 60) |
 | `PUT …/{id}/name` · `/line` · `/public?isPublic=` · `/sent?sent=` | Renombrar, editar una línea (pasa por el guardián), marcar CV público, marcar como enviado (si su oferta está «sin postular» pasa a «postulada» con la fecha de hoy y seguimiento a 7 días) |
-| `POST /tasks/{cv\|profile\|profile-translate}/ai-package` · `/ai-run` · `/ai-result` | **Acciones de IA** (`AiTaskHandler`): prompt completo para una IA externa, ejecución con el proveedor configurado (nginx le da 150 s: la ruta termina en `ai-run`) o importación del JSON. `cv` redacta una o dos versiones (idiomas `es`/`en`) desde el banco en crudo, o reemplaza `versionId`; `profile` redacta secciones del perfil (español e inglés); `profile-translate` reescribe el inglés de secciones editadas. Todo pasa por el guardián, nunca Typst |
+| `GET /studio/letters` · `GET/DELETE …/{id}` · `PUT …/{id}/content` · `/name` · `/sent?sent=` · `GET …/{id}/pdf` · `/docx` | Cartas de presentación (máx. 60): lectura, edición validada por el guardián (2 a 5 párrafos, 2400 caracteres, cifras solo del banco o de la oferta), envío (pasa su oferta a «postulada»), PDF (`letter.typ`) y Word (`LetterDocx`) |
+| `POST /tasks/{cv\|letter\|profile\|profile-translate}/ai-package` · `/ai-run` · `/ai-result` | **Acciones de IA** (`AiTaskHandler`): prompt completo para una IA externa, ejecución con el proveedor configurado (nginx le da 150 s: la ruta termina en `ai-run`) o importación del JSON. `cv` redacta una o dos versiones (idiomas `es`/`en`) desde el banco en crudo, o reemplaza `versionId`; `letter` redacta una carta por idioma para una oferta (`offerId`, `tone` `formal`/`cercano`; `versionId` = la carta a reemplazar) con `LetterAi`; `profile` redacta secciones del perfil (español e inglés); `profile-translate` reescribe el inglés de secciones editadas. Todo pasa por el guardián, nunca Typst |
 | `GET …/{id}/pdf` | PDF del CV con Typst (`Pastel.Documents`); `503 huella.cv.renderer_unavailable` si el motor no está instalado |
 | `GET …/{id}/docx` | El mismo CV en Word (`Cv/CvDocx.cs`: paquete Open XML escrito a mano, sin dependencias ni motor externo, siempre disponible; abre en Word, Google Docs y LibreOffice) |
 | `GET /ai/settings` · `PUT/DELETE /ai/settings/{gemini\|openai\|anthropic}` · `POST …/{provider}/models` | IA automática: proveedor, modelo y clave (escritura; la clave nunca se devuelve) |
@@ -45,7 +46,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 ## Datos (esquema `huella`)
 
 `Profile` (único por `OwnerUserId`, `PublicTokenHash` único) · `ProfileLink` · `PrivateNote` · `Experience` · `Project` · `Skill` · `Education` · `Certification` · `LanguageSkill` · `Achievement` + `AchievementSkill` (el logro es la unidad: de ahí salen CV, perfil y futuras funciones) · `JobOffer` · `CvVersion` · `PublishedSnapshot` · `AiCredential` (una fila por proveedor; clave cifrada, `KeyHint`, `IsActive`).
-Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials`, `AddHuellaPublicLinkCipher` y `AddHuellaLinkIcon`, `AddHuellaApplicationTracking` (seguimiento en `job_offers` y `SentAt` en `cv_versions`), `AddHuellaPublicContent` (tabla `profile_contents`; quita `PreferredLanguage` de las notas: no hay idioma global) (estas con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
+Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials`, `AddHuellaPublicLinkCipher` y `AddHuellaLinkIcon`, `AddHuellaApplicationTracking` (seguimiento en `job_offers` y `SentAt` en `cv_versions`), `AddHuellaCoverLetters` (tabla `cover_letters`), `AddHuellaPublicContent` (tabla `profile_contents`; quita `PreferredLanguage` de las notas: no hay idioma global) (estas con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
 
 ## Códigos de error
 
@@ -56,7 +57,7 @@ Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredent
 | `huella.session.required` | 401 | Sin sesión |
 | `huella.input.invalid` | 400 | Campos inválidos (`errors` por campo) |
 | `huella.publication.empty` | 400 | Falta nombre o titular para publicar |
-| `huella.cv.empty_bank` · `huella.profile.empty_bank` | 400 | El banco no tiene experiencias ni proyectos para redactar un CV o el perfil |
+| `huella.cv.empty_bank` · `huella.letter.empty_bank` · `huella.profile.empty_bank` | 400 | El banco no tiene experiencias ni proyectos para redactar un CV, una carta o el perfil |
 | `huella.cv.no_achievements` | 400 | El borrador sin IA necesita al menos un logro derivado |
 | `huella.cv.line_rejected` | 400 | El guardián rechazó la línea |
 | `huella.cv.not_public` | 404 | La publicación no incluye CV |

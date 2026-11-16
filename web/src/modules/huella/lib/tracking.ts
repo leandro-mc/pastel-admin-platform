@@ -1,4 +1,9 @@
-import type { OfferStatus, OfferSummary, VersionSummary } from "../api/schemas";
+import type {
+  LetterSummary,
+  OfferStatus,
+  OfferSummary,
+  VersionSummary,
+} from "../api/schemas";
 
 /** Estados con los que el proceso terminó; el resto sigue abierto. */
 export const closedStatuses: readonly OfferStatus[] = [
@@ -55,10 +60,31 @@ export const needsFollowUp = (offer: OfferSummary) =>
   followUpState(offer.followUpAt)?.kind !== undefined &&
   followUpState(offer.followUpAt)?.kind !== "soon";
 
-/** Documentos (CV) de una oferta y cuántos se enviaron. */
-export function documentsOf(offerId: string, versions: readonly VersionSummary[]) {
-  const docs = versions.filter((v) => v.offerId === offerId);
-  return { docs, sent: docs.filter((v) => v.sentAt !== null).length };
+/** Un documento de una oferta, sea CV o carta. */
+export type OfferDoc = {
+  kind: "cv" | "letter";
+  id: string;
+  name: string;
+  language: string;
+  sentAt: string | null;
+  createdAt: string;
+};
+
+/** Documentos (CV y cartas) de una oferta y cuántos se enviaron. */
+export function documentsOf(
+  offerId: string,
+  versions: readonly VersionSummary[],
+  letters: readonly LetterSummary[] = [],
+) {
+  const docs: OfferDoc[] = [
+    ...versions
+      .filter((v) => v.offerId === offerId)
+      .map((v) => ({ kind: "cv" as const, id: v.id, name: v.name, language: v.language, sentAt: v.sentAt, createdAt: v.createdAt })),
+    ...letters
+      .filter((l) => l.offerId === offerId)
+      .map((l) => ({ kind: "letter" as const, id: l.id, name: l.name, language: l.language, sentAt: l.sentAt, createdAt: l.createdAt })),
+  ];
+  return { docs, sent: docs.filter((d) => d.sentAt !== null).length };
 }
 
 /** Fecha local `AAAA-MM-DD` de un instante (para los campos de fecha). */

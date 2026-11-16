@@ -15,7 +15,7 @@ internal static class CvDocx
     public const string ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
     private const string W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-    private const string Muted = "505050";
+    internal const string Muted = "505050";
 
     /// <summary>Texto principal del CV como archivo .docx (bytes del zip).</summary>
     public static byte[] Build(CvDocument doc, CvRequestOptions options)
@@ -90,6 +90,12 @@ internal static class CvDocx
             }
         }
 
+        return Package(body.ToString(), pageWidth, pageHeight, marginTop, marginSide, marginBottom, $"{labels.DocumentTitle} — {doc.Header.Name}", doc.Header.Name, en);
+    }
+
+    /// <summary>Arma el paquete .docx (zip con las partes fijas) alrededor del cuerpo ya escrito; lo comparten el CV y la carta.</summary>
+    internal static byte[] Package(string body, int pageWidth, int pageHeight, int marginTop, int marginSide, int marginBottom, string title, string author, bool en)
+    {
         var document =
             $"""<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="{W}"><w:body>{body}<w:sectPr><w:pgSz w:w="{pageWidth}" w:h="{pageHeight}"/><w:pgMar w:top="{marginTop}" w:right="{marginSide}" w:bottom="{marginBottom}" w:left="{marginSide}" w:header="0" w:footer="0" w:gutter="0"/></w:sectPr></w:body></w:document>""";
 
@@ -98,7 +104,7 @@ internal static class CvDocx
         {
             Add(zip, "[Content_Types].xml", ContentTypesXml);
             Add(zip, "_rels/.rels", RootRelsXml);
-            Add(zip, "docProps/core.xml", CoreXml($"{labels.DocumentTitle} — {doc.Header.Name}", doc.Header.Name, en));
+            Add(zip, "docProps/core.xml", CoreXml(title, author, en));
             Add(zip, "word/document.xml", document);
             Add(zip, "word/_rels/document.xml.rels", DocumentRelsXml);
             Add(zip, "word/styles.xml", StylesXml(en));
@@ -138,7 +144,7 @@ internal static class CvDocx
     private static string DateTab(string dates) =>
         dates.Length == 0 ? string.Empty : "<w:r><w:tab/></w:r>" + Run(dates, color: Muted);
 
-    private static string Run(string text, bool bold = false, string? color = null, int? size = null)
+    internal static string Run(string text, bool bold = false, string? color = null, int? size = null)
     {
         if (text.Length == 0)
         {
@@ -152,7 +158,7 @@ internal static class CvDocx
         return $"<w:r>{rPr}<w:t xml:space=\"preserve\">{Escape(text)}</w:t></w:r>";
     }
 
-    private static string Paragraph(string? style, string runs, int? tabAt = null, bool keepNext = false, int? spaceBefore = null)
+    internal static string Paragraph(string? style, string runs, int? tabAt = null, bool keepNext = false, int? spaceBefore = null)
     {
         var props = (style is null ? string.Empty : $"<w:pStyle w:val=\"{style}\"/>")
             + (keepNext ? "<w:keepNext/>" : string.Empty)

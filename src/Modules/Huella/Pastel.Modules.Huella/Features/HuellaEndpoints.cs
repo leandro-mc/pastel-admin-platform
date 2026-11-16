@@ -8,6 +8,7 @@ using Pastel.Modules.Huella.Features.AiSettings;
 using Pastel.Modules.Huella.Features.AiTasks;
 using Pastel.Modules.Huella.Features.Bank;
 using Pastel.Modules.Huella.Features.Common;
+using Pastel.Modules.Huella.Features.Letters;
 using Pastel.Modules.Huella.Features.MyProfile;
 using Pastel.Modules.Huella.Features.PublicContent;
 using Pastel.Modules.Huella.Features.PublicProfile;
@@ -36,6 +37,8 @@ internal static class HuellaEndpoints
         services.AddScoped<BankHandler>();
         services.AddScoped<StudioHandler>();
         services.AddScoped<ContentHandler>();
+        services.AddScoped<LetterHandler>();
+        services.AddScoped<OfferTracking>();
         services.AddScoped<AiTaskHandler>();
         services.AddScoped<PublicationHandler>();
         services.AddScoped<PublicProfileHandler>();
@@ -126,6 +129,25 @@ internal static class HuellaEndpoints
         {
             var docx = await h.RenderDocxAsync(versionId, ct);
             return docx.IsFailure ? PastelProblem.From(docx.Error, http) : Results.File(docx.Value, CvDocx.ContentType, "cv.docx");
+        }).RequirePermission(read);
+
+        // Cartas de presentación (se redactan con las acciones de IA `letter`; aquí se leen, editan, envían y descargan)
+        var letters = studio.MapGroup("/letters");
+        letters.MapGet("/", async (LetterHandler h, HttpContext http, CancellationToken ct) => (await h.ListAsync(ct)).ToResponse(http)).RequirePermission(read);
+        letters.MapGet("/{letterId:guid}", async (Guid letterId, LetterHandler h, HttpContext http, CancellationToken ct) => (await h.GetAsync(letterId, ct)).ToResponse(http)).RequirePermission(read);
+        letters.MapPut("/{letterId:guid}/content", async (Guid letterId, LetterEditInput i, LetterHandler h, HttpContext http, CancellationToken ct) => (await h.SaveAsync(letterId, i, ct)).ToResponse(http)).RequirePermission(write);
+        letters.MapPut("/{letterId:guid}/name", async (Guid letterId, RenameInput i, LetterHandler h, HttpContext http, CancellationToken ct) => (await h.RenameAsync(letterId, i, ct)).ToResponse(http)).RequirePermission(write);
+        letters.MapPut("/{letterId:guid}/sent", async (Guid letterId, bool sent, LetterHandler h, HttpContext http, CancellationToken ct) => (await h.SetSentAsync(letterId, sent, ct)).ToResponse(http)).RequirePermission(write);
+        letters.MapDelete("/{letterId:guid}", async (Guid letterId, LetterHandler h, HttpContext http, CancellationToken ct) => (await h.DeleteAsync(letterId, ct)).ToNoContent(http)).RequirePermission(write);
+        letters.MapGet("/{letterId:guid}/pdf", async (Guid letterId, LetterHandler h, HttpContext http, CancellationToken ct) =>
+        {
+            var pdf = await h.RenderPdfAsync(letterId, ct);
+            return pdf.IsFailure ? PastelProblem.From(pdf.Error, http) : Results.File(pdf.Value, "application/pdf", "carta.pdf");
+        }).RequirePermission(read);
+        letters.MapGet("/{letterId:guid}/docx", async (Guid letterId, LetterHandler h, HttpContext http, CancellationToken ct) =>
+        {
+            var docx = await h.RenderDocxAsync(letterId, ct);
+            return docx.IsFailure ? PastelProblem.From(docx.Error, http) : Results.File(docx.Value, CvDocx.ContentType, "carta.docx");
         }).RequirePermission(read);
 
         // IA automática: la clave entra una vez, se guarda cifrada y nunca se devuelve. Solo quien edita el perfil la gestiona.

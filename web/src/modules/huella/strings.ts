@@ -4,7 +4,7 @@ export const strings = {
   tagline: "Su perfil profesional en un enlace",
   nav: {
     bank: "Banco",
-    studio: "Crear CV",
+    studio: "CV y carta",
     profile: "Perfil público",
     ai: "Configurar IA",
     history: "Historial",
@@ -261,7 +261,7 @@ export const strings = {
       discarded: "Descartada",
     },
     tabs: {
-      label: "Secciones de Crear CV",
+      label: "Secciones de Crear CV y carta",
       offers: "Ofertas",
       generate: "Generar",
       documents: "Documentos",
@@ -318,8 +318,61 @@ export const strings = {
       noMatch: "Ninguna oferta coincide con la búsqueda o el filtro.",
       followUp: (label: string) => `Seguimiento ${label}`,
     },
+    letter: {
+      title: "Carta de presentación",
+      description:
+        "La IA lee la oferta y su banco, elige las evidencias que responden a lo que piden y escribe una carta de una página, sin repetir el CV. Se escribe siempre para una oferta.",
+      tone: "Tono",
+      tones: { formal: "Formal", cercano: "Cercano" },
+      language: "Idioma de la carta",
+      languageHint:
+        "Se escribe completa en el idioma que elija, aunque su banco o la oferta estén en otro. Con «ambos» se crea una carta por idioma.",
+      needOffer:
+        "La carta se escribe para una oferta concreta: elíjala en la pestaña Ofertas.",
+      aiTitle: (n: number) =>
+        n === 1 ? "Redactando su carta" : "Redactando su carta en español e inglés",
+      run: (label: string, model: string) =>
+        `Redactar la carta con ${label} (${model})`,
+      externalHint:
+        "1. Descargue las instrucciones: llevan la oferta, su banco y las reglas de la carta. Péguelas completas en la IA que prefiera; con una sola respuesta tendrá la carta en el idioma o idiomas elegidos.",
+      editor: {
+        tabs: {
+          label: "Secciones de la carta",
+          content: "Contenido",
+          send: "Enviar y descargar",
+          redo: "Volver a redactar",
+        },
+        title: "Texto de la carta",
+        description:
+          "Su nombre y contacto salen del banco. Lo que escriba o cambie no puede traer cifras que su banco o la oferta no tengan.",
+        subject: "Asunto del correo",
+        greeting: "Saludo",
+        paragraph: (n: number) => `Párrafo ${n}`,
+        closing: "Despedida",
+        addParagraph: "Agregar párrafo",
+        counter: (n: number, max: number) => `${n} de ${max} caracteres`,
+        total: (n: number, max: number) =>
+          `${n} de ${max} caracteres en total (una página)`,
+        save: "Guardar cambios",
+        removeParagraph: "este párrafo",
+        sendTitle: "Envío y descarga",
+        sendHint:
+          "Descargue la carta o copie el texto para pegarlo en el formulario de la oferta. Al marcarla como enviada, el historial queda al día.",
+        copy: "Copiar texto",
+        copied: "Carta copiada.",
+        redoTitle: "Volver a redactar con IA",
+        redoDescription:
+          "Redacta de nuevo esta carta desde su banco y la oferta, con el mismo idioma y tono, y reemplaza su texto.",
+        redoBusy: "Redactando de nuevo su carta",
+        redoRun: (label: string, model: string) =>
+          `Redactar de nuevo con ${label} (${model})`,
+      },
+    },
     docs: {
       title: "Documentos generados",
+      typeFilter: "Tipo",
+      types: { all: "CV y cartas", cv: "Solo CV", letter: "Solo cartas" },
+      letterKind: "Carta",
       searchLabel: "Buscar documento",
       searchPlaceholder: "Buscar por nombre u oferta",
       sort: "Ordenar por",
@@ -350,9 +403,9 @@ export const strings = {
       cvKind: "CV",
       pagesShort: (n: number) => `${n} pág.`,
     },
-    title: "Crear CV",
+    title: "Crear CV y carta",
     description:
-      "Elija una oferta, genere el documento a su medida y lleve el control de lo que ya envió. Todo sale de su banco: no se inventa nada.",
+      "Elija una oferta, genere su CV y su carta de presentación a la medida y lleve el control de lo que ya envió. Todo sale de su banco: no se inventa nada.",
     offer: {
       title: "Oferta",
       description:
@@ -392,6 +445,8 @@ export const strings = {
       languageHint:
         "El CV se redacta completo en el idioma que elija, aunque su banco esté en otro. Con «ambos» se crea una versión por idioma.",
       fromOffer: "Se generará a partir de la oferta seleccionada.",
+      kindLabel: "Qué generar",
+      kinds: { cv: "CV", letter: "Carta de presentación" },
       needTarget:
         "Para generar, elija una oferta en la pestaña Ofertas o escriba un enfoque (por ejemplo «automatización de pruebas») para un CV general.",
       goOffers: "Elegir una oferta",
