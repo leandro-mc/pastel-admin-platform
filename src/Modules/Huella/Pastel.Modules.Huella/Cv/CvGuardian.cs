@@ -119,29 +119,60 @@ internal static class CvGuardian
     public static string AtsText(CvDocument doc, string language)
     {
         var en = language == "en";
+        var labels = CvLabels.For(en);
         var sb = new StringBuilder();
         sb.AppendLine(doc.Header.Name).AppendLine(doc.Header.Headline);
-        sb.AppendLine(string.Join(" · ", doc.Header.ContactLine1.Concat(doc.Header.ContactLine2)));
-        sb.AppendLine().AppendLine(en ? "Summary" : "Perfil profesional").AppendLine(doc.Summary);
-        sb.AppendLine().AppendLine(en ? "Skills" : "Habilidades técnicas");
-        foreach (var g in doc.Skills)
-        {
-            sb.AppendLine(g.Line);
-        }
+        sb.AppendLine(string.Join(" | ", doc.Header.ContactLine1.Concat(doc.Header.ContactLine2)));
+        sb.AppendLine().AppendLine(labels.Summary).AppendLine(doc.Summary);
 
-        sb.AppendLine().AppendLine(en ? "Experience" : "Experiencia laboral");
-        foreach (var e in doc.Experience)
+        void Skills()
         {
-            sb.AppendLine($"{e.Title}, {e.Subtitle}{(e.Location is null ? string.Empty : ", " + e.Location)}   {e.Dates}");
-            foreach (var b in e.Bullets)
+            if (doc.Skills.Count == 0)
             {
-                sb.Append("• ").AppendLine(b.Text);
+                return;
+            }
+
+            sb.AppendLine().AppendLine(labels.Skills);
+            foreach (var g in doc.Skills)
+            {
+                sb.AppendLine(g.Line);
             }
         }
 
-        if (doc.Projects.Count > 0)
+        void Competencies()
         {
-            sb.AppendLine().AppendLine(en ? "Projects" : "Proyectos");
+            foreach (var g in doc.Competencies)
+            {
+                sb.AppendLine().AppendLine(g.Label);
+                foreach (var c in g.Items)
+                {
+                    sb.AppendLine(string.IsNullOrEmpty(c.Note) ? $"• {c.Name}" : $"• {c.Name}: {c.Note}");
+                }
+            }
+        }
+
+        void Experience()
+        {
+            sb.AppendLine().AppendLine(labels.Experience);
+            foreach (var e in doc.Experience)
+            {
+                var context = string.IsNullOrEmpty(e.Context) ? string.Empty : $" ({e.Context})";
+                sb.AppendLine($"{e.Title}, {e.Subtitle}{context}{(e.Location is null ? string.Empty : ", " + e.Location)}   {e.Dates}");
+                foreach (var b in e.Bullets)
+                {
+                    sb.Append("• ").AppendLine(b.Text);
+                }
+            }
+        }
+
+        void Projects()
+        {
+            if (doc.Projects.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine().AppendLine(labels.Projects);
             foreach (var p in doc.Projects)
             {
                 sb.AppendLine(p.Subtitle.Length > 0 ? $"{p.Title} | {p.Subtitle}" : p.Title);
@@ -152,20 +183,47 @@ internal static class CvGuardian
             }
         }
 
-        sb.AppendLine().AppendLine(en ? "Education" : "Educación");
-        foreach (var ed in doc.Education)
+        void Education()
         {
-            sb.AppendLine($"{ed.Degree}, {ed.Institution}   {ed.Dates}");
-            if (ed.Detail is not null)
+            sb.AppendLine().AppendLine(labels.Education);
+            foreach (var ed in doc.Education)
             {
-                sb.AppendLine(ed.Detail);
+                sb.AppendLine($"{ed.Degree}, {ed.Institution}   {ed.Dates}");
+                if (ed.Detail is not null)
+                {
+                    sb.AppendLine(ed.Detail);
+                }
             }
         }
 
-        sb.AppendLine().AppendLine(en ? "Certifications & Languages" : "Certificaciones e idiomas");
-        foreach (var x in doc.Extras)
+        void Extras()
         {
-            sb.AppendLine(x);
+            if (doc.Extras.Count == 0)
+            {
+                return;
+            }
+
+            sb.AppendLine().AppendLine(doc.ExtrasLabel ?? labels.Extras);
+            foreach (var x in doc.Extras)
+            {
+                sb.AppendLine(x);
+            }
+        }
+
+        if (doc.Format == CvFormats.Competencies)
+        {
+            Competencies();
+            Experience();
+            Education();
+            Extras();
+        }
+        else
+        {
+            Experience();
+            Projects();
+            Skills();
+            Education();
+            Extras();
         }
 
         return sb.ToString().TrimEnd();
@@ -190,6 +248,7 @@ internal static class CvGuardian
             new("Cada viñeta cita su logro de origen (sourceIds)", bullets.All(b => b.SourceIds.Count > 0 && b.SourceIds.All(bank.IsSource)), null),
             new("Todas las cifras existen en el banco", bullets.All(b => !(ValidateBullet(b.Text, b.SourceIds, bank, limits)?.StartsWith("Cifra", StringComparison.Ordinal) ?? false)), null),
             new("Ninguna habilidad inventada (todas están en el banco)", doc.Skills.SelectMany(g => g.Items).All(bank.Mentions), null),
+            new("Toda competencia pertenece al catálogo del banco", doc.Competencies.SelectMany(g => g.Items).All(c => bank.IsCompetency(c.Id)), null),
         ];
     }
 }

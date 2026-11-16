@@ -15,7 +15,7 @@ internal static class CvDocx
     public const string ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
 
     private const string W = "http://schemas.openxmlformats.org/wordprocessingml/2006/main";
-    internal const string Muted = "505050";
+    internal const string Muted = "555555";
 
     /// <summary>Texto principal del CV como archivo .docx (bytes del zip).</summary>
     public static byte[] Build(CvDocument doc, CvRequestOptions options)
@@ -24,16 +24,17 @@ internal static class CvDocx
         var a4 = options.Paper == "a4";
         var labels = CvLabels.For(en);
 
-        // Medidas en veinteavos de punto (twips): mismos márgenes que la plantilla del PDF (1,8 / 1,5 / 1,6 cm).
+        // Medidas en veinteavos de punto (twips): mismos márgenes que la plantilla del PDF (1,9 / 1,6 / 1,7 cm).
         var pageWidth = a4 ? 11906 : 12240;
         var pageHeight = a4 ? 16838 : 15840;
-        const int marginSide = 1021;
-        const int marginTop = 850;
-        const int marginBottom = 907;
+        const int marginSide = 1077;
+        const int marginTop = 907;
+        const int marginBottom = 964;
         var textWidth = pageWidth - (2 * marginSide);
 
         var body = new StringBuilder();
 
+        // Encabezado centrado, como el PDF.
         body.Append(Paragraph("Title", Run(doc.Header.Name)));
         if (doc.Header.Headline.Length > 0)
         {
@@ -42,33 +43,55 @@ internal static class CvDocx
 
         foreach (var line in new[] { doc.Header.ContactLine1, doc.Header.ContactLine2 })
         {
-            var joined = string.Join("  ·  ", line.Where(x => x.Length > 0));
+            var joined = string.Join("  |  ", line.Where(x => x.Length > 0));
             if (joined.Length > 0)
             {
-                body.Append(Paragraph(null, Run(joined, color: Muted)));
+                body.Append(Paragraph("Contact", Run(joined, color: Muted)));
             }
         }
 
-        if (doc.Summary.Length > 0)
+        void Summary()
         {
-            body.Append(Paragraph("Heading1", Run(labels.Summary)));
-            body.Append(Paragraph(null, Run(doc.Summary)));
+            if (doc.Summary.Length > 0)
+            {
+                body.Append(Paragraph("Heading1", Run(labels.Summary)));
+                body.Append(Paragraph(null, Run(doc.Summary)));
+            }
         }
 
-        if (doc.Skills.Count > 0)
+        void Skills()
         {
+            if (doc.Skills.Count == 0)
+            {
+                return;
+            }
+
             body.Append(Paragraph("Heading1", Run(labels.Skills)));
             foreach (var group in doc.Skills)
             {
-                body.Append(Paragraph(null, Run(group.Label + ": ", bold: true) + Run(string.Join(", ", group.Items))));
+                body.Append(Paragraph(null, Run(group.Label + ": ", bold: true) + Run(string.Join(", ", group.Items)), spaceAfter: 40));
             }
         }
 
-        AppendEntries(body, labels.Experience, doc.Experience, textWidth);
-        AppendEntries(body, labels.Projects, doc.Projects, textWidth);
-
-        if (doc.Education.Count > 0)
+        void Competencies()
         {
+            foreach (var group in doc.Competencies)
+            {
+                body.Append(Paragraph("Heading1", Run(group.Label)));
+                foreach (var competency in group.Items)
+                {
+                    body.Append(Bullet(Run(competency.Name, bold: true) + (string.IsNullOrEmpty(competency.Note) ? string.Empty : Run(": " + competency.Note))));
+                }
+            }
+        }
+
+        void Education()
+        {
+            if (doc.Education.Count == 0)
+            {
+                return;
+            }
+
             body.Append(Paragraph("Heading1", Run(labels.Education)));
             foreach (var education in doc.Education)
             {
@@ -76,16 +99,38 @@ internal static class CvDocx
             }
         }
 
-        if (doc.Extras.Count > 0)
+        void Extras()
         {
-            body.Append(Paragraph("Heading1", Run(labels.Extras)));
+            if (doc.Extras.Count == 0)
+            {
+                return;
+            }
+
+            body.Append(Paragraph("Heading1", Run(doc.ExtrasLabel ?? labels.Extras)));
             foreach (var extra in doc.Extras)
             {
-                body.Append(Bullet(extra));
+                body.Append(Bullet(Run(extra)));
             }
         }
 
-        return Package(body.ToString(), pageWidth, pageHeight, marginTop, marginSide, marginBottom, $"{labels.DocumentTitle} — {doc.Header.Name}", doc.Header.Name, en);
+        Summary();
+        if (doc.Format == CvFormats.Competencies)
+        {
+            Competencies();
+            AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
+            Education();
+            Extras();
+        }
+        else
+        {
+            AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
+            AppendEntries(body, labels.Projects, doc.Projects, textWidth, experience: false);
+            Skills();
+            Education();
+            Extras();
+        }
+
+        return Package(body.ToString(), pageWidth, pageHeight, marginTop, marginSide, marginBottom, $"{labels.DocumentTitle} — {doc.Header.Name}", doc.Header.Name, en, "Arial", 20);
     }
 
     /// <summary>Arma el paquete .docx (zip con las partes fijas) alrededor del cuerpo ya escrito; lo comparten el CV y la carta.</summary>
@@ -109,7 +154,7 @@ internal static class CvDocx
         return stream.ToArray();
     }
 
-    private static void AppendEntries(StringBuilder body, string heading, List<CvEntry> entries, int textWidth)
+    private static void AppendEntries(StringBuilder body, string heading, List<CvEntry> entries, int textWidth, bool experience)
     {
         if (entries.Count == 0)
         {
@@ -119,23 +164,38 @@ internal static class CvDocx
         body.Append(Paragraph("Heading1", Run(heading)));
         foreach (var entry in entries)
         {
-            if (entry.Dates.Length == 0)
+            if (!experience)
             {
                 // Proyecto: el nombre y, debajo, las tecnologías.
-                body.Append(Paragraph(null, Run(entry.Title, bold: true), keepNext: entry.Subtitle.Length > 0 || entry.Bullets.Count > 0, spaceBefore: 80));
+                body.Append(Paragraph(null, Run(entry.Title, bold: true), keepNext: entry.Subtitle.Length > 0 || entry.Bullets.Count > 0, spaceBefore: 100, spaceAfter: 0));
                 if (entry.Subtitle.Length > 0)
                 {
-                    body.Append(Paragraph(null, Run(entry.Subtitle, color: Muted, size: 19), keepNext: entry.Bullets.Count > 0));
+                    body.Append(Paragraph(null, Run(entry.Subtitle, color: Muted, size: 19), keepNext: entry.Bullets.Count > 0, spaceAfter: 20));
                 }
             }
             else
             {
-                body.Append(Head(entry.Title, " — ", entry.Subtitle, entry.Dates, string.IsNullOrEmpty(entry.Location) ? null : entry.Location, textWidth, entry.Bullets.Count > 0, spaceBefore: 80));
+                // Experiencia: cargo y fechas; debajo, la empresa en negrita y, junto a ella, qué fue (cursiva).
+                body.Append(Paragraph(null, Run(entry.Title, bold: true) + DateTab(entry.Dates), tabAt: textWidth, keepNext: true, spaceBefore: 100, spaceAfter: 0));
+                // Si la empresa y su contexto no caben en un renglón, el contexto pasa completo al siguiente (como en el PDF).
+                var company = Run(entry.Subtitle, bold: true);
+                var hasContext = !string.IsNullOrEmpty(entry.Context);
+                var stacked = hasContext && entry.Subtitle.Length + entry.Context!.Length > 78;
+                if (hasContext && !stacked)
+                {
+                    company += Run("   ") + Run(entry.Context!, color: Muted, italic: true);
+                }
+
+                body.Append(Paragraph(null, company, keepNext: stacked || entry.Bullets.Count > 0, spaceAfter: stacked ? 0 : 20));
+                if (stacked)
+                {
+                    body.Append(Paragraph(null, Run(entry.Context!, color: Muted, italic: true), keepNext: entry.Bullets.Count > 0, spaceAfter: 20));
+                }
             }
 
             foreach (var bullet in entry.Bullets)
             {
-                body.Append(Bullet(bullet.Text));
+                body.Append(Bullet(Run(bullet.Text)));
             }
         }
     }
@@ -147,7 +207,7 @@ internal static class CvDocx
     private static string Head(string title, string sep, string subtitle, string dates, string? extra, int textWidth, bool keepNext, int spaceBefore)
     {
         var sb = new StringBuilder();
-        var oneLine = title.Length + (subtitle.Length > 0 ? sep.Length + subtitle.Length : 0) + dates.Length <= 84;
+        var oneLine = title.Length + (subtitle.Length > 0 ? sep.Length + subtitle.Length : 0) + dates.Length <= 92;
         if (oneLine)
         {
             var line = Run(title, bold: true) + (subtitle.Length > 0 ? Run(sep + subtitle) : string.Empty);
@@ -175,7 +235,7 @@ internal static class CvDocx
     private static string DateTab(string dates) =>
         dates.Length == 0 ? string.Empty : "<w:r><w:tab/></w:r>" + Run(dates, color: Muted);
 
-    internal static string Run(string text, bool bold = false, string? color = null, int? size = null)
+    internal static string Run(string text, bool bold = false, string? color = null, int? size = null, bool italic = false)
     {
         if (text.Length == 0)
         {
@@ -183,24 +243,26 @@ internal static class CvDocx
         }
 
         var props = (bold ? "<w:b/>" : string.Empty)
+            + (italic ? "<w:i/>" : string.Empty)
             + (color is null ? string.Empty : $"<w:color w:val=\"{color}\"/>")
             + (size is null ? string.Empty : $"<w:sz w:val=\"{size}\"/><w:szCs w:val=\"{size}\"/>");
         var rPr = props.Length == 0 ? string.Empty : $"<w:rPr>{props}</w:rPr>";
         return $"<w:r>{rPr}<w:t xml:space=\"preserve\">{Escape(text)}</w:t></w:r>";
     }
 
-    internal static string Paragraph(string? style, string runs, int? tabAt = null, bool keepNext = false, int? spaceBefore = null)
+    internal static string Paragraph(string? style, string runs, int? tabAt = null, bool keepNext = false, int? spaceBefore = null, int? spaceAfter = null)
     {
+        var spacing = (spaceBefore is null ? string.Empty : $" w:before=\"{spaceBefore}\"") + (spaceAfter is null ? string.Empty : $" w:after=\"{spaceAfter}\"");
         var props = (style is null ? string.Empty : $"<w:pStyle w:val=\"{style}\"/>")
             + (keepNext ? "<w:keepNext/>" : string.Empty)
             + (tabAt is null ? string.Empty : $"<w:tabs><w:tab w:val=\"right\" w:pos=\"{tabAt}\"/></w:tabs>")
-            + (spaceBefore is null ? string.Empty : $"<w:spacing w:before=\"{spaceBefore}\"/>");
+            + (spacing.Length == 0 ? string.Empty : $"<w:spacing{spacing}/>");
         var pPr = props.Length == 0 ? string.Empty : $"<w:pPr>{props}</w:pPr>";
         return $"<w:p>{pPr}{runs}</w:p>";
     }
 
-    private static string Bullet(string text) =>
-        $"<w:p><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr>{Run(text)}</w:p>";
+    private static string Bullet(string runs) =>
+        $"<w:p><w:pPr><w:pStyle w:val=\"ListBullet\"/><w:numPr><w:ilvl w:val=\"0\"/><w:numId w:val=\"1\"/></w:numPr></w:pPr>{runs}</w:p>";
 
     /// <summary>Escapa el texto y descarta lo que XML 1.0 no admite (controles y sustitutos sueltos): el archivo siempre es válido.</summary>
     internal static string Escape(string text)
@@ -259,7 +321,7 @@ internal static class CvDocx
     {
         var lang = en ? "en-US" : "es-ES";
         return $"""
-            <?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="{W}"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="{font}" w:hAnsi="{font}" w:eastAsia="{font}" w:cs="{font}"/><w:sz w:val="{halfPoints}"/><w:szCs w:val="{halfPoints}"/><w:lang w:val="{lang}" w:eastAsia="{lang}" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="252" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:after="60"/></w:pPr><w:rPr><w:b/><w:sz w:val="40"/><w:szCs w:val="40"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="80"/></w:pPr><w:rPr><w:sz w:val="24"/><w:szCs w:val="24"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="1" w:color="969696"/></w:pBdr><w:spacing w:before="240" w:after="100"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:caps/><w:spacing w:val="8"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="ListBullet"><w:name w:val="List Bullet"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="40"/></w:pPr></w:style></w:styles>
+            <?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:styles xmlns:w="{W}"><w:docDefaults><w:rPrDefault><w:rPr><w:rFonts w:ascii="{font}" w:hAnsi="{font}" w:eastAsia="{font}" w:cs="{font}"/><w:sz w:val="{halfPoints}"/><w:szCs w:val="{halfPoints}"/><w:lang w:val="{lang}" w:eastAsia="{lang}" w:bidi="ar-SA"/></w:rPr></w:rPrDefault><w:pPrDefault><w:pPr><w:spacing w:after="80" w:line="252" w:lineRule="auto"/></w:pPr></w:pPrDefault></w:docDefaults><w:style w:type="paragraph" w:default="1" w:styleId="Normal"><w:name w:val="Normal"/><w:qFormat/></w:style><w:style w:type="paragraph" w:styleId="Title"><w:name w:val="Title"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:spacing w:after="40"/><w:jc w:val="center"/></w:pPr><w:rPr><w:b/><w:sz w:val="42"/><w:szCs w:val="42"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Subtitle"><w:name w:val="Subtitle"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="60"/><w:jc w:val="center"/></w:pPr><w:rPr><w:sz w:val="23"/><w:szCs w:val="23"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="Contact"><w:name w:val="Contact"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="20"/><w:jc w:val="center"/></w:pPr></w:style><w:style w:type="paragraph" w:styleId="Heading1"><w:name w:val="heading 1"/><w:basedOn w:val="Normal"/><w:next w:val="Normal"/><w:qFormat/><w:pPr><w:keepNext/><w:pBdr><w:bottom w:val="single" w:sz="6" w:space="2" w:color="464646"/></w:pBdr><w:spacing w:before="260" w:after="120"/><w:outlineLvl w:val="0"/></w:pPr><w:rPr><w:b/><w:sz w:val="22"/><w:szCs w:val="22"/></w:rPr></w:style><w:style w:type="paragraph" w:styleId="ListBullet"><w:name w:val="List Bullet"/><w:basedOn w:val="Normal"/><w:qFormat/><w:pPr><w:spacing w:after="50"/></w:pPr></w:style></w:styles>
             """;
     }
 

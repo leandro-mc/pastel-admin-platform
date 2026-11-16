@@ -76,13 +76,15 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
             lang = en ? "en" : "es",
             paper = options.Paper == "a4" ? "a4" : "letter",
             title = l.DocumentTitle + " — " + doc.Header.Name,
+            format = doc.Format,
             name = doc.Header.Name,
             headline = doc.Header.Headline,
             contact1 = doc.Header.ContactLine1,
             contact2 = doc.Header.ContactLine2,
             summary = doc.Summary,
-            labels = new { summary = l.Summary, skills = l.Skills, experience = l.Experience, projects = l.Projects, education = l.Education, extras = l.Extras },
+            labels = new { summary = l.Summary, skills = l.Skills, experience = l.Experience, projects = l.Projects, education = l.Education, extras = doc.ExtrasLabel ?? l.Extras },
             skills = doc.Skills.Select(g => new { label = g.Label, items = g.Items }),
+            competencies = doc.Competencies.Select(g => new { label = g.Label, items = g.Items.Select(c => new { name = c.Name, note = c.Note }) }),
             experience = doc.Experience.Select(Entry),
             projects = doc.Projects.Select(Entry),
             education = doc.Education.Select(e => new { degree = e.Degree, institution = e.Institution, dates = e.Dates, detail = e.Detail }),
@@ -96,6 +98,7 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
         title = e.Title,
         subtitle = e.Subtitle,
         location = e.Location,
+        descriptor = e.Context,
         dates = e.Dates,
         bullets = e.Bullets.Select(b => b.Text),
     };
@@ -111,10 +114,21 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
 }
 
 /// <summary>Títulos de sección del CV en el idioma elegido; los usan el PDF y el Word para decir lo mismo.</summary>
-internal sealed record CvLabels(string DocumentTitle, string Summary, string Skills, string Experience, string Projects, string Education, string Extras)
+internal sealed record CvLabels(
+    string DocumentTitle,
+    string Summary,
+    string Skills,
+    string Experience,
+    string Projects,
+    string Education,
+    string Extras,
+    string Languages,
+    string Certifications,
+    string PersonalCompetencies,
+    string TechnicalCompetencies)
 {
     public static CvLabels For(bool en) =>
         en
-            ? new("Resume", "Summary", "Skills", "Experience", "Projects", "Education", "Certifications and languages")
-            : new("CV", "Perfil profesional", "Habilidades técnicas", "Experiencia laboral", "Proyectos", "Educación", "Certificaciones e idiomas");
+            ? new("Resume", "Summary", "Skills", "Experience", "Projects", "Education", "Certifications and languages", "Languages", "Certifications", "Personal competencies", "Technical competencies")
+            : new("CV", "Perfil profesional", "Habilidades técnicas", "Experiencia laboral", "Proyectos", "Educación", "Certificaciones e idiomas", "Idiomas", "Certificaciones", "Competencias personales", "Competencias técnicas");
 }

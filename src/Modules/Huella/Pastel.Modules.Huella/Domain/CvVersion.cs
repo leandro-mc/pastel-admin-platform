@@ -22,6 +22,9 @@ internal sealed class CvVersion : IProfileOwned
 
     public string Mode { get; set; } = string.Empty;
 
+    /// <summary>Qué tipo de CV es: <c>standard</c> (el propio, pensado para filtros ATS) o <c>competencies</c> (formato de intermediación laboral).</summary>
+    public string Format { get; set; } = "standard";
+
     public string? Focus { get; set; }
 
     public string ContentJson { get; set; } = string.Empty;

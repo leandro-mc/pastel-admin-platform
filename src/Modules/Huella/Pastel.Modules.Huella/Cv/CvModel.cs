@@ -13,11 +13,17 @@ internal sealed class CvDocument
     /// <summary>Idioma en que está redactado (<c>es</c> o <c>en</c>); lo usa la vista pública del CV para sus títulos.</summary>
     public string? Language { get; set; }
 
+    /// <summary><see cref="CvFormats.Standard"/> (CV propio, pensado para filtros ATS) o <see cref="CvFormats.Competencies"/> (formato de intermediación laboral).</summary>
+    public string Format { get; set; } = CvFormats.Standard;
+
     public CvHeader Header { get; set; } = new();
 
     public string Summary { get; set; } = string.Empty;
 
     public List<CvSkillGroup> Skills { get; set; } = [];
+
+    /// <summary>Competencias personales y técnicas del catálogo del banco (solo en el formato de competencias).</summary>
+    public List<CvCompetencyGroup> Competencies { get; set; } = [];
 
     public List<CvEntry> Experience { get; set; } = [];
 
@@ -26,6 +32,9 @@ internal sealed class CvDocument
     public List<CvEducation> Education { get; set; } = [];
 
     public List<string> Extras { get; set; } = [];
+
+    /// <summary>Título de la sección de <see cref="Extras"/> cuando no es el de siempre (p. ej. solo «Idiomas» si no hay certificaciones). <c>null</c> = el título por defecto.</summary>
+    public string? ExtrasLabel { get; set; }
 
     public IEnumerable<CvBullet> AllBullets() => Experience.Concat(Projects).SelectMany(e => e.Bullets);
 }
@@ -53,6 +62,35 @@ internal sealed class CvSkillGroup
     public string Line => Label + ": " + string.Join(", ", Items);
 }
 
+/// <summary>Competencias de un mismo tipo (<c>personal</c> o <c>technical</c>) con su título.</summary>
+internal sealed class CvCompetencyGroup
+{
+    public string Kind { get; set; } = string.Empty;
+
+    public string Label { get; set; } = string.Empty;
+
+    public List<CvCompetency> Items { get; set; } = [];
+}
+
+/// <summary>Una competencia del catálogo y, opcionalmente, una frase corta con la evidencia que la respalda.</summary>
+internal sealed class CvCompetency
+{
+    public Guid Id { get; set; }
+
+    public string Name { get; set; } = string.Empty;
+
+    public string? Note { get; set; }
+}
+
+/// <summary>Tipos de CV que genera Huella.</summary>
+internal static class CvFormats
+{
+    public const string Standard = "standard";
+    public const string Competencies = "competencies";
+
+    public static readonly IReadOnlyList<string> All = [Standard, Competencies];
+}
+
 /// <summary>Experiencia o proyecto. En un proyecto, <see cref="Title"/> es el nombre y <see cref="Subtitle"/> la tecnología.</summary>
 internal sealed class CvEntry
 {
@@ -61,6 +99,9 @@ internal sealed class CvEntry
     public string Subtitle { get; set; } = string.Empty;
 
     public string? Location { get; set; }
+
+    /// <summary>Qué fue esa experiencia cuando no es un empleo (práctica supervisada, proyecto académico, asistencia universitaria); va en cursiva junto a la empresa.</summary>
+    public string? Context { get; set; }
 
     public string Dates { get; set; } = string.Empty;
 
@@ -129,23 +170,38 @@ internal sealed record CvLimits(
     int CertificationCount,
     int CapacityLu,
     int CharsPerLine,
-    int BulletCharsPerLine)
+    int BulletCharsPerLine,
+    int PersonalCompetencies = 0,
+    int TechnicalCompetencies = 0)
 {
+    /// <summary>Tope de la frase de evidencia de una competencia.</summary>
+    public const int CompetencyNoteMax = 70;
+
     public const int BulletMin = 55;
 
     public static readonly IReadOnlyList<string> Levels = ["junior", "mid", "senior"];
     public static readonly IReadOnlyList<string> Papers = ["letter", "a4"];
     public static readonly IReadOnlyList<string> Languages = ["es", "en"];
 
-    public static CvLimits For(string level, string paper)
+    public static CvLimits For(string level, string paper, string format = CvFormats.Standard)
     {
+        // Capacidad en líneas (LU) medida con la plantilla vigente (Liberation Sans 10 pt): Letter 55 líneas por página, A4 59;
+        // la estimación de CvLayout.Total queda ~3 % por encima de lo real, así el CV nunca desborda la página que promete.
         var a4 = paper == "a4";
-        return level switch
+        var limits = level switch
         {
-            "junior" => new("junior", 1, 270, 4, 90, 22, 3, [5, 3, 0], 170, 2, [2, 2], 2, 2, a4 ? 53 : 50, a4 ? 90 : 93, a4 ? 88 : 91),
-            "senior" => new("senior", 2, 380, 6, 180, 38, 6, [11, 9, 7, 5, 3, 0], 180, 1, [3], 2, 5, a4 ? 109 : 101, a4 ? 95 : 98, a4 ? 92 : 95),
-            _ => new("mid", 2, 270, 5, 180, 30, 5, [9, 8, 6, 4, 2], 175, 2, [3, 3], 2, 4, a4 ? 103 : 97, a4 ? 90 : 93, a4 ? 88 : 91),
+            "junior" => new CvLimits("junior", 1, 300, 3, 90, 16, 3, [3, 6, 3], 170, 2, [2, 2], 2, 2, a4 ? 58 : 55, a4 ? 90 : 93, a4 ? 88 : 91),
+            "senior" => new CvLimits("senior", 2, 380, 5, 180, 32, 6, [11, 9, 7, 5, 3, 0], 180, 1, [3], 2, 5, a4 ? 117 : 110, a4 ? 95 : 98, a4 ? 92 : 95),
+            _ => new CvLimits("mid", 2, 300, 5, 180, 26, 5, [9, 8, 6, 4, 2], 175, 2, [3, 3], 2, 4, a4 ? 113 : 106, a4 ? 90 : 93, a4 ? 88 : 91),
         };
+        if (format != CvFormats.Competencies)
+        {
+            return limits;
+        }
+
+        // Formato de competencias: sin proyectos ni habilidades sueltas; las competencias (personales y técnicas) ocupan su lugar.
+        var (personal, technical) = level == "junior" ? (6, 5) : (8, 7);
+        return limits with { ProjectCount = 0, ProjectLines = [], SkillGroups = 0, SkillsTotal = 0, PersonalCompetencies = personal, TechnicalCompetencies = technical, CertificationCount = level == "junior" ? 1 : limits.CertificationCount };
     }
 
     /// <summary>Nivel sugerido por años de experiencia profesional (§6.1): Junior 0-3, Mid 3-8, Senior 8+.</summary>

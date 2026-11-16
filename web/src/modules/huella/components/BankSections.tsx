@@ -3,6 +3,7 @@ import { useSaveNotes, useSaveSection } from "../api/hooks";
 import type {
   Bank,
   Certification,
+  Competency,
   Education,
   Experience,
   LanguageSkill,
@@ -794,6 +795,96 @@ export function LanguageSection({ bank }: { bank: Bank }) {
           <div className="sm:col-span-2">
             <TextField
               label={t.language.evidence}
+              value={r.evidence}
+              error={err("evidence")}
+              onChange={(e) => set({ evidence: e.target.value })}
+            />
+          </div>
+        </>
+      )}
+    />
+  );
+}
+
+type CompetencyRow = Row & {
+  name: string;
+  kind: string;
+  description: string;
+  evidence: string;
+  isVisible: boolean;
+};
+
+export function CompetencySection({ bank }: { bank: Bank }) {
+  const save = useSaveSection("competencies");
+  return (
+    <SectionEditor<Competency, CompetencyRow>
+      title={t.competency.title}
+      description={t.competency.description}
+      empty={t.competency.empty}
+      addLabel={t.competency.add}
+      searchLabel={t.competency.search}
+      removeWhat={strings.confirm.what.competency}
+      readyHint={t.competency.readyHint}
+      maxItems={60}
+      source={bank.competencies}
+      toRow={(c) => ({
+        key: c.id,
+        id: c.id,
+        name: c.name,
+        kind: c.kind,
+        description: c.description,
+        evidence: c.evidence,
+        isVisible: c.isVisible,
+      })}
+      blank={() => ({
+        key: newKey(),
+        name: "",
+        kind: "personal",
+        description: "",
+        evidence: "",
+        isVisible: true,
+      })}
+      toPayload={(r) => ({
+        id: r.id,
+        name: r.name,
+        kind: r.kind,
+        description: r.description,
+        evidence: r.evidence,
+        isVisible: r.isVisible,
+      })}
+      isReady={(r) => filled(r.name)}
+      save={(items) => save.mutateAsync(items).then((b) => b.competencies)}
+      heading={(r) =>
+        r.name ? `${r.name} · ${t.competency.kinds[r.kind as "personal" | "technical"] ?? r.kind}` : ""
+      }
+      searchText={(r) => `${r.description} ${r.evidence}`}
+      fields={(r, set, err) => (
+        <>
+          <TextField
+            label={t.competency.name}
+            value={r.name}
+            error={err("name")}
+            onChange={(e) => set({ name: e.target.value })}
+          />
+          <SelectField
+            label={t.competency.kind}
+            options={options(t.competency.kinds)}
+            value={r.kind}
+            error={err("kind")}
+            onChange={(e) => set({ kind: e.target.value })}
+          />
+          <div className="sm:col-span-2">
+            <TextField
+              label={t.competency.description_}
+              value={r.description}
+              error={err("description")}
+              onChange={(e) => set({ description: e.target.value })}
+            />
+          </div>
+          <div className="sm:col-span-2">
+            <TextAreaField
+              label={t.competency.evidence}
+              rows={3}
               value={r.evidence}
               error={err("evidence")}
               onChange={(e) => set({ evidence: e.target.value })}

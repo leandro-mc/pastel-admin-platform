@@ -25,7 +25,7 @@ public sealed class CvAiComposeTests
         };
         var project = new Project { Id = Guid.CreateVersion7(), ProfileId = profileId, Name = "Runner", Summary = "Ejecutor de pruebas.", IsVisible = true };
         var skill = new Skill { Id = Guid.CreateVersion7(), ProfileId = profileId, Name = "Playwright", Category = "Pruebas", IsVisible = true };
-        var records = new BankRecords([], [experience], [project], [], [skill], [], [], [], []);
+        var records = new BankRecords([], [experience], [project], [], [skill], [], [], [], [], []);
         return (new AiBank(profile, new PrivateNote { ProfileId = profileId }, records, 2026), experience.Id, project.Id);
     }
 

@@ -28,6 +28,8 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
 
     public DbSet<Skill> Skills => Set<Skill>();
 
+    public DbSet<Competency> Competencies => Set<Competency>();
+
     public DbSet<Education> Educations => Set<Education>();
 
     public DbSet<Certification> Certifications => Set<Certification>();
@@ -173,6 +175,20 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();
         });
 
+        modelBuilder.Entity<Competency>(e =>
+        {
+            e.ToTable("competencies");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(80).IsRequired();
+            e.Property(x => x.NormalizedName).HasMaxLength(80).IsRequired();
+            e.Property(x => x.Kind).HasMaxLength(12).IsRequired();
+            e.Property(x => x.Description).HasMaxLength(300).IsRequired();
+            e.Property(x => x.Evidence).HasMaxLength(700).IsRequired();
+            e.Property(x => x.Version).IsRowVersion();
+            e.HasIndex(x => new { x.ProfileId, x.Kind, x.NormalizedName }).IsUnique();
+            e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();
+        });
+
         modelBuilder.Entity<Education>(e =>
         {
             e.ToTable("educations");
@@ -245,6 +261,7 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.Property(x => x.Paper).HasMaxLength(8).IsRequired();
             e.Property(x => x.Language).HasMaxLength(2).IsRequired();
             e.Property(x => x.Mode).HasMaxLength(10).IsRequired();
+            e.Property(x => x.Format).HasMaxLength(12).IsRequired().HasDefaultValue("standard");
             e.Property(x => x.Focus).HasMaxLength(200);
             e.Property(x => x.ContentJson).HasColumnType("jsonb").IsRequired();
             e.Property(x => x.ReportJson).HasColumnType("jsonb");

@@ -133,7 +133,9 @@ function Bullets({
             ) : null}
           </p>
           <p className="text-sm text-muted">
-            {[entry.dates, entry.location].filter(Boolean).join(" · ")}
+            {[entry.context, entry.dates, entry.location]
+              .filter(Boolean)
+              .join(" · ")}
           </p>
           <ul className="mt-1 flex flex-col gap-2">
             {entry.bullets.map((bullet, bi) => {
@@ -292,6 +294,21 @@ export function CvEditor({ version }: { version: CvVersion }) {
                 </>
               )}
             </section>
+            {doc.competencies.map((group) => (
+              <section key={group.kind} className="flex flex-col gap-1">
+                <h4 className="text-sm font-semibold tracking-wide text-accent-strong uppercase">
+                  {group.label}
+                </h4>
+                <ul className="text-sm text-fg">
+                  {group.items.map((c) => (
+                    <li key={c.id}>
+                      <span className="font-medium">{c.name}</span>
+                      {c.note ? `: ${c.note}` : ""}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ))}
             {doc.skills.length > 0 ? (
               <section className="flex flex-col gap-1">
                 <h4 className="text-sm font-semibold tracking-wide text-accent-strong uppercase">
@@ -347,7 +364,10 @@ export function CvEditor({ version }: { version: CvVersion }) {
               </section>
             ) : null}
             {doc.extras.length > 0 ? (
-              <ul className="list-disc pl-5 text-sm text-fg">
+              <ul
+                className="list-disc pl-5 text-sm text-fg"
+                aria-label={doc.extrasLabel ?? undefined}
+              >
                 {doc.extras.map((x) => (
                   <li key={x}>{x}</li>
                 ))}

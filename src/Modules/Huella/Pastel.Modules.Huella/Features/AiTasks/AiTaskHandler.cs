@@ -9,7 +9,7 @@ namespace Pastel.Modules.Huella.Features.AiTasks;
 
 /// <summary>
 /// Datos de una tarea de IA. Cada tarea usa los campos que le corresponden: <c>cv</c> (oferta o enfoque, nivel, papel,
-/// idiomas, nombre y, opcional, la versión a reemplazar), <c>letter</c> (oferta, idiomas, tono, nombre y, opcional, la carta a
+/// idiomas, formato —<c>standard</c> o <c>competencies</c>—, nombre y, opcional, la versión a reemplazar), <c>letter</c> (oferta, idiomas, tono, nombre y, opcional, la carta a
 /// reemplazar en <c>VersionId</c>), <c>profile</c> y <c>profile-translate</c> (secciones) y, al
 /// importar, <c>Json</c> con la respuesta de la IA externa.
 /// </summary>
@@ -24,7 +24,8 @@ internal sealed record AiTaskInput(
     IReadOnlyList<string>? Sections,
     string? Json,
     string? Tone = null,
-    string? Today = null);
+    string? Today = null,
+    string? Format = null);
 
 /// <summary>El prompt completo de una tarea y el nombre sugerido para guardarlo. Es el mismo texto que recibe el proveedor configurado.</summary>
 internal sealed record AiTaskPackage(string Kind, string Title, string FileName, string Prompt, string Schema);

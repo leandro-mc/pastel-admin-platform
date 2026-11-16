@@ -20,6 +20,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
     public const int MaxEducation = 20;
     public const int MaxCertifications = 40;
     public const int MaxLanguages = 15;
+    public const int MaxCompetencies = 60;
     public const int MaxAchievementsPerParent = 40;
 
     private static readonly string[] EmploymentTypes = ["full_time", "part_time", "contract", "freelance", "internship", "volunteer"];
@@ -56,7 +57,8 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
             r.Skills.Select(s => new SkillView(s.Id, s.Name, s.Aliases, s.Category, s.FirstUsedYear, s.LastUsedYear, s.Why, s.IsVisible, r.EvidenceOf(s))).ToList(),
             r.Educations.Select(e => new EducationView(e.Id, e.Degree, e.Institution, e.StartYear, e.EndYear, e.Note, e.IsVisible)).ToList(),
             r.Certifications.Select(c => new CertificationView(c.Id, c.Name, c.Issuer, c.IssuedYear, c.ExpiresYear, c.CredentialUrl, c.IsVisible)).ToList(),
-            r.Languages.Select(l => new LanguageView(l.Id, l.Language, l.Level, l.Evidence, l.IsVisible)).ToList());
+            r.Languages.Select(l => new LanguageView(l.Id, l.Language, l.Level, l.Evidence, l.IsVisible)).ToList(),
+            r.Competencies.Select(c => new CompetencyView(c.Id, c.Name, c.Kind, c.Description, c.Evidence, c.IsVisible)).ToList());
     }
 
     // ───────────────────────────── Notas privadas ─────────────────────────────
@@ -245,6 +247,41 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                 };
             },
             (profileId, now) => new Skill { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
+            cancellationToken);
+    }
+
+    // ───────────────────────────── Competencias ─────────────────────────────
+    public Task<Result<BankView>> SaveCompetenciesAsync(IReadOnlyList<CompetencyInput>? items, CancellationToken cancellationToken)
+    {
+        var seen = new HashSet<string>(StringComparer.Ordinal);
+        return SaveSectionAsync(
+            items, MaxCompetencies, db.Competencies, x => x.Id, x => x.Id,
+            (i, item, errors) =>
+            {
+                var prefix = $"items[{i}].";
+                var name = errors.RequiredLine(prefix + "name", item.Name, HuellaLimits.Competency.Name);
+                var kind = errors.OneOf(prefix + "kind", item.Kind, CompetencyKinds.All.ToArray(), CompetencyKinds.Personal);
+                var normalized = TermMatcher.Fold(name);
+                if (normalized.Length > 0 && !seen.Add(kind + "|" + normalized))
+                {
+                    errors.Add(prefix + "name", "Esta competencia ya está en la lista.");
+                }
+
+                var description = errors.Text(prefix + "description", item.Description, HuellaLimits.Competency.Description);
+                var evidence = errors.Text(prefix + "evidence", item.Evidence, HuellaLimits.Competency.Evidence);
+                return (Competency x, int order, DateTimeOffset now) =>
+                {
+                    x.Name = name;
+                    x.NormalizedName = normalized.Length > HuellaLimits.Competency.NormalizedName ? normalized[..HuellaLimits.Competency.NormalizedName] : normalized;
+                    x.Kind = kind;
+                    x.Description = description;
+                    x.Evidence = evidence;
+                    x.IsVisible = item.IsVisible ?? true;
+                    x.SortOrder = order;
+                    x.UpdatedAt = now;
+                };
+            },
+            (profileId, now) => new Competency { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
             cancellationToken);
     }
 

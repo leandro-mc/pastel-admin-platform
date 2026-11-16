@@ -43,6 +43,7 @@ internal sealed record CvVersionSummary(
     string Level,
     string Paper,
     string Language,
+    string Format,
     string Mode,
     string Source,
     int Pages,

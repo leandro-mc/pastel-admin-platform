@@ -57,6 +57,7 @@ export const strings = {
       education: "este estudio",
       certification: "esta certificación",
       language: "este idioma",
+      competency: "esta competencia",
       achievement: "este logro",
       link: "este enlace",
     },
@@ -70,6 +71,7 @@ export const strings = {
       experiences: "Experiencia",
       projects: "Proyectos",
       skills: "Habilidades",
+      competencies: "Competencias",
       education: "Educación",
       certifications: "Certificaciones",
       languages: "Idiomas",
@@ -141,6 +143,20 @@ export const strings = {
           : `${n} logro${n === 1 ? "" : "s"}`,
       noEvidence: "Sin respaldo",
       search: "Buscar en habilidades",
+      readyHint: "el nombre",
+    },
+    competency: {
+      title: "Competencias",
+      description:
+        "Catálogo de competencias personales y técnicas que de verdad tiene. El «CV competencias» (formato que piden las agencias de empleo) elige de aquí; la IA nunca inventa una que no esté en esta lista.",
+      empty: "Aún no agregó competencias.",
+      add: "Agregar competencia",
+      name: "Competencia",
+      kind: "Tipo",
+      kinds: { personal: "Personal", technical: "Técnica" },
+      description_: "Qué significa en el trabajo",
+      evidence: "Cómo la demuestra (con hechos de su banco)",
+      search: "Buscar en competencias",
       readyHint: "el nombre",
     },
     education: {
@@ -460,7 +476,25 @@ export const strings = {
         "El CV se redacta completo en el idioma que elija, aunque su banco esté en otro. Con «ambos» se crea una versión por idioma.",
       fromOffer: "Se generará a partir de la oferta seleccionada.",
       kindLabel: "Qué generar",
-      kinds: { cv: "CV", letter: "Carta de presentación" },
+      kinds: {
+        cv: "CV",
+        competencies: "CV competencias",
+        letter: "Carta de presentación",
+      },
+      competencies: {
+        title: "Generar CV competencias",
+        description:
+          "Formato para agencias de empleo y áreas de recursos humanos (por ejemplo ane.cr): encabezado centrado, competencias personales y técnicas por separado, experiencia explicada en lenguaje claro y aire entre secciones. La IA elige las competencias de su catálogo del banco. Para postular por su cuenta use el CV, que está pensado para los filtros ATS.",
+        aiTitle: (n: number) =>
+          n === 1
+            ? "Redactando su CV de competencias"
+            : "Redactando su CV de competencias en español e inglés",
+        externalHint:
+          "1. Descargue las instrucciones: llevan su oferta o enfoque, su banco con el catálogo de competencias y los límites del nivel. Péguelas completas en la IA que prefiera.",
+        badge: "Competencias",
+        needCatalog:
+          "Su catálogo de competencias está vacío. Agregue competencias en el Banco para poder generar este CV.",
+      },
       needTarget:
         "Para generar, elija una oferta en la pestaña Ofertas o escriba un enfoque (por ejemplo «automatización de pruebas») para un CV general.",
       goOffers: "Elegir una oferta",

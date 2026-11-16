@@ -109,14 +109,38 @@ internal static class CvComposer
         }
 
         doc.Extras = bank.Certifications.Take(limits.CertificationCount)
-            .Select(c => c.Year is { } y ? $"{c.Name} ({y.ToString(CultureInfo.InvariantCulture)})" : c.Name)
+            .Select(c => CertificationLine(c.Name, c.Issuer, c.Year))
             .ToList();
+        var certificationCount = doc.Extras.Count;
         if (bank.Languages.Count > 0)
         {
             doc.Extras.Add(string.Join(" | ", bank.Languages.Select(l => $"{l.Language}: {l.Level}")));
         }
 
+        doc.ExtrasLabel = ExtrasLabel(certificationCount, bank.Languages.Count, options.Language);
+
         return doc;
+    }
+
+    /// <summary>Una certificación en una línea: «nombre — emisor (año)»; si el nombre ya termina en paréntesis el año va tras una coma.</summary>
+    public static string CertificationLine(string name, string? issuer, int? year)
+    {
+        var text = string.IsNullOrWhiteSpace(issuer) ? name : $"{name} — {issuer}";
+        return year is { } y
+            ? (text.EndsWith(')') ? $"{text}, {y.ToString(CultureInfo.InvariantCulture)}" : $"{text} ({y.ToString(CultureInfo.InvariantCulture)})")
+            : text;
+    }
+
+    /// <summary>Título de la última sección según lo que lleva: certificaciones e idiomas, solo idiomas o solo certificaciones. <c>null</c> = el de siempre.</summary>
+    public static string? ExtrasLabel(int certifications, int languages, string language)
+    {
+        var labels = CvLabels.For(language == "en");
+        return (certifications, languages) switch
+        {
+            (0, > 0) => labels.Languages,
+            ( > 0, 0) => labels.Certifications,
+            _ => null,
+        };
     }
 
     private static CvBullet Bullet(string text, BankAchievement a, double score) =>
@@ -234,21 +258,35 @@ internal static class CvComposer
 /// <summary>Presupuesto de líneas (LU) de un CV y escalera de ajuste a la página (§6 y §7.6).</summary>
 internal static class CvLayout
 {
-    public const double HeaderLu = 5.5;
+    /// <summary>Encabezado centrado: nombre, titular y dos líneas de contacto.</summary>
+    public const double HeaderLu = 5.8;
+
+    /// <summary>Título de sección con su línea y el aire que lo separa de lo anterior.</summary>
+    private const double SectionLu = 2.1;
+
+    /// <summary>Una experiencia ocupa dos renglones de cabecera (cargo y empresa) más el aire entre entradas.</summary>
+    private const double ExperienceHeadLu = 2.5;
 
     public static double EntryLines(CvEntry entry, CvLimits limits) =>
         entry.Bullets.Sum(b => CvComposer.Lines(b.Text.Length, limits.BulletCharsPerLine));
 
+    /// <summary>La empresa y su contexto caben en un renglón o pasan a dos.</summary>
+    private static double ExperienceHead(CvEntry e) =>
+        ExperienceHeadLu + (e.Context is { Length: > 0 } && e.Subtitle.Length + e.Context.Length > 78 ? 1 : 0);
+
     public static double Total(CvDocument doc, CvLimits limits)
     {
-        var summary = 2 + CvComposer.Lines(doc.Summary.Length, limits.CharsPerLine);
-        var skills = 2 + doc.Skills.Sum(g => CvComposer.Lines(g.Line.Length, limits.CharsPerLine));
-        var experience = 2 + doc.Experience.Sum(e => 1.65 + EntryLines(e, limits));
-        var projects = doc.Projects.Count == 0 ? 0 : 2 + doc.Projects.Sum(p => (p.Subtitle.Length > 0 ? 2.15 : 1.65) + EntryLines(p, limits));
-        var education = 2 + doc.Education.Sum(e => 1.5 + (e.Detail is null ? 0 : CvComposer.Lines(e.Detail.Length, limits.CharsPerLine)));
-        var extras = 2 + doc.Extras.Sum(x => CvComposer.Lines(x.Length, limits.CharsPerLine));
-        return HeaderLu + summary + skills + experience + projects + education + extras;
+        var summary = SectionLu + CvComposer.Lines(doc.Summary.Length, limits.CharsPerLine);
+        var skills = doc.Skills.Count == 0 ? 0 : SectionLu + doc.Skills.Sum(g => CvComposer.Lines(g.Line.Length, limits.CharsPerLine) + 0.1);
+        var competencies = doc.Competencies.Sum(g => SectionLu + g.Items.Sum(c => CvComposer.Lines(CompetencyLength(c), limits.CharsPerLine) + 0.4));
+        var experience = SectionLu + doc.Experience.Sum(e => ExperienceHead(e) + EntryLines(e, limits));
+        var projects = doc.Projects.Count == 0 ? 0 : SectionLu + doc.Projects.Sum(p => (p.Subtitle.Length > 0 ? 2.4 : 1.6) + EntryLines(p, limits));
+        var education = SectionLu + doc.Education.Sum(e => 1.25 + (e.Detail is null ? 0 : CvComposer.Lines(e.Detail.Length, limits.CharsPerLine)));
+        var extras = doc.Extras.Count == 0 ? 0 : SectionLu + doc.Extras.Sum(x => CvComposer.Lines(x.Length, limits.CharsPerLine) + 0.05);
+        return HeaderLu + summary + skills + competencies + experience + projects + education + extras;
     }
+
+    private static int CompetencyLength(CvCompetency c) => c.Name.Length + (string.IsNullOrEmpty(c.Note) ? 0 : 2 + c.Note.Length);
 
     /// <summary>Páginas estimadas a partir del presupuesto (el conteo real lo da el compilador cuando exista el motor de PDF).</summary>
     public static int EstimatedPages(CvDocument doc, CvLimits limits) =>
@@ -301,6 +339,11 @@ internal static class CvLayout
             {
                 group.Items.RemoveAt(group.Items.Count - 1);
                 log.Add("Paso 3 · se recorta la última habilidad de un grupo.");
+            }
+            else if (doc.Competencies.Where(g => g.Items.Count > 3).OrderByDescending(g => g.Items.Count).FirstOrDefault() is { } competencies)
+            {
+                competencies.Items.RemoveAt(competencies.Items.Count - 1);
+                log.Add($"Paso 3 · se recorta la última competencia de «{competencies.Label}».");
             }
             else if (doc.Experience.Where(e => e.Bullets.Count > 1).OrderBy(e => e.Bullets.Min(b => b.Score)).FirstOrDefault() is { } entry)
             {

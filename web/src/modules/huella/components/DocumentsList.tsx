@@ -83,9 +83,14 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
         sentAt: item.sentAt,
         meta: [
           item.language.toUpperCase(),
+          item.format === "competencies"
+            ? strings.studio.generate.competencies.badge
+            : null,
           strings.studio.generate.levels[item.level as "junior" | "mid" | "senior"] ?? item.level,
           t.pagesShort(item.pages),
-        ].join(" · "),
+        ]
+          .filter(Boolean)
+          .join(" · "),
         source: v.source[item.source as "rules" | "manual" | "ai"] ?? item.source,
       })),
       ...(letters.data ?? []).map((item) => ({

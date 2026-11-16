@@ -88,6 +88,7 @@ internal static class HuellaEndpoints
         bank.MapPut("/experiences", async (ListInput<ExperienceInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveExperiencesAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);
         bank.MapPut("/projects", async (ListInput<ProjectInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveProjectsAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);
         bank.MapPut("/skills", async (ListInput<SkillInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveSkillsAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);
+        bank.MapPut("/competencies", async (ListInput<CompetencyInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveCompetenciesAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);
         bank.MapPut("/education", async (ListInput<EducationInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveEducationsAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);
         bank.MapPut("/certifications", async (ListInput<CertificationInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveCertificationsAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);
         bank.MapPut("/languages", async (ListInput<LanguageInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveLanguagesAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);

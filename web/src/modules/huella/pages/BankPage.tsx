@@ -3,6 +3,7 @@ import { useBank } from "../api/hooks";
 import { Loaded } from "../components/Form";
 import {
   CertificationSection,
+  CompetencySection,
   EducationSection,
   ExperienceSection,
   LanguageSection,
@@ -33,6 +34,7 @@ export function Component() {
               <Tab id="experiences">{tabs.experiences}</Tab>
               <Tab id="projects">{tabs.projects}</Tab>
               <Tab id="skills">{tabs.skills}</Tab>
+              <Tab id="competencies">{tabs.competencies}</Tab>
               <Tab id="education">{tabs.education}</Tab>
               <Tab id="certifications">{tabs.certifications}</Tab>
               <Tab id="languages">{tabs.languages}</Tab>
@@ -48,6 +50,9 @@ export function Component() {
             </TabPanel>
             <TabPanel id="skills">
               <SkillSection bank={data} />
+            </TabPanel>
+            <TabPanel id="competencies">
+              <CompetencySection bank={data} />
             </TabPanel>
             <TabPanel id="education">
               <EducationSection bank={data} />

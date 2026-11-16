@@ -29,8 +29,9 @@ internal sealed class AiBank
 
     private readonly Dictionary<Guid, string> _entryText = [];
 
-    public AiBank(Profile profile, PrivateNote notes, BankRecords records, int currentYear)
+    public AiBank(Profile profile, PrivateNote notes, BankRecords records, int currentYear, DateOnly? today = null)
     {
+        Today = today ?? DateOnly.FromDateTime(DateTime.UtcNow);
         Profile = profile;
         Notes = notes;
         Records = records;
@@ -88,8 +89,16 @@ internal sealed class AiBank
             Take($"{c.Name} {c.Issuer} {c.IssuedYear}");
         }
 
+        foreach (var c in records.Competencies)
+        {
+            Take($"{c.Name} {c.Description} {c.Evidence}");
+        }
+
         AllText = all.ToString();
-        Numbers = AchievementRules.Numbers(AllText).Append(Data.ProfessionalYears().ToString(CultureInfo.InvariantCulture)).ToHashSet(StringComparer.Ordinal);
+        Numbers = AchievementRules.Numbers(AllText)
+            .Append(Data.ProfessionalYears().ToString(CultureInfo.InvariantCulture))
+            .Append(Math.Round(PracticalMonths() / 12.0, MidpointRounding.AwayFromZero).ToString(CultureInfo.InvariantCulture))
+            .ToHashSet(StringComparer.Ordinal);
         FoldedText = TermMatcher.Fold(AllText);
         Data = Data with { EntryTexts = _entryText, AllText = AllText };
     }
@@ -101,6 +110,9 @@ internal sealed class AiBank
     public BankRecords Records { get; }
 
     public int CurrentYear { get; }
+
+    /// <summary>Fecha de hoy con la que se cuentan los cargos vigentes.</summary>
+    public DateOnly Today { get; }
 
     /// <summary>Misma vista que usan el análisis de la oferta, el reporte y el contacto del CV.</summary>
     public BankData Data { get; private set; }
@@ -139,12 +151,12 @@ internal sealed class AiBank
         purpose == AiPurpose.Cv ? a.Visibility is "cv" or "both" : a.Visibility is "public" or "both";
 
     /// <summary>JSON del banco para el prompt. Mismo contenido para el proveedor configurado y para una IA externa.</summary>
-    public string ContextJson(AiPurpose purpose)
+    public string ContextJson(AiPurpose purpose, bool withCompetencies = false)
     {
         var json = string.Empty;
         foreach (var cap in NarrativeCaps)
         {
-            json = JsonSerializer.Serialize(Context(purpose, cap), HuellaJson.Options);
+            json = JsonSerializer.Serialize(Context(purpose, cap, withCompetencies), HuellaJson.Options);
             if (json.Length <= ContextBudgetChars)
             {
                 break;
@@ -154,7 +166,7 @@ internal sealed class AiBank
         return json;
     }
 
-    private object Context(AiPurpose purpose, int olderNarrativeCap)
+    private object Context(AiPurpose purpose, int olderNarrativeCap, bool withCompetencies)
     {
         var records = Records;
         var forProfile = purpose == AiPurpose.Profile;
@@ -210,11 +222,16 @@ internal sealed class AiBank
             .Select(a => a.LongText)
             .ToList();
 
+        var competencies = withCompetencies
+            ? records.Competencies.Where(c => c.IsVisible).Select(c => new { id = c.Id, kind = c.Kind, name = c.Name, meaning = c.Description, evidence = c.Evidence }).ToList()
+            : null;
+
         return new
         {
             person = new
             {
                 yearsOfExperience = Data.ProfessionalYears(),
+                practicalExperienceMonths = PracticalMonths(),
                 currentHeadline = Profile.Headline,
                 currentSummary = Profile.Summary,
                 story = Notes.Story,
@@ -223,6 +240,7 @@ internal sealed class AiBank
             },
             experiences,
             projects,
+            competencies,
             skills = records.Skills.Where(s => !forProfile || s.IsVisible)
                 .Select(s => new { name = s.Name, category = s.Category, firstUsed = s.FirstUsedYear, lastUsed = s.LastUsedYear }),
             education = records.Educations.Where(e => !forProfile || e.IsVisible)
@@ -233,6 +251,33 @@ internal sealed class AiBank
                 .Select(l => new { id = l.Id, language = l.Language, level = l.Level, evidence = l.Evidence }),
             doNotUse,
         };
+    }
+
+    /// <summary>
+    /// Meses de experiencia práctica (proyecto académico, práctica y asistencia): unión de los periodos de las experiencias, sin
+    /// contar dos veces los meses que se traslapan. Es un dato para redactar «cerca de N años», no un cargo laboral.
+    /// </summary>
+    public int PracticalMonths()
+    {
+        var spans = Records.Experiences
+            .Select(e => (Start: e.StartDate, End: e.EndDate ?? Today))
+            .Select(x => (x.Start, End: x.End < x.Start ? x.Start : x.End))
+            .OrderBy(x => x.Start)
+            .ToList();
+        var months = 0;
+        DateOnly? cursor = null;
+        foreach (var (start, end) in spans)
+        {
+            var from = cursor is { } c && c > start ? c : start;
+            if (end > from)
+            {
+                months += ((end.Year - from.Year) * 12) + end.Month - from.Month;
+            }
+
+            cursor = cursor is { } c2 && c2 > end ? c2 : end;
+        }
+
+        return months;
     }
 
     private static string? Result(Achievement a) =>

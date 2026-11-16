@@ -22,6 +22,9 @@ const languageChoices: Record<LanguageChoice, readonly string[]> = {
 const g = strings.studio.generate;
 const l = strings.studio.letter;
 
+/** Lo que se puede generar: el CV propio, el CV de competencias (formato de intermediación laboral) o la carta. */
+type GenKind = "cv" | "competencies" | "letter";
+
 type Props = {
   offerId: string | null;
   /** Un documento nuevo está listo: se abre en la pestaña Documentos. */
@@ -35,12 +38,12 @@ type Props = {
  * enfoque escrito. CV y carta son pedidos distintos (prompt y respuesta propios) en la misma pantalla.
  */
 export function GenerateWorkspace({ offerId, onGenerated, onPickOffer }: Props) {
-  const [kind, setKind] = useState<DocKind>("cv");
+  const [kind, setKind] = useState<GenKind>("cv");
   return (
     <div className="flex flex-col gap-5">
       <div role="group" aria-label={g.kindLabel} className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-semibold text-fg">{g.kindLabel}</span>
-        {(["cv", "carta"] as const).map((value) => (
+        {(["cv", "competencies", "letter"] as const).map((value) => (
           <button
             key={value}
             type="button"
@@ -52,15 +55,21 @@ export function GenerateWorkspace({ offerId, onGenerated, onPickOffer }: Props) 
                 : "border-line bg-surface text-fg-secondary hover:bg-accent-soft"
             }`}
           >
-            {value === "cv" ? g.kinds.cv : g.kinds.letter}
+            {g.kinds[value]}
           </button>
         ))}
       </div>
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
-        {kind === "cv" ? (
-          <CvForm offerId={offerId} onGenerated={onGenerated} onPickOffer={onPickOffer} />
-        ) : (
+        {kind === "letter" ? (
           <LetterForm offerId={offerId} onGenerated={onGenerated} onPickOffer={onPickOffer} />
+        ) : (
+          <CvForm
+            key={kind}
+            format={kind === "competencies" ? "competencies" : "standard"}
+            offerId={offerId}
+            onGenerated={onGenerated}
+            onPickOffer={onPickOffer}
+          />
         )}
         <Analysis offerId={offerId} />
       </div>
@@ -68,7 +77,13 @@ export function GenerateWorkspace({ offerId, onGenerated, onPickOffer }: Props) 
   );
 }
 
-function CvForm({ offerId, onGenerated, onPickOffer }: Props) {
+function CvForm({
+  offerId,
+  onGenerated,
+  onPickOffer,
+  format,
+}: Props & { format: "standard" | "competencies" }) {
+  const competencies = format === "competencies";
   const bank = useBank();
   const generate = useGenerateCv();
   const [focus, setFocus] = useState("");
@@ -90,6 +105,7 @@ function CvForm({ offerId, onGenerated, onPickOffer }: Props) {
   const effectivePaper = paper ?? bank.data?.notes.preferredPaper ?? "letter";
   const languages = languageChoices[language];
   const hasTarget = offerId !== null || focus.trim() !== "";
+  const catalogEmpty = bank.data ? bank.data.competencies.length === 0 : false;
 
   const taskInput = () => ({
     offerId,
@@ -97,6 +113,7 @@ function CvForm({ offerId, onGenerated, onPickOffer }: Props) {
     level,
     paper: effectivePaper,
     languages: [...languages],
+    format,
     name: name || null,
   });
 
@@ -122,10 +139,16 @@ function CvForm({ offerId, onGenerated, onPickOffer }: Props) {
   };
 
   return (
-    <Panel title={g.title} description={g.description}>
+    <Panel
+      title={competencies ? g.competencies.title : g.title}
+      description={competencies ? g.competencies.description : g.description}
+    >
       <div className="flex flex-col gap-5">
         {hasContent === false ? (
           <p className="text-sm text-muted">{g.emptyBank}</p>
+        ) : null}
+        {competencies && catalogEmpty ? (
+          <p className="text-sm text-muted">{g.competencies.needCatalog}</p>
         ) : null}
 
         <TextField
@@ -177,17 +200,22 @@ function CvForm({ offerId, onGenerated, onPickOffer }: Props) {
           <>
             <AiTaskPanel
               kind="cv"
-              title={g.aiTitle(languages.length)}
-              fileBase={`huella-cv-${level}-${languages.join("-")}`}
-              disabled={hasContent === false}
+              title={(competencies ? g.competencies.aiTitle : g.aiTitle)(
+                languages.length,
+              )}
+              fileBase={`huella-cv${competencies ? "-competencias" : ""}-${level}-${languages.join("-")}`}
+              disabled={hasContent === false || (competencies && catalogEmpty)}
               input={taskInput}
               runLabel={(label, model) => g.run(label, model)}
-              externalHint={g.externalHint}
+              externalHint={
+                competencies ? g.competencies.externalHint : g.externalHint
+              }
               onDone={(outcomes) => {
                 const id = outcomes[0]?.versionIds[0];
                 if (id) onGenerated("cv", id);
               }}
             />
+            {competencies ? null : (
             <div className="flex flex-col gap-2 border-t border-line pt-4">
               <p className="text-sm text-muted">{g.draftHint}</p>
               <div>
@@ -207,6 +235,7 @@ function CvForm({ offerId, onGenerated, onPickOffer }: Props) {
               ) : null}
               <ErrorNotice error={draftError} />
             </div>
+            )}
           </>
         ) : (
           <NeedTarget text={g.needTarget} onPickOffer={onPickOffer} />

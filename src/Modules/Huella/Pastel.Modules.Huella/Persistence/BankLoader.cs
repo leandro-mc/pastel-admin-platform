@@ -14,7 +14,8 @@ internal sealed record BankRecords(
     List<AchievementSkill> AchievementSkills,
     List<Education> Educations,
     List<Certification> Certifications,
-    List<LanguageSkill> Languages)
+    List<LanguageSkill> Languages,
+    List<Competency> Competencies)
 {
     public IEnumerable<Achievement> AchievementsOf(Experience experience) =>
         Achievements.Where(a => a.ExperienceId == experience.Id).OrderBy(a => a.SortOrder).ThenBy(a => a.CreatedAt);
@@ -52,7 +53,8 @@ internal sealed class BankLoader(HuellaDbContext db)
         var educations = await db.Educations.Where(x => x.ProfileId == profileId).OrderBy(x => x.SortOrder).ToListAsync(cancellationToken);
         var certifications = await db.Certifications.Where(x => x.ProfileId == profileId).OrderBy(x => x.SortOrder).ToListAsync(cancellationToken);
         var languages = await db.LanguageSkills.Where(x => x.ProfileId == profileId).OrderBy(x => x.SortOrder).ToListAsync(cancellationToken);
-        return new BankRecords(links, experiences, projects, achievements, skills, achievementSkills, educations, certifications, languages);
+        var competencies = await db.Competencies.Where(x => x.ProfileId == profileId).OrderBy(x => x.Kind).ThenBy(x => x.SortOrder).ThenBy(x => x.Name).ToListAsync(cancellationToken);
+        return new BankRecords(links, experiences, projects, achievements, skills, achievementSkills, educations, certifications, languages, competencies);
     }
 
     /// <summary>Vista del banco para el CV: solo logros visibles en CV (<c>cv</c> o <c>both</c>).</summary>
@@ -107,7 +109,8 @@ internal sealed class BankLoader(HuellaDbContext db)
             new BankPrivate(notes.Residence, notes.WorkMode, notes.Availability, notes.WorkAuthorization, notes.Avoid),
             notes.ExtraBannedPhrases.Split([',', '\n'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries),
             notes.Voice,
-            currentYear);
+            currentYear,
+            Competencies: r.Competencies.Select(c => new BankCompetency(c.Id, c.Name, c.Kind, c.Description, c.Evidence)).ToList());
     }
 
     /// <summary>URL legible para el CV y el perfil: sin <c>https://</c> ni <c>www.</c>, sin barra final.</summary>

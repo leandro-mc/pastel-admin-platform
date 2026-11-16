@@ -166,7 +166,8 @@ export type BankSection =
   | "skills"
   | "education"
   | "certifications"
-  | "languages";
+  | "languages"
+  | "competencies";
 
 export function useSaveProfile() {
   const client = useQueryClient();
@@ -360,6 +361,8 @@ export type AiTaskInput = {
   level?: string;
   paper?: string;
   languages?: string[];
+  /** `standard` (CV propio) o `competencies` (formato de intermediación laboral). */
+  format?: string;
   name?: string | null;
   /** Versión del CV (o carta) que se vuelve a redactar. */
   versionId?: string | null;

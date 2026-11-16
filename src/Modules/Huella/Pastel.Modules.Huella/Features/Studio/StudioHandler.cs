@@ -290,7 +290,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var (version, document) = loaded.Value;
         var profile = await owners.GetOrCreateAsync(cancellationToken);
         var bank = await LoadBankAsync(profile.Value, cancellationToken);
-        var limits = CvLimits.For(version.Level, version.Paper);
+        var limits = CvLimits.For(version.Level, version.Paper, version.Format);
         var text = TextInput.CleanLine(input.Text);
 
         if (input.Target == "summary")
@@ -457,16 +457,18 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
 
         string level;
         string paper;
+        string format;
         List<string> languages;
         if (existing is not null)
         {
-            (level, paper, languages) = (existing.Level, existing.Paper, [existing.Language]);
+            (level, paper, format, languages) = (existing.Level, existing.Paper, existing.Format, [existing.Language]);
         }
         else
         {
             var notes = await owners.GetNotesAsync(profile.Value, cancellationToken);
             level = errors.OneOf("level", input.Level, CvLimits.Levels.ToArray(), CvLimits.SuggestLevel(loaded.Data.ProfessionalYears()));
             paper = errors.OneOf("paper", input.Paper, CvLimits.Papers.ToArray(), notes.PreferredPaper.Length > 0 ? notes.PreferredPaper : "letter");
+            format = errors.OneOf("format", input.Format, CvFormats.All.ToArray(), CvFormats.Standard);
             languages = (input.Languages ?? [])
                 .Select(l => (l ?? string.Empty).Trim().ToLowerInvariant())
                 .Where(l => CvLimits.Languages.Contains(l))
@@ -495,7 +497,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             }
         }
 
-        return new ComposeContext(profile.Value, loaded.Bank, new CvComposeRequest(level, paper, languages), existing, offer, offer is null ? focus : null, name);
+        return new ComposeContext(profile.Value, loaded.Bank, new CvComposeRequest(level, paper, languages, format), existing, offer, offer is null ? focus : null, name);
     }
 
     /// <summary>Prompt del CV: oferta (o enfoque) y banco en crudo. Es el mismo texto para el proveedor configurado y para una IA externa.</summary>
@@ -539,11 +541,16 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             }
         }
 
-        var limits = CvLimits.For(c.Request.Level, c.Request.Paper);
+        var limits = CvLimits.For(c.Request.Level, c.Request.Paper, c.Request.Format);
         var analysisText = c.Offer?.RawText ?? c.Focus ?? string.Empty;
         var analysis = OfferAnalyzer.Analyze(analysisText, isFocus: c.Offer is null, c.Bank.Data);
         var now = clock.UtcNow;
         var defaultName = c.Offer is not null ? $"{c.Offer.Title}{(c.Offer.Company is null ? string.Empty : " · " + c.Offer.Company)}" : (c.Focus ?? "CV general");
+        if (c.Request.IsCompetencies)
+        {
+            defaultName += " · Competencias";
+        }
+
         var ids = new List<Guid>();
         foreach (var item in composed)
         {
@@ -562,6 +569,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
                     Level = c.Request.Level,
                     Paper = c.Request.Paper,
                     Language = item.Language,
+                    Format = c.Request.Format,
                     Mode = c.Offer is not null ? "offer" : "general",
                     Focus = c.Focus,
                     CreatedAt = now,
@@ -613,7 +621,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     {
         var notes = await owners.GetNotesAsync(profile, cancellationToken);
         var records = await loader.LoadAsync(profile.Id, cancellationToken);
-        var bank = new AiBank(profile, notes, records, clock.UtcNow.Year);
+        var bank = new AiBank(profile, notes, records, clock.UtcNow.Year, DateOnly.FromDateTime(clock.UtcNow.UtcDateTime));
         return new LoadedBank(bank.Data, bank);
     }
 
@@ -649,7 +657,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         new(SummaryOf(version), document, report, CvGuardian.AtsText(document, version.Language), renderer.IsAvailable);
 
     private static CvVersionSummary SummaryOf(CvVersion v) =>
-        new(v.Id, v.Name, v.Level, v.Paper, v.Language, v.Mode, v.Source, v.Pages, v.LinesUsed, v.LineBudget, v.IsPublic, v.SentAt, v.JobOfferId, v.CreatedAt, v.UpdatedAt);
+        new(v.Id, v.Name, v.Level, v.Paper, v.Language, v.Format, v.Mode, v.Source, v.Pages, v.LinesUsed, v.LineBudget, v.IsPublic, v.SentAt, v.JobOfferId, v.CreatedAt, v.UpdatedAt);
 
     private static string Trim(string value, int max) => value.Length > max ? value[..max] : value;
 }

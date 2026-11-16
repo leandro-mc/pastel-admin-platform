@@ -8,7 +8,8 @@ internal sealed record BankView(
     IReadOnlyList<SkillView> Skills,
     IReadOnlyList<EducationView> Educations,
     IReadOnlyList<CertificationView> Certifications,
-    IReadOnlyList<LanguageView> Languages);
+    IReadOnlyList<LanguageView> Languages,
+    IReadOnlyList<CompetencyView> Competencies);
 
 internal sealed record NotesView(
     string Story,
@@ -73,6 +74,8 @@ internal sealed record CertificationView(Guid Id, string Name, string? Issuer, i
 
 internal sealed record LanguageView(Guid Id, string Language, string Level, string? Evidence, bool IsVisible);
 
+internal sealed record CompetencyView(Guid Id, string Name, string Kind, string Description, string Evidence, bool IsVisible);
+
 // ── Escritura (cada sección se guarda completa; un elemento sin Id es nuevo) ──
 internal sealed record NotesInput(
     string? Story,
@@ -110,6 +113,8 @@ internal sealed record EducationInput(Guid? Id, string? Degree, string? Institut
 internal sealed record CertificationInput(Guid? Id, string? Name, string? Issuer, int? IssuedYear, int? ExpiresYear, string? CredentialUrl, bool? IsVisible);
 
 internal sealed record LanguageInput(Guid? Id, string? Language, string? Level, string? Evidence, bool? IsVisible);
+
+internal sealed record CompetencyInput(Guid? Id, string? Name, string? Kind, string? Description, string? Evidence, bool? IsVisible);
 
 internal sealed record AchievementInput(
     Guid? Id,

@@ -81,6 +81,15 @@ internal static class HuellaLimits
         public const int Why = 800;
     }
 
+    public static class Competency
+    {
+        public const int Name = 80;
+        public const int NormalizedName = 80;
+        public const int Kind = 12;
+        public const int Description = 300;
+        public const int Evidence = 700;
+    }
+
     public static class Education
     {
         public const int Degree = 160;
@@ -118,6 +127,7 @@ internal static class HuellaLimits
         public const int Paper = 8;
         public const int Language = 2;
         public const int Mode = 10;
+        public const int Format = 12;
         public const int Focus = 200;
         public const int Source = 24;
     }

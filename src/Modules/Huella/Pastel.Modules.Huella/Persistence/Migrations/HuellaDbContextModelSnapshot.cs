@@ -239,6 +239,66 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.ToTable("certifications", "huella");
                 });
 
+            modelBuilder.Entity("Pastel.Modules.Huella.Domain.Competency", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<string>("Evidence")
+                        .IsRequired()
+                        .HasMaxLength(700)
+                        .HasColumnType("character varying(700)");
+
+                    b.Property<bool>("IsVisible")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<string>("NormalizedName")
+                        .IsRequired()
+                        .HasMaxLength(80)
+                        .HasColumnType("character varying(80)");
+
+                    b.Property<Guid>("ProfileId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<uint>("Version")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ProfileId", "Kind", "NormalizedName")
+                        .IsUnique();
+
+                    b.ToTable("competencies", "huella");
+                });
+
             modelBuilder.Entity("Pastel.Modules.Huella.Domain.CoverLetter", b =>
                 {
                     b.Property<Guid>("Id")
@@ -315,6 +375,13 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.Property<string>("Focus")
                         .HasMaxLength(200)
                         .HasColumnType("character varying(200)");
+
+                    b.Property<string>("Format")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(12)
+                        .HasColumnType("character varying(12)")
+                        .HasDefaultValue("standard");
 
                     b.Property<bool>("IsPublic")
                         .HasColumnType("boolean");
@@ -1098,6 +1165,15 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                 });
 
             modelBuilder.Entity("Pastel.Modules.Huella.Domain.Certification", b =>
+                {
+                    b.HasOne("Pastel.Modules.Huella.Domain.Profile", null)
+                        .WithMany()
+                        .HasForeignKey("ProfileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Pastel.Modules.Huella.Domain.Competency", b =>
                 {
                     b.HasOne("Pastel.Modules.Huella.Domain.Profile", null)
                         .WithMany()

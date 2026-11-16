@@ -119,6 +119,16 @@ export const languageSchema = z.object({
   isVisible: z.boolean(),
 });
 
+export const competencySchema = z.object({
+  id,
+  name: text,
+  /** `personal` (blanda) o `technical`. */
+  kind: text,
+  description: text,
+  evidence: text,
+  isVisible: z.boolean(),
+});
+
 export const notesSchema = z.object({
   story: text,
   voice: text,
@@ -140,6 +150,7 @@ export const bankSchema = z.object({
   educations: z.array(educationSchema),
   certifications: z.array(certificationSchema),
   languages: z.array(languageSchema),
+  competencies: z.array(competencySchema),
 });
 
 export const proposalSchema = z.object({
@@ -236,6 +247,8 @@ export const entrySchema = z.object({
   title: text,
   subtitle: text,
   location: maybe,
+  /** Qué fue (práctica, proyecto académico…); va junto a la empresa. */
+  context: maybe.optional(),
   dates: text,
   lineBudget: z.number(),
   bullets: z.array(bulletSchema),
@@ -243,6 +256,8 @@ export const entrySchema = z.object({
 
 export const cvDocumentSchema = z.object({
   language: maybe.optional(),
+  /** `standard` o `competencies`; los CV anteriores no lo traen. */
+  format: z.string().optional(),
   header: z.object({
     name: text,
     headline: text,
@@ -251,6 +266,15 @@ export const cvDocumentSchema = z.object({
   }),
   summary: text,
   skills: z.array(z.object({ label: text, items: z.array(text) })),
+  competencies: z
+    .array(
+      z.object({
+        kind: text,
+        label: text,
+        items: z.array(z.object({ id, name: text, note: maybe.optional() })),
+      }),
+    )
+    .default([]),
   experience: z.array(entrySchema),
   projects: z.array(entrySchema),
   education: z.array(
@@ -262,6 +286,7 @@ export const cvDocumentSchema = z.object({
     }),
   ),
   extras: z.array(text),
+  extrasLabel: maybe.optional(),
 });
 
 export const versionSummarySchema = z.object({
@@ -270,6 +295,7 @@ export const versionSummarySchema = z.object({
   level: text,
   paper: text,
   language: text,
+  format: z.string().default("standard"),
   mode: text,
   source: text,
   pages: z.number(),
@@ -543,6 +569,7 @@ export type Skill = z.infer<typeof skillSchema>;
 export type Education = z.infer<typeof educationSchema>;
 export type Certification = z.infer<typeof certificationSchema>;
 export type LanguageSkill = z.infer<typeof languageSchema>;
+export type Competency = z.infer<typeof competencySchema>;
 export type Achievement = z.infer<typeof achievementSchema>;
 export type Proposal = z.infer<typeof proposalSchema>;
 export type Derivation = z.infer<typeof derivationSchema>;

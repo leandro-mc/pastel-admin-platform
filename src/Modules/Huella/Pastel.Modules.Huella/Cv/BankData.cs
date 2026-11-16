@@ -19,8 +19,12 @@ internal sealed record BankData(
     string Voice,
     int CurrentYear,
     IReadOnlyDictionary<Guid, string>? EntryTexts = null,
-    string? AllText = null)
+    string? AllText = null,
+    IReadOnlyList<BankCompetency>? Competencies = null)
 {
+    /// <summary>¿El id es de una competencia del catálogo del banco?</summary>
+    public bool IsCompetency(Guid id) => Competencies?.Any(c => c.Id == id) ?? false;
+
     /// <summary>¿El id es de un logro, de una experiencia o de un proyecto del banco? Una viñeta puede citar cualquiera de los tres.</summary>
     public bool IsSource(Guid id) => (EntryTexts?.ContainsKey(id) ?? false) || AllAchievements().Any(a => a.Id == id);
 
@@ -72,6 +76,8 @@ internal sealed record BankData(
         return starts.Count == 0 ? 0 : Math.Max(0, CurrentYear - starts.Min());
     }
 }
+
+internal sealed record BankCompetency(Guid Id, string Name, string Kind, string Description, string Evidence);
 
 internal sealed record BankHeader(string Name, string Headline, IReadOnlyList<string> ContactLine1, IReadOnlyList<string> ContactLine2);
 

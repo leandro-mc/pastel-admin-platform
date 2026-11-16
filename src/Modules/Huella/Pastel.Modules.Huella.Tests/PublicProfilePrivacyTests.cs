@@ -26,7 +26,7 @@ public sealed class PublicProfilePrivacyTests
         };
         var visible = new Experience { Id = Guid.CreateVersion7(), ProfileId = profileId, Role = "QA", Company = "Empresa Visible", StartDate = new(2022, 3, 1), IsVisible = true };
         var hidden = new Experience { Id = Guid.CreateVersion7(), ProfileId = profileId, Role = "QA", Company = "Empresa Oculta", StartDate = new(2020, 1, 1), IsVisible = false };
-        var records = new BankRecords([], [visible, hidden], [], [], [], [], [], [], []);
+        var records = new BankRecords([], [visible, hidden], [], [], [], [], [], [], [], []);
 
         // Contenido redactado: incluye, por error o por haberla ocultado después, una experiencia que el banco marca como oculta.
         string Entry(Experience e, string bullet) => $"{{\"sourceId\":\"{e.Id}\",\"role\":\"QA\",\"company\":\"{e.Company}\",\"start\":\"2022-03\",\"bullets\":[\"{bullet}\"]}}";
