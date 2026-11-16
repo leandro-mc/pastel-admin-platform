@@ -10,6 +10,9 @@ const isSlug = (value: string | undefined): value is Slug =>
 /** Marcador honesto de lo que viene: sin botones que no hagan nada. */
 export function Component() {
   const { item } = useParams();
+  // Las dos primeras pantallas «en preparación» ya existen con otro nombre: los enlaces viejos llegan a su lugar.
+  if (item === "postulaciones") return <Navigate to="/huella/historial" replace />;
+  if (item === "recomendacion") return <Navigate to="/huella/cv" replace />;
   if (!isSlug(item)) return <Navigate to="/huella/banco" replace />;
   const info = items[item];
   return (

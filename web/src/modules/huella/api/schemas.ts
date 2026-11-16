@@ -168,11 +168,31 @@ export const aiPackageSchema = z.object({
 });
 
 // ── Estudio ──
+export const offerStatusValues = [
+  "saved",
+  "applied",
+  "interview",
+  "offer",
+  "rejected",
+  "no_response",
+  "discarded",
+] as const;
+export type OfferStatus = (typeof offerStatusValues)[number];
+
 export const offerSummarySchema = z.object({
   id,
   title: text,
   company: maybe,
+  sourceUrl: maybe,
   createdAt: text,
+  status: z.enum(offerStatusValues),
+  statusUpdatedAt: maybe,
+  appliedAt: maybe,
+  /** Día de seguimiento (`AAAA-MM-DD`). */
+  followUpAt: maybe,
+  notes: text,
+  /** Requisitos obligatorios con respaldo en el banco de hoy. */
+  coverage: z.object({ covered: z.number(), total: z.number() }),
 });
 
 export const evidenceSchema = z.object({
@@ -256,6 +276,8 @@ export const versionSummarySchema = z.object({
   linesUsed: z.number(),
   lineBudget: z.number(),
   isPublic: z.boolean(),
+  /** Cuándo se envió; `null` = sin enviar. */
+  sentAt: maybe,
   offerId: z.string().nullable(),
   createdAt: text,
   updatedAt: text,

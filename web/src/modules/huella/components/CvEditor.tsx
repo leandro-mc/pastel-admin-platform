@@ -1,16 +1,27 @@
 import { useState } from "react";
 import { useNotify } from "@/core/notifications";
-import { Badge, Button, Panel, TextField } from "@/core/ui";
+import {
+  Badge,
+  Button,
+  Panel,
+  Tab,
+  TabList,
+  TabPanel,
+  Tabs,
+  TextField,
+} from "@/core/ui";
 import {
   downloadCvDocx,
   downloadCvPdf,
   useEditLine,
   useRenameVersion,
   useSetPublicVersion,
+  useSetSentVersion,
 } from "../api/hooks";
 import type { CvDocument, CvVersion } from "../api/schemas";
 import { strings } from "../strings";
 import { AiTaskPanel } from "./AiTaskPanel";
+import { formatDateTime } from "../lib/format";
 import { ErrorNotice, TextAreaField } from "./Form";
 import { EvidenceList } from "./OfferPanel";
 
@@ -170,12 +181,24 @@ export function CvEditor({ version }: { version: CvVersion }) {
   const { summary, document: doc, report } = version;
   const rename = useRenameVersion();
   const setPublic = useSetPublicVersion();
+  const sent = useSetSentVersion();
   const [name, setName] = useState(summary.name);
   const [editingSummary, setEditingSummary] = useState(false);
   const failed = report.checks.filter((c) => !c.passed);
 
   return (
-    <div className="flex flex-col gap-6">
+    <Tabs defaultSelectedKey="content">
+      <TabList aria-label={t.tabs.label}>
+        <Tab id="content">{t.tabs.content}</Tab>
+        <Tab id="send">{t.tabs.send}</Tab>
+        <Tab id="review">
+          {t.tabs.review}
+          {failed.length > 0 ? ` (${failed.length})` : ""}
+        </Tab>
+        <Tab id="redo">{t.tabs.redo}</Tab>
+      </TabList>
+
+      <TabPanel id="content">
       <Panel
         title={t.title}
         description={strings.studio.versions.pagesLines(
@@ -332,24 +355,68 @@ export function CvEditor({ version }: { version: CvVersion }) {
             ) : null}
           </article>
 
-          <div className="flex flex-wrap items-center gap-3">
-            <Button
-              variant={summary.isPublic ? "secondary" : "primary"}
-              type="button"
-              loading={setPublic.isPending}
-              onClick={() =>
-                setPublic.mutate({ id: summary.id, vars: !summary.isPublic })
-              }
-            >
-              {summary.isPublic ? t.removePublic : t.makePublic}
-            </Button>
-            <DownloadButtons version={version} />
-          </div>
-          <p className="text-sm text-muted">{t.publicHint}</p>
-          <ErrorNotice error={setPublic.error} />
         </div>
       </Panel>
+      </TabPanel>
 
+      <TabPanel id="send">
+        <Panel title={t.sendTitle} description={t.sendHint}>
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-col gap-2 rounded-lg border border-line p-4">
+              <p className="text-sm text-fg">
+                {summary.sentAt
+                  ? `${strings.studio.docs.sentOn} ${formatDateTime(summary.sentAt)}`
+                  : strings.studio.docs.unsent}
+              </p>
+              <div>
+                <Button
+                  variant={summary.sentAt ? "secondary" : "primary"}
+                  type="button"
+                  loading={sent.isPending}
+                  onClick={() =>
+                    sent.mutate(
+                      { id: summary.id, vars: summary.sentAt === null },
+                      {
+                        onSuccess: () =>
+                          notify(
+                            summary.sentAt === null
+                              ? strings.studio.docs.markedSent
+                              : strings.common.saved,
+                          ),
+                      },
+                    )
+                  }
+                >
+                  {summary.sentAt
+                    ? strings.studio.docs.unmarkSent
+                    : strings.studio.docs.markSent}
+                </Button>
+              </div>
+              <ErrorNotice error={sent.error} />
+            </div>
+            <DownloadButtons version={version} />
+            <div className="flex flex-col gap-2 border-t border-line pt-4">
+              <div>
+                <Button
+                  variant={summary.isPublic ? "secondary" : "primary"}
+                  type="button"
+                  loading={setPublic.isPending}
+                  onClick={() =>
+                    setPublic.mutate({ id: summary.id, vars: !summary.isPublic })
+                  }
+                >
+                  {summary.isPublic ? t.removePublic : t.makePublic}
+                </Button>
+              </div>
+              <p className="text-sm text-muted">{t.publicHint}</p>
+              <ErrorNotice error={setPublic.error} />
+            </div>
+          </div>
+        </Panel>
+      </TabPanel>
+
+      <TabPanel id="review">
+        <div className="flex flex-col gap-6">
       <Panel title={t.checks}>
         {failed.length === 0 ? (
           <p className="text-sm text-fg">{t.checksPassed}</p>
@@ -393,9 +460,13 @@ export function CvEditor({ version }: { version: CvVersion }) {
           value={version.atsText}
         />
       </Panel>
+        </div>
+      </TabPanel>
 
-      <AiRegenerate version={version} />
-    </div>
+      <TabPanel id="redo">
+        <AiRegenerate version={version} />
+      </TabPanel>
+    </Tabs>
   );
 }
 

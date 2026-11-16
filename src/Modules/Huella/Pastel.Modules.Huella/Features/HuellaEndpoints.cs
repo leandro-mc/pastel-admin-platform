@@ -114,6 +114,8 @@ internal static class HuellaEndpoints
         studio.MapDelete("/versions/{versionId:guid}", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.DeleteVersionAsync(versionId, ct)).ToNoContent(http)).RequirePermission(write);
         studio.MapPut("/versions/{versionId:guid}/name", async (Guid versionId, RenameInput i, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.RenameAsync(versionId, i, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapPut("/versions/{versionId:guid}/line", async (Guid versionId, EditLineInput i, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.EditLineAsync(versionId, i, ct)).ToResponse(http)).RequirePermission(write);
+        studio.MapPut("/offers/{offerId:guid}/tracking", async (Guid offerId, OfferTrackingInput i, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.UpdateTrackingAsync(offerId, i, ct)).ToResponse(http)).RequirePermission(write);
+        studio.MapPut("/versions/{versionId:guid}/sent", async (Guid versionId, bool sent, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.SetSentAsync(versionId, sent, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapPut("/versions/{versionId:guid}/public", async (Guid versionId, bool isPublic, StudioHandler h, HttpContext http, CancellationToken ct) => (await h.SetPublicAsync(versionId, isPublic, ct)).ToResponse(http)).RequirePermission(write);
         studio.MapGet("/versions/{versionId:guid}/pdf", async (Guid versionId, StudioHandler h, HttpContext http, CancellationToken ct) =>
         {

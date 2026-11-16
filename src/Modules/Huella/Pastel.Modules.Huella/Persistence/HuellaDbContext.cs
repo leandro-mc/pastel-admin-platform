@@ -74,6 +74,8 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.Property(x => x.Company).HasMaxLength(160);
             e.Property(x => x.SourceUrl).HasMaxLength(2048);
             e.Property(x => x.RawText).HasMaxLength(20000).IsRequired();
+            e.Property(x => x.Status).HasMaxLength(16).IsRequired().HasDefaultValue("saved");
+            e.Property(x => x.Notes).HasMaxLength(1000).IsRequired().HasDefaultValue("");
             e.Property(x => x.TextHash).IsRequired();
             e.Property(x => x.AnalysisJson).HasColumnType("jsonb");
             e.Property(x => x.Version).IsRowVersion();

@@ -1,315 +1,96 @@
-import { useState } from "react";
-import { useNotify } from "@/core/notifications";
-import {
-  Badge,
-  Button,
-  ConfirmDialog,
-  PageHeader,
-  Panel,
-  SelectField,
-  TextField,
-} from "@/core/ui";
-import {
-  useBank,
-  useDeleteVersion,
-  useGenerateCv,
-  useOffer,
-  useVersion,
-  useVersions,
-} from "../api/hooks";
-import { AiTaskPanel } from "../components/AiTaskPanel";
+import { Button, PageHeader, Tab, TabList, TabPanel, Tabs } from "@/core/ui";
+import { useVersion, useVersions } from "../api/hooks";
 import { CvEditor } from "../components/CvEditor";
-import { ErrorNotice, Loaded } from "../components/Form";
-import { EvidenceMap, OfferPanel } from "../components/OfferPanel";
-import { formatDateTime } from "../lib/format";
+import { DocumentsList } from "../components/DocumentsList";
+import { Loaded } from "../components/Form";
+import { GenerateWorkspace } from "../components/GenerateWorkspace";
+import { OfferList } from "../components/OfferList";
+import { StudioContextBar } from "../components/StudioContextBar";
+import { useStudioState, type StudioTab } from "../lib/studioState";
 import { strings } from "../strings";
 
-/** Nivel de CV que viene elegido al abrir «Crear CV». */
-const DEFAULT_LEVEL = "junior";
+const tabs = strings.studio.tabs;
 
-type LanguageChoice = "es" | "en" | "both";
-const languageChoices: Record<LanguageChoice, readonly string[]> = {
-  es: ["es"],
-  en: ["en"],
-  both: ["es", "en"],
-};
-
-const g = strings.studio.generate;
-const v = strings.studio.versions;
-
+/**
+ * Crear CV, en tres pestañas con una barra fija que dice con qué oferta se trabaja: Ofertas (elegir), Generar (pedir el
+ * documento) y Documentos (lo generado, con su estado de envío). El lugar queda en la dirección: se puede recargar, volver
+ * atrás y llegar desde el historial directo a los documentos de una oferta.
+ */
 export function Component() {
-  const [offerId, setOfferId] = useState<string | null>(null);
-  const [versionId, setVersionId] = useState<string | null>(null);
+  const { offerId, docId, tab, go } = useStudioState();
+  const versions = useVersions();
   return (
     <div
       data-module="huella"
-      className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 sm:p-6"
+      className="mx-auto flex w-full max-w-5xl flex-col gap-5 p-4 sm:p-6"
     >
       <PageHeader
         title={strings.studio.title}
         description={strings.studio.description}
       />
-      <OfferPanel selectedId={offerId} onSelect={setOfferId} />
-      <SelectedOffer id={offerId} />
-      <GeneratePanel offerId={offerId} onGenerated={setVersionId} />
-      <VersionsPanel selectedId={versionId} onSelect={setVersionId} />
-      <SelectedVersion id={versionId} />
+      <StudioContextBar
+        offerId={offerId}
+        onPick={() => go({ vista: "ofertas", doc: null })}
+        onClear={() => go({ oferta: null, doc: null })}
+      />
+      <Tabs
+        selectedKey={tab}
+        onSelectionChange={(key) =>
+          go({ vista: key as StudioTab, doc: key === "documentos" ? docId : null })
+        }
+      >
+        <TabList aria-label={tabs.label}>
+          <Tab id="ofertas">{tabs.offers}</Tab>
+          <Tab id="generar">{tabs.generate}</Tab>
+          <Tab id="documentos">
+            {tabs.documents}
+            {versions.data ? ` (${versions.data.length})` : ""}
+          </Tab>
+        </TabList>
+        <TabPanel id="ofertas">
+          <OfferList
+            selectedId={offerId}
+            onUse={(id) => go({ oferta: id, vista: "generar", doc: null })}
+            onDocuments={(id) => go({ oferta: id, vista: "documentos", doc: null })}
+            onClear={() => go({ oferta: null, doc: null })}
+          />
+        </TabPanel>
+        <TabPanel id="generar">
+          <GenerateWorkspace
+            offerId={offerId}
+            onPickOffer={() => go({ vista: "ofertas" })}
+            onGenerated={(id) => go({ vista: "documentos", doc: id })}
+          />
+        </TabPanel>
+        <TabPanel id="documentos">
+          {docId ? (
+            <OpenDocument id={docId} onBack={() => go({ doc: null })} />
+          ) : (
+            <DocumentsList
+              offerId={offerId}
+              onOpen={(id) => go({ doc: id })}
+              onDeleted={(id) => {
+                if (id === docId) go({ doc: null });
+              }}
+            />
+          )}
+        </TabPanel>
+      </Tabs>
     </div>
   );
 }
 
-function SelectedOffer({ id }: { id: string | null }) {
-  const offer = useOffer(id);
-  if (id === null) return null;
-  return (
-    <Loaded query={offer}>{(data) => <EvidenceMap offer={data} />}</Loaded>
-  );
-}
-
-function GeneratePanel({
-  offerId,
-  onGenerated,
-}: {
-  offerId: string | null;
-  onGenerated: (id: string) => void;
-}) {
-  const bank = useBank();
-  const generate = useGenerateCv();
-  const [focus, setFocus] = useState("");
-  const [level, setLevel] = useState(DEFAULT_LEVEL);
-  const [paper, setPaper] = useState<string | null>(null);
-  // El idioma no es una preferencia global: se elige en cada generación (uno o los dos).
-  const [language, setLanguage] = useState<LanguageChoice>("es");
-  const [name, setName] = useState("");
-  const [draftError, setDraftError] = useState<unknown>(null);
-  const [drafting, setDrafting] = useState(false);
-
-  const hasContent = bank.data
-    ? bank.data.experiences.length + bank.data.projects.length > 0
-    : null;
-  const achievements = bank.data
-    ? bank.data.experiences.reduce((n, e) => n + e.achievements.length, 0) +
-      bank.data.projects.reduce((n, p) => n + p.achievements.length, 0)
-    : null;
-  const effectivePaper = paper ?? bank.data?.notes.preferredPaper ?? "letter";
-  const languages = languageChoices[language];
-
-  const taskInput = () => ({
-    offerId,
-    focus: offerId ? null : focus || null,
-    level,
-    paper: effectivePaper,
-    languages: [...languages],
-    name: name || null,
-  });
-
-  // Borrador sin IA: arma el CV con reglas a partir de los logros ya derivados (una versión por idioma).
-  const draft = async () => {
-    setDraftError(null);
-    setDrafting(true);
-    try {
-      let last: string | null = null;
-      for (const lang of languages) {
-        const version = await generate.mutateAsync({
-          ...taskInput(),
-          language: lang,
-        });
-        last = version.summary.id;
-      }
-      if (last) onGenerated(last);
-    } catch (error) {
-      setDraftError(error);
-    } finally {
-      setDrafting(false);
-    }
-  };
-
-  return (
-    <Panel title={g.title} description={g.description}>
-      <div className="flex flex-col gap-4">
-        {hasContent === false ? (
-          <p className="text-sm text-muted">{g.emptyBank}</p>
-        ) : null}
-        <div className="grid gap-4 sm:grid-cols-2">
-          <div className="sm:col-span-2">
-            <TextField
-              label={g.focus}
-              hint={offerId ? undefined : g.focusHint}
-              value={focus}
-              disabled={offerId !== null}
-              onChange={(e) => setFocus(e.target.value)}
-            />
-          </div>
-          <SelectField
-            label={g.level}
-            options={Object.entries(g.levels).map(([value, label]) => ({
-              value,
-              label,
-            }))}
-            value={level}
-            onChange={(e) => setLevel(e.target.value)}
-          />
-          <SelectField
-            label={g.paper}
-            options={Object.entries(strings.bank.papers).map(
-              ([value, label]) => ({ value, label }),
-            )}
-            value={effectivePaper}
-            onChange={(e) => setPaper(e.target.value)}
-          />
-          <SelectField
-            label={g.language}
-            options={Object.entries(g.languageChoices).map(
-              ([value, label]) => ({ value, label }),
-            )}
-            value={language}
-            onChange={(e) => setLanguage(e.target.value as LanguageChoice)}
-          />
-          <TextField
-            label={g.name}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <p className="text-sm text-muted">{g.languageHint}</p>
-        <p className="text-sm text-muted">
-          {offerId ? g.fromOffer : g.noOffer}
-        </p>
-
-        <AiTaskPanel
-          kind="cv"
-          title={g.aiTitle(languages.length)}
-          fileBase={`huella-cv-${level}-${languages.join("-")}`}
-          disabled={hasContent === false}
-          input={taskInput}
-          runLabel={(label, model) => g.run(label, model)}
-          externalHint={g.externalHint}
-          onDone={(outcomes) => {
-            const id = outcomes[0]?.versionIds[0];
-            if (id) onGenerated(id);
-          }}
-        />
-
-        <div className="flex flex-col gap-2 border-t border-line pt-4">
-          <p className="text-sm text-muted">{g.draftHint}</p>
-          <div>
-            <Button
-              variant="secondary"
-              type="button"
-              disabled={achievements === 0}
-              loading={drafting}
-              loadingLabel={g.submitting}
-              onClick={() => void draft()}
-            >
-              {g.draft}
-            </Button>
-          </div>
-          {achievements === 0 ? (
-            <p className="text-sm text-muted">{g.draftNeedsAchievements}</p>
-          ) : null}
-          <ErrorNotice error={draftError} />
-        </div>
-      </div>
-    </Panel>
-  );
-}
-
-function VersionsPanel({
-  selectedId,
-  onSelect,
-}: {
-  selectedId: string | null;
-  onSelect: (id: string | null) => void;
-}) {
-  const notify = useNotify();
-  const versions = useVersions();
-  const remove = useDeleteVersion();
-  const [toDelete, setToDelete] = useState<string | null>(null);
-  return (
-    <Panel title={v.title}>
-      <Loaded query={versions}>
-        {(list) =>
-          list.length === 0 ? (
-            <p className="text-sm text-muted">{v.empty}</p>
-          ) : (
-            <ul className="flex flex-col gap-2">
-              {list.map((item) => (
-                <li
-                  key={item.id}
-                  className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-3"
-                >
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-fg">
-                      {item.name}
-                    </p>
-                    <p className="text-sm text-muted">
-                      {v.pagesLines(
-                        item.pages,
-                        item.linesUsed,
-                        item.lineBudget,
-                      )}
-                    </p>
-                    <p className="text-sm text-muted">
-                      {v.createdAt}{" "}
-                      <time dateTime={item.createdAt}>
-                        {formatDateTime(item.createdAt)}
-                      </time>
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    {item.isPublic ? (
-                      <Badge variant="accent">{v.public}</Badge>
-                    ) : null}
-                    <Button
-                      variant={selectedId === item.id ? "primary" : "secondary"}
-                      type="button"
-                      aria-pressed={selectedId === item.id}
-                      onClick={() => onSelect(item.id)}
-                    >
-                      {v.open}
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      aria-label={`${v.delete}: ${item.name}`}
-                      onClick={() => setToDelete(item.id)}
-                    >
-                      {strings.common.delete}
-                    </Button>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          )
-        }
-      </Loaded>
-      {toDelete ? (
-        <ConfirmDialog
-          title={v.deleteTitle}
-          message={v.deleteMessage}
-          confirmLabel={strings.common.delete}
-          cancelLabel={strings.common.cancel}
-          pending={remove.isPending}
-          onClose={() => setToDelete(null)}
-          onConfirm={() =>
-            remove.mutate(toDelete, {
-              onSuccess: () => {
-                if (selectedId === toDelete) onSelect(null);
-                setToDelete(null);
-                notify(strings.common.saved);
-              },
-            })
-          }
-        />
-      ) : null}
-    </Panel>
-  );
-}
-
-function SelectedVersion({ id }: { id: string | null }) {
+/** Un documento abierto: reemplaza a la lista (no se apila debajo) y se vuelve con un botón. */
+function OpenDocument({ id, onBack }: { id: string; onBack: () => void }) {
   const version = useVersion(id);
-  if (id === null) return null;
   return (
-    <Loaded query={version}>{(data) => <CvEditor version={data} />}</Loaded>
+    <div className="flex flex-col gap-4">
+      <div>
+        <Button variant="secondary" type="button" onClick={onBack}>
+          {strings.studio.docs.back}
+        </Button>
+      </div>
+      <Loaded query={version}>{(data) => <CvEditor version={data} />}</Loaded>
+    </div>
   );
 }

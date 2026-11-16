@@ -269,6 +269,17 @@ export function useDeleteOffer() {
   });
 }
 
+/** Estado, fecha de postulación, seguimiento y notas de una oferta. */
+export function useUpdateTracking() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }: { id: string; body: unknown }) =>
+      api.put(`${base}/studio/offers/${id}/tracking`, offerSummarySchema, body),
+    onSuccess: () =>
+      void client.invalidateQueries({ queryKey: huellaKeys.offers }),
+  });
+}
+
 export function useGenerateCv() {
   const client = useQueryClient();
   return useMutation({
@@ -292,6 +303,8 @@ function useVersionMutation<TVars>(
     onSuccess: (data) => {
       client.setQueryData(huellaKeys.version(data.summary.id), data);
       void client.invalidateQueries({ queryKey: huellaKeys.versions });
+      // Marcar un envío puede pasar la oferta a «postulada».
+      void client.invalidateQueries({ queryKey: huellaKeys.offers });
       refreshDerived(client);
     },
   });
@@ -300,6 +313,14 @@ function useVersionMutation<TVars>(
 export const useEditLine = () =>
   useVersionMutation<unknown>((id, body) =>
     api.put(`${base}/studio/versions/${id}/line`, versionSchema, body),
+  );
+
+export const useSetSentVersion = () =>
+  useVersionMutation<boolean>((id, sent) =>
+    api.put(
+      `${base}/studio/versions/${id}/sent?sent=${sent ? "true" : "false"}`,
+      versionSchema,
+    ),
   );
 
 export const useRenameVersion = () =>

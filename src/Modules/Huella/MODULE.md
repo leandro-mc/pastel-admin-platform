@@ -19,9 +19,10 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 | `GET /bank` · `PUT /bank/{notes\|experiences\|projects\|skills\|education\|certifications\|languages}` | Banco completo / reemplazo de una sección |
 | `PUT /bank/{experiences\|projects}/{id}/achievements` | Logros de una experiencia o proyecto |
 | `POST …/{id}/derive` · `…/ai-package` · `…/ai-run` · `…/ai-result` | Logros por reglas; prompt para una IA externa; propuestas del proveedor configurado; validación del JSON importado |
-| `GET/POST /studio/offers` · `GET/DELETE …/{id}` | Ofertas (texto = dato no confiable; máx. 50) con mapa de evidencia y filtros duros |
+| `GET/POST /studio/offers` · `GET/DELETE …/{id}` | Ofertas (texto = dato no confiable; máx. 50) con mapa de evidencia y filtros duros; la lista trae el seguimiento y la cobertura de requisitos obligatorios contra el banco de hoy |
+| `PUT /studio/offers/{id}/tracking` | Seguimiento: estado (`saved`, `applied`, `interview`, `offer`, `rejected`, `no_response`, `discarded`), fecha de postulación, día de seguimiento y notas (≤ 1000). Volver a `saved` borra la fecha de postulación |
 | `GET/POST /studio/versions` · `GET/DELETE …/{id}` | Versiones de CV (máx. 60) |
-| `PUT …/{id}/name` · `/line` · `/public?isPublic=` | Renombrar, editar una línea (pasa por el guardián), marcar CV público |
+| `PUT …/{id}/name` · `/line` · `/public?isPublic=` · `/sent?sent=` | Renombrar, editar una línea (pasa por el guardián), marcar CV público, marcar como enviado (si su oferta está «sin postular» pasa a «postulada» con la fecha de hoy y seguimiento a 7 días) |
 | `POST /tasks/{cv\|profile\|profile-translate}/ai-package` · `/ai-run` · `/ai-result` | **Acciones de IA** (`AiTaskHandler`): prompt completo para una IA externa, ejecución con el proveedor configurado (nginx le da 150 s: la ruta termina en `ai-run`) o importación del JSON. `cv` redacta una o dos versiones (idiomas `es`/`en`) desde el banco en crudo, o reemplaza `versionId`; `profile` redacta secciones del perfil (español e inglés); `profile-translate` reescribe el inglés de secciones editadas. Todo pasa por el guardián, nunca Typst |
 | `GET …/{id}/pdf` | PDF del CV con Typst (`Pastel.Documents`); `503 huella.cv.renderer_unavailable` si el motor no está instalado |
 | `GET …/{id}/docx` | El mismo CV en Word (`Cv/CvDocx.cs`: paquete Open XML escrito a mano, sin dependencias ni motor externo, siempre disponible; abre en Word, Google Docs y LibreOffice) |
@@ -44,7 +45,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 ## Datos (esquema `huella`)
 
 `Profile` (único por `OwnerUserId`, `PublicTokenHash` único) · `ProfileLink` · `PrivateNote` · `Experience` · `Project` · `Skill` · `Education` · `Certification` · `LanguageSkill` · `Achievement` + `AchievementSkill` (el logro es la unidad: de ahí salen CV, perfil y futuras funciones) · `JobOffer` · `CvVersion` · `PublishedSnapshot` · `AiCredential` (una fila por proveedor; clave cifrada, `KeyHint`, `IsActive`).
-Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials`, `AddHuellaPublicLinkCipher` y `AddHuellaLinkIcon`, `AddHuellaPublicContent` (tabla `profile_contents`; quita `PreferredLanguage` de las notas: no hay idioma global) (estas con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
+Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredentials`, `AddHuellaPublicLinkCipher` y `AddHuellaLinkIcon`, `AddHuellaApplicationTracking` (seguimiento en `job_offers` y `SentAt` en `cv_versions`), `AddHuellaPublicContent` (tabla `profile_contents`; quita `PreferredLanguage` de las notas: no hay idioma global) (estas con `dotnet ef`; `has-pending-model-changes` sin cambios y las tres aplicadas en PostgreSQL por las pruebas de integración).
 
 ## Códigos de error
 

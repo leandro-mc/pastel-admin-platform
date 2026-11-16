@@ -9,11 +9,12 @@ Backend: `src/Modules/Huella/MODULE.md`. Producto: `docs/modules/HUELLA.md`.
 | ---------------------- | -------------------------------------------------------------------------------------------------------------- | ----------------------------- |
 | `/huella`              | Redirige a `banco`                                                                                             | Owner con permiso             |
 | `/huella/banco`        | Banco de información: notas, experiencia, proyectos, habilidades, educación, certificaciones, idiomas y logros | Owner                         |
-| `/huella/cv`           | Crear CV: ofertas, mapa de evidencia, generación, versiones, edición validada, reporte, texto ATS, IA y PDF    | Owner                         |
+| `/huella/cv`           | Crear CV en tres pestañas (Ofertas, Generar, Documentos) con barra de contexto fija; el lugar vive en `?oferta=&vista=&doc=` (`lib/studioState.ts`) | Owner                         |
+| `/huella/historial`    | Historial de postulaciones: estado, fechas, seguimiento y notas por oferta, con los documentos enviados                                         | Owner                         |
 | `/huella/perfil`       | Contenido del perfil (`ContentPanel`: español editable, inglés sincronizado), datos y enlaces con icono, vista previa, publicar/despublicar, enlace | Owner                         |
 | `/huella/vista-previa` | **Vista previa real** del borrador (`platformRoutes`, `session: true`, `bare`, pestaña nueva) con los mismos componentes que el enlace público | Owner |
 | `/huella/ia`           | Configurar IA: proveedor (Gemini, OpenAI, Anthropic), clave y modelo cargado desde el proveedor                | Owner                         |
-| `/huella/pronto/:item` | «En preparación»: carta de recomendación, postulaciones, entrevistas (sin acciones falsas)                     | Owner                         |
+| `/huella/pronto/:item` | «En preparación»: entrevistas (sin acciones falsas); `postulaciones` y `recomendacion` redirigen a Historial y Crear CV                          | Owner                         |
 | `/huella/p/:token`     | **Perfil público** (`platformRoutes`, `session: false`, `bare`: sin barra lateral ni barra superior de Pastel)  | Quien tenga el enlace vigente |
 
 ## Estructura
@@ -33,6 +34,7 @@ Backend: `src/Modules/Huella/MODULE.md`. Producto: `docs/modules/HUELLA.md`.
 - **PDF:** se descarga con `api.blob` (misma sesión y refresco que el resto de la API), no con un enlace directo. Si `pdfAvailable` es falso, la UI ofrece el texto ATS y explica que el PDF no está disponible en ese servidor.
 - **Word (.docx):** mismo mecanismo (`downloadCvDocx`); no depende del motor del PDF, así que siempre se ofrece junto a él (`DownloadButtons` en `CvEditor`).
 - **Iconos de enlace:** `lib/linkIcons.tsx` es el catálogo (claves = `LinkIcons.Keys` del servidor); sin elección se usa el icono del tipo (sitio web = globo, LinkedIn, GitHub, otro = enlace genérico). El perfil público lo muestra tal como estaba al publicar.
+- **Listas del estudio** (ofertas, documentos, historial): buscador (`SearchField`), filtros, orden y **páginas de 5** (`usePaging`, `Pager`); todo local porque los topes del servidor son pequeños (50 ofertas, 60 versiones). Una oferta seleccionada limita la lista de documentos a ella, con aviso y «Ver todos».
 - **Crear CV:** el nivel inicial es Junior (`DEFAULT_LEVEL` en `StudioPage`); el borrador sin IA sigue disponible desde los logros derivados.
 - **Acciones de IA:** `components/AiTaskPanel.tsx` envuelve `AiWorkbench` para las tres tareas del servidor (`cv`, `profile`, `profile-translate`): ejecutar con el proveedor (`lib/useAiJob.tsx`: ventana con barra de progreso y pasos que se ejecutan de uno en uno, cada uno espera al anterior; si falla se detiene y se puede reintentar; alerta en la esquina al terminar), descargar el **mismo prompt** (`.md`/`.txt`/copiar) e importar la respuesta. Cualquier acción de IA muestra ventana de progreso y alerta de éxito o error.
 - **Idioma del CV:** se elige en cada generación (español, inglés o ambos); no hay preferencia global.

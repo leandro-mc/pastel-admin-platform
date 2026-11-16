@@ -12,6 +12,7 @@ import { usePreferences } from "@/core/preferences";
 import type { PublicLocalized, PublicProfile } from "../api/schemas";
 import { countEvidence, parseTerms, segments } from "../lib/highlight";
 import { LinkGlyph } from "../lib/linkIcons";
+import { safeHref } from "../lib/safeHref";
 import { formatMonth, publicText, type Lang } from "../lib/publicText";
 import { Fingerprint } from "./Fingerprint";
 import "./public-profile.css";
@@ -36,17 +37,7 @@ function Hl({ text }: { text: string }) {
   );
 }
 
-/** Solo se enlazan direcciones http(s); cualquier otra cosa se muestra como texto. */
-export function safeHref(url: string): string | null {
-  try {
-    const parsed = new URL(url);
-    return parsed.protocol === "https:" || parsed.protocol === "http:"
-      ? parsed.toString()
-      : null;
-  } catch {
-    return null;
-  }
-}
+export { safeHref };
 
 function ExternalLink({ url, children }: { url: string; children: string }) {
   const href = safeHref(url);

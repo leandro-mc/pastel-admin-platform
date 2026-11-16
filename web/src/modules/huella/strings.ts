@@ -7,12 +7,19 @@ export const strings = {
     studio: "Crear CV",
     profile: "Perfil público",
     ai: "Configurar IA",
+    history: "Historial",
     soon: "En preparación",
-    recommendation: "Carta de recomendación",
-    applications: "Postulaciones",
     interview: "Entrevistas",
   },
   common: {
+    pager: {
+      label: "Paginación",
+      prev: "Anterior",
+      next: "Siguiente",
+      range: (from: number, to: number, total: number) =>
+        `Mostrando ${from}–${to} de ${total}`,
+      page: (page: number, pages: number) => `página ${page} de ${pages}`,
+    },
     save: "Guardar",
     saving: "Guardando…",
     saved: "Cambios guardados.",
@@ -244,9 +251,108 @@ export const strings = {
     levels: ["Nativo", "C2", "C1", "B2", "B1", "A2", "A1"],
   },
   studio: {
+    status: {
+      saved: "Sin postular",
+      applied: "Postulada",
+      interview: "En entrevistas",
+      offer: "Oferta recibida",
+      rejected: "Rechazada",
+      no_response: "Sin respuesta",
+      discarded: "Descartada",
+    },
+    tabs: {
+      label: "Secciones de Crear CV",
+      offers: "Ofertas",
+      generate: "Generar",
+      documents: "Documentos",
+    },
+    context: {
+      none: "Sin oferta seleccionada",
+      noneHint:
+        "Elija una oferta para generar a su medida o escriba un enfoque para un CV general.",
+      working: "Trabajando con",
+      change: "Cambiar oferta",
+      clear: "Quitar selección",
+      pick: "Elegir oferta",
+      docs: (n: number, sent: number) =>
+        n === 0
+          ? "Sin documentos todavía"
+          : `${n} documento${n === 1 ? "" : "s"}${sent > 0 ? ` · ${sent} enviado${sent === 1 ? "" : "s"}` : " · ninguno enviado"}`,
+      history: "Ver en el historial",
+    },
+    offers: {
+      new: "Nueva oferta",
+      newDescription:
+        "Pegue el texto completo de la oferta. Se analiza contra su banco y queda guardada en su historial.",
+      searchLabel: "Buscar oferta",
+      searchPlaceholder: "Buscar por puesto o empresa",
+      sort: "Ordenar por",
+      sorts: {
+        recent: "Más recientes",
+        old: "Más antiguas",
+        name: "Nombre (A-Z)",
+        match: "Mayor coincidencia",
+      },
+      statusFilter: "Estado",
+      statusFilters: {
+        all: "Todos los estados",
+        saved: "Sin postular",
+        applied: "Postuladas",
+        interview: "En entrevistas",
+        offer: "Con oferta",
+        closed: "Cerradas",
+      },
+      use: "Usar para generar",
+      selected: "Seleccionada",
+      documents: "Ver documentos",
+      savedOn: "Guardada el",
+      coverage: (covered: number, total: number) =>
+        `${covered} de ${total} requisitos`,
+      coverageTitle:
+        "Requisitos obligatorios de la oferta que su banco respalda hoy.",
+      docCount: (n: number, sent: number) =>
+        n === 0
+          ? "Sin documentos"
+          : `${n} documento${n === 1 ? "" : "s"}${sent > 0 ? ` · ${sent} enviado${sent === 1 ? "" : "s"}` : ""}`,
+      none: "Aún no guardó ofertas. Use «Nueva oferta» para empezar.",
+      noMatch: "Ninguna oferta coincide con la búsqueda o el filtro.",
+      followUp: (label: string) => `Seguimiento ${label}`,
+    },
+    docs: {
+      title: "Documentos generados",
+      searchLabel: "Buscar documento",
+      searchPlaceholder: "Buscar por nombre u oferta",
+      sort: "Ordenar por",
+      sorts: {
+        recent: "Más recientes",
+        old: "Más antiguos",
+        name: "Nombre (A-Z)",
+      },
+      sentFilter: "Envío",
+      sentFilters: {
+        all: "Enviados y sin enviar",
+        sent: "Enviados",
+        unsent: "Sin enviar",
+      },
+      onlyOffer: (title: string) => `Solo de la oferta: ${title}`,
+      showAll: "Ver todos",
+      general: "General (sin oferta)",
+      open: "Abrir",
+      back: "Volver a los documentos",
+      sentOn: "Enviado el",
+      unsent: "Sin enviar",
+      markSent: "Marcar como enviado",
+      unmarkSent: "Quitar envío",
+      markedSent: "Marcado como enviado. La oferta pasó a «Postulada» si estaba sin postular.",
+      none: "Aún no generó documentos. Elija una oferta y use «Generar».",
+      noMatch: "Ningún documento coincide con la búsqueda o el filtro.",
+      forOffer: "Oferta",
+      cvKind: "CV",
+      pagesShort: (n: number) => `${n} pág.`,
+    },
     title: "Crear CV",
     description:
-      "Genere un CV a partir de su banco, ajustado a una oferta o a un enfoque. Cada línea sale de un logro suyo: no se inventa nada.",
+      "Elija una oferta, genere el documento a su medida y lleve el control de lo que ya envió. Todo sale de su banco: no se inventa nada.",
     offer: {
       title: "Oferta",
       description:
@@ -286,6 +392,14 @@ export const strings = {
       languageHint:
         "El CV se redacta completo en el idioma que elija, aunque su banco esté en otro. Con «ambos» se crea una versión por idioma.",
       fromOffer: "Se generará a partir de la oferta seleccionada.",
+      needTarget:
+        "Para generar, elija una oferta en la pestaña Ofertas o escriba un enfoque (por ejemplo «automatización de pruebas») para un CV general.",
+      goOffers: "Elegir una oferta",
+      options: "Opciones",
+      analysis: "Análisis de la oferta",
+      analysisNone:
+        "Con una oferta seleccionada aquí verá qué pide y qué de su banco lo respalda.",
+      toDocs: "Ver documentos",
       aiTitle: (n: number) =>
         n === 1 ? "Redactando su CV" : "Redactando su CV en español e inglés",
       run: (label: string, model: string) =>
@@ -326,6 +440,16 @@ export const strings = {
       rename: "Nombre",
     },
     editor: {
+      tabs: {
+        label: "Secciones del CV",
+        content: "Contenido",
+        send: "Enviar y descargar",
+        review: "Revisión ATS",
+        redo: "Volver a redactar",
+      },
+      sendTitle: "Envío y descarga",
+      sendHint:
+        "Descargue el archivo para postular. Al marcarlo como enviado, el historial de la oferta queda al día.",
       title: "Vista previa y edición",
       summary: "Perfil profesional",
       edit: "Editar",
@@ -433,6 +557,62 @@ export const strings = {
     imported: (n: number) =>
       n === 1 ? "Se importó y validó la respuesta." : `Se importaron ${n} elementos.`,
     importedNothing: "La respuesta no trajo nada que se pudiera usar.",
+  },
+  history: {
+    title: "Historial de postulaciones",
+    description:
+      "Cada oferta con su estado, los documentos que generó y cuáles envió. Actualice aquí cómo avanza cada proceso.",
+    searchLabel: "Buscar en el historial",
+    searchPlaceholder: "Buscar por puesto, empresa o nota",
+    sort: "Ordenar por",
+    sorts: {
+      recent: "Más recientes",
+      old: "Más antiguas",
+      followUp: "Seguimiento más próximo",
+      status: "Estado",
+    },
+    summary: {
+      all: "Todas",
+      saved: "Sin postular",
+      applied: "Postuladas",
+      interview: "En entrevistas",
+      offer: "Con oferta",
+      closed: "Cerradas",
+      followUp: "Seguimiento pendiente",
+    },
+    empty: "Aún no hay ofertas. Guarde una en «Crear CV» y aparecerá aquí.",
+    noMatch: "Ninguna oferta coincide con la búsqueda o el filtro.",
+    goStudio: "Ir a Crear CV",
+    savedOn: "Guardada el",
+    appliedOn: "Postulada el",
+    docsSent: (n: number) => `${n} documento${n === 1 ? "" : "s"} enviado${n === 1 ? "" : "s"}`,
+    docsReady: (n: number) =>
+      `${n} listo${n === 1 ? "" : "s"} sin enviar`,
+    noDocs: "Sin documentos generados",
+    followUp: {
+      overdue: (days: number) =>
+        `Seguimiento vencido hace ${days} día${days === 1 ? "" : "s"}`,
+      today: "Seguimiento hoy",
+      soon: (days: number) =>
+        `Seguimiento en ${days} día${days === 1 ? "" : "s"}`,
+    },
+    details: "Actualizar seguimiento",
+    hideDetails: "Ocultar",
+    openDocs: "Abrir documentos",
+    generate: "Generar documentos",
+    viewOffer: "Ver oferta original",
+    status: "Estado",
+    appliedAt: "Fecha de postulación",
+    followUpAt: "Seguimiento el",
+    followUpHint:
+      "Un recordatorio para escribir o llamar si no responden; el historial lo resalta cuando llega.",
+    notes: "Notas",
+    notesHint:
+      "Contacto, salario, fechas de entrevista, lo que le dijeron…",
+    save: "Guardar seguimiento",
+    saved: "Seguimiento guardado.",
+    sentDocs: "Documentos enviados",
+    allDocs: "Todos los documentos de esta oferta",
   },
   content: {
     title: "Contenido del perfil",
@@ -707,14 +887,6 @@ export const strings = {
     description:
       "Esta función se suma al banco que ya tiene: reutilizará sus logros, sus ofertas y sus versiones de CV sin pedirle nada de nuevo.",
     items: {
-      recomendacion: {
-        title: "Carta de recomendación",
-        text: "Pida una carta a alguien que trabajó con usted y arme un texto con los logros que esa persona puede respaldar.",
-      },
-      postulaciones: {
-        title: "Historial de postulaciones",
-        text: "Registre a qué ofertas aplicó, con qué versión del CV y cómo avanzó cada proceso.",
-      },
       entrevistas: {
         title: "Preparación de entrevistas",
         text: "Practique con preguntas sobre sus propios logros y sobre la oferta a la que aplica.",

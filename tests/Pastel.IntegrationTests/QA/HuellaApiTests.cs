@@ -384,6 +384,86 @@ public sealed class HuellaApiTests : IClassFixture<IdentityApiFactory>, IDisposa
         }
     }
 
+    // El historial sigue lo que se envía: marcar un CV como enviado pasa su oferta a «postulada» con un seguimiento; un estado
+    // inventado se rechaza y volver a «sin postular» borra la fecha de postulación.
+    [Trait("RequirementId", "HUELLA-E1-9")]
+    [RequiresPostgresFact]
+    public async Task Offer_tracking_follows_what_is_sent_and_rejects_invalid_states()
+    {
+        var owner = await OwnerAsync();
+        using var bank = await QaSupport.SendAsync(owner, HttpMethod.Put, "/api/huella/bank/experiences", new
+        {
+            items = new[] { new { role = "QA Engineer", company = "Empresa Historial", start = "2022-03", isVisible = true, narrative = "Automaticé 140 pruebas con Playwright y bajé la regresión de 2 días a 3 horas." } },
+        });
+        using var bankJson = JsonDocument.Parse(await bank.Content.ReadAsStringAsync());
+        var experienceId = bankJson.RootElement.GetProperty("experiences").EnumerateArray()
+            .First(e => e.GetProperty("company").GetString() == "Empresa Historial").GetProperty("id").GetString();
+
+        using var created = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/studio/offers", new
+        {
+            title = "QA Senior",
+            company = "Acme",
+            rawText = "Buscamos QA con Playwright, k6 y GitHub Actions para un equipo remoto. Se requiere experiencia en pruebas de API.",
+        });
+        Assert.Equal(HttpStatusCode.OK, created.StatusCode);
+        using var offerJson = JsonDocument.Parse(await created.Content.ReadAsStringAsync());
+        var offerId = offerJson.RootElement.GetProperty("id").GetString();
+
+        var cv = JsonSerializer.Serialize(new
+        {
+            versions = new[]
+            {
+                new
+                {
+                    language = "es",
+                    headline = "QA Engineer",
+                    summary = "QA con foco en automatización.",
+                    skills = Array.Empty<object>(),
+                    experience = new[] { new { id = experienceId, title = "QA Engineer", bullets = new[] { "Automaticé 140 pruebas con Playwright y bajé la regresión de 2 días a 3 horas." } } },
+                },
+            },
+        });
+        using var imported = await QaSupport.SendAsync(owner, HttpMethod.Post, "/api/huella/tasks/cv/ai-result", new { offerId, level = "junior", paper = "letter", languages = new[] { "es" }, json = cv });
+        Assert.Equal(HttpStatusCode.OK, imported.StatusCode);
+        using var outcome = JsonDocument.Parse(await imported.Content.ReadAsStringAsync());
+        var versionId = outcome.RootElement.GetProperty("versionIds")[0].GetString();
+
+        async Task<JsonElement> OfferAsync()
+        {
+            using var list = await QaSupport.SendAsync(owner, HttpMethod.Get, "/api/huella/studio/offers");
+            using var doc = JsonDocument.Parse(await list.Content.ReadAsStringAsync());
+            return doc.RootElement.EnumerateArray().First(o => o.GetProperty("id").GetString() == offerId).Clone();
+        }
+
+        Assert.Equal("saved", (await OfferAsync()).GetProperty("status").GetString());
+
+        using (var sent = await QaSupport.SendAsync(owner, HttpMethod.Put, $"/api/huella/studio/versions/{versionId}/sent?sent=true"))
+        {
+            Assert.Equal(HttpStatusCode.OK, sent.StatusCode);
+            using var doc = JsonDocument.Parse(await sent.Content.ReadAsStringAsync());
+            Assert.NotEqual(JsonValueKind.Null, doc.RootElement.GetProperty("summary").GetProperty("sentAt").ValueKind);
+        }
+
+        var applied = await OfferAsync();
+        Assert.Equal("applied", applied.GetProperty("status").GetString());
+        Assert.NotEqual(JsonValueKind.Null, applied.GetProperty("appliedAt").ValueKind);
+        Assert.NotEqual(JsonValueKind.Null, applied.GetProperty("followUpAt").ValueKind);
+
+        using (var invalid = await QaSupport.SendAsync(owner, HttpMethod.Put, $"/api/huella/studio/offers/{offerId}/tracking", new { status = "inventado", notes = "" }))
+        {
+            await QaSupport.AssertProblemAsync(invalid, HttpStatusCode.BadRequest);
+        }
+
+        using (var back = await QaSupport.SendAsync(owner, HttpMethod.Put, $"/api/huella/studio/offers/{offerId}/tracking", new { status = "saved", notes = "Volver a empezar" }))
+        {
+            Assert.Equal(HttpStatusCode.OK, back.StatusCode);
+            using var doc = JsonDocument.Parse(await back.Content.ReadAsStringAsync());
+            Assert.Equal("saved", doc.RootElement.GetProperty("status").GetString());
+            Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("appliedAt").ValueKind);
+            Assert.Equal("Volver a empezar", doc.RootElement.GetProperty("notes").GetString());
+        }
+    }
+
     private sealed class FakeGemini : IAiProvider
     {
         public string? LastKey { get; private set; }

@@ -27,7 +27,81 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var offers = await db.JobOffers.Where(o => o.ProfileId == profile.Value.Id).OrderByDescending(o => o.CreatedAt).ToListAsync(cancellationToken);
-        return offers.Select(o => new OfferSummary(o.Id, o.Title, o.Company, o.CreatedAt)).ToList();
+        var bank = await LoadBankAsync(profile.Value, cancellationToken);
+        return offers.Select(o => SummaryOf(o, bank.Data)).ToList();
+    }
+
+    /// <summary>Actualiza el seguimiento de una oferta: estado, fecha de postulación, día de seguimiento y notas.</summary>
+    public async Task<Result<OfferSummary>> UpdateTrackingAsync(Guid offerId, OfferTrackingInput input, CancellationToken cancellationToken)
+    {
+        var profile = await owners.GetOrCreateAsync(cancellationToken);
+        if (profile.IsFailure)
+        {
+            return profile.Error;
+        }
+
+        var offer = await db.JobOffers.SingleOrDefaultAsync(o => o.Id == offerId && o.ProfileId == profile.Value.Id, cancellationToken);
+        if (offer is null)
+        {
+            return HuellaErrors.NotFound;
+        }
+
+        var errors = new FieldErrors();
+        var status = errors.OneOf("status", input.Status, OfferStatus.All.ToArray(), offer.Status);
+        var notes = errors.Text("notes", input.Notes, HuellaLimits.JobOffer.Notes);
+        if (errors.Any)
+        {
+            return HuellaErrors.Invalid(errors.ToDictionary());
+        }
+
+        var now = clock.UtcNow;
+        if (status != offer.Status)
+        {
+            offer.StatusUpdatedAt = now;
+        }
+
+        offer.Status = status;
+        offer.Notes = notes;
+        offer.FollowUpAt = input.FollowUpAt;
+        // Volver a «guardada» borra la fecha de postulación; cualquier estado posterior a postular la conserva o la fija hoy.
+        offer.AppliedAt = status == OfferStatus.Saved ? null : input.AppliedAt ?? offer.AppliedAt ?? (OfferStatus.WasApplied(status) ? now : null);
+        offer.UpdatedAt = now;
+        await db.SaveChangesAsync(cancellationToken);
+        var bank = await LoadBankAsync(profile.Value, cancellationToken);
+        return SummaryOf(offer, bank.Data);
+    }
+
+    private static OfferSummary SummaryOf(JobOffer o, BankData bank)
+    {
+        var must = OfferAnalyzer.Evidence(OfferAnalyzer.Analyze(o.RawText, isFocus: false, bank), bank).Where(e => e.Weight >= 3).ToList();
+        return new OfferSummary(
+            o.Id, o.Title, o.Company, o.SourceUrl, o.CreatedAt, o.Status, o.StatusUpdatedAt, o.AppliedAt, o.FollowUpAt, o.Notes,
+            new OfferCoverage(must.Count(e => e.Status != "gap"), must.Count));
+    }
+
+    /// <summary>
+    /// Al enviar un documento a una oferta guardada, la oferta pasa a «postulada» con la fecha de hoy y un seguimiento a 7 días
+    /// (si la persona no los había puesto): el historial queda al día sin trabajo extra.
+    /// </summary>
+    private async Task MarkOfferAppliedAsync(Guid? offerId, Guid profileId, CancellationToken cancellationToken)
+    {
+        if (offerId is null)
+        {
+            return;
+        }
+
+        var offer = await db.JobOffers.SingleOrDefaultAsync(o => o.Id == offerId && o.ProfileId == profileId, cancellationToken);
+        if (offer is null || offer.Status != OfferStatus.Saved)
+        {
+            return;
+        }
+
+        var now = clock.UtcNow;
+        offer.Status = OfferStatus.Applied;
+        offer.StatusUpdatedAt = now;
+        offer.AppliedAt ??= now;
+        offer.FollowUpAt ??= DateOnly.FromDateTime(now.UtcDateTime).AddDays(7);
+        offer.UpdatedAt = now;
     }
 
     public async Task<Result<OfferView>> CreateOfferAsync(OfferInput input, CancellationToken cancellationToken)
@@ -337,6 +411,27 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         return ViewOf(version, loaded.Value.Document, ReportOf(version));
     }
 
+    /// <summary>Marca una versión como enviada (o la desmarca). Enviarla a una oferta guardada la pasa a «postulada».</summary>
+    public async Task<Result<CvVersionView>> SetSentAsync(Guid versionId, bool sent, CancellationToken cancellationToken)
+    {
+        var loaded = await LoadVersionAsync(versionId, cancellationToken);
+        if (loaded.IsFailure)
+        {
+            return loaded.Error;
+        }
+
+        var version = loaded.Value.Version;
+        version.SentAt = sent ? clock.UtcNow : null;
+        version.UpdatedAt = clock.UtcNow;
+        if (sent)
+        {
+            await MarkOfferAppliedAsync(version.JobOfferId, version.ProfileId, cancellationToken);
+        }
+
+        await db.SaveChangesAsync(cancellationToken);
+        return ViewOf(version, loaded.Value.Document, ReportOf(version));
+    }
+
     public async Task<Result> DeleteVersionAsync(Guid versionId, CancellationToken cancellationToken)
     {
         var loaded = await LoadVersionAsync(versionId, cancellationToken);
@@ -579,7 +674,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         new(SummaryOf(version), document, report, CvGuardian.AtsText(document, version.Language), renderer.IsAvailable);
 
     private static CvVersionSummary SummaryOf(CvVersion v) =>
-        new(v.Id, v.Name, v.Level, v.Paper, v.Language, v.Mode, v.Source, v.Pages, v.LinesUsed, v.LineBudget, v.IsPublic, v.JobOfferId, v.CreatedAt, v.UpdatedAt);
+        new(v.Id, v.Name, v.Level, v.Paper, v.Language, v.Mode, v.Source, v.Pages, v.LinesUsed, v.LineBudget, v.IsPublic, v.SentAt, v.JobOfferId, v.CreatedAt, v.UpdatedAt);
 
     private static string Trim(string value, int max) => value.Length > max ? value[..max] : value;
 }

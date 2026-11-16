@@ -36,6 +36,9 @@ internal sealed class CvVersion : IProfileOwned
 
     public bool IsPublic { get; set; }
 
+    /// <summary>Cuándo se envió esta versión (a su oferta o a quien corresponda); <c>null</c> = sin enviar.</summary>
+    public DateTimeOffset? SentAt { get; set; }
+
     public string Source { get; set; } = string.Empty;
 
     public DateTimeOffset CreatedAt { get; set; }

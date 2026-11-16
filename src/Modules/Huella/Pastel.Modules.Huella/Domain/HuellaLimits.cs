@@ -108,6 +108,7 @@ internal static class HuellaLimits
         public const int Company = 160;
         public const int SourceUrl = 2048;
         public const int RawText = 20000;
+        public const int Notes = 1000;
     }
 
     public static class CvVersion

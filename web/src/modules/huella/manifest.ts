@@ -6,7 +6,6 @@ import {
   Globe,
   KeyRound,
   MessagesSquare,
-  Quote,
 } from "lucide-react";
 import type { ModuleManifest } from "@/core/modules/types";
 import { strings } from "./strings";
@@ -33,19 +32,8 @@ export default {
     },
     { label: strings.nav.studio, to: "cv", icon: FileText },
     { label: strings.nav.profile, to: "perfil", icon: Globe },
+    { label: strings.nav.history, to: "historial", icon: ClipboardList },
     { label: strings.nav.ai, to: "ia", icon: KeyRound },
-    {
-      label: strings.nav.recommendation,
-      to: "pronto/recomendacion",
-      icon: Quote,
-      group: strings.nav.soon,
-    },
-    {
-      label: strings.nav.applications,
-      to: "pronto/postulaciones",
-      icon: ClipboardList,
-      group: strings.nav.soon,
-    },
     {
       label: strings.nav.interview,
       to: "pronto/entrevistas",
@@ -69,6 +57,11 @@ export default {
       path: "perfil",
       crumb: strings.nav.profile,
       lazy: () => import("./pages/PublicationPage"),
+    },
+    {
+      path: "historial",
+      crumb: strings.nav.history,
+      lazy: () => import("./pages/HistoryPage"),
     },
     {
       path: "ia",

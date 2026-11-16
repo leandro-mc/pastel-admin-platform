@@ -303,6 +303,9 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.Property<string>("ReportJson")
                         .HasColumnType("jsonb");
 
+                    b.Property<DateTimeOffset?>("SentAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Source")
                         .IsRequired()
                         .HasMaxLength(24)
@@ -471,12 +474,25 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.Property<string>("AnalysisJson")
                         .HasColumnType("jsonb");
 
+                    b.Property<DateTimeOffset?>("AppliedAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<string>("Company")
                         .HasMaxLength(160)
                         .HasColumnType("character varying(160)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly?>("FollowUpAt")
+                        .HasColumnType("date");
+
+                    b.Property<string>("Notes")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)")
+                        .HasDefaultValue("");
 
                     b.Property<Guid>("ProfileId")
                         .HasColumnType("uuid");
@@ -489,6 +505,16 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.Property<string>("SourceUrl")
                         .HasMaxLength(2048)
                         .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)")
+                        .HasDefaultValue("saved");
+
+                    b.Property<DateTimeOffset?>("StatusUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<byte[]>("TextHash")
                         .IsRequired()
