@@ -344,7 +344,7 @@ export const strings = {
         },
         title: "Texto de la carta",
         description:
-          "Carta formal compacta: arriba su nombre con la fecha a la derecha y su país; después destinatario, asunto, saludo, cuerpo con sangría y texto justificado y despedida; al pie, bajo su nombre, el correo y el teléfono. Su nombre y datos salen del banco; lo que escriba no puede traer cifras que su banco o la oferta no tengan.",
+          "Carta formal compacta: arriba su nombre con la fecha a la derecha y su país; después destinatario, asunto, saludo, cuerpo con sangría y texto justificado y despedida; al pie, bajo su nombre, el correo y el teléfono, uno por renglón. Su nombre y datos salen del banco; lo que escriba no puede traer cifras que su banco o la oferta no tengan.",
         sender: "Remitente (del banco)",
         font: "Tipo de letra",
         fonts: { times: "Times New Roman", arial: "Arial" },

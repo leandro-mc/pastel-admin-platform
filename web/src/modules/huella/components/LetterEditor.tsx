@@ -143,9 +143,11 @@ function ContentForm({ letter }: { letter: Letter }) {
           {doc.location ? (
             <p className="text-sm text-fg-secondary">{doc.location}</p>
           ) : null}
-          {doc.contact.length > 0 ? (
-            <p className="text-sm text-muted">{doc.contact.join(" · ")}</p>
-          ) : null}
+          {doc.contact.map((line) => (
+            <p key={line} className="text-sm text-muted">
+              {line}
+            </p>
+          ))}
         </div>
 
         <div className="grid items-end gap-4 sm:grid-cols-[1fr_auto_1fr]">
@@ -411,7 +413,7 @@ function letterText(doc: Letter["document"]): string {
     [doc.greeting],
     doc.paragraphs,
     [doc.closing],
-    [doc.signature, ...(doc.contact.length > 0 ? [doc.contact.join(" · ")] : [])],
+    [doc.signature, ...doc.contact],
   ].filter((b) => b.length > 0);
   return blocks.map((b) => b.join("\n")).join("\n\n");
 }

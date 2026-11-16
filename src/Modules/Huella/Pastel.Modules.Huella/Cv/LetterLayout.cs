@@ -53,7 +53,6 @@ internal static class LetterLayout
     public static double Used(LetterDoc doc, string font, string paper)
     {
         var width = CharsPerLine(font, paper);
-        var contact = string.Join("  ·  ", doc.Contact.Where(x => x.Length > 0));
 
         // Encabezado: nombre y fecha comparten el primer renglón; debajo, el país o la ciudad.
         var used = 1.0 + (doc.Location.Length > 0 ? 1 : 0);
@@ -79,10 +78,7 @@ internal static class LetterLayout
 
         used += Math.Max(0, doc.Paragraphs.Count - 1) * Half;
         used += 1 + Lines(doc.Closing.Length, width) + SignatureGap + 1;
-        if (contact.Length > 0)
-        {
-            used += Lines(contact.Length, width);
-        }
+        used += doc.Contact.Count(x => x.Length > 0);
 
         return used;
     }
@@ -111,7 +107,7 @@ internal static class LetterLayout
         var typical = new LetterDoc
         {
             Location = "Costa Rica",
-            Contact = ["correo@ejemplo.com  ·  8888 8888"],
+            Contact = ["correo@ejemplo.com", "8888 8888"],
             Recipient = ["Equipo de selección", "Empresa"],
             Subject = new string('a', 75),
             Greeting = "Estimado equipo de la empresa:",

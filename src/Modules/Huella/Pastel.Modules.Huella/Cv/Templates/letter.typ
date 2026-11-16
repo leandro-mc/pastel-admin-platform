@@ -42,10 +42,10 @@
   #for p in d.paragraphs { par(p) }
 ]
 
-// Despedida y firma, con un renglón en blanco antes de la despedida y espacio para firmar; el contacto, bajo el nombre.
+// Despedida y firma, con un renglón en blanco antes de la despedida y espacio para firmar; el correo y el teléfono, uno por renglón bajo el nombre.
 #blank
 #par(d.closing)
 #blank
 #blank
 #par(text(weight: "bold", d.signature))
-#if d.contact.len() > 0 { par(d.contact.join("  ·  ")) }
+#for line in d.contact { par(line) }

@@ -6,7 +6,7 @@ namespace Pastel.Modules.Huella.Cv;
 /// La carta de presentación en Word (.docx) con la forma de una carta formal compacta: arriba el nombre con la fecha a la
 /// derecha y el país o la ciudad; después destinatario, asunto y saludo, cada bloque separado por medio renglón; un renglón
 /// en blanco antes del cuerpo (sangría de primera línea y texto justificado) y otro antes de la despedida; y al pie, bajo el
-/// nombre de la firma, el correo y el teléfono. Times New Roman o Arial; abre en Word, Google Docs y LibreOffice. Las medidas
+/// nombre de la firma, el correo y el teléfono, uno por renglón. Times New Roman o Arial; abre en Word, Google Docs y LibreOffice. Las medidas
 /// de la página son las que supone <see cref="LetterLayout"/> para garantizar que quepa en una sola hoja.
 /// </summary>
 internal static class LetterDocx
@@ -71,8 +71,7 @@ internal static class LetterDocx
         Blank();
         Blank();
         Line(letter.Signature, bold: true);
-        var contact = string.Join("  ·  ", letter.Contact.Where(x => x.Length > 0));
-        if (contact.Length > 0)
+        foreach (var contact in letter.Contact.Where(x => x.Length > 0))
         {
             Line(contact);
         }

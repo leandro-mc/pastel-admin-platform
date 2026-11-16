@@ -103,7 +103,7 @@ public sealed class LetterAiTests
                 var doc = new LetterDoc
                 {
                     Location = "Costa Rica",
-                    Contact = ["correo@ejemplo.com  ·  8888 8888"],
+                    Contact = ["correo@ejemplo.com", "8888 8888"],
                     Recipient = ["Equipo de selección", "Empresa"],
                     Subject = new string('a', 75),
                     Greeting = "Estimado equipo de la empresa:",
