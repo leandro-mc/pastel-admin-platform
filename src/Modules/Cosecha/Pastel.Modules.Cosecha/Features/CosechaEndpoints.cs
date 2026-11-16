@@ -7,8 +7,10 @@ using Pastel.Modules.Cosecha.Features.Buyers;
 using Pastel.Modules.Cosecha.Features.Orders;
 using Pastel.Modules.Cosecha.Features.Policy;
 using Pastel.Modules.Cosecha.Features.Producers;
+using Pastel.Modules.Cosecha.Features.Reports;
 using Pastel.Modules.Cosecha.Features.Settlements;
 using Pastel.Modules.Cosecha.Features.Shipments;
+using Pastel.Modules.Cosecha.Features.Today;
 using Pastel.Modules.Cosecha.Features.Products;
 using Pastel.Modules.Cosecha.Features.Seasons;
 using Pastel.Platform.Errors;
@@ -40,6 +42,8 @@ internal static class CosechaEndpoints
         services.AddScoped<AllocationHandler>();
         services.AddScoped<ReceptionHandler>();
         services.AddScoped<SettlementsHandler>();
+        services.AddScoped<ReportsHandler>();
+        services.AddScoped<TodayHandler>();
         return services;
     }
 
@@ -54,6 +58,8 @@ internal static class CosechaEndpoints
         MyOrdersEndpoint.Map(api.MapGroup("/my"));
         ShipmentsEndpoint.Map(api.MapGroup("/shipments"));
         SettlementsEndpoint.Map(api.MapGroup("/settlements"));
+        ReportsEndpoint.Map(api.MapGroup("/reports"));
+        TodayEndpoint.Map(api);
     }
 }
 

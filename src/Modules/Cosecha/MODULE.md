@@ -55,6 +55,8 @@ Rutas bajo `/api/cosecha`. Los cambios de registros editables reciben `version` 
 | `POST /shipments/{id}/deliveries/{deliveryId}/status`, `PUT /shipments/{id}/deliveries/{deliveryId}/reception`, `PUT /shipments/{id}/orders/{shipmentOrderId}/delivery` | `shipments.manage` | Recepción (recibido, rechazado, calidad, precio) y entrega al comprador; la fecha prevista de pago sale de la política vigente (vacía si no hay); las correcciones dejan antes/después y nota |
 | `GET /settlements/producers`, `GET /settlements/producers/{producerId}` | `settlements.read` | Saldos por productor y estado de cuenta (entregas Pendiente/Parcial/Pagada, pagos con sus asignaciones) |
 | `POST /settlements/payments`, `POST /settlements/payments/{id}/void` | `settlements.manage` | El pago se aplica a las entregas más antiguas primero (o solo a las elegidas), sin pasarse de lo adeudado; no se edita: se anula con motivo; ambos quedan en auditoría |
+| `GET /reports/{kind}`, `GET /reports/{kind}/csv` (`shipments`, `producers`, `buyers`, `season`; temporada y fechas opcionales) | `reports.read` | Incluyen montos a productores y margen informativo, por eso solo con este permiso. El CSV es para Excel en español: UTF-8 con BOM, `;`, decimales con coma, sin fórmulas inyectables |
+| `GET /today` | `shipments.read` | Envíos abiertos con lo pendiente (sin confirmar, recepciones, entregas) y pagos de los próximos 7 días (estos solo con `settlements.read`) |
 
 ## Datos
 
@@ -84,7 +86,7 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 | `cosecha.shipment.invalid`, `cosecha.allocation.invalid`, `cosecha.delivery.invalid` | 400 | Validación por campo |
 | `cosecha.shipment.order_cancelled`, `cosecha.shipment.order_draft`, `cosecha.shipment.order_other_season` | 409 / 400 | Pedido no asignable a un envío |
 | `cosecha.shipment.invalid_transition`, `cosecha.shipment.close_reason_required`, `cosecha.shipment.not_deletable`, `cosecha.shipment.order_delivered` | 409 / 400 | Reglas del ciclo del envío |
-| `cosecha.payment.invalid` | 400 | Validación por campo (la fecha del pago no puede ser futura) |
+| `cosecha.payment.invalid`, `cosecha.report.invalid` | 400 | Validación por campo (la fecha del pago no puede ser futura; reporte o rango desconocido) |
 | `cosecha.payment.exceeds_balance`, `cosecha.payment.nothing_to_pay`, `cosecha.payment.already_voided` | 409 | Pago mayor a lo adeudado, sin entregas pendientes o ya anulado |
 | `cosecha.delivery.has_reception`, `cosecha.delivery.invalid_transition`, `cosecha.delivery.below_paid` | 409 | La entrega ya se recibió, la transición no existe o el monto quedaría por debajo de lo pagado |
 | `cosecha.order.cancelled`, `cosecha.order.not_draft`, `cosecha.order.has_deliveries`, `cosecha.order.in_open_shipment` | 409 | Reglas de estado del pedido (no se cancela con entregas ni dentro de un envío abierto) |
@@ -98,4 +100,4 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 
 ## Pendiente
 
-Reportes y la pantalla «Hoy» (siguiente commit de la rama).
+Nada del alcance del MVP en el backend. Fuera del MVP (ver `docs/modules/COSECHA.md` §9): importar datos históricos, notificaciones, reclamos, lotes y trazabilidad, mercado y cotizador, equipo y pagos por anticipo.
