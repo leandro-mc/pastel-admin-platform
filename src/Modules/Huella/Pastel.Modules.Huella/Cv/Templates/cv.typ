@@ -24,24 +24,38 @@
 
 #let joined(items) = items.filter(x => x != "").join("  ·  ")
 
-#let entry(e) = {
-  block(breakable: false, below: 0.4em, {
-    grid(
-      columns: (1fr, auto),
-      column-gutter: 1em,
-      {
-        text(weight: "semibold", e.title)
-        if e.subtitle != "" { [ — ] + e.subtitle }
-      },
-      align(right, text(fill: muted, e.dates)),
-    )
-    if e.at("location", default: none) not in (none, "") {
+// Cabecera de una entrada: «Título — Subtítulo» a la izquierda y las fechas a la derecha, todo en un renglón si cabe. Si no
+// cabe, el subtítulo pasa completo al renglón siguiente (con el lugar): nunca queda una palabra suelta del subtítulo.
+#let head(title, sep, subtitle, dates, extra) = layout(size => {
+  let lead = { text(weight: "semibold", title); if subtitle != "" { sep; subtitle } }
+  let when = text(fill: muted, dates)
+  let fits = measure(lead).width + measure(when).width + (1em).to-absolute() <= size.width
+  if fits {
+    grid(columns: (1fr, auto), column-gutter: 1em, lead, align(top + right, when))
+    if extra != "" { v(-0.2em); text(fill: muted, size: 9.5pt, extra) }
+  } else {
+    grid(columns: (1fr, auto), column-gutter: 1em, text(weight: "semibold", title), align(top + right, when))
+    if subtitle != "" or extra != "" {
       v(-0.2em)
-      text(fill: muted, size: 9.5pt, e.location)
+      if subtitle != "" { subtitle }
+      if subtitle != "" and extra != "" { text(fill: muted, size: 9.5pt)[ · ] }
+      if extra != "" { text(fill: muted, size: 9.5pt, extra) }
+    }
+  }
+})
+
+#let entry(e) = {
+  block(breakable: false, below: 0.55em, {
+    if e.dates == "" {
+      // Proyecto: el nombre y, debajo, las tecnologías (solo las relevantes).
+      text(weight: "semibold", e.title)
+      if e.subtitle != "" { v(-0.2em); text(fill: muted, size: 9.5pt, e.subtitle) }
+    } else {
+      head(e.title, [ — ], e.subtitle, e.dates, if e.at("location", default: none) not in (none, "") { e.location } else { "" })
     }
   })
   if e.bullets.len() > 0 { list(..e.bullets) }
-  v(0.25em)
+  v(0.3em)
 }
 
 // ───────── Encabezado ─────────
@@ -80,17 +94,8 @@
 #if d.education.len() > 0 {
   heading(level: 2, d.labels.education)
   for ed in d.education {
-    block(breakable: false, below: 0.45em, {
-      grid(
-        columns: (1fr, auto),
-        column-gutter: 1em,
-        { text(weight: "semibold", ed.degree); [, ] + ed.institution },
-        align(right, text(fill: muted, ed.dates)),
-      )
-      if ed.at("detail", default: none) not in (none, "") {
-        v(-0.2em)
-        text(fill: muted, size: 9.5pt, ed.detail)
-      }
+    block(breakable: false, below: 0.8em, {
+      head(ed.degree, [, ], ed.institution, ed.dates, if ed.at("detail", default: none) not in (none, "") { ed.detail } else { "" })
     })
   }
 }

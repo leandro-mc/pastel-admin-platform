@@ -38,4 +38,20 @@ public sealed class CvTruthTests
             Assert.NotEmpty(document.AllBullets());
         }
     }
+
+    // Presentación del CV: un proyecto muestra sus tecnologías principales (no 20) y una formación no repite institución ni fechas.
+    [Fact]
+    public void CvShowsShortStackAndNoRepeatedEducationDetail()
+    {
+        var stack = "Kotlin 1.9, Spring Boot 3.5, Spring Security con JWT, Spring AI (OpenAI), PostgreSQL 16, Flyway, Docker/Railway, Testcontainers, Next.js 16, React 19";
+
+        var shortStack = CvComposer.ShortStack(stack);
+
+        Assert.True(shortStack.Length <= 90);
+        Assert.StartsWith("Kotlin 1.9, Spring Boot 3.5", shortStack, StringComparison.Ordinal);
+        Assert.DoesNotContain("React", shortStack, StringComparison.Ordinal);
+        Assert.True(CvComposer.RepeatsEducation("Universidad Nacional, 2022-2026", "Universidad Nacional", "2022 - 2026"));
+        Assert.True(CvComposer.RepeatsEducation("Promedio 9,2 (2022)", "UNA", "2022 - 2026"));
+        Assert.False(CvComposer.RepeatsEducation("Graduado con honores", "Universidad Nacional", "2022 - 2026"));
+    }
 }

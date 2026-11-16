@@ -69,7 +69,7 @@ internal static class CvComposer
         {
             var p = projects[i].project;
             var budget = i < limits.ProjectLines.Count ? limits.ProjectLines[i] : 0;
-            var entry = new CvEntry { Title = p.Name, Subtitle = p.Stack, LineBudget = budget };
+            var entry = new CvEntry { Title = p.Name, Subtitle = ShortStack(p.Stack), LineBudget = budget };
             var used = 0;
             foreach (var a in p.Achievements.OrderByDescending(x => Score(x, 0, analysis, vocabulary)))
             {
@@ -94,6 +94,11 @@ internal static class CvComposer
         {
             var ed = education[i];
             var detail = limits.Level != "senior" && i == 0 ? ed.Note : null;
+            if (detail is not null && RepeatsEducation(detail, ed.Institution, YearRange(ed.StartYear, ed.EndYear)))
+            {
+                detail = null;
+            }
+
             doc.Education.Add(new CvEducation
             {
                 Degree = ed.Degree,
@@ -176,6 +181,33 @@ internal static class CvComposer
         return result;
     }
 
+    /// <summary>
+    /// Tecnologías de un proyecto para la línea bajo su nombre: las primeras que caben en <paramref name="max"/> caracteres, sin
+    /// cortar una a la mitad. Un proyecto con 20 tecnologías muestra las principales, no la lista completa.
+    /// </summary>
+    public static string ShortStack(string? stack, int max = 90)
+    {
+        var kept = new List<string>();
+        var length = 0;
+        foreach (var item in (stack ?? string.Empty).Split([',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        {
+            if (length + item.Length + (kept.Count > 0 ? 2 : 0) > max)
+            {
+                break;
+            }
+
+            kept.Add(item);
+            length += item.Length + (kept.Count > 1 ? 2 : 0);
+        }
+
+        return string.Join(", ", kept);
+    }
+
+    /// <summary>¿El detalle de una formación repite lo que ya dicen la institución o las fechas? Entonces no se muestra.</summary>
+    public static bool RepeatsEducation(string detail, string institution, string dates) =>
+        TermMatcher.Fold(detail).Contains(TermMatcher.Fold(institution), StringComparison.Ordinal)
+        || System.Text.RegularExpressions.Regex.Matches(dates, @"\d{4}").Any(y => detail.Contains(y.Value, StringComparison.Ordinal));
+
     public static int Lines(int chars, int perLine) => Math.Max(1, (int)Math.Ceiling(chars / (double)perLine));
 
     public static string Truncate(string text, int max)
@@ -211,8 +243,8 @@ internal static class CvLayout
     {
         var summary = 2 + CvComposer.Lines(doc.Summary.Length, limits.CharsPerLine);
         var skills = 2 + doc.Skills.Sum(g => CvComposer.Lines(g.Line.Length, limits.CharsPerLine));
-        var experience = 2 + doc.Experience.Sum(e => 1.5 + EntryLines(e, limits));
-        var projects = doc.Projects.Count == 0 ? 0 : 2 + doc.Projects.Sum(p => 1.5 + EntryLines(p, limits));
+        var experience = 2 + doc.Experience.Sum(e => 1.65 + EntryLines(e, limits));
+        var projects = doc.Projects.Count == 0 ? 0 : 2 + doc.Projects.Sum(p => (p.Subtitle.Length > 0 ? 2.15 : 1.65) + EntryLines(p, limits));
         var education = 2 + doc.Education.Sum(e => 1.5 + (e.Detail is null ? 0 : CvComposer.Lines(e.Detail.Length, limits.CharsPerLine)));
         var extras = 2 + doc.Extras.Sum(x => CvComposer.Lines(x.Length, limits.CharsPerLine));
         return HeaderLu + summary + skills + experience + projects + education + extras;

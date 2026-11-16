@@ -25,7 +25,7 @@ internal static class CvAiCompose
     public const int BulletMin = 25;
     private const string Schema =
         "{\"versions\":[{\"language\":\"es|en\",\"headline\":\"string\",\"summary\":\"string\",\"skills\":[{\"label\":\"string\",\"items\":[\"string\"]}],"
-        + "\"experience\":[{\"id\":\"uuid\",\"title\":\"string\",\"bullets\":[\"string\"]}],\"projects\":[{\"id\":\"uuid\",\"bullets\":[\"string\"]}],"
+        + "\"experience\":[{\"id\":\"uuid\",\"title\":\"string\",\"bullets\":[\"string\"]}],\"projects\":[{\"id\":\"uuid\",\"stack\":\"string\",\"bullets\":[\"string\"]}],"
         + "\"education\":[{\"id\":\"uuid\",\"degree\":\"string\",\"detail\":\"string|null\"}],\"certifications\":[{\"id\":\"uuid\",\"name\":\"string\"}],"
         + "\"languages\":[{\"id\":\"uuid\",\"language\":\"string\",\"level\":\"string\"}]}]}";
 
@@ -56,9 +56,9 @@ internal static class CvAiCompose
         sb.AppendLine(CultureInfo.InvariantCulture, $"- headline: máximo {HeadlineMax} caracteres (titular profesional en ese idioma).");
         sb.AppendLine(CultureInfo.InvariantCulture, $"- summary (perfil profesional): máximo {limits.SummaryMax} caracteres, sin frases vacías.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"- experience: como máximo {limits.Entries}. Presupuesto de líneas de viñetas por posición, de la más reciente a la más antigua: [{string.Join(", ", limits.EntryLines.Take(limits.Entries))}]. Cada viñeta entre {BulletMin} y {limits.BulletMax} caracteres.");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- projects: como máximo {limits.ProjectCount}, con presupuesto de líneas [{string.Join(", ", limits.ProjectLines.Take(limits.ProjectCount))}] por posición en tu orden. Si no aportan a la oferta, deja la lista vacía.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- projects: como máximo {limits.ProjectCount}, con presupuesto de líneas [{string.Join(", ", limits.ProjectLines.Take(limits.ProjectCount))}] por posición en tu orden. Si no aportan a la oferta, deja la lista vacía. `stack` de cada proyecto: SOLO las 4 a 6 tecnologías más relevantes para la oferta, tomadas de las del banco y separadas por comas (máximo 90 caracteres); nunca la lista completa.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"- skills: como máximo {limits.SkillGroups} grupos y {limits.SkillsTotal} habilidades en total; la línea de cada grupo («etiqueta: a, b, c») no pasa de {limits.SkillLineChars} caracteres. Solo habilidades que el banco mencione.");
-        sb.AppendLine(CultureInfo.InvariantCulture, $"- education: como máximo {limits.EducationCount}; certifications: como máximo {limits.CertificationCount}; languages: los idiomas hablados que aporten.");
+        sb.AppendLine(CultureInfo.InvariantCulture, $"- education: como máximo {limits.EducationCount}; certifications: como máximo {limits.CertificationCount}; languages: los idiomas hablados que aporten. `detail` de education: solo si aporta algo que NO está ya en el título, la institución o las fechas (honores, tesis, promedio); si no, null.");
         sb.AppendLine();
         sb.AppendLine("<PROHIBIDAS>").AppendLine(string.Join(", ", CvGuardian.BannedPhrases(bank.Data))).AppendLine("</PROHIBIDAS>");
         sb.AppendLine("<VOZ>").AppendLine(bank.Notes.Voice).AppendLine("</VOZ>");
@@ -204,7 +204,7 @@ internal static class CvAiCompose
             var cv = new CvEntry
             {
                 Title = project.Name,
-                Subtitle = project.Stack ?? string.Empty,
+                Subtitle = StackOf(entry, project.Stack, bank),
                 LineBudget = doc.Projects.Count < limits.ProjectLines.Count ? limits.ProjectLines[doc.Projects.Count] : 0,
                 Bullets = Bullets(entry, project.Id, project.Name, bank, limits, warnings),
             };
@@ -232,7 +232,7 @@ internal static class CvAiCompose
                 Degree = degree.Length is > 0 and <= TitleMax ? degree : education.Degree,
                 Institution = education.Institution,
                 Dates = CvComposer.YearRange(education.StartYear, education.EndYear),
-                Detail = detail.Length is > 0 and <= 90 && CvGuardian.ValidateWritten(detail, 90, bank.Numbers, data) is null && doc.Education.Count == 0 && limits.Level != "senior" ? detail : null,
+                Detail = detail.Length is > 0 and <= 90 && !CvComposer.RepeatsEducation(detail, education.Institution, CvComposer.YearRange(education.StartYear, education.EndYear)) && CvGuardian.ValidateWritten(detail, 90, bank.Numbers, data) is null && doc.Education.Count == 0 && limits.Level != "senior" ? detail : null,
             });
         }
 
@@ -270,6 +270,17 @@ internal static class CvAiCompose
         }
 
         return doc.Experience.Count == 0 && doc.Projects.Count == 0 ? null : doc;
+    }
+
+    /// <summary>Tecnologías del proyecto: las que eligió la IA (solo las que el banco menciona, hasta 90 caracteres); si no, las primeras del banco.</summary>
+    private static string StackOf(JsonElement entry, string? bankStack, AiBank bank)
+    {
+        var chosen = TextInput.CleanLine(Str(entry, "stack"))
+            .Split([',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
+            .Where(bank.Data.Mentions)
+            .Distinct(StringComparer.OrdinalIgnoreCase);
+        var stack = CvComposer.ShortStack(string.Join(", ", chosen));
+        return stack.Length > 0 ? stack : CvComposer.ShortStack(bankStack);
     }
 
     private static List<CvBullet> Bullets(JsonElement entry, Guid sourceId, string label, AiBank bank, CvLimits limits, List<string> warnings)

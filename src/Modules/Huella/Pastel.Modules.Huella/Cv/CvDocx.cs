@@ -72,12 +72,7 @@ internal static class CvDocx
             body.Append(Paragraph("Heading1", Run(labels.Education)));
             foreach (var education in doc.Education)
             {
-                var title = Run(education.Degree, bold: true) + Run(education.Institution.Length > 0 ? ", " + education.Institution : string.Empty);
-                body.Append(Paragraph(null, title + DateTab(education.Dates), tabAt: textWidth, keepNext: !string.IsNullOrEmpty(education.Detail)));
-                if (!string.IsNullOrEmpty(education.Detail))
-                {
-                    body.Append(Paragraph(null, Run(education.Detail, color: Muted, size: 19)));
-                }
+                body.Append(Head(education.Degree, ", ", education.Institution, education.Dates, string.IsNullOrEmpty(education.Detail) ? null : education.Detail, textWidth, keepNext: false, spaceBefore: 60));
             }
         }
 
@@ -124,12 +119,18 @@ internal static class CvDocx
         body.Append(Paragraph("Heading1", Run(heading)));
         foreach (var entry in entries)
         {
-            var title = Run(entry.Title, bold: true) + (entry.Subtitle.Length > 0 ? Run(" — " + entry.Subtitle) : string.Empty);
-            var hasLocation = !string.IsNullOrEmpty(entry.Location);
-            body.Append(Paragraph(null, title + DateTab(entry.Dates), tabAt: textWidth, keepNext: hasLocation || entry.Bullets.Count > 0, spaceBefore: 80));
-            if (hasLocation)
+            if (entry.Dates.Length == 0)
             {
-                body.Append(Paragraph(null, Run(entry.Location!, color: Muted, size: 19), keepNext: entry.Bullets.Count > 0));
+                // Proyecto: el nombre y, debajo, las tecnologías.
+                body.Append(Paragraph(null, Run(entry.Title, bold: true), keepNext: entry.Subtitle.Length > 0 || entry.Bullets.Count > 0, spaceBefore: 80));
+                if (entry.Subtitle.Length > 0)
+                {
+                    body.Append(Paragraph(null, Run(entry.Subtitle, color: Muted, size: 19), keepNext: entry.Bullets.Count > 0));
+                }
+            }
+            else
+            {
+                body.Append(Head(entry.Title, " — ", entry.Subtitle, entry.Dates, string.IsNullOrEmpty(entry.Location) ? null : entry.Location, textWidth, entry.Bullets.Count > 0, spaceBefore: 80));
             }
 
             foreach (var bullet in entry.Bullets)
@@ -137,6 +138,36 @@ internal static class CvDocx
                 body.Append(Bullet(bullet.Text));
             }
         }
+    }
+
+    /// <summary>
+    /// Cabecera de una entrada: «Título — Subtítulo» y las fechas a la derecha en un renglón si caben (se estima por caracteres);
+    /// si no, el subtítulo pasa completo al renglón siguiente junto con el lugar, para que no quede una palabra suelta.
+    /// </summary>
+    private static string Head(string title, string sep, string subtitle, string dates, string? extra, int textWidth, bool keepNext, int spaceBefore)
+    {
+        var sb = new StringBuilder();
+        var oneLine = title.Length + (subtitle.Length > 0 ? sep.Length + subtitle.Length : 0) + dates.Length <= 84;
+        if (oneLine)
+        {
+            var line = Run(title, bold: true) + (subtitle.Length > 0 ? Run(sep + subtitle) : string.Empty);
+            sb.Append(Paragraph(null, line + DateTab(dates), tabAt: textWidth, keepNext: keepNext || extra is not null, spaceBefore: spaceBefore));
+            if (extra is not null)
+            {
+                sb.Append(Paragraph(null, Run(extra, color: Muted, size: 19), keepNext: keepNext));
+            }
+        }
+        else
+        {
+            sb.Append(Paragraph(null, Run(title, bold: true) + DateTab(dates), tabAt: textWidth, keepNext: true, spaceBefore: spaceBefore));
+            if (subtitle.Length > 0 || extra is not null)
+            {
+                var second = Run(subtitle) + (extra is null ? string.Empty : Run((subtitle.Length > 0 ? " · " : string.Empty) + extra, color: Muted, size: 19));
+                sb.Append(Paragraph(null, second, keepNext: keepNext));
+            }
+        }
+
+        return sb.ToString();
     }
 
     // ───────────────────────────── Piezas de WordprocessingML ─────────────────────────────
