@@ -44,6 +44,9 @@ public sealed class LetterAiTests
         Assert.Equal("2026-11-16", letter.Document.Date);
         Assert.Equal(["Equipo de selección", "Acme"], letter.Document.Recipient);
         Assert.Equal("times", letter.Document.Font);
+        Assert.Equal("QA en Acme", letter.Document.Subject);
+        Assert.Equal("QA at Acme", LetterAi.SubjectOf("QA", "Acme", en: true));
+        Assert.Equal("QA en Acme", LetterAi.SubjectOf("QA en Acme", "Acme", en: false));
         Assert.Contains(rejected, r => r.Contains("999", StringComparison.Ordinal));
         Assert.Contains(rejected, r => r.StartsWith("EN", StringComparison.Ordinal));
     }
