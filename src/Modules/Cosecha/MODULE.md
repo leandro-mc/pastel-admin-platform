@@ -53,6 +53,8 @@ Rutas bajo `/api/cosecha`. Los cambios de registros editables reciben `version` 
 | `POST /shipments`, `PUT /shipments/{id}`, `DELETE /shipments/{id}?version=`, `PUT /shipments/{id}/orders`, `POST /shipments/{id}/status`, `POST /shipments/{id}/close` | `shipments.manage` | No se asigna un pedido cancelado ni en borrador; retroceder el estado exige motivo; cerrar con recepciones o entregas sin registrar exige motivo y queda en auditoría; solo se elimina un envío planificado sin recepciones |
 | `GET /shipments/{id}/allocation/candidates`, `POST /shipments/{id}/allocation/suggest`, `PUT /shipments/{id}/deliveries` | `shipments.manage` | Reparto proporcional a la capacidad: sugerir no guarda; aplicar fija el conjunto de entregas solicitadas (las ya recibidas no se tocan) |
 | `POST /shipments/{id}/deliveries/{deliveryId}/status`, `PUT /shipments/{id}/deliveries/{deliveryId}/reception`, `PUT /shipments/{id}/orders/{shipmentOrderId}/delivery` | `shipments.manage` | Recepción (recibido, rechazado, calidad, precio) y entrega al comprador; la fecha prevista de pago sale de la política vigente (vacía si no hay); las correcciones dejan antes/después y nota |
+| `GET /settlements/producers`, `GET /settlements/producers/{producerId}` | `settlements.read` | Saldos por productor y estado de cuenta (entregas Pendiente/Parcial/Pagada, pagos con sus asignaciones) |
+| `POST /settlements/payments`, `POST /settlements/payments/{id}/void` | `settlements.manage` | El pago se aplica a las entregas más antiguas primero (o solo a las elegidas), sin pasarse de lo adeudado; no se edita: se anula con motivo; ambos quedan en auditoría |
 
 ## Datos
 
@@ -82,6 +84,8 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 | `cosecha.shipment.invalid`, `cosecha.allocation.invalid`, `cosecha.delivery.invalid` | 400 | Validación por campo |
 | `cosecha.shipment.order_cancelled`, `cosecha.shipment.order_draft`, `cosecha.shipment.order_other_season` | 409 / 400 | Pedido no asignable a un envío |
 | `cosecha.shipment.invalid_transition`, `cosecha.shipment.close_reason_required`, `cosecha.shipment.not_deletable`, `cosecha.shipment.order_delivered` | 409 / 400 | Reglas del ciclo del envío |
+| `cosecha.payment.invalid` | 400 | Validación por campo (la fecha del pago no puede ser futura) |
+| `cosecha.payment.exceeds_balance`, `cosecha.payment.nothing_to_pay`, `cosecha.payment.already_voided` | 409 | Pago mayor a lo adeudado, sin entregas pendientes o ya anulado |
 | `cosecha.delivery.has_reception`, `cosecha.delivery.invalid_transition`, `cosecha.delivery.below_paid` | 409 | La entrega ya se recibió, la transición no existe o el monto quedaría por debajo de lo pagado |
 | `cosecha.order.cancelled`, `cosecha.order.not_draft`, `cosecha.order.has_deliveries`, `cosecha.order.in_open_shipment` | 409 | Reglas de estado del pedido (no se cancela con entregas ni dentro de un envío abierto) |
 | `cosecha.change.note_required`, `cosecha.reason.required` | 400 | Editar un registro cerrado o cancelar exige nota o motivo |
@@ -94,4 +98,4 @@ Esquema `cosecha`: 17 tablas en `snake_case` y su historial en `cosecha.__EFMigr
 
 ## Pendiente
 
-Liquidación y pagos, reportes y la pantalla «Hoy» (siguientes commits de la rama).
+Reportes y la pantalla «Hoy» (siguiente commit de la rama).
