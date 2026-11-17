@@ -31,7 +31,7 @@ Port de `docs/requirements/brisa/prototype/logic.js` (inventario §13.1–§13.4
 | `POST /tasks` | `access` + `manage` | 201. Alta rápida: basta `title`; día = hoy, prioridad Media, color al azar de la paleta |
 | `PUT /tasks/{id}` | `access` + `manage` | Reemplazo completo; `version` obligatoria (409 si cambió) |
 | `PUT /tasks/{id}/completed` | `access` + `manage` | Cuerpo `{ completed }` (estado pedido, no alternancia). `CompletedAt` lo fija el servidor. Devuelve `{ task, undoId }` |
-| `DELETE /tasks/{id}` | `access` + `manage` | Eliminación lógica. Devuelve `{ taskId, undoId }` |
+| `POST /tasks/{id}/delete` | `access` + `manage` | Eliminación lógica (es `POST` porque la respuesta lleva cuerpo y es deshacible). Devuelve `{ taskId, undoId }` |
 | `POST /undo/{undoId}` | `access` + `manage` | Deshacer seguro (BR-19), ver abajo |
 | `GET` / `PUT /settings` | `access` / + `manage` | `{ timeZoneId, today }`; la zona se valida contra la base IANA |
 

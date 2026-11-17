@@ -62,7 +62,7 @@ public sealed class BrisaApiTests : IClassFixture<IdentityApiFactory>
         Assert.Equal(
             HttpStatusCode.NotFound,
             await QaSupport.StatusOfAsync(actors.B, HttpMethod.Put, $"{TasksPath}/{id}/completed", new { completed = true }));
-        Assert.Equal(HttpStatusCode.NotFound, await QaSupport.StatusOfAsync(actors.B, HttpMethod.Delete, $"{TasksPath}/{id}"));
+        Assert.Equal(HttpStatusCode.NotFound, await QaSupport.StatusOfAsync(actors.B, HttpMethod.Post, $"{TasksPath}/{id}/delete"));
 
         // La tarea de A quedó intacta.
         Assert.Contains(await ListIdsAsync(actors.A), listed => listed == id);
@@ -89,7 +89,7 @@ public sealed class BrisaApiTests : IClassFixture<IdentityApiFactory>
         Assert.Equal("brisa.task.changed", problem.GetProperty("code").GetString());
 
         // Borrado lógico: deja de listarse, pero la lectura incremental lo informa con su fecha de borrado.
-        using var deleted = await QaSupport.SendAsync(actors.A, HttpMethod.Delete, $"{TasksPath}/{id}");
+        using var deleted = await QaSupport.SendAsync(actors.A, HttpMethod.Post, $"{TasksPath}/{id}/delete");
         Assert.Equal(HttpStatusCode.OK, deleted.StatusCode);
         Assert.DoesNotContain(await ListIdsAsync(actors.A), listed => listed == id);
 

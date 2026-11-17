@@ -6,11 +6,14 @@ using Pastel.Platform.Security;
 
 namespace Pastel.Modules.Brisa.Features.DeleteTask;
 
-/// <summary><c>DELETE /api/brisa/tasks/{id}</c>: eliminación lógica. Devuelve el id para deshacer.</summary>
+/// <summary>
+/// <c>POST /api/brisa/tasks/{id}/delete</c>: eliminación lógica. Devuelve el id para deshacer. Es un <c>POST</c> (y no un
+/// <c>DELETE</c>) porque la respuesta lleva cuerpo y la acción es deshacible, como <c>/completed</c>.
+/// </summary>
 internal static class DeleteTaskEndpoint
 {
     public static void Map(IEndpointRouteBuilder tasks) =>
-        tasks.MapDelete("/{id:guid}", HandleAsync)
+        tasks.MapPost("/{id:guid}/delete", HandleAsync)
             .RequirePermission(BrisaPermissions.Access)
             .RequirePermission(BrisaPermissions.ItemsManage);
 
