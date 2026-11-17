@@ -1,14 +1,14 @@
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Pastel.Modules.Brisa.Features.Ping;
+using Pastel.Modules.Brisa.Features;
 using Pastel.Modules.Brisa.Persistence;
 using Pastel.Platform.Modules;
 using Pastel.Platform.Persistence;
 
 namespace Pastel.Modules.Brisa;
 
-/// <summary>Módulo Brisa (marcador). Ver <c>MODULE.md</c> y <c>docs/modules/</c> para el alcance de producto.</summary>
+/// <summary>Módulo Brisa: pendientes del día a día. Ver <c>MODULE.md</c> y <c>docs/modules/BRISA.md</c> para el alcance de producto.</summary>
 internal sealed class BrisaModule : IPastelModule
 {
     public string Code => BrisaPermissions.Code;
@@ -24,10 +24,13 @@ internal sealed class BrisaModule : IPastelModule
         new("Brisa — Usuario", "Usa Brisa y gestiona sus propios pendientes.", [BrisaPermissions.Access, BrisaPermissions.ItemsManage]),
     ];
 
-    public void ConfigureServices(IServiceCollection services, IConfiguration configuration) =>
+    public void ConfigureServices(IServiceCollection services, IConfiguration configuration)
+    {
         services.AddPastelDbContext<BrisaDbContext>(configuration, BrisaDbContext.Schema);
+        services.AddBrisaFeatures();
+    }
 
-    public void MapEndpoints(IEndpointRouteBuilder api) => PingEndpoint.Map(api);
+    public void MapEndpoints(IEndpointRouteBuilder api) => BrisaEndpoints.Map(api);
 
     public Task MigrateAsync(IServiceProvider services, CancellationToken cancellationToken) =>
         PastelDbContextExtensions.MigrateModuleAsync<BrisaDbContext>(services, cancellationToken);

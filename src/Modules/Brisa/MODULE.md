@@ -1,6 +1,6 @@
 # Brisa — ficha técnica (backend)
 
-Estado: **en construcción** (MVP en `feat/brisa-mvp`). Hecho: regla de fechas y validación (`Domain/TaskRules.cs`). Pendiente: persistencia, API e importación.
+Estado: **en construcción** (MVP en `feat/brisa-mvp`). Hecho: regla de fechas, persistencia y API de pendientes (crear, modificar, marcar, eliminar, deshacer, ajustes). Pendiente: importación. Detalle y lo no verificado: `docs/progress/BRISA.md`.
 
 - Código: `brisa` · esquema de base de datos `brisa` · API `/api/brisa` · proyecto `Pastel.Modules.Brisa`.
 - Producto: `docs/modules/BRISA.md` (fuente de verdad funcional). Frontend: `web/src/modules/brisa/MODULE.md`.
@@ -9,42 +9,43 @@ Estado: **en construcción** (MVP en `feat/brisa-mvp`). Hecho: regla de fechas y
 
 | Código | Qué permite |
 |---|---|
-| `brisa.access` | Entrar al módulo (hub y router) |
-| `brisa.items.manage` | Crear y editar **sus propios** pendientes |
+| `brisa.access` | Entrar al módulo y leer sus propios pendientes y ajustes |
+| `brisa.items.manage` | Crear, editar, marcar, eliminar y deshacer sobre **sus propios** pendientes |
 
-Roles sugeridos (se crean una sola vez si no existen; nunca se sobrescriben):
-
-- `Brisa — Usuario`: `brisa.access`, `brisa.items.manage`
-
-El rol `Administrator` no recibe los permisos de esta app al sincronizar el catálogo (solo `Owner/Superuser`); ver `docs/SECURITY.md`.
-
-## Reglas de servidor (de la ficha)
-
-- Cada persona ve y modifica solo sus pendientes (filtro por usuario en el servidor).
-- Diseño preparado para sincronización móvil futura (no se implementa ahora): `UpdatedAt`, borrado lógico (`DeletedAt`), token de concurrencia y escrituras idempotentes con identificador de cliente (`docs/ARCHITECTURE.md` §5 y §7).
-- No se agrega compartir ni grupos sin decisión del propietario; el inventario funcional es `docs/requirements/brisa/INVENTARIO-BRISA.md`.
+Las escrituras exigen ambos permisos. Rol sugerido: `Brisa — Usuario` (ambos). `Administrator` no recibe los permisos de esta app (solo `Owner/Superuser`); ver `docs/SECURITY.md`.
 
 ## Regla de fechas (`Domain/TaskRules.cs`)
 
-Port de `docs/requirements/brisa/prototype/logic.js` (inventario §13.1–§13.4). Es **pura** (sin base de datos ni reloj): recibe «hoy» y la zona de la persona.
+Port de `docs/requirements/brisa/prototype/logic.js` (inventario §13.1–§13.4). **Pura**: recibe «hoy» y la zona de la persona.
 
 - **Día efectivo derivado:** `ScheduledDate` nunca se reescribe; se calcula. Abierta → referencia = hoy; hecha → día local de `CompletedAt` (si es nulo, queda en su día asignado). Sin fecha límite nunca se mueve; con ella avanza cada día hasta la fecha límite y luego queda ahí, vencida.
 - **«Vencida»** (dos criterios): abierta y, con fecha límite, esa fecha ya pasó; sin ella, su día efectivo ya pasó.
 - **Validación:** `día ≤ fecha límite` (se compara el día elegido o el guardado, no el efectivo); título ≤ 150 y notas ≤ 2000 tras recortar, sin truncar; color `#RRGGBB`; fechas `aaaa-mm-dd` estrictas.
-- **«Hoy»** sale de la zona IANA de la persona (por defecto `America/Costa_Rica`), nunca de la del servidor.
+- **«Hoy»** sale de la zona IANA de la persona (`PersonContext`; por defecto `America/Costa_Rica`), nunca de la del servidor.
 
-Pruebas: `Pastel.Modules.Brisa.Tests/TaskRulesTests.cs` (vectores V1–V10, AC1–AC7, casos de paridad, frontera de zona con y sin horario de verano).
-
-## Endpoints
+## Endpoints (`/api/brisa`)
 
 | Método y ruta | Permiso | Nota |
 |---|---|---|
-| `GET /api/brisa/ping` | `brisa.access` | Comprobación del esqueleto; se retira con la primera funcionalidad real |
+| `GET /tasks?page&pageSize&updatedSince` | `access` | Paginado (≤ 100), orden `UpdatedAt`. Sin `updatedSince`: no eliminadas. Con él: lo cambiado desde entonces, **incluidas** las eliminadas (`deletedAt`) |
+| `POST /tasks` | `access` + `manage` | 201. Alta rápida: basta `title`; día = hoy, prioridad Media, color al azar de la paleta |
+| `PUT /tasks/{id}` | `access` + `manage` | Reemplazo completo; `version` obligatoria (409 si cambió) |
+| `PUT /tasks/{id}/completed` | `access` + `manage` | Cuerpo `{ completed }` (estado pedido, no alternancia). `CompletedAt` lo fija el servidor. Devuelve `{ task, undoId }` |
+| `DELETE /tasks/{id}` | `access` + `manage` | Eliminación lógica. Devuelve `{ taskId, undoId }` |
+| `POST /undo/{undoId}` | `access` + `manage` | Deshacer seguro (BR-19), ver abajo |
+| `GET` / `PUT /settings` | `access` / + `manage` | `{ timeZoneId, today }`; la zona se valida contra la base IANA |
 
-## Datos
+Cada tarea sale con `effectiveDate` (calculado), `isOverdue`, `version` (`xmin`) y los campos de sincronización `updatedAt`/`deletedAt`. No hay búsqueda en el servidor: el cliente busca (sin tildes ni mayúsculas) sobre las tareas propias que ya cargó.
 
-Esquema `brisa` sin tablas. `BrisaDbContext` usa `HasDefaultSchema("brisa")` y su historial de migraciones vive en `brisa.__EFMigrationsHistory`.
-**La migración inicial la genera Build** con `dotnet ef` (ver `Persistence/BrisaDbContextFactory.cs`); mientras no exista, el host no arranca con este módulo incluido.
+## Deshacer seguro (BR-19)
+
+Cada marcar/reabrir y cada eliminar guarda en `task_undos` el estado anterior (hecha, `CompletedAt`, `DeletedAt`) y el `UpdatedAt` posterior. `POST /undo/{id}` (transacción serializable): restaura **solo esos tres campos**, sin recalcular; 409 `brisa.undo.stale` si `UpdatedAt` cambió después; 409 `brisa.undo.used` si ya se usó. Las reversiones de más de un día se podan al crear nuevas.
+
+## Datos (esquema `brisa`)
+
+- `tasks`: clave `(OwnerId, Id)` — toda consulta por id exige el dueño, así que un id ajeno es 404 —; `ScheduledDate`/`DueDate` son `date`; `CreatedAt`/`UpdatedAt`/`CompletedAt`/`DeletedAt` `timestamptz`; `Version` = `xmin`; `ImportBatchId` para revertir lotes.
+- `settings` (zona por persona), `task_undos`, `import_batches`. Sin claves foráneas.
+- Migración `AddBrisaTasks` escrita a mano (sin SDK en el entorno de desarrollo): **Build debe regenerarla con `dotnet ef` y comparar** (`Persistence/BrisaDbContextFactory.cs`).
 
 ## Códigos de error
 
@@ -52,11 +53,19 @@ Los mensajes usan **tuteo** (regla propia de Brisa, `docs/modules/BRISA.md` §7)
 
 | Código | Estado | Cuándo |
 |---|---|---|
-| `brisa.resource.not_found` | 404 | El recurso pedido no existe |
+| `brisa.resource.not_found` / `brisa.task.not_found` | 404 | No existe o es de otra persona |
 | `brisa.task.title_required` / `title_too_long` / `notes_too_long` | 400 | Título vacío o > 150; notas > 2000 |
-| `brisa.task.date_invalid` / `due_invalid` / `color_invalid` | 400 | Día, fecha límite o color con formato inválido |
-| `brisa.task.day_after_deadline` | 400 | El día de la tarea es posterior a su fecha límite |
+| `brisa.task.date_invalid` / `due_invalid` / `color_invalid` / `priority_invalid` | 400 | Formato inválido |
+| `brisa.task.day_after_deadline` | 400 | El día es posterior a la fecha límite |
+| `brisa.task.version_required` | 400 | Falta la versión al modificar |
+| `brisa.task.changed` | 409 | La tarea cambió mientras se editaba |
+| `brisa.undo.not_found` / `used` / `stale` | 404 / 409 / 409 | Reversión inexistente, ya usada o tarea cambiada después |
+| `brisa.settings.timezone_invalid` | 400 | Zona horaria desconocida |
+
+## Pruebas
+
+`Pastel.Modules.Brisa.Tests/TaskRulesTests.cs` (regla de fechas y validación) y `tests/Pastel.IntegrationTests/QA/BrisaApiTests.cs` (permisos 401/403, aislamiento, borrado lógico, `updatedSince` y 409). Se escriben pero no se ejecutan hasta que el propietario lo pida (`AGENTS.md` §4).
 
 ## Pendiente
 
-Todo lo funcional de la ficha de producto, empezando por el inventario de migración si aplica.
+Importación (lote con vista previa, todo o nada, reversión) y su prueba esencial.

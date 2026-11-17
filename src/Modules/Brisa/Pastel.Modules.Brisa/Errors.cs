@@ -21,4 +21,28 @@ internal static class BrisaErrors
         "El día de la tarea no puede ser después de su fecha límite. Cambia la fecha límite si necesitas más tiempo.";
 
     public static readonly Error NotFound = Error.NotFound("brisa.resource.not_found", "No encontramos lo que buscas.");
+
+    public static readonly Error TaskNotFound = Error.NotFound(
+        "brisa.task.not_found", "No encontramos esa tarea. Puede que ya no esté disponible.");
+
+    public static readonly Error TaskChanged = Error.Conflict(
+        "brisa.task.changed", "Esta tarea cambió mientras la editabas. Recarga para ver la versión más reciente y vuelve a intentarlo.");
+
+    public static readonly Error VersionRequired = Error.Validation(
+        "brisa.task.version_required", "No pudimos saber qué versión de la tarea estabas editando. Recárgala e inténtalo de nuevo.");
+
+    public static readonly Error PriorityInvalid = Error.Validation(
+        "brisa.task.priority_invalid", "Elige una prioridad válida: baja, media o alta.");
+
+    public static readonly Error UndoNotFound = Error.NotFound(
+        "brisa.undo.not_found", "La tarea ya no está disponible.");
+
+    public static readonly Error UndoUsed = Error.Conflict(
+        "brisa.undo.used", "Ese cambio ya se deshizo.");
+
+    public static readonly Error UndoStale = Error.Conflict(
+        "brisa.undo.stale", "No se pudo deshacer porque la tarea cambió después. Revisa su estado y repite el cambio si lo necesitas.");
+
+    public static readonly Error TimeZoneInvalid = Error.Validation(
+        "brisa.settings.timezone_invalid", "Esa zona horaria no es válida. Elige una de la lista.");
 }
