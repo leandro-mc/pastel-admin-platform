@@ -1,4 +1,5 @@
 import { common } from "./text/common";
+import { orders } from "./text/orders";
 import { people } from "./text/people";
 import { settings } from "./text/settings";
 import { status } from "./text/status";
@@ -10,4 +11,5 @@ export const strings = {
   status,
   settings,
   people,
+  orders,
 } as const;

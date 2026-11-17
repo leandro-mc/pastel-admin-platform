@@ -38,6 +38,10 @@ export const common = {
   noSeason: "Sin temporadas",
   changesTitle: "Registro de cambios",
   changesEmpty: "Todavía no hay cambios registrados.",
+  changeWhen: "Cuándo y quién",
+  changeWhat: "Qué cambió",
+  changeValues: "Antes → después",
+  changeNote: "Nota",
   changeBy: (name: string | null, when: string) =>
     name ? `${name} · ${when}` : when,
   changeFrom: (before: string | null, after: string | null) =>

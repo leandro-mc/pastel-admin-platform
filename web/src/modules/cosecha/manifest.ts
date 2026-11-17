@@ -1,4 +1,4 @@
-import { Settings, Sprout, Store, Users } from "lucide-react";
+import { ClipboardList, Package, Settings, Sprout, Store, Users } from "lucide-react";
 import type { ModuleManifest } from "@/core/modules/types";
 import { cosechaPermissions } from "./paths";
 import { strings } from "./strings";
@@ -13,6 +13,19 @@ export default {
   access: "permission",
   requiredPermission: cosechaPermissions.access,
   nav: [
+    {
+      label: strings.orders.title,
+      to: "pedidos",
+      icon: ClipboardList,
+      requiredPermission: cosechaPermissions.ordersRead,
+      alsoActiveOn: ["pedidos/nuevo"],
+    },
+    {
+      label: strings.orders.mine.title,
+      to: "mis-pedidos",
+      icon: Package,
+      requiredPermission: cosechaPermissions.ordersReadOwn,
+    },
     {
       label: strings.people.buyers.title,
       to: "compradores",
@@ -36,6 +49,23 @@ export default {
   ],
   routes: [
     { index: true, lazy: () => import("./pages/HomePage") },
+    {
+      path: "pedidos",
+      crumb: strings.orders.title,
+      lazy: () => import("./pages/OrdersPage"),
+    },
+    {
+      path: "pedidos/nuevo",
+      crumb: strings.orders.newTitle,
+      lazy: () => import("./pages/NewOrderPage"),
+    },
+    { path: "pedidos/:id", lazy: () => import("./pages/OrderPage") },
+    {
+      path: "mis-pedidos",
+      crumb: strings.orders.mine.title,
+      lazy: () => import("./pages/MyOrdersPage"),
+    },
+    { path: "mis-pedidos/:id", lazy: () => import("./pages/MyOrderPage") },
     {
       path: "compradores",
       crumb: strings.people.buyers.title,
