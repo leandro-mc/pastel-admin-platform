@@ -1,7 +1,7 @@
 import { Sprout } from "lucide-react";
 import { strings } from "../strings";
 
-/** Página de marcador del módulo. La reemplaza la primera funcionalidad real. */
+/** Portada provisional del módulo; la reemplaza «Hoy» cuando esté la pantalla de envíos. */
 export function Component() {
   return (
     <section
@@ -12,7 +12,7 @@ export function Component() {
         <Sprout aria-hidden="true" className="size-8" />
       </span>
       <h1 className="text-2xl font-semibold text-fg">{strings.name}</h1>
-      <p className="text-muted">{strings.placeholder}</p>
+      <p className="text-muted">{strings.tagline}</p>
     </section>
   );
 }
