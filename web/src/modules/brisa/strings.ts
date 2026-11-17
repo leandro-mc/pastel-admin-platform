@@ -151,6 +151,31 @@ export const strings = {
     firstAction: "Crear mi primera tarea",
   },
 
+  settings: {
+    title: "Configuración",
+    description: "Ajusta Brisa a tu manera.",
+    timeZoneTitle: "Zona horaria",
+    timeZoneDescription:
+      "Define cuándo empieza tu día. Cambiarla solo cambia qué día es «hoy»: tus tareas no se mueven.",
+    timeZoneLabel: "Tu zona horaria",
+    timeZoneNow: (date: string) => `Para ti hoy es ${date}.`,
+    save: "Guardar zona",
+    saving: "Guardando…",
+    saved: "Listo, guardamos tu zona horaria.",
+    themeTitle: "Tema",
+    themeDescription: "Elige cómo quieres ver Brisa.",
+    themeLight: "Claro",
+    themeDark: "Oscuro",
+    textSizeTitle: "Tamaño del texto",
+    textSizeDescription: "Hazlo más cómodo para tus ojos.",
+    textSizes: {
+      small: "Pequeño",
+      normal: "Normal",
+      large: "Grande",
+      xlarge: "Muy grande",
+    },
+  },
+
   errors: {
     generic: "Algo no salió como esperábamos. Inténtalo de nuevo.",
     network:
