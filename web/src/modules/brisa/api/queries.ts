@@ -1,7 +1,8 @@
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/core/api";
 import { brisaKeys, toQuery } from "./keys";
-import { settingsSchema, tasksPageSchema, type Task } from "./schemas";
+import { z } from "zod";
+import { importBatchSchema, settingsSchema, tasksPageSchema, type Task } from "./schemas";
 
 const PAGE_SIZE = 100;
 
@@ -39,5 +40,14 @@ export function useSettings() {
     queryKey: brisaKeys.settings,
     queryFn: ({ signal }) =>
       api.get("/api/brisa/settings", settingsSchema, { signal }),
+  });
+}
+
+/** Últimos lotes de importación de la persona (para poder revertirlos). */
+export function useImportBatches() {
+  return useQuery({
+    queryKey: brisaKeys.imports,
+    queryFn: ({ signal }) =>
+      api.get("/api/brisa/import", z.array(importBatchSchema), { signal }),
   });
 }

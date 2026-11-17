@@ -151,6 +151,53 @@ export const strings = {
     firstAction: "Crear mi primera tarea",
   },
 
+  import: {
+    title: "Importar tareas",
+    description:
+      "Trae tus tareas desde un archivo JSON. Primero verás una vista previa y no se guarda nada hasta que lo confirmes.",
+    fileLabel: "Archivo de tareas (.json)",
+    fileHint: "Acepta la lista de tareas de la app o un archivo «brisa-export».",
+    reading: "Revisando tu archivo…",
+    readError: "No pudimos leer ese archivo. Elige otro e inténtalo de nuevo.",
+    tooBig: "Ese archivo es demasiado grande. Elige uno de hasta 10 MB.",
+    rejectedTitle: "No se importó nada",
+    rejectedDescription:
+      "Encontramos problemas en el archivo. Corrígelos y vuelve a intentarlo: o se importa todo, o nada.",
+    previewTitle: "Vista previa",
+    totals: (records: number, open: number, done: number, withDeadline: number) =>
+      `${plural(records, "tarea", "tareas")} · ${plural(open, "abierta", "abiertas")} · ${plural(done, "hecha", "hechas")} · ${withDeadline} con fecha límite`,
+    range: (from: string, to: string) => `Días asignados: del ${from} al ${to}.`,
+    toCreate: (n: number) => `${plural(n, "tarea nueva", "tareas nuevas")} para importar.`,
+    existing: (n: number) =>
+      `${plural(n, "tarea ya existía", "tareas ya existían")} con el mismo contenido y no cambiará.`,
+    differences: (n: number) =>
+      `${plural(n, "tarea ya existía", "tareas ya existían")} con diferencias: se omitirá para no pisar tus cambios.`,
+    nothingNew: "No hay tareas nuevas que importar.",
+    confirm: (n: number) => `Importar ${plural(n, "tarea", "tareas")}`,
+    importing: "Importando…",
+    warningsTitle: "Avisos",
+    skippedTitle: "Omitidas",
+    errorsTitle: "Qué corregir",
+    row: (n: number) => `Fila ${n}`,
+    doneTitle: (n: number) => `Listo, importamos ${plural(n, "tarea", "tareas")}.`,
+    doneDescription: "Ya las ves en tu semana. Si algo no era lo que esperabas, puedes revertir la importación.",
+    revert: "Revertir esta importación",
+    reverting: "Revirtiendo…",
+    revertTitle: "¿Revertir esta importación?",
+    revertDescription:
+      "Quitaremos las tareas que importaste y no editaste después. Las que ya editaste se quedan.",
+    revertConfirm: "Revertir",
+    revertKeep: "Conservar",
+    reverted: (reverted: number, kept: number) =>
+      kept === 0
+        ? `Listo, quitamos ${plural(reverted, "tarea", "tareas")}.`
+        : `Listo, quitamos ${plural(reverted, "tarea", "tareas")}. ${plural(kept, "se conservó", "se conservaron")} porque las editaste.`,
+    recentTitle: "Importaciones recientes",
+    recentEmpty: "Todavía no has importado nada.",
+    recentItem: (date: string, count: number) => `${date} · ${plural(count, "tarea", "tareas")}`,
+    recentReverted: "Revertida",
+  },
+
   settings: {
     title: "Configuración",
     description: "Ajusta Brisa a tu manera.",

@@ -46,6 +46,49 @@ export const settingsSchema = z.object({
   today: z.string(),
 });
 
+const importIssueSchema = z.object({
+  row: z.number().nullable(),
+  field: z.string().nullable(),
+  message: z.string(),
+});
+
+export const importReportSchema = z.object({
+  /** Falso si el archivo tiene algún error: no se crea nada (todo o nada). */
+  accepted: z.boolean(),
+  dryRun: z.boolean(),
+  batchId: z.string().nullable(),
+  totals: z.object({
+    records: z.number(),
+    open: z.number(),
+    done: z.number(),
+    withDeadline: z.number(),
+    from: z.string().nullable(),
+    to: z.string().nullable(),
+  }),
+  /** Tareas que se crearían (vista previa) o que se crearon. */
+  toCreate: z.number(),
+  alreadyExisting: z.number(),
+  withDifferences: z.number(),
+  existingDeleted: z.number(),
+  errors: z.array(importIssueSchema),
+  warnings: z.array(importIssueSchema),
+  skipped: z.array(importIssueSchema),
+});
+
+export const importBatchSchema = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  taskCount: z.number(),
+  revertedAt: z.string().nullable(),
+});
+
+export const revertResultSchema = z.object({
+  reverted: z.number(),
+  kept: z.number(),
+});
+
+export type ImportReport = z.infer<typeof importReportSchema>;
+export type ImportBatch = z.infer<typeof importBatchSchema>;
 export type Task = z.infer<typeof taskSchema>;
 export type Settings = z.infer<typeof settingsSchema>;
 export type { Priority } from "../domain/dates";

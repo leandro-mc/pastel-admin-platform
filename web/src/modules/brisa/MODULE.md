@@ -1,6 +1,6 @@
 # Brisa — ficha técnica (frontend)
 
-Estado: **en construcción** (MVP en `feat/brisa-mvp`). Hecho: reglas de fechas, capa de datos, Semana, Mes, Vencidas, Fechas límite, editor, búsqueda, «Deshacer» y Configuración. Pendiente: importación. Lo no verificado: `docs/progress/BRISA.md`.
+Estado: **en construcción** (MVP en `feat/brisa-mvp`). Hecho: reglas de fechas, capa de datos, Semana, Mes, Vencidas, Fechas límite, editor, búsqueda, «Deshacer», Importar y Configuración. Lo no verificado: `docs/progress/BRISA.md`.
 
 - Código `brisa` · ruta `/brisa` · icono `ListChecks` (Lucide) · identidad visual por definir (tokens provisionales en `web/src/core/design/module-themes.css`; no se tocan).
 - Acceso en el manifiesto: `permission`; permiso `brisa.access`. Escrituras: el servidor exige además `brisa.items.manage`.
@@ -28,6 +28,7 @@ Reglas: no importar de otro módulo, solo de `@/core/*`; utilidades de Tailwind 
 | `/brisa/mes` | Mes: cuadrícula L M X J V S D con conteo; elegir un día lo abre en Semana |
 | `/brisa/vencidas` | «Pendientes atrasados», con «PROGRAMADA PARA» |
 | `/brisa/fechas-limite` | Abiertas antes que hechas, por vencimiento |
+| `/brisa/importar` | Importar un archivo JSON: vista previa con totales, confirmar, revertir y lotes recientes (todo o nada) |
 | `/brisa/configuracion` | Zona horaria (define «hoy»), tema y tamaño de texto de la plataforma |
 
 ## Decisiones
@@ -39,6 +40,7 @@ Reglas: no importar de otro módulo, solo de `@/core/*`; utilidades de Tailwind 
 - **Búsqueda** en el cliente (sin tildes ni mayúsculas) sobre las tareas propias ya cargadas.
 - **«Deshacer»:** aviso de 8 s; la reversión la hace el servidor (`POST /api/brisa/undo/{id}`) y puede responder 409 si la tarea cambió.
 - **Vista y día enfocado** sobreviven a una recarga con `localStorage` (sin datos en la URL); en un día nuevo se enfoca hoy.
+- **Importar:** el archivo se lee en el navegador y se envía como texto; primero `dryRun` (vista previa, no escribe), luego el definitivo. El servidor valida todo; aquí solo se muestran fila, campo y motivo. Revertir confirma antes y avisa cuántas tareas se conservaron por haberse editado.
 - **Errores:** los códigos `brisa.*` traen su mensaje en tuteo del servidor; red y errores inesperados usan `strings.errors` (los de la plataforma tratan de usted).
 
 ## Pruebas
@@ -47,7 +49,6 @@ Reglas: no importar de otro módulo, solo de `@/core/*`; utilidades de Tailwind 
 
 ## Pendiente y límites conocidos
 
-- Importación (BR-14).
 - Tema «Del sistema» (BR-12): la plataforma solo tiene Claro/Oscuro; añadirlo exige cambiar `core/preferences` (zona compartida). Hoy la primera visita sigue `prefers-color-scheme`.
 - Contador de Vencidas en el menú lateral: el manifiesto no admite contadores; el número va en la pantalla.
 - «Restablecer demo» de la configuración del prototipo no es del producto.

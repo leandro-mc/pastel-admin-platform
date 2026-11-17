@@ -2,6 +2,8 @@ import { useMutation, useQueryClient, type QueryClient } from "@tanstack/react-q
 import { api } from "@/core/api";
 import { brisaKeys } from "./keys";
 import {
+  importReportSchema,
+  revertResultSchema,
   settingsSchema,
   taskChangeSchema,
   taskDeletedSchema,
@@ -97,5 +99,32 @@ export function useUpdateSettings() {
     mutationFn: (timeZoneId: string) =>
       api.put("/api/brisa/settings", settingsSchema, { timeZoneId }),
     onSuccess: (settings) => client.setQueryData(brisaKeys.settings, settings),
+  });
+}
+
+/** Importa un archivo. Con `dryRun` solo devuelve la vista previa; no escribe nada. */
+export function useImport() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ content, dryRun }: { content: string; dryRun: boolean }) =>
+      api.post("/api/brisa/import", importReportSchema, { content, dryRun }),
+    onSuccess: (report) => {
+      if (report.dryRun || !report.accepted) return;
+      void client.invalidateQueries({ queryKey: brisaKeys.tasks });
+      void client.invalidateQueries({ queryKey: brisaKeys.imports });
+    },
+  });
+}
+
+/** Revierte un lote: quita lo importado que no se editó después. */
+export function useRevertImport() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ batchId }: { batchId: string }) =>
+      api.post(`/api/brisa/import/${batchId}/revert`, revertResultSchema),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: brisaKeys.tasks });
+      void client.invalidateQueries({ queryKey: brisaKeys.imports });
+    },
   });
 }

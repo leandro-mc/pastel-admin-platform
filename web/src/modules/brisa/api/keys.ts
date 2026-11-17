@@ -3,6 +3,7 @@ export const brisaKeys = {
   all: ["brisa"] as const,
   tasks: ["brisa", "tasks"] as const,
   settings: ["brisa", "settings"] as const,
+  imports: ["brisa", "imports"] as const,
 };
 
 /** Arma `?a=1&b=2` omitiendo los valores vacíos. */
