@@ -2,6 +2,7 @@ import { common } from "./text/common";
 import { orders } from "./text/orders";
 import { people } from "./text/people";
 import { settings } from "./text/settings";
+import { shipments } from "./text/shipments";
 import { status } from "./text/status";
 
 export const strings = {
@@ -12,4 +13,5 @@ export const strings = {
   settings,
   people,
   orders,
+  shipments,
 } as const;
