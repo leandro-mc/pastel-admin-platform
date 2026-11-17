@@ -43,6 +43,12 @@ internal static class BrisaErrors
     public static readonly Error UndoStale = Error.Conflict(
         "brisa.undo.stale", "No se pudo deshacer porque la tarea cambió después. Revisa su estado y repite el cambio si lo necesitas.");
 
+    public static readonly Error ImportNotFound = Error.NotFound(
+        "brisa.import.not_found", "No encontramos esa importación.");
+
+    public static readonly Error ImportAlreadyReverted = Error.Conflict(
+        "brisa.import.already_reverted", "Esa importación ya se revirtió.");
+
     public static readonly Error TimeZoneInvalid = Error.Validation(
         "brisa.settings.timezone_invalid", "Esa zona horaria no es válida. Elige una de la lista.");
 }

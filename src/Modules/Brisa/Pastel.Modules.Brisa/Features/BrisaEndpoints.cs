@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Pastel.Modules.Brisa.Common;
 using Pastel.Modules.Brisa.Features.CreateTask;
 using Pastel.Modules.Brisa.Features.DeleteTask;
+using Pastel.Modules.Brisa.Features.Import;
 using Pastel.Modules.Brisa.Features.ListTasks;
 using Pastel.Modules.Brisa.Features.SetCompleted;
 using Pastel.Modules.Brisa.Features.Settings;
@@ -24,6 +25,8 @@ internal static class BrisaEndpoints
         services.AddScoped<DeleteTaskHandler>();
         services.AddScoped<UndoChangeHandler>();
         services.AddScoped<SettingsHandler>();
+        services.AddScoped<ImportTasksHandler>();
+        services.AddScoped<ImportBatchesHandler>();
         return services;
     }
 
@@ -38,5 +41,6 @@ internal static class BrisaEndpoints
 
         UndoChangeEndpoint.Map(api.MapGroup("/undo"));
         SettingsEndpoint.Map(api.MapGroup("/settings"));
+        ImportEndpoint.Map(api.MapGroup("/import"));
     }
 }

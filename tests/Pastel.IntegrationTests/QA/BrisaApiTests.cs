@@ -103,6 +103,62 @@ public sealed class BrisaApiTests : IClassFixture<IdentityApiFactory>
         Assert.DoesNotContain(await ListAsync(actors.A, $"?updatedSince={after}"), item => item.GetProperty("id").GetString() == id);
     }
 
+    // ---------------------------------------------------------------- Prueba 6: importación
+
+    [RequiresPostgresFact]
+    public async Task Import_is_all_or_nothing_previewable_idempotent_and_reversible()
+    {
+        var actors = await ActorsAsync();
+        var first = Guid.NewGuid();
+        var second = Guid.NewGuid();
+        string Archive(string secondDay) =>
+            $$"""
+            [
+             {"id":"{{first}}","title":"Importada uno","details":"","scheduledDate":"2026-10-18","priority":"HIGH","colorHex":"#F6DDCE","dueDate":"","completed":false,"createdAt":1792278000000},
+             {"id":"{{second}}","title":"Importada dos","details":"","scheduledDate":"{{secondDay}}","priority":"URGENT","colorHex":"#DCEAF4","dueDate":"2026-10-20","completed":true,"createdAt":1792022400000}
+            ]
+            """;
+
+        // Archivo inválido (día posterior a la fecha límite): se rechaza todo el lote y no se crea nada.
+        var rejected = await PostImportAsync(actors.A, Archive("2026-10-25"), dryRun: false);
+        Assert.False(rejected.GetProperty("accepted").GetBoolean());
+        Assert.Equal(0, rejected.GetProperty("toCreate").GetInt32());
+        Assert.DoesNotContain(await ListIdsAsync(actors.A), listed => listed == first.ToString());
+
+        // Vista previa: con totales y sin escribir nada.
+        var preview = await PostImportAsync(actors.A, Archive("2026-10-15"), dryRun: true);
+        Assert.True(preview.GetProperty("accepted").GetBoolean());
+        Assert.Equal(2, preview.GetProperty("totals").GetProperty("records").GetInt32());
+        Assert.Equal(2, preview.GetProperty("toCreate").GetInt32());
+        Assert.Single(preview.GetProperty("warnings").EnumerateArray()); // prioridad URGENT → Media con aviso
+        Assert.DoesNotContain(await ListIdsAsync(actors.A), listed => listed == first.ToString());
+
+        // Importación definitiva y reimportación idempotente.
+        var imported = await PostImportAsync(actors.A, Archive("2026-10-15"), dryRun: false);
+        Assert.Equal(2, imported.GetProperty("toCreate").GetInt32());
+        var batchId = imported.GetProperty("batchId").GetString()!;
+        Assert.Contains(await ListIdsAsync(actors.A), listed => listed == first.ToString());
+
+        var again = await PostImportAsync(actors.A, Archive("2026-10-15"), dryRun: false);
+        Assert.Equal(0, again.GetProperty("toCreate").GetInt32());
+        Assert.Equal(2, again.GetProperty("alreadyExisting").GetInt32());
+
+        // El mismo id con contenido distinto se omite y no se sobrescribe.
+        var changed = await PostImportAsync(actors.A, Archive("2026-10-16"), dryRun: false);
+        Assert.Equal(1, changed.GetProperty("withDifferences").GetInt32());
+
+        // Otra persona puede importar el mismo archivo: los ids se resuelven por dueño.
+        var other = await PostImportAsync(actors.B, Archive("2026-10-15"), dryRun: false);
+        Assert.Equal(2, other.GetProperty("toCreate").GetInt32());
+
+        // Reversión: quita lo creado por el lote (borrado lógico) y no se puede repetir.
+        using var revert = await QaSupport.SendAsync(actors.A, HttpMethod.Post, $"/api/brisa/import/{batchId}/revert");
+        Assert.Equal(HttpStatusCode.OK, revert.StatusCode);
+        Assert.DoesNotContain(await ListIdsAsync(actors.A), listed => listed == first.ToString());
+        using var repeated = await QaSupport.SendAsync(actors.A, HttpMethod.Post, $"/api/brisa/import/{batchId}/revert");
+        await QaSupport.AssertProblemAsync(repeated, HttpStatusCode.Conflict);
+    }
+
     // ---------------------------------------------------------------- Apoyo
 
     private static async Task<JsonElement> CreateTaskAsync(HttpClient client, string title)
@@ -110,6 +166,14 @@ public sealed class BrisaApiTests : IClassFixture<IdentityApiFactory>
         using var response = await QaSupport.SendAsync(
             client, HttpMethod.Post, TasksPath, new { title, scheduledDate = "2026-10-18" });
         Assert.Equal(HttpStatusCode.Created, response.StatusCode);
+        using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
+        return document.RootElement.Clone();
+    }
+
+    private static async Task<JsonElement> PostImportAsync(HttpClient client, string content, bool dryRun)
+    {
+        using var response = await QaSupport.SendAsync(client, HttpMethod.Post, "/api/brisa/import", new { content, dryRun });
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());
         return document.RootElement.Clone();
     }

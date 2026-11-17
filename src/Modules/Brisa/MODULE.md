@@ -1,6 +1,6 @@
 # Brisa — ficha técnica (backend)
 
-Estado: **en construcción** (MVP en `feat/brisa-mvp`). Hecho: regla de fechas, persistencia y API de pendientes (crear, modificar, marcar, eliminar, deshacer, ajustes). Pendiente: importación. Detalle y lo no verificado: `docs/progress/BRISA.md`.
+Estado: **en construcción** (MVP en `feat/brisa-mvp`). Hecho: regla de fechas, persistencia, API de pendientes (crear, modificar, marcar, eliminar, deshacer, ajustes) e importación. Detalle y lo no verificado: `docs/progress/BRISA.md`.
 
 - Código: `brisa` · esquema de base de datos `brisa` · API `/api/brisa` · proyecto `Pastel.Modules.Brisa`.
 - Producto: `docs/modules/BRISA.md` (fuente de verdad funcional). Frontend: `web/src/modules/brisa/MODULE.md`.
@@ -34,12 +34,26 @@ Port de `docs/requirements/brisa/prototype/logic.js` (inventario §13.1–§13.4
 | `POST /tasks/{id}/delete` | `access` + `manage` | Eliminación lógica (es `POST` porque la respuesta lleva cuerpo y es deshacible). Devuelve `{ taskId, undoId }` |
 | `POST /undo/{undoId}` | `access` + `manage` | Deshacer seguro (BR-19), ver abajo |
 | `GET` / `PUT /settings` | `access` / + `manage` | `{ timeZoneId, today }`; la zona se valida contra la base IANA |
+| `POST /import` | `access` + `manage` | Cuerpo `{ content, dryRun }`. Vista previa o definitivo; ver «Importación» |
+| `GET /import` | `access` | Últimos 10 lotes de la persona |
+| `POST /import/{batchId}/revert` | `access` + `manage` | Revierte un lote; devuelve `{ reverted, kept }` |
 
 Cada tarea sale con `effectiveDate` (calculado), `isOverdue`, `version` (`xmin`) y los campos de sincronización `updatedAt`/`deletedAt`. No hay búsqueda en el servidor: el cliente busca (sin tildes ni mayúsculas) sobre las tareas propias que ya cargó.
 
 ## Deshacer seguro (BR-19)
 
 Cada marcar/reabrir y cada eliminar guarda en `task_undos` el estado anterior (hecha, `CompletedAt`, `DeletedAt`) y el `UpdatedAt` posterior. `POST /undo/{id}` (transacción serializable): restaura **solo esos tres campos**, sin recalcular; 409 `brisa.undo.stale` si `UpdatedAt` cambió después; 409 `brisa.undo.used` si ya se usó. Las reversiones de más de un día se podan al crear nuevas.
+
+## Importación (BR-14, inventario §9)
+
+Acepta el arreglo crudo de `tasks_json` o el sobre `{ "format": "brisa-export", "version": 1, "tasks": [...] }` (`Domain/ImportParser.cs`, puro).
+
+- **Todo o nada:** cualquier registro inválido rechaza el lote y se informa fila, campo y motivo (`accepted: false`, nada se crea). Única tolerancia: prioridad desconocida → Media con aviso.
+- **Sin duplicar** por `(OwnerId, Id)`: id existente con contenido igual → «ya existente»; con contenido distinto o eliminada → se **omite** y se informa; nunca se sobrescribe. Los ids del archivo se conservan.
+- **Vista previa** (`dryRun: true`): totales (registros, abiertas, hechas, con fecha límite, rango de días) sin escribir.
+- Los datos entran **tal cual** (sin reprogramar); `CompletedAt` queda nulo; `createdAt` (ms UTC) se conserva o, si falta, se usa el momento de la importación con aviso.
+- **Reversión:** cada lote guarda su id en las tareas. Revertir borra de forma lógica solo las que **no se tocaron** desde la importación (`UpdatedAt` igual al instante del lote); las editadas después se conservan y se cuentan en `kept`. Un lote se revierte una sola vez.
+- «Respaldo previo» del inventario §9.4.4: la importación nunca modifica tareas existentes y es reversible, así que no hay copia aparte que restaurar.
 
 ## Datos (esquema `brisa`)
 
@@ -61,11 +75,12 @@ Los mensajes usan **tuteo** (regla propia de Brisa, `docs/modules/BRISA.md` §7)
 | `brisa.task.changed` | 409 | La tarea cambió mientras se editaba |
 | `brisa.undo.not_found` / `used` / `stale` | 404 / 409 / 409 | Reversión inexistente, ya usada o tarea cambiada después |
 | `brisa.settings.timezone_invalid` | 400 | Zona horaria desconocida |
+| `brisa.import.not_found` / `already_reverted` | 404 / 409 | Lote inexistente o ya revertido |
 
 ## Pruebas
 
-`Pastel.Modules.Brisa.Tests/TaskRulesTests.cs` (regla de fechas y validación) y `tests/Pastel.IntegrationTests/QA/BrisaApiTests.cs` (permisos 401/403, aislamiento, borrado lógico, `updatedSince` y 409). Se escriben pero no se ejecutan hasta que el propietario lo pida (`AGENTS.md` §4).
+`Pastel.Modules.Brisa.Tests/TaskRulesTests.cs` (regla de fechas y validación), `ImportParserTests.cs` (importación con el archivo de §9.5) y `tests/Pastel.IntegrationTests/QA/BrisaApiTests.cs` (permisos 401/403, aislamiento, borrado lógico, `updatedSince`, 409 e importación). Se escriben pero no se ejecutan hasta que el propietario lo pida (`AGENTS.md` §4).
 
 ## Pendiente
 
-Importación (lote con vista previa, todo o nada, reversión) y su prueba esencial.
+Prueba esencial 3 (idempotencia con Guid de cliente): contradice §3 de la ficha y espera decisión del propietario (`docs/progress/BRISA.md`).
