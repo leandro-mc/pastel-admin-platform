@@ -74,3 +74,8 @@ export function nextThursdayIso(): string {
 export function whatsAppLink(phone: string, message: string): string {
   return `https://wa.me/506${phone}?text=${encodeURIComponent(message)}`;
 }
+
+/** Teléfono de 8 dígitos como «8888 1234». */
+export function formatPhone(phone: string): string {
+  return phone.length === 8 ? `${phone.slice(0, 4)} ${phone.slice(4)}` : phone;
+}
