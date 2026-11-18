@@ -51,6 +51,20 @@ Todas las rutas cuelgan de `/api/agora`. Las públicas son anónimas (`AllowAnon
 | `GET /share/{slug}` | Público | HTML de vista previa (`og:*` y JSON-LD) que lleva a `/agora/p/{slug}`; el sello viaja en la descripción |
 | `GET /share/{slug}/card.png` | Público | Tarjeta PNG detrás de `IShareCardRenderer`; 404 `agora.share_card.unavailable` hasta CCR-2 |
 
+Personas registradas: sesión y `agora.saved.manage`, límite de tasa `agora-interaction` (60 por minuto por IP). Los datos son siempre de la persona autenticada y las operaciones son idempotentes.
+
+| Método y ruta | Permiso | Nota |
+|---|---|---|
+| `GET /me/saved` | `agora.saved.manage` | Piezas guardadas publicadas, más reciente primero; paginado |
+| `PUT` / `DELETE /articles/{slug}/saved` | `agora.saved.manage` | Guardar / quitar (204) |
+| `GET /me/followed` | `agora.saved.manage` | Slugs de las categorías que sigue |
+| `PUT` / `DELETE /categories/{slug}/follow` | `agora.saved.manage` | Seguir / dejar de seguir (204) |
+| `GET /articles/{slug}/viewer` | `agora.saved.manage` | `{ saved, reactions[], followingCategory }` de la persona |
+| `PUT` / `DELETE /articles/{slug}/reactions/{kind}` | `agora.saved.manage` | `kind`: `helped` o `moreSources`; sin contadores públicos |
+| `POST /articles/{slug}/error-reports` | `agora.saved.manage` | `{ text }` de 10 a 500 caracteres; 201 con `{ id }`; máximo 3 avisos pendientes por persona y pieza |
+
+`agora.saved.manage` agrupa lo que hace una persona registrada: guardar, seguir, reaccionar y señalar errores. **Hoy el rol `Member` no recibe ese permiso** (Identity no asigna permisos de módulos al registrarse): hasta que exista esa asignación, quien lo necesite lo recibe por rol o por concesión individual.
+
 Los enums viajan como texto en camelCase (`facts`, `modifiedAfterVerification`).
 
 ## Datos
@@ -84,11 +98,15 @@ Migraciones: `InitialAgoraSchema` (esquema vacío) y `AddAgoraContentModel` (tod
 | `agora.daily_pick.limit` | 409 | «Hoy en 5 minutos» ya tiene 5 piezas |
 | `agora.daily_pick.not_published` | 409 | Solo las piezas publicadas pueden destacarse |
 | `agora.taxonomy.name_taken` | 409 | Ya existe una categoría o serie con ese nombre |
+| `agora.session.required` | 401 | Se pidió una acción de persona registrada sin sesión |
+| `agora.error_report.invalid` | 400 | El aviso de error no tiene entre 10 y 500 caracteres |
+| `agora.error_report.limit` | 409 | Ya hay 3 avisos pendientes de esa persona sobre la pieza |
+| `agora.reaction.invalid` | 400 | La reacción no existe |
 | `agora.share_card.unavailable` | 404 | La tarjeta PNG depende de CCR-2 y aún no está disponible |
 
 ## Pendiente
 
-- Interacción de personas registradas, panel editorial y verificación (siguientes bloques de la F1).
+- Panel editorial y verificación (siguientes bloques de la F1).
 - Tarjetas PNG: dependen de CCR-2 (`Pastel.Documents`). Hoy `UnavailableShareCardRenderer`; para activarlas se registra otra implementación de `IShareCardRenderer`.
 - Caché HTTP de lecturas públicas: la plataforma fuerza `Cache-Control: no-store` en toda la API (`SecurityHeadersMiddleware`), así que no se puede fijar desde el módulo; es una decisión de zona compartida.
 - HTML con metadatos en la ruta pública `/agora/p/{slug}` (AG-SEO-01): requiere que nginx sirva metadatos a rastreadores; es zona compartida. Mientras tanto el enlace para compartir es `/api/agora/share/{slug}`.

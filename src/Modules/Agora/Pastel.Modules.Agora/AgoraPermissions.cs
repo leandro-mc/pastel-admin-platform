@@ -18,7 +18,7 @@ internal static class AgoraPermissions
             new(Access, "Entrar al panel editorial", "Entrar al panel editorial de Ágora. Lo público no requiere permiso."),
             new(ContentManage, "Gestionar contenido", "Crear, editar, publicar y despublicar piezas; gestionar categorías, series, fuentes, videos y noticias enlazadas."),
             new(ContentReview, "Revisar y verificar", "Revisar una pieza y verificarla o retirar la verificación, con nota."),
-            new(SavedManage, "Guardar piezas", "Guardar piezas y seguir categorías."),
+            new(SavedManage, "Interactuar con las piezas", "Guardar piezas, seguir categorías, reaccionar y señalar errores. Es lo que hace una persona registrada."),
         ]),
     ];
 }

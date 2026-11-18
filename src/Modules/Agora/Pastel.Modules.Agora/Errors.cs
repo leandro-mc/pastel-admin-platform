@@ -42,6 +42,13 @@ internal static class AgoraErrors
     public static readonly Error TaxonomyNameTaken = Error.Conflict(
         "agora.taxonomy.name_taken", "Ya existe un elemento con ese nombre. Use otro nombre.");
 
+    public static readonly Error Unauthenticated = Error.Unauthorized(
+        "agora.session.required", "Inicie sesión para continuar.");
+
+    public static readonly Error ErrorReportLimit = Error.Conflict(
+        "agora.error_report.limit",
+        "Ya nos avisó de varios errores en esta pieza. Los estamos revisando; gracias por su ayuda.");
+
     public static readonly Error ShareCardUnavailable = Error.NotFound(
         "agora.share_card.unavailable", "La tarjeta para compartir todavía no está disponible.");
 }

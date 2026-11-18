@@ -38,6 +38,6 @@ internal static class NewsEndpoint
             .Skip(paging.Skip)
             .Take(paging.PageSize)
             .ToListAsync(cancellationToken);
-        return Results.Json(new PagedResult<NewsDto>(page.Select(ArticleProjection.ToDto).ToList(), paging.Page, paging.PageSize, total));
+        return Results.Json(new PagedResult<NewsDto>(page.Select(n => ArticleProjection.ToDto(n)).ToList(), paging.Page, paging.PageSize, total));
     }
 }

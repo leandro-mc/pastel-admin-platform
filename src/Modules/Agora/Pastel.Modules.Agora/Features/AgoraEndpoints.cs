@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Routing;
+using Pastel.Modules.Agora.Features.Interaction;
 using Pastel.Modules.Agora.Features.Public;
 using Pastel.Modules.Agora.Features.Share;
 
@@ -14,5 +15,7 @@ internal static class AgoraEndpoints
         ArticlesEndpoints.Map(api);
         NewsEndpoint.Map(api);
         ShareEndpoints.Map(api);
+        SavedAndFollowEndpoints.Map(api);
+        ReactionAndReportEndpoints.Map(api);
     }
 }

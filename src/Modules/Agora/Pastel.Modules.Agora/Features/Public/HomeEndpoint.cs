@@ -53,7 +53,7 @@ internal static class HomeEndpoint
             cards.Skip(picks.Count).ToList(),
             await ArticleProjection.SeriesAsync(db, cancellationToken),
             await ArticleProjection.CategoriesAsync(db, cancellationToken),
-            news.Select(ArticleProjection.ToDto).ToList());
+            news.Select(n => ArticleProjection.ToDto(n)).ToList());
         return Results.Json(home);
     }
 }
