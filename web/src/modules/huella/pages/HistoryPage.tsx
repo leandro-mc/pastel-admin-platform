@@ -1,8 +1,9 @@
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { Link } from "react-router";
 import { useNotify } from "@/core/notifications";
 import { Badge, Button, PageHeader, Panel, SelectField, TextField } from "@/core/ui";
-import { focusClass, secondaryButton } from "@/core/ui/styles";
+import { secondaryButton } from "@/core/ui/styles";
 import {
   useLetters,
   useOffers,
@@ -21,6 +22,7 @@ import { Pager } from "../components/Pager";
 import { SearchField, fold } from "../components/SearchField";
 import { StatusBadge } from "../components/StatusBadge";
 import { formatDate, formatDateTime } from "../lib/format";
+import { chipClass } from "../lib/marker";
 import { safeHref } from "../lib/safeHref";
 import {
   documentsOf,
@@ -119,14 +121,11 @@ export function Component() {
                     type="button"
                     aria-pressed={filter === key}
                     onClick={() => setFilter(key)}
-                    className={`inline-flex min-h-10 items-center gap-2 rounded-full border px-3 text-sm font-medium ${focusClass} ${
-                      filter === key
-                        ? "border-accent-strong bg-accent-soft text-fg"
-                        : "border-line bg-surface text-fg-secondary hover:bg-accent-soft"
-                    }`}
+                    className={chipClass(filter === key)}
                   >
+                    {filter === key ? <Check aria-hidden="true" className="size-4" /> : null}
                     {t.summary[key]}
-                    <span className="rounded-full bg-line px-2 text-xs text-fg">{counts[key]}</span>
+                    <span className="rounded-full bg-surface/70 px-2 text-xs font-semibold text-fg ring-1 ring-line">{counts[key]}</span>
                   </button>
                 ))}
               </div>

@@ -51,7 +51,7 @@ Los logros son la capa que reutilizan CV, perfil y futuras funciones (preparaci�
 - Entrada de datos con límites de longitud; texto plano o Markdown mínimo sanitizado.
 - Auditoría: publicar, despublicar y regenerar/revocar el enlace público (sin registrar el token en claro).
 
-- **Identidad visual (decisión del propietario, 2026-11-17):** la del perfil público llevada al panel: papel gris frío, tinta casi negra y estados suaves en grises fríos, sin tonos cálidos en superficies (tokens de `[data-module="huella"]` en `module-themes.css`, claro y oscuro, contrastes AA). El acento es la tinta: botón principal, foco y elemento activo. Una sola acción principal por vista: las acciones repetidas en tarjetas y listas son secundarias.
+- **Identidad visual (decisión del propietario, 2026-11-17):** la del perfil público llevada al panel, con tres papeles de color (tokens de `[data-module="huella"]` en `module-themes.css`, claro y oscuro, contrastes AA): **fondos** en papel gris frío y superficies blancas, **texto** en tinta casi negra; **azul océano** (tono 213°) para lo que se puede hacer (botón principal, enlaces, foco, navegación y pestaña activas); **marcador amarillo** (el del perfil público) para lo elegido o destacado (oferta con la que se trabaja, tipo de documento, filtros activos), siempre con un icono de verificación. Las clases viven en `web/src/modules/huella/lib/marker.ts`. Una sola acción principal por vista: las acciones repetidas en tarjetas y listas son secundarias.
 
 ## 6. Fuera del MVP
 Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (requiere almacenamiento de archivos), analítica de visitas, dominio propio por perfil, internacionalización del perfil.

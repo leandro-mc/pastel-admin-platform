@@ -2,6 +2,7 @@ import { Link } from "react-router";
 import { Button } from "@/core/ui";
 import { secondaryButton } from "@/core/ui/styles";
 import { useLetters, useOffers, useVersions } from "../api/hooks";
+import { markedSurface } from "../lib/marker";
 import { documentsOf } from "../lib/tracking";
 import { strings } from "../strings";
 import { StatusBadge } from "./StatusBadge";
@@ -45,7 +46,7 @@ export function StudioContextBar({ offerId, onPick, onClear }: Props) {
   return (
     <div
       role="status"
-      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-accent-strong bg-accent-soft p-4"
+      className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 p-4 ${markedSurface}`}
     >
       <div className="min-w-0">
         <p className="text-sm text-muted">{t.working}</p>

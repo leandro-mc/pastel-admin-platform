@@ -1,3 +1,4 @@
+import { Check } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNotify } from "@/core/notifications";
 import {
@@ -19,6 +20,7 @@ import {
 } from "../api/hooks";
 import type { OfferSummary } from "../api/schemas";
 import { formatDateTime } from "../lib/format";
+import { markedBadge, markedSurface } from "../lib/marker";
 import { safeHref } from "../lib/safeHref";
 import {
   documentsOf,
@@ -134,7 +136,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
                   return (
                     <li
                       key={offer.id}
-                      className={`flex flex-col gap-3 rounded-xl border p-4 ${isSelected ? "border-accent-strong bg-accent-soft" : "border-line"}`}
+                      className={`flex flex-col gap-3 rounded-xl border p-4 ${isSelected ? markedSurface : "border-line bg-surface"}`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -152,7 +154,12 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
                           </p>
                         </div>
                         <div className="flex flex-wrap items-center gap-2">
-                          {isSelected ? <Badge variant="accent">{t.selected}</Badge> : null}
+                          {isSelected ? (
+                            <span className={markedBadge}>
+                              <Check aria-hidden="true" className="size-3.5" />
+                              {t.selected}
+                            </span>
+                          ) : null}
                           <StatusBadge status={offer.status} />
                         </div>
                       </div>

@@ -1,7 +1,8 @@
+import { Check } from "lucide-react";
 import { useState } from "react";
 import { Button, Panel, SelectField, TextField } from "@/core/ui";
-import { focusClass } from "@/core/ui/styles";
 import { useBank, useGenerateCv, useOffer } from "../api/hooks";
+import { chipClass } from "../lib/marker";
 import type { DocKind } from "../lib/studioState";
 import { inDays } from "../lib/tracking";
 import { strings } from "../strings";
@@ -49,12 +50,9 @@ export function GenerateWorkspace({ offerId, onGenerated, onPickOffer }: Props) 
             type="button"
             aria-pressed={kind === value}
             onClick={() => setKind(value)}
-            className={`inline-flex min-h-10 items-center rounded-full border px-4 text-sm font-medium ${focusClass} ${
-              kind === value
-                ? "border-accent-strong bg-accent-soft text-fg"
-                : "border-line bg-surface text-fg-secondary hover:bg-accent-soft"
-            }`}
+            className={chipClass(kind === value)}
           >
+            {kind === value ? <Check aria-hidden="true" className="size-4" /> : null}
             {g.kinds[value]}
           </button>
         ))}
@@ -160,7 +158,7 @@ function CvForm({
         />
 
         <fieldset className="flex flex-col gap-3">
-          <legend className="text-sm font-semibold text-fg">{g.options}</legend>
+          <legend className="mb-3 text-sm font-semibold text-fg">{g.options}</legend>
           <div className="grid gap-4 sm:grid-cols-2">
             <SelectField
               label={g.level}
@@ -262,7 +260,7 @@ function LetterForm({ offerId, onGenerated, onPickOffer }: Props) {
           <p className="text-sm text-muted">{g.emptyBank}</p>
         ) : null}
         <fieldset className="flex flex-col gap-3">
-          <legend className="text-sm font-semibold text-fg">{g.options}</legend>
+          <legend className="mb-3 text-sm font-semibold text-fg">{g.options}</legend>
           <div className="grid gap-4 sm:grid-cols-2">
             <SelectField
               label={l.language}
