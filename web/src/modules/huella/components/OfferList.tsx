@@ -20,7 +20,7 @@ import {
 } from "../api/hooks";
 import type { OfferSummary } from "../api/schemas";
 import { formatDateTime } from "../lib/format";
-import { markedBadge, markedSurface } from "../lib/marker";
+import { markedBadge, markedSurface, nestedCard } from "../lib/marker";
 import { safeHref } from "../lib/safeHref";
 import {
   documentsOf,
@@ -136,7 +136,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
                   return (
                     <li
                       key={offer.id}
-                      className={`flex flex-col gap-3 rounded-xl border p-4 ${isSelected ? markedSurface : "border-line bg-surface"}`}
+                      className={`flex flex-col gap-3 rounded-xl border p-4 ${isSelected ? markedSurface : nestedCard}`}
                     >
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
@@ -190,7 +190,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Button
-                          variant="secondary"
+                          variant="tonal"
                           type="button"
                           onClick={() => onUse(offer.id)}
                         >
@@ -212,7 +212,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
                           {t.read}
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="quietDanger"
                           type="button"
                           aria-label={`${o.delete}: ${offer.title}`}
                           onClick={() => setToDelete(offer)}

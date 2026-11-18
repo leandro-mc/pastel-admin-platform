@@ -466,6 +466,14 @@ export const strings = {
       filtersDescription:
         "Requisitos que suelen descartar una candidatura sin leer el resto.",
       status: { ok: "Con evidencia", partial: "Parcial", gap: "Brecha" },
+      summaryLabel: "Resumen del ajuste",
+      summary: {
+        ok: (n: number) => `${n} con evidencia`,
+        partial: (n: number) => `${n} ${n === 1 ? "parcial" : "parciales"}`,
+        gap: (n: number) => `${n} ${n === 1 ? "brecha" : "brechas"}`,
+      },
+      filterOk: "Cumple",
+      filterNo: "No cumple",
       mustHave: "Obligatorio",
       nice: "Deseable",
     },
@@ -480,7 +488,8 @@ export const strings = {
       },
       languageHint:
         "El CV se redacta completo en el idioma que elija, aunque su banco esté en otro. Con «ambos» se crea una versión por idioma.",
-      fromOffer: "Se generará a partir de la oferta seleccionada.",
+      fromOffer: "Se generará a partir de la oferta seleccionada (barra de arriba).",
+      actionTitle: "Generar",
       kindLabel: "Qué generar",
       kinds: {
         cv: "CV",

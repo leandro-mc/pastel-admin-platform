@@ -29,7 +29,9 @@ Reglas vigentes de diseño de Pastel. La identidad visual de cada aplicación **
 
 | Patrón | Guía |
 |---|---|
-| Botones | Una acción primaria por vista; etiquetas con verbo («Guardar pedido»); área táctil ≥ 44×44 px; estado «cargando» sin cambiar el tamaño. |
+| Botones | Una acción primaria por vista; etiquetas con verbo («Guardar pedido»); área táctil ≥ 44×44 px; estado «cargando» sin cambiar el tamaño. Jerarquía (Material 3): `primary` (relleno, una por vista) → `tonal` (la principal de una tarjeta o fila) → `secondary` (contorno) → `ghost`/`link` (opcionales); `quietDanger` inicia una eliminación desde una tarjeta y `danger` la confirma en el diálogo. |
+| Estados y avisos | Cada tipo tiene su color, siempre con texto o icono (WCAG 1.4.1): `success` verde, `warning` ámbar, `danger` rojo, `info` azul o el tono de la app en tinte; un dato informativo es `neutral` (contorno, sin color). Tokens `--success*`, `--warning*`, `--info*` (texto ≥ 4,5:1 sobre su fondo suave). Los avisos (`Alert`) llevan un borde izquierdo grueso del color de su tipo. |
+| Superficies | Tres niveles (contenedores de Material 3): fondo de la página → panel (`--surface`) → tarjeta dentro del panel (`--surface-sunken`). Una tarjeta que va directo sobre el fondo usa `--surface`. Los bordes de los controles conservan ≥ 3:1 sobre los tres niveles (WCAG 1.4.11). |
 | Fechas | Selector que acepte escritura (`dd/mm/aaaa`) y teclado; mostrar el día de la semana. |
 | Diálogos | Solo tareas breves; `Escape` cierra, el foco queda atrapado y vuelve a quien abrió; título accesible. |
 | Notificaciones | `aria-live="polite"`, mínimo 6 s y descartables; los errores permanecen hasta cerrarlos. |

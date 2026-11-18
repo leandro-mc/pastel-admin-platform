@@ -76,19 +76,25 @@
  *   Tinte del mismo petróleo (--hl*): lo que está elegido — oferta con la que se trabaja, tipo de documento, filtros
  *   activos. Se distingue de la acción por el valor (tinte claro con borde fuerte frente a relleno sólido) y siempre
  *   lleva un icono de verificación; nunca se comunica solo con color.
+ * Tres niveles de superficie (modelo de contenedores de Material 3): fondo de la página → panel blanco → tarjeta hundida
+ * (--surface-sunken) dentro del panel; así cada grupo se reconoce sin depender de sombras fuertes.
+ * Estados con su propio color, siempre con texto o icono: éxito verde, advertencia ámbar, error rojo e información en el
+ * mismo petróleo (no es una acción: va en tinte, nunca en sólido).
  * Contrastes (WCAG AA): texto 16,9:1; blanco sobre el petróleo 6,4:1 (fuerte 8,3:1); petróleo fuerte sobre el fondo
- * 7,4:1; tinta sobre el tinte de lo elegido 14,8:1; bordes de controles y de lo elegido ≥ 3:1.
+ * 7:1; tinta sobre el tinte de lo elegido 14,8:1; texto de cada estado sobre su fondo ≥ 5,6:1; bordes de controles ≥ 3:1
+ * sobre las tres superficies.
  */
 [data-module="huella"] {
-  --app-bg: #f1f2f4;
+  --app-bg: #eaecf0;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --sidebar-bg: #e9ebef;
+  --surface-sunken: #f7f8fa;
+  --sidebar-bg: #e3e6eb;
   --text: #0d1117;
   --text-secondary: #2f3743;
   --muted: #4d5666;
-  --border: #dde1e7;
-  --border-strong: #8a929f;
+  --border: #d5dae1;
+  --border-strong: #808896;
   --input: #ffffff;
   --accent: #2b6777;
   --accent-strong: #1f5562;
@@ -101,18 +107,25 @@
   --hl-ink: #0d1117;
   --danger: #b42318;
   --danger-soft: #fdecea;
+  --success: #1d6b48;
+  --success-soft: #e5f3ec;
+  --warning: #8a5300;
+  --warning-soft: #fdf1d8;
+  --info: #1f5562;
+  --info-soft: #e4eff1;
   --focus: rgba(43, 103, 119, 0.38);
   --shadow: 0 16px 40px rgba(13, 17, 23, 0.08);
-  --shadow-soft: 0 4px 16px rgba(13, 17, 23, 0.05);
+  --shadow-soft: 0 1px 2px rgba(13, 17, 23, 0.06), 0 4px 14px rgba(13, 17, 23, 0.05);
   --shadow-bottom-nav: 0 -6px 20px rgba(13, 17, 23, 0.06);
 }
 
-/* Oscuro neutro (el del perfil público), con el petróleo aclarado para fondo oscuro y lo elegido en tinte profundo. */
+/* Oscuro neutro (el del perfil público), con el petróleo y los estados aclarados para fondo oscuro y lo elegido en tinte profundo. */
 [data-theme="dark"] [data-module="huella"],
 [data-theme="dark"][data-module="huella"] {
   --app-bg: #0e1116;
   --surface: #161b22;
   --surface-raised: #1c222b;
+  --surface-sunken: #12171e;
   --sidebar-bg: #12161c;
   --text: #eceff4;
   --text-secondary: #c9d1db;
@@ -131,6 +144,12 @@
   --hl-ink: #eceff4;
   --danger: #ff8a80;
   --danger-soft: #3a1d1d;
+  --success: #7fd1a6;
+  --success-soft: #15301f;
+  --warning: #f2c26b;
+  --warning-soft: #3a2c12;
+  --info: #79b8c6;
+  --info-soft: #142a30;
   --focus: rgba(121, 184, 198, 0.45);
   --shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
   --shadow-soft: 0 4px 18px rgba(0, 0, 0, 0.22);

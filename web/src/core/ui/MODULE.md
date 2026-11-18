@@ -6,12 +6,12 @@ Kit común del shell y las subaplicaciones. Centraliza patrones de formularios, 
 
 ## Componentes
 
-- **Button:** variantes primary, secondary, danger, ghost y link; botón nativo, deshabilitado y estado ocupado.
+- **Button:** variantes primary, tonal, secondary, danger, quietDanger, ghost y link (jerarquía en `docs/DESIGN_SYSTEM.md §4`); botón nativo, deshabilitado y estado ocupado.
 - **TextField:** etiqueta visible, ayuda y error asociados; opción de mostrar u ocultar contraseña.
 - **SelectField / CheckboxField:** controles nativos con etiqueta, ayuda, errores y referencias ARIA.
 - **Dialog / ConfirmDialog:** diálogo modal basado en React Aria y acciones de confirmación separadas.
 - **Alert:** error, advertencia, éxito e información; icono, texto y semántica `alert`/`status`.
-- **PageHeader / Panel / Badge:** jerarquía de página, panel de contenido y etiqueta de estado.
+- **PageHeader / Panel / Badge:** jerarquía de página, panel de contenido y etiqueta de estado (neutral, accent, info, success, warning, danger, con los tokens de estado).
 - **Tabs:** primitivas de React Aria con navegación accesible por teclado.
 - **StateView:** presentación consistente de carga, vacío, error o éxito.
 - **Toast:** sigue en `core/notifications`, donde se controla duración y anuncio accesible.

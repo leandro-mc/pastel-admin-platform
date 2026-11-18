@@ -22,7 +22,7 @@ import { Pager } from "../components/Pager";
 import { SearchField, fold } from "../components/SearchField";
 import { StatusBadge } from "../components/StatusBadge";
 import { formatDate, formatDateTime } from "../lib/format";
-import { chipClass } from "../lib/marker";
+import { chipClass, pageCard } from "../lib/marker";
 import { safeHref } from "../lib/safeHref";
 import {
   documentsOf,
@@ -193,7 +193,7 @@ function HistoryRow({
   const url = offer.sourceUrl ? safeHref(offer.sourceUrl) : null;
   const target = `/huella/cv?oferta=${offer.id}`;
   return (
-    <li className="flex flex-col gap-3 rounded-xl border border-line p-4">
+    <li className={`flex flex-col gap-3 rounded-xl border p-4 ${pageCard}`}>
       <div className="flex flex-wrap items-start justify-between gap-2">
         <div className="min-w-0">
           <h2 className="text-base font-semibold break-words text-fg">{offer.title}</h2>
@@ -242,7 +242,7 @@ function HistoryRow({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="secondary" type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <Button variant="tonal" type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
           {open ? t.hideDetails : t.details}
         </Button>
         <Link to={`${target}&vista=documentos`} className={`${secondaryButton} no-underline`}>

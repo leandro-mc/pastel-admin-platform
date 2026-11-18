@@ -35,7 +35,7 @@ export function StudioContextBar({ offerId, onPick, onClear }: Props) {
           <p className="text-sm font-semibold text-fg">{t.none}</p>
           <p className="text-sm text-muted">{t.noneHint}</p>
         </div>
-        <Button variant="secondary" type="button" onClick={onPick}>
+        <Button variant="tonal" type="button" onClick={onPick}>
           {t.pick}
         </Button>
       </div>
@@ -46,7 +46,7 @@ export function StudioContextBar({ offerId, onPick, onClear }: Props) {
   return (
     <div
       role="status"
-      className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border-2 p-4 ${markedSurface}`}
+      className={`flex flex-wrap items-center justify-between gap-3 rounded-xl border p-4 ${markedSurface}`}
     >
       <div className="min-w-0">
         <p className="text-sm text-muted">{t.working}</p>

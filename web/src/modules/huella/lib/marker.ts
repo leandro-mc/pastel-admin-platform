@@ -10,8 +10,17 @@ import { focusClass } from "@/core/ui/styles";
  * comunica solo con color.
  */
 
-/** Superficie marcada: la oferta seleccionada o la barra con la oferta de trabajo. */
-export const markedSurface = "border-[var(--hl-edge)] bg-[var(--hl-soft)]";
+/** Superficie marcada: la oferta seleccionada o la barra con la oferta de trabajo (borde doble sin mover el contenido). */
+export const markedSurface = "border-[var(--hl-edge)] bg-[var(--hl-soft)] ring-1 ring-[var(--hl-edge)]";
+
+/**
+ * Tarjeta dentro de un panel (ofertas, documentos): un nivel más hundido que el panel blanco, para que cada elemento se
+ * reconozca como grupo (región común) y sus botones blancos resalten. Sobre el fondo de la página se usa `pageCard`.
+ */
+export const nestedCard = "border-line bg-surface-sunken";
+
+/** Tarjeta directamente sobre el fondo de la página (historial): superficie blanca con sombra suave. */
+export const pageCard = "border-line bg-surface shadow-[var(--shadow-soft)]";
 
 /** Etiqueta pequeña de lo elegido («Seleccionada»). */
 export const markedBadge =

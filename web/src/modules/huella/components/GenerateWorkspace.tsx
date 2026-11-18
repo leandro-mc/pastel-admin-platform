@@ -1,6 +1,6 @@
-import { Check } from "lucide-react";
-import { useState } from "react";
-import { Button, Panel, SelectField, TextField } from "@/core/ui";
+import { Check, Info } from "lucide-react";
+import { useId, useState, type ReactNode } from "react";
+import { Alert, Button, Panel, SelectField, TextField } from "@/core/ui";
 import { useBank, useGenerateCv, useOffer } from "../api/hooks";
 import { chipClass } from "../lib/marker";
 import type { DocKind } from "../lib/studioState";
@@ -142,20 +142,21 @@ function CvForm({
       description={competencies ? g.competencies.description : g.description}
     >
       <div className="flex flex-col gap-5">
-        {hasContent === false ? (
-          <p className="text-sm text-muted">{g.emptyBank}</p>
-        ) : null}
+        {hasContent === false ? <Alert variant="warning" message={g.emptyBank} /> : null}
         {competencies && catalogEmpty ? (
-          <p className="text-sm text-muted">{g.competencies.needCatalog}</p>
+          <Alert variant="warning" message={g.competencies.needCatalog} />
         ) : null}
 
-        <TextField
-          label={g.focus}
-          hint={offerId ? g.fromOffer : g.focusHint}
-          value={focus}
-          disabled={offerId !== null}
-          onChange={(e) => setFocus(e.target.value)}
-        />
+        {offerId ? (
+          <InfoNote>{g.fromOffer}</InfoNote>
+        ) : (
+          <TextField
+            label={g.focus}
+            hint={g.focusHint}
+            value={focus}
+            onChange={(e) => setFocus(e.target.value)}
+          />
+        )}
 
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-3 text-sm font-semibold text-fg">{g.options}</legend>
@@ -195,7 +196,7 @@ function CvForm({
         </fieldset>
 
         {hasTarget ? (
-          <>
+          <ActionArea>
             <AiTaskPanel
               kind="cv"
               title={(competencies ? g.competencies.aiTitle : g.aiTitle)(
@@ -234,7 +235,7 @@ function CvForm({
               <ErrorNotice error={draftError} />
             </div>
             )}
-          </>
+          </ActionArea>
         ) : (
           <NeedTarget text={g.needTarget} onPickOffer={onPickOffer} />
         )}
@@ -256,9 +257,7 @@ function LetterForm({ offerId, onGenerated, onPickOffer }: Props) {
   return (
     <Panel title={l.title} description={l.description}>
       <div className="flex flex-col gap-5">
-        {hasContent === false ? (
-          <p className="text-sm text-muted">{g.emptyBank}</p>
-        ) : null}
+        {hasContent === false ? <Alert variant="warning" message={g.emptyBank} /> : null}
         <fieldset className="flex flex-col gap-3">
           <legend className="mb-3 text-sm font-semibold text-fg">{g.options}</legend>
           <div className="grid gap-4 sm:grid-cols-2">
@@ -291,6 +290,7 @@ function LetterForm({ offerId, onGenerated, onPickOffer }: Props) {
         </fieldset>
 
         {offerId !== null ? (
+          <ActionArea>
           <AiTaskPanel
             kind="letter"
             title={l.aiTitle(languages.length)}
@@ -310,6 +310,7 @@ function LetterForm({ offerId, onGenerated, onPickOffer }: Props) {
               if (id) onGenerated("carta", id);
             }}
           />
+          </ActionArea>
         ) : (
           <NeedTarget text={l.needOffer} onPickOffer={onPickOffer} />
         )}
@@ -318,14 +319,50 @@ function LetterForm({ offerId, onGenerated, onPickOffer }: Props) {
   );
 }
 
+/**
+ * Zona de acción: separa «qué se pide» (opciones, arriba) de «cómo se genera» (las vías de IA) con un contenedor hundido
+ * y su propio título, así el botón principal se encuentra sin recorrer el formulario.
+ */
+function ActionArea({ children }: { children: ReactNode }) {
+  const id = useId();
+  return (
+    <section
+      aria-labelledby={id}
+      className="flex flex-col gap-4 rounded-xl border border-line bg-surface-sunken p-4"
+    >
+      <h3 id={id} className="text-base font-semibold text-fg">
+        {g.actionTitle}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+/** Información importante (no un error ni una advertencia): tinte de información con su icono. */
+function InfoNote({ children }: { children: ReactNode }) {
+  return (
+    <p
+      role="note"
+      className="flex items-start gap-2 rounded-xl border border-info/30 border-l-4 border-l-info bg-info-soft px-3 py-2.5 text-sm text-fg"
+    >
+      <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-info" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+/** Falta un destino: se explica qué hacer y la salida va como acción principal del bloque (tonal). */
 function NeedTarget({ text, onPickOffer }: { text: string; onPickOffer: () => void }) {
   return (
     <div
       role="note"
-      className="flex flex-col items-start gap-3 rounded-xl border border-dashed border-line-strong p-4"
+      className="flex flex-col items-start gap-3 rounded-xl border border-info/30 border-l-4 border-l-info bg-info-soft p-4"
     >
-      <p className="text-sm text-fg">{text}</p>
-      <Button variant="secondary" type="button" onClick={onPickOffer}>
+      <p className="flex items-start gap-2 text-sm text-fg">
+        <Info aria-hidden="true" className="mt-0.5 size-4 shrink-0 text-info" />
+        <span>{text}</span>
+      </p>
+      <Button variant="tonal" type="button" onClick={onPickOffer}>
         {g.goOffers}
       </Button>
     </div>

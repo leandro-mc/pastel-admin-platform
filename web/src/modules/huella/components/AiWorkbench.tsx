@@ -6,6 +6,7 @@ import { labelClass } from "@/core/ui/styles";
 import { saveFile, useAiSettings } from "../api/hooks";
 import { AiBusyDialog } from "../lib/useAiJob";
 import { strings } from "../strings";
+import { Collapsible } from "./Collapsible";
 import { ErrorNotice, TextAreaField } from "./Form";
 
 const t = strings.aiWork;
@@ -66,6 +67,10 @@ export function AiWorkbench({
   const [busyHidden, setBusyHidden] = useState(false);
   const fileId = useId();
   const active = settings.data?.providers.find((p) => p.isActive);
+  const providerReady = Boolean(active && active.readable);
+  // Divulgación progresiva: con un proveedor listo, la vía externa queda plegada (es la alternativa); sin él, abierta.
+  const [externalToggled, setExternalToggled] = useState<boolean | null>(null);
+  const externalOpen = externalToggled ?? (!providerReady || pasted !== "");
 
   const download = async (extension: "md" | "txt") => {
     const pack = await getPackage().catch(() => null);
@@ -143,77 +148,80 @@ export function AiWorkbench({
         )}
       </section>
 
-      <section
-        className="flex flex-col gap-3 border-t border-line pt-4"
-        aria-labelledby={`${fileId}-external`}
+      <Collapsible
+        heading="h4"
+        title={t.external}
+        expanded={externalOpen}
+        onToggle={() => setExternalToggled(!externalOpen)}
       >
-        <h4 id={`${fileId}-external`} className="text-sm font-semibold text-fg">
-          {t.external}
-        </h4>
-        <p className="text-sm text-muted">{externalHint ?? t.step1}</p>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            variant="secondary"
-            type="button"
-            loading={preparing}
-            disabled={disabled}
-            onClick={() => void download("md")}
-          >
-            {t.downloadMd}
-          </Button>
-          <Button
-            variant="secondary"
-            type="button"
-            disabled={preparing || disabled}
-            onClick={() => void download("txt")}
-          >
-            {t.downloadTxt}
-          </Button>
-          <Button
-            variant="ghost"
-            type="button"
-            disabled={preparing || disabled}
-            onClick={() => void copy()}
-          >
-            {strings.common.copy}
-          </Button>
-        </div>
-        <p className="text-sm text-muted">{t.step2}</p>
-        <p className="text-sm text-muted">{t.step3}</p>
-        <div className="flex flex-col gap-1.5">
-          <label htmlFor={`${fileId}-file`} className={labelClass}>
-            {t.file}
-          </label>
-          <input
-            id={`${fileId}-file`}
-            type="file"
-            accept=".json,.txt,.md,application/json,text/plain,text/markdown"
-            className="text-sm text-fg file:mr-3 file:rounded-md file:border file:border-line file:bg-surface-raised file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-fg"
-            onChange={(e) => void readFile(e.target.files?.[0])}
-          />
-          {fileError ? (
-            <p className="text-sm text-danger">{fileError}</p>
-          ) : null}
-        </div>
-        <TextAreaField
-          label={t.paste}
-          rows={6}
-          value={pasted}
-          maxLength={MAX_IMPORT_CHARS}
-          onChange={(e) => setPasted(e.target.value)}
-        />
-        <div>
-          <Button
-            variant="secondary"
-            type="button"
-            disabled={pasted.trim() === "" || disabled}
-            loading={importing}
-            onClick={() => onImport(pasted, () => setPasted(""))}
-          >
-            {t.import}
-          </Button>
-        </div>
-      </section>
+        <ol className="flex flex-col gap-4">
+          <Step n={1} text={externalHint ?? t.step1}>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                variant="secondary"
+                type="button"
+                loading={preparing}
+                disabled={disabled}
+                onClick={() => void download("md")}
+              >
+                {t.downloadMd}
+              </Button>
+              <Button
+                variant="secondary"
+                type="button"
+                disabled={preparing || disabled}
+                onClick={() => void download("txt")}
+              >
+                {t.downloadTxt}
+              </Button>
+              <Button
+                variant="ghost"
+                type="button"
+                disabled={preparing || disabled}
+                onClick={() => void copy()}
+              >
+                {strings.common.copy}
+              </Button>
+            </div>
+          </Step>
+          <Step n={2} text={t.step2} />
+          <Step n={3} text={t.step3}>
+            <div className="flex flex-col gap-1.5">
+              <label htmlFor={`${fileId}-file`} className={labelClass}>
+                {t.file}
+              </label>
+              <input
+                id={`${fileId}-file`}
+                type="file"
+                accept=".json,.txt,.md,application/json,text/plain,text/markdown"
+                className="text-sm text-fg file:mr-3 file:min-h-9 file:rounded-lg file:border file:border-line-strong file:bg-surface file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-fg"
+                onChange={(e) => void readFile(e.target.files?.[0])}
+              />
+              {fileError ? (
+                <p className="text-sm text-danger">{fileError}</p>
+              ) : null}
+            </div>
+            <TextAreaField
+              label={t.paste}
+              rows={6}
+              value={pasted}
+              maxLength={MAX_IMPORT_CHARS}
+              onChange={(e) => setPasted(e.target.value)}
+            />
+            <div>
+              <Button
+                variant="tonal"
+                type="button"
+                disabled={pasted.trim() === "" || disabled}
+                loading={importing}
+                onClick={() => onImport(pasted, () => setPasted(""))}
+              >
+                {t.import}
+              </Button>
+            </div>
+          </Step>
+        </ol>
+      </Collapsible>
 
       {(running || importing) && !busyHidden && !hideBusy ? (
         <AiBusyDialog
@@ -222,8 +230,8 @@ export function AiWorkbench({
         />
       ) : null}
       {rejected.length > 0 ? (
-        <div className="text-sm text-muted">
-          <p className="font-medium text-fg">{t.rejected}</p>
+        <div className="rounded-xl border border-warning/40 border-l-4 border-l-warning bg-warning-soft px-4 py-3 text-sm text-fg">
+          <p className="font-medium">{t.rejected}</p>
           <ul className="list-disc pl-5">
             {rejected.map((r) => (
               <li key={r}>{r}</li>
@@ -237,5 +245,23 @@ export function AiWorkbench({
         fallback={strings.bank.achievements.ai.invalid}
       />
     </div>
+  );
+}
+
+/** Paso numerado de la vía externa: el número es visual; la lista ordenada ya lo anuncia a los lectores de pantalla. */
+function Step({ n, text, children }: { n: number; text: string; children?: ReactNode }) {
+  return (
+    <li className="flex gap-3">
+      <span
+        aria-hidden="true"
+        className="mt-0.5 grid size-6 shrink-0 place-items-center rounded-full bg-accent-soft text-xs font-semibold text-accent-strong"
+      >
+        {n}
+      </span>
+      <div className="flex min-w-0 flex-1 flex-col gap-3">
+        <p className="text-sm text-fg-secondary">{text.replace(/^\d+\.\s*/, "")}</p>
+        {children}
+      </div>
+    </li>
   );
 }

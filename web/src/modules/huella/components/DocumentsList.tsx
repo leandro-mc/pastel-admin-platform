@@ -1,3 +1,4 @@
+import { CircleCheck } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useNotify } from "@/core/notifications";
 import { Badge, Button, ConfirmDialog, Panel, SelectField } from "@/core/ui";
@@ -12,6 +13,7 @@ import {
   useVersions,
 } from "../api/hooks";
 import { formatDateTime } from "../lib/format";
+import { nestedCard } from "../lib/marker";
 import type { DocKind } from "../lib/studioState";
 import { usePaging } from "../lib/usePaging";
 import { strings } from "../strings";
@@ -196,7 +198,7 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
                 {paging.slice.map((doc) => {
                   const offer = doc.offerId ? offerById.get(doc.offerId) : undefined;
                   return (
-                    <li key={`${doc.kind}-${doc.id}`} className="flex flex-col gap-3 rounded-xl border border-line p-4">
+                    <li key={`${doc.kind}-${doc.id}`} className={`flex flex-col gap-3 rounded-xl border p-4 ${nestedCard}`}>
                       <div className="flex flex-wrap items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="flex flex-wrap items-center gap-2">
@@ -218,6 +220,7 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
                         </div>
                         {doc.sentAt ? (
                           <Badge variant="success">
+                            <CircleCheck aria-hidden="true" className="size-3.5" />
                             {t.sentOn} {formatDateTime(doc.sentAt)}
                           </Badge>
                         ) : (
@@ -226,7 +229,7 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Button
-                          variant="secondary"
+                          variant="tonal"
                           type="button"
                           onClick={() => onOpen(doc.kind === "cv" ? "cv" : "carta", doc.id)}
                         >
@@ -250,7 +253,7 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
                           {doc.sentAt ? t.unmarkSent : t.markSent}
                         </Button>
                         <Button
-                          variant="ghost"
+                          variant="quietDanger"
                           type="button"
                           aria-label={`${v.delete}: ${doc.name}`}
                           onClick={() => setToDelete(doc)}

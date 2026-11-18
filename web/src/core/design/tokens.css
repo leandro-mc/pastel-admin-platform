@@ -36,6 +36,14 @@
   --input: #fffefa;
   --focus: rgba(49, 91, 74, 0.28);
   --on-accent: #ffffff;
+  /* Estados (badges y avisos): texto ≥ 4,5:1 sobre su fondo suave; siempre con texto o icono, nunca solo color. */
+  --surface-sunken: #f2f3ee;
+  --success: #2f6b4f;
+  --success-soft: #e3efe6;
+  --warning: #79591c;
+  --warning-soft: #f6ebc8;
+  --info: #2e5b7a;
+  --info-soft: #e4edf4;
 }
 
 :root[data-theme="dark"] {
@@ -67,6 +75,13 @@
   --input: #1d2128;
   --focus: rgba(166, 197, 178, 0.48);
   --on-accent: #19221d;
+  --surface-sunken: #1d2128;
+  --success: #a6d7b8;
+  --success-soft: #2a3d31;
+  --warning: #e8c77a;
+  --warning-soft: #433a2a;
+  --info: #a9c8e0;
+  --info-soft: #2a3644;
 }
 
 @theme inline {
@@ -84,4 +99,11 @@
   --color-on-accent: var(--on-accent);
   --color-danger: var(--danger);
   --color-danger-soft: var(--danger-soft);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
 }

@@ -4,7 +4,7 @@ import { strings } from "../strings";
 
 const variants: Record<OfferStatus, BadgeVariant> = {
   saved: "neutral",
-  applied: "accent",
+  applied: "info",
   interview: "success",
   offer: "success",
   rejected: "danger",
