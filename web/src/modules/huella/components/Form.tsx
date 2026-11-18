@@ -64,9 +64,13 @@ export function ErrorNotice({
     isApiError(error) &&
     (error.status < 500 || error.status === 503) &&
     !error.isNetwork;
+  // Si es una validación, el motivo concreto por campo (p. ej. el tope de versiones) en vez de «Revise los campos marcados».
+  const fields = known && isApiError(error) ? Object.values(error.errors).flat() : [];
   const message =
     known && isApiError(error)
-      ? error.detail
+      ? fields.length > 0
+        ? fields.join(" ")
+        : error.detail
       : (fallback ?? strings.common.loadFailed);
   return (
     <Alert

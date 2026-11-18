@@ -15,7 +15,7 @@ namespace Pastel.Modules.Huella.Features.Studio;
 internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, OfferTracking tracking, IClock clock)
 {
     public const int MaxOffers = 50;
-    public const int MaxVersions = 60;
+    public const int MaxVersions = 300;
 
     // ───────────────────────────── Ofertas ─────────────────────────────
     public async Task<Result<IReadOnlyList<OfferSummary>>> ListOffersAsync(CancellationToken cancellationToken)

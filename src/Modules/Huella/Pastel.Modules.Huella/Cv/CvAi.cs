@@ -49,7 +49,7 @@ internal static class AiPackages
 /// <summary>Lectura defensiva del JSON pegado o recibido. Nada se aplica sin pasar por el guardián.</summary>
 internal static class CvAiResult
 {
-    public const int MaxJsonChars = 60000;
+    public const int MaxJsonChars = 150000;
 
     /// <summary>Extrae el objeto JSON (tolera cercos de código y texto alrededor) y lo analiza.</summary>
     public static JsonDocument? TryParse(string? raw)
@@ -68,7 +68,8 @@ internal static class CvAiResult
 
         try
         {
-            return JsonDocument.Parse(raw[start..(end + 1)], new JsonDocumentOptions { MaxDepth = 16 });
+            // Tolerante con lo que suelen agregar los modelos: comas finales y comentarios.
+            return JsonDocument.Parse(raw[start..(end + 1)], new JsonDocumentOptions { MaxDepth = 16, AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip });
         }
         catch (JsonException)
         {

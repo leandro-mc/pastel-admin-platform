@@ -10,7 +10,7 @@ import {
   type AiTaskKind,
 } from "../api/hooks";
 import type { AiTaskOutcome } from "../api/schemas";
-import { useAiJob, type AiStep } from "../lib/useAiJob";
+import { messageOf, useAiJob, type AiStep } from "../lib/useAiJob";
 import { strings } from "../strings";
 import { AiWorkbench } from "./AiWorkbench";
 
@@ -91,7 +91,7 @@ export function AiTaskPanel({
       })
       .catch((e: unknown) => {
         setError(e);
-        notify(t.importedNothing, "error");
+        notify(messageOf(e), "error");
       })
       .finally(() => setImporting(false));
   };

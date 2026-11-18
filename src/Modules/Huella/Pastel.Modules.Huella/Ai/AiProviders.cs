@@ -48,6 +48,9 @@ internal abstract class AiProviderBase(IHttpClientFactory httpClientFactory, ILo
 {
     private const int MaxResponseBytes = 2 * 1024 * 1024;
 
+    /// <summary>Registro del proveedor (solo metadatos; nunca la clave, el prompt ni el contenido de la respuesta).</summary>
+    protected ILogger Logger => logger;
+
     public abstract string Id { get; }
 
     public abstract string Label { get; }
@@ -197,7 +200,17 @@ internal sealed class GeminiProvider(IHttpClientFactory factory, ILogger<GeminiP
             && candidates[0].TryGetProperty("content", out var content)
             && content.TryGetProperty("parts", out var parts) && parts.ValueKind == JsonValueKind.Array)
         {
-            var text = string.Concat(parts.EnumerateArray().Select(p => Str(p, "text")));
+            // Solo las partes de respuesta: las de razonamiento («thought») no son parte del JSON.
+            var text = string.Concat(parts.EnumerateArray()
+                .Where(p => !(p.TryGetProperty("thought", out var thought) && thought.ValueKind == JsonValueKind.True))
+                .Select(p => Str(p, "text")));
+            var finish = Str(candidates[0], "finishReason");
+            if (finish.Length > 0 && finish != "STOP")
+            {
+                // Solo el motivo de corte (p. ej. MAX_TOKENS), nunca el contenido.
+                Logger.LogWarning("Gemini terminó la respuesta con {FinishReason}", finish);
+            }
+
             if (text.Length > 0)
             {
                 return text;

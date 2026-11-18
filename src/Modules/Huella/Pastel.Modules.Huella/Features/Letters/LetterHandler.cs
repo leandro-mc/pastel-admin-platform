@@ -38,7 +38,7 @@ internal sealed record LetterEditInput(
 /// </summary>
 internal sealed class LetterHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, OfferTracking tracking, IClock clock)
 {
-    public const int MaxLetters = 60;
+    public const int MaxLetters = 150;
 
     // ───────────────────────────── Lectura y edición ─────────────────────────────
     public async Task<Result<IReadOnlyList<LetterSummary>>> ListAsync(CancellationToken cancellationToken)

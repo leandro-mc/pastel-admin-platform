@@ -26,11 +26,16 @@ type Job = {
 
 /** Mensaje de un error de la API (el texto del servidor si es esperable, el genérico si no). */
 export function messageOf(error: unknown): string {
-  return isApiError(error) &&
+  if (
+    isApiError(error) &&
     (error.status < 500 || error.status === 503) &&
     !error.isNetwork
-    ? error.detail
-    : strings.common.loadFailed;
+  ) {
+    // Una validación trae el motivo concreto por campo (p. ej. el tope de versiones guardadas): se muestra ese.
+    const fields = Object.values(error.errors).flat();
+    return fields.length > 0 ? fields.join(" ") : error.detail;
+  }
+  return strings.common.loadFailed;
 }
 
 /**
