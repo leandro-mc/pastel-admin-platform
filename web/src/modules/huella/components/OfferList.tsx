@@ -13,11 +13,13 @@ import {
   useCreateOffer,
   useDeleteOffer,
   useLetters,
+  useOffer,
   useOffers,
   useVersions,
 } from "../api/hooks";
 import type { OfferSummary } from "../api/schemas";
 import { formatDateTime } from "../lib/format";
+import { safeHref } from "../lib/safeHref";
 import {
   documentsOf,
   followUpState,
@@ -71,6 +73,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
   const [status, setStatus] = useState<StatusFilter>("all");
   const [creating, setCreating] = useState(false);
   const [toDelete, setToDelete] = useState<OfferSummary | null>(null);
+  const [reading, setReading] = useState<OfferSummary | null>(null);
 
   const filtered = useMemo(() => {
     const q = fold(query.trim());
@@ -194,6 +197,14 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
                           {t.documents}
                         </Button>
                         <Button
+                          variant="secondary"
+                          type="button"
+                          aria-label={`${t.read}: ${offer.title}`}
+                          onClick={() => setReading(offer)}
+                        >
+                          {t.read}
+                        </Button>
+                        <Button
                           variant="ghost"
                           type="button"
                           aria-label={`${o.delete}: ${offer.title}`}
@@ -211,6 +222,10 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
         </Loaded>
         <Pager paging={paging} />
       </div>
+
+      {reading ? (
+        <OfferTextDialog offer={reading} onClose={() => setReading(null)} />
+      ) : null}
 
       {creating ? (
         <NewOfferDialog
@@ -319,6 +334,40 @@ function NewOfferDialog({
             {o.analyze}
           </Button>
         </div>
+      </div>
+    </Dialog>
+  );
+}
+
+/** El texto original de la oferta, para leerlo cuando haga falta (con el enlace a la publicación si lo tiene). */
+function OfferTextDialog({ offer, onClose }: { offer: OfferSummary; onClose: () => void }) {
+  const detail = useOffer(offer.id);
+  const href = offer.sourceUrl ? safeHref(offer.sourceUrl) : null;
+  return (
+    <Dialog
+      title={offer.title}
+      description={offer.company ?? undefined}
+      onClose={onClose}
+      maxWidthClassName="max-w-3xl"
+    >
+      <div className="flex flex-col gap-4">
+        {href ? (
+          <a
+            href={href}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sm font-medium text-accent-strong underline-offset-4 hover:underline"
+          >
+            {t.openSource}
+          </a>
+        ) : null}
+        <Loaded query={detail}>
+          {(data) => (
+            <div className="max-h-[65vh] overflow-y-auto rounded-xl border border-line bg-surface p-4 text-sm leading-relaxed whitespace-pre-wrap text-fg">
+              {data.rawText}
+            </div>
+          )}
+        </Loaded>
       </div>
     </Dialog>
   );

@@ -324,6 +324,8 @@ export const strings = {
       use: "Usar para generar",
       selected: "Seleccionada",
       documents: "Ver documentos",
+      read: "Ver oferta",
+      openSource: "Abrir la publicación original",
       savedOn: "Guardada el",
       coverage: (covered: number, total: number) =>
         `${covered} de ${total} requisitos`,
