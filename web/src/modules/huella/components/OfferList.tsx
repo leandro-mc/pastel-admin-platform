@@ -183,7 +183,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Button
-                          variant={isSelected ? "secondary" : "primary"}
+                          variant="secondary"
                           type="button"
                           onClick={() => onUse(offer.id)}
                         >

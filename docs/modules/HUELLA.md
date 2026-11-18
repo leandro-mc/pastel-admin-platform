@@ -51,6 +51,8 @@ Los logros son la capa que reutilizan CV, perfil y futuras funciones (preparaci�
 - Entrada de datos con límites de longitud; texto plano o Markdown mínimo sanitizado.
 - Auditoría: publicar, despublicar y regenerar/revocar el enlace público (sin registrar el token en claro).
 
+- **Identidad visual (decisión del propietario, 2026-11-17):** la del perfil público llevada al panel: papel gris frío, tinta casi negra y estados suaves en grises fríos, sin tonos cálidos en superficies (tokens de `[data-module="huella"]` en `module-themes.css`, claro y oscuro, contrastes AA). El acento es la tinta: botón principal, foco y elemento activo. Una sola acción principal por vista: las acciones repetidas en tarjetas y listas son secundarias.
+
 ## 6. Fuera del MVP
 Múltiples perfiles o plantillas, temas personalizados, subida de fotografía (requiere almacenamiento de archivos), analítica de visitas, dominio propio por perfil, internacionalización del perfil.
 

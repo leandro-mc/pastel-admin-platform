@@ -69,17 +69,58 @@
   --on-accent: #14181c;
 }
 
+/*
+ * Huella: la identidad del perfil público llevada al panel (decisión del propietario, 2026-11-17). Papel gris frío y tinta
+ * casi negra, sin tonos cálidos en superficies: la jerarquía la dan el contraste y las líneas, no el color. El acento es
+ * la tinta (botones principales, foco, elemento activo) y los estados suaves son grises fríos. Contrastes (WCAG AA):
+ * texto 16,9:1, secundario ≥ 6,2:1, bordes de controles ≥ 3:1, texto sobre botón principal 15,2:1.
+ */
 [data-module="huella"] {
-  --accent: #a96c4a;
-  --accent-strong: #87563b;
-  --accent-soft: #f8e7de;
+  --app-bg: #f1f2f4;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --sidebar-bg: #e9ebef;
+  --text: #0d1117;
+  --text-secondary: #2f3743;
+  --muted: #4d5666;
+  --border: #dde1e7;
+  --border-strong: #8a929f;
+  --input: #ffffff;
+  --accent: #1f2630;
+  --accent-strong: #0d1117;
+  --accent-soft: #e9ecf1;
+  --accent-subtle: #f4f5f7;
   --on-accent: #ffffff;
+  --danger: #b42318;
+  --danger-soft: #fdecea;
+  --focus: rgba(13, 17, 23, 0.35);
+  --shadow: 0 16px 40px rgba(13, 17, 23, 0.08);
+  --shadow-soft: 0 4px 16px rgba(13, 17, 23, 0.05);
+  --shadow-bottom-nav: 0 -6px 20px rgba(13, 17, 23, 0.06);
 }
 
+/* Oscuro neutro (el del perfil público), no una versión oscurecida de una paleta cálida. */
 [data-theme="dark"] [data-module="huella"],
 [data-theme="dark"][data-module="huella"] {
-  --accent: #c59c85;
-  --accent-strong: #c59c85;
-  --accent-soft: #3d3433;
-  --on-accent: #14181c;
+  --app-bg: #0e1116;
+  --surface: #161b22;
+  --surface-raised: #1c222b;
+  --sidebar-bg: #12161c;
+  --text: #eceff4;
+  --text-secondary: #c9d1db;
+  --muted: #a3adbb;
+  --border: #2a313c;
+  --border-strong: #6b7584;
+  --input: #12161c;
+  --accent: #dfe4ea;
+  --accent-strong: #ffffff;
+  --accent-soft: #252c36;
+  --accent-subtle: #1c222b;
+  --on-accent: #0d1117;
+  --danger: #ff8a80;
+  --danger-soft: #3a1d1d;
+  --focus: rgba(236, 239, 244, 0.45);
+  --shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
+  --shadow-soft: 0 4px 18px rgba(0, 0, 0, 0.22);
+  --shadow-bottom-nav: 0 -6px 22px rgba(0, 0, 0, 0.35);
 }

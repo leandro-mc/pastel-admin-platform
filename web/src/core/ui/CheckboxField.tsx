@@ -35,7 +35,7 @@ export function CheckboxField({
     <div className="flex flex-col gap-1">
       <label
         htmlFor={inputId}
-        className="flex min-h-11 items-start gap-3 text-sm text-fg"
+        className={`flex min-h-11 gap-3 text-sm text-fg ${description ? "items-start" : "items-center"}`}
       >
         <input
           {...input}

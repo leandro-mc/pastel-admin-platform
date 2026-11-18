@@ -243,7 +243,7 @@ function HistoryRow({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
-        <Button variant="primary" type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
+        <Button variant="secondary" type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)}>
           {open ? t.hideDetails : t.details}
         </Button>
         <Link to={`${target}&vista=documentos`} className={`${secondaryButton} no-underline`}>

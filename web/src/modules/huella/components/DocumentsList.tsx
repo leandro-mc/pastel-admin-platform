@@ -226,7 +226,7 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
                       </div>
                       <div className="flex flex-wrap items-center gap-2">
                         <Button
-                          variant="primary"
+                          variant="secondary"
                           type="button"
                           onClick={() => onOpen(doc.kind === "cv" ? "cv" : "carta", doc.id)}
                         >

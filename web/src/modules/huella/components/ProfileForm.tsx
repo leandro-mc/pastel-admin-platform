@@ -55,7 +55,7 @@ const toDraft = (profile: Profile): Draft => ({
   links: profile.links.map((l) => ({ ...l, key: l.id })),
 });
 
-/** Botón de un icono del selector: marcado cuando es el elegido. */
+/** Opción del selector de iconos: marcada cuando es la elegida. */
 const iconChoice = (selected: boolean) =>
   `inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-xl border px-3 text-fg hover:bg-accent-soft ${focusClass} ${
     selected ? "border-accent bg-accent-soft" : "border-line-strong bg-surface"
