@@ -14,39 +14,50 @@ import { pageClass, primaryButton, table, tableScroll, td, tdNumber, th, thNumbe
 
 const t = strings.orders;
 
-/** Lista de pedidos de todos los compradores, con filtros. El estado «Parcial» o «Entregado» se deriva de lo entregado. */
+/**
+ * Lista de pedidos de todos los compradores. Los filtros viven en la URL (se pueden guardar, compartir y recargar).
+ * El estado «Parcial» o «Entregado» se deriva de lo entregado.
+ */
 export function Component() {
   const { hasPermission } = useAuth();
   const canManage = hasPermission(cosechaPermissions.ordersManage);
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const seasons = useSeasons();
   const buyers = useBuyers({ page: 1, pageSize: 100, includeArchived: true });
-  const [seasonId, setSeasonId] = useState("");
-  const [buyerId, setBuyerId] = useState(params.get("buyerId") ?? "");
-  const [status, setStatus] = useState("");
-  const [from, setFrom] = useState("");
-  const [to, setTo] = useState("");
-  const [text, setText] = useState("");
-  const [search, setSearch] = useState("");
-  const [page, setPage] = useState(1);
 
-  const season = seasonId || seasons.data?.find((item) => item.status === "Active")?.id || "";
+  const get = (key: string) => params.get(key) ?? "";
+  const update = (changes: Record<string, string>) =>
+    setParams(
+      (current) => {
+        const next = new URLSearchParams(current);
+        for (const [key, value] of Object.entries(changes)) {
+          if (value === "") next.delete(key);
+          else next.set(key, value);
+        }
+        if (!("page" in changes)) next.delete("page");
+        return next;
+      },
+      { replace: true },
+    );
+
+  const [text, setText] = useState(get("search"));
+  const page = Number(get("page")) || 1;
+  const season = get("season") || seasons.data?.find((item) => item.status === "Active")?.id || "";
+  const filtered = Boolean(get("status") || get("buyer") || get("search") || get("from") || get("to"));
   const orders = useOrders({
     page,
     pageSize: 20,
     seasonId: season,
-    buyerId,
-    status,
-    from,
-    to,
-    search,
+    buyerId: get("buyer"),
+    status: get("status"),
+    from: get("from"),
+    to: get("to"),
+    search: get("search"),
   });
-  const reset = () => setPage(1);
 
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    reset();
-    setSearch(text);
+    update({ search: text.trim() });
   };
 
   return (
@@ -69,30 +80,21 @@ export function Component() {
             label={strings.common.season}
             value={season}
             placeholder={strings.common.noSeason}
-            onChange={(event) => {
-              reset();
-              setSeasonId(event.target.value);
-            }}
+            onChange={(event) => update({ season: event.target.value })}
             options={(seasons.data ?? []).map((item) => ({ value: item.id, label: item.name }))}
           />
           <SelectField
             label={t.filters.buyer}
-            value={buyerId}
+            value={get("buyer")}
             placeholder={strings.common.all}
-            onChange={(event) => {
-              reset();
-              setBuyerId(event.target.value);
-            }}
+            onChange={(event) => update({ buyer: event.target.value })}
             options={(buyers.data?.items ?? []).map((item) => ({ value: item.id, label: item.name }))}
           />
           <SelectField
             label={t.filters.status}
-            value={status}
+            value={get("status")}
             placeholder={strings.common.all}
-            onChange={(event) => {
-              reset();
-              setStatus(event.target.value);
-            }}
+            onChange={(event) => update({ status: event.target.value })}
             options={Object.entries(strings.status.progress).map(([value, label]) => ({ value, label }))}
           />
           <TextField
@@ -104,20 +106,14 @@ export function Component() {
           <TextField
             type="date"
             label={t.filters.from}
-            value={from}
-            onChange={(event) => {
-              reset();
-              setFrom(event.target.value);
-            }}
+            value={get("from")}
+            onChange={(event) => update({ from: event.target.value })}
           />
           <TextField
             type="date"
             label={t.filters.to}
-            value={to}
-            onChange={(event) => {
-              reset();
-              setTo(event.target.value);
-            }}
+            value={get("to")}
+            onChange={(event) => update({ to: event.target.value })}
           />
           <Button type="submit" variant="secondary" className="sm:self-end">
             {strings.common.search}
@@ -126,7 +122,7 @@ export function Component() {
         <QueryState query={orders}>
           {(data) =>
             data.items.length === 0 ? (
-              <StateView status="empty" title={status || buyerId || search || from || to ? t.empty : t.emptyFirst} />
+              <StateView status="empty" title={filtered ? t.empty : t.emptyFirst} />
             ) : (
               <>
                 <div className={tableScroll}>
@@ -166,7 +162,11 @@ export function Component() {
                     </tbody>
                   </table>
                 </div>
-                <Pager page={data.page} totalPages={data.totalPages} onPage={setPage} />
+                <Pager
+                  page={data.page}
+                  totalPages={data.totalPages}
+                  onPage={(next) => update({ page: String(next) })}
+                />
               </>
             )
           }

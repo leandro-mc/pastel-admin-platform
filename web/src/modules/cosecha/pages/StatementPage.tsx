@@ -178,6 +178,7 @@ export function Component() {
             {paying && producerId ? (
               <PaymentDialog
                 producerId={producerId}
+                producerName={data.balance.producerName}
                 deliveryIds={[...chosen]}
                 suggestedCrc={suggested}
                 onClose={() => {

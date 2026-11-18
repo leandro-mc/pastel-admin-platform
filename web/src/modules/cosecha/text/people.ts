@@ -1,4 +1,9 @@
 export const people = {
+  contact: {
+    call: (name: string) => `Llamar a ${name}`,
+    whatsapp: "WhatsApp",
+    whatsappLabel: (name: string) => `Escribir por WhatsApp a ${name}`,
+  },
   location: {
     latitude: "Latitud",
     longitude: "Longitud",
@@ -51,7 +56,7 @@ export const people = {
     capacityNote: "Nota del cambio",
     capacitySaved: "Capacidad guardada.",
     noSeasons: "Cree una temporada para registrar capacidades.",
-    callLabel: (name: string) => `Llamar a ${name}`,
+    statement: "Ver estado de cuenta",
     back: "Volver a productores",
   },
   buyers: {

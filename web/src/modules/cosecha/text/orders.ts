@@ -34,8 +34,6 @@ export const orders = {
     productPlaceholder: "Elija un producto",
     kilograms: "Kilos",
     pricePerKg: "Precio por kilo (₡)",
-    addLine: "Agregar producto",
-    removeLine: "Quitar producto",
     confirmOnSave: "Confirmar el pedido al guardar",
     confirmHint: "Un pedido sin confirmar queda como borrador y no se puede incluir en un envío.",
     needBuyers: "Primero registre un comprador.",

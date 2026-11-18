@@ -1,3 +1,4 @@
+import { MessageCircle } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { useNotify } from "@/core/notifications";
 import { Button, Dialog, Panel, SelectField, StateView, TextField } from "@/core/ui";
@@ -6,9 +7,9 @@ import type { Delivery, ShipmentDetail } from "../../api/schemas";
 import { FormAlert } from "../../components/FormAlert";
 import { StatusBadge } from "../../components/StatusBadge";
 import { fieldMessage } from "../../errors";
-import { formatCrc, formatDate, formatKg, parseDecimal, toFieldText } from "../../format";
+import { formatCrc, formatDate, formatKg, parseDecimal, toFieldText, whatsAppLink } from "../../format";
 import { strings } from "../../strings";
-import { tableScroll, td, tdNumber, th, thNumber } from "../../styles";
+import { secondaryButton, tableScroll, td, tdNumber, th, thNumber } from "../../styles";
 
 const t = strings.shipments.reception;
 
@@ -186,9 +187,30 @@ export function ReceptionPanel({ detail, canManage }: { detail: ShipmentDetail; 
                   <td className={td}>{formatDate(delivery.expectedPaymentDate)}</td>
                   {canManage ? (
                     <td className={td}>
-                      <Button variant="link" onClick={() => setEditing(delivery)}>
-                        {delivery.receivedKg === null ? t.register : t.correct}
-                      </Button>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Button variant="link" onClick={() => setEditing(delivery)}>
+                          {delivery.receivedKg === null ? t.register : t.correct}
+                        </Button>
+                        {delivery.status === "Received" && delivery.primaryPhone ? (
+                          <a
+                            className={secondaryButton}
+                            href={whatsAppLink(
+                              delivery.primaryPhone,
+                              strings.shipments.deliveries.thanks(
+                                delivery.producerName,
+                                formatDate(detail.summary.shipmentDate),
+                                formatKg(delivery.acceptedKg),
+                              ),
+                            )}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={strings.shipments.deliveries.thankLabel(delivery.producerName)}
+                          >
+                            <MessageCircle aria-hidden="true" className="mr-1 size-4" />
+                            {strings.shipments.deliveries.thank}
+                          </a>
+                        ) : null}
+                      </div>
                     </td>
                   ) : null}
                 </tr>

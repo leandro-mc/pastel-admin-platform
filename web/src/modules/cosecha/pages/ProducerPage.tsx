@@ -26,7 +26,7 @@ import { fieldMessage } from "../errors";
 import { formatPhone, parseDecimal, toFieldText } from "../format";
 import { cosechaPaths, cosechaPermissions } from "../paths";
 import { strings } from "../strings";
-import { linkButton, pageClass } from "../styles";
+import { linkButton, pageClass, secondaryButton } from "../styles";
 import { CapacityPanel } from "./producers/CapacityPanel";
 
 const t = strings.people.producers;
@@ -133,10 +133,19 @@ function ProducerForm({ producer }: { producer?: ProducerDetail }) {
       <PageHeader
         title={producer ? producer.name : t.newTitle}
         actions={
-          producer && canManage ? (
-            <Button variant="secondary" onClick={() => setArchiving(true)}>
-              {producer.isArchived ? t.restore : t.archive}
-            </Button>
+          producer ? (
+            <div className="flex flex-wrap gap-2">
+              {hasPermission(cosechaPermissions.settlementsRead) ? (
+                <Link to={cosechaPaths.settlement(producer.id)} className={secondaryButton}>
+                  {t.statement}
+                </Link>
+              ) : null}
+              {canManage ? (
+                <Button variant="secondary" onClick={() => setArchiving(true)}>
+                  {producer.isArchived ? t.restore : t.archive}
+                </Button>
+              ) : null}
+            </div>
           ) : undefined
         }
       />

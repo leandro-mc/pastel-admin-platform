@@ -12,9 +12,9 @@ import {
   TextField,
 } from "@/core/ui";
 import { useBuyers } from "../api/queries";
+import { ContactLinks } from "../components/ContactLinks";
 import { Pager } from "../components/Pager";
 import { QueryState } from "../components/QueryState";
-import { formatPhone } from "../format";
 import { cosechaPaths, cosechaPermissions } from "../paths";
 import { strings } from "../strings";
 import { pageClass, primaryButton, table, tableScroll, td, th } from "../styles";
@@ -107,15 +107,9 @@ export function Component() {
                               <>
                                 {buyer.primaryContact.name}
                                 {buyer.primaryContact.phone ? (
-                                  <>
-                                    {" · "}
-                                    <a
-                                      href={`tel:+506${buyer.primaryContact.phone}`}
-                                      className="whitespace-nowrap text-accent-strong underline-offset-2 hover:underline"
-                                    >
-                                      {formatPhone(buyer.primaryContact.phone)}
-                                    </a>
-                                  </>
+                                  <div>
+                                    <ContactLinks name={buyer.primaryContact.name} phone={buyer.primaryContact.phone} />
+                                  </div>
                                 ) : null}
                               </>
                             ) : (

@@ -122,7 +122,7 @@ export function OrderForm({ order, onDone, onCancel }: Props) {
         {lines.map((row, index) => (
           <div
             key={index}
-            className="grid items-end gap-3 sm:grid-cols-[minmax(12rem,1fr)_minmax(8rem,10rem)_minmax(9rem,12rem)_auto]"
+            className="grid items-end gap-3 sm:grid-cols-[minmax(12rem,1fr)_minmax(8rem,10rem)_minmax(9rem,12rem)]"
           >
             <SelectField
               label={t.product}
@@ -146,34 +146,12 @@ export function OrderForm({ order, onDone, onCancel }: Props) {
               onChange={(event) => setLine(index, { pricePerKg: event.target.value })}
               error={invalid[`lines[${index}].pricePerKg`] ?? fieldMessage(mutation.error, `lines[${index}].pricePerKg`)}
             />
-            {lines.length > 1 ? (
-              <Button
-                variant="ghost"
-                type="button"
-                aria-label={t.removeLine}
-                onClick={() => setLines((rows) => rows.filter((_, i) => i !== index))}
-              >
-                {strings.common.remove}
-              </Button>
-            ) : null}
           </div>
         ))}
         {fieldMessage(mutation.error, "lines") ? (
           <p role="alert" className="text-sm text-danger">
             {fieldMessage(mutation.error, "lines")}
           </p>
-        ) : null}
-        {lines.length < 10 ? (
-          <Button
-            variant="secondary"
-            type="button"
-            className="self-start"
-            onClick={() =>
-              setLines((rows) => [...rows, { productId: "", kilograms: "", pricePerKg: "" }])
-            }
-          >
-            {t.addLine}
-          </Button>
         ) : null}
       </fieldset>
       <TextField

@@ -54,6 +54,16 @@ export function LocationFields({
         error={fieldMessage(error, "mapUrl")}
         maxLength={500}
       />
+      {/^https?:\/\//i.test(mapUrl.trim()) ? (
+        <a
+          href={mapUrl.trim()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex min-h-11 items-center self-start text-sm font-medium text-accent-strong underline-offset-2 hover:underline"
+        >
+          {t.openMap}
+        </a>
+      ) : null}
     </div>
   );
 }

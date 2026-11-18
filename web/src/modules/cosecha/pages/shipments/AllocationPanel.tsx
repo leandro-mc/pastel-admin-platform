@@ -3,7 +3,7 @@ import { useState } from "react";
 import { useNotify } from "@/core/notifications";
 import { Alert, Button, Panel, StateView, TextField } from "@/core/ui";
 import { useApplyAllocation, useSetDeliveryStatus, useSuggestAllocation } from "../../api/mutations";
-import { useCandidates } from "../../api/queries";
+import { useCandidates, useSeasons } from "../../api/queries";
 import type { Candidates, ShipmentDetail } from "../../api/schemas";
 import { FormAlert } from "../../components/FormAlert";
 import { QueryState } from "../../components/QueryState";
@@ -204,6 +204,8 @@ function AllocationEditor({ detail, candidates }: { detail: ShipmentDetail; cand
 function DeliveriesTable({ detail, canManage }: { detail: ShipmentDetail; canManage: boolean }) {
   const notify = useNotify();
   const setStatus = useSetDeliveryStatus();
+  const seasons = useSeasons();
+  const product = seasons.data?.find((season) => season.id === detail.summary.seasonId)?.productName ?? "fruta";
   const closed = detail.summary.status === "Closed";
   const change = (deliveryId: string, status: string, version: number) =>
     setStatus.mutate(
@@ -242,10 +244,11 @@ function DeliveriesTable({ detail, canManage }: { detail: ShipmentDetail; canMan
                           className={secondaryButton}
                           href={whatsAppLink(
                             delivery.primaryPhone,
-                            d.message(
+                            (delivery.status === "Confirmed" ? d.reminder : d.request)(
                               delivery.producerName,
                               formatDate(detail.summary.shipmentDate),
                               formatKg(delivery.requestedKg),
+                              product,
                             ),
                           )}
                           target="_blank"
@@ -253,7 +256,7 @@ function DeliveriesTable({ detail, canManage }: { detail: ShipmentDetail; canMan
                           aria-label={d.whatsappLabel(delivery.producerName)}
                         >
                           <MessageCircle aria-hidden="true" className="mr-1 size-4" />
-                          {d.whatsapp}
+                          {delivery.status === "Confirmed" ? d.remind : d.whatsapp}
                         </a>
                         <a
                           className={secondaryButton}

@@ -79,3 +79,8 @@ export function whatsAppLink(phone: string, message: string): string {
 export function formatPhone(phone: string): string {
   return phone.length === 8 ? `${phone.slice(0, 4)} ${phone.slice(4)}` : phone;
 }
+
+/** Chat de WhatsApp (`wa.me`) sin mensaje, para un teléfono ya normalizado de 8 dígitos. */
+export function whatsAppChat(phone: string): string {
+  return `https://wa.me/506${phone}`;
+}

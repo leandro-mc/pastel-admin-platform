@@ -13,9 +13,10 @@ import {
   TextField,
 } from "@/core/ui";
 import { useProducers, useSeasons } from "../api/queries";
+import { ContactLinks } from "../components/ContactLinks";
 import { Pager } from "../components/Pager";
 import { QueryState } from "../components/QueryState";
-import { formatKg, formatPhone } from "../format";
+import { formatKg } from "../format";
 import { cosechaPaths, cosechaPermissions } from "../paths";
 import { strings } from "../strings";
 import {
@@ -143,16 +144,11 @@ export function Component() {
                             {producer.pickupPoint ?? strings.common.none}
                           </td>
                           <td className={td}>
-                            {producer.phones.map((phone) => (
-                              <a
-                                key={phone.phone}
-                                href={`tel:+506${phone.phone}`}
-                                aria-label={t.callLabel(producer.name)}
-                                className="mr-3 whitespace-nowrap text-accent-strong underline-offset-2 hover:underline"
-                              >
-                                {formatPhone(phone.phone)}
-                              </a>
-                            ))}
+                            <div className="flex flex-col">
+                              {producer.phones.map((phone) => (
+                                <ContactLinks key={phone.phone} name={producer.name} phone={phone.phone} />
+                              ))}
+                            </div>
                           </td>
                           <td className={tdNumber}>{formatKg(producer.capacityKg)}</td>
                           <td className={td}>

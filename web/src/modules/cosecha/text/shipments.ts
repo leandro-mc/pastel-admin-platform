@@ -148,8 +148,15 @@ export const shipments = {
     call: "Llamar",
     callLabel: (name: string) => `Llamar a ${name}`,
     statusChanged: "Estado de la entrega actualizado.",
-    message: (name: string, date: string, kg: string) =>
-      `Hola ${name}, le escribimos para coordinar la entrega del ${date}. Le solicitamos ${kg}. ¿Nos confirma que puede entregarlos? Gracias.`,
+    remind: "Recordar",
+    thank: "Agradecer",
+    thankLabel: (name: string) => `Agradecer por WhatsApp a ${name}`,
+    request: (name: string, date: string, kg: string, product: string) =>
+      `Hola don/doña ${name}, para el envío del ${date} le pedimos ${kg} de ${product}. ¿Nos confirma por favor?`,
+    reminder: (name: string, date: string, kg: string, product: string) =>
+      `Hola don/doña ${name}, le recordamos la recolección del ${date}: ${kg} de ${product}. ¡Gracias!`,
+    thanks: (name: string, date: string, kg: string) =>
+      `Hola don/doña ${name}, recibimos su entrega del ${date}: ${kg} aceptados. ¡Muchas gracias!`,
   },
   reception: {
     title: "Recepción en el punto de acopio",
