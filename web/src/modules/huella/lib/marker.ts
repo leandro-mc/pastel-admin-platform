@@ -1,10 +1,11 @@
 import { focusClass } from "@/core/ui/styles";
 
 /*
- * Lenguaje visual de Huella (tokens en core/design/module-themes.css), una sola familia de color fría:
- *   petróleo sólido (--accent*) → lo que se puede hacer: botones principales, enlaces, foco, navegación y pestaña activas;
- *   tinte de petróleo (--hl*)   → lo que está elegido: la oferta con la que se trabaja, el tipo de documento, filtros;
- *   tinta (--text)              → el contenido.
+ * Lenguaje visual de Huella (tokens en core/design/module-themes.css), acento neutro:
+ *   grafito sólido (--accent*) → lo que se puede hacer: botones principales, enlaces, foco, navegación y pestaña activas;
+ *   tinte gris (--hl*)         → lo que está elegido: la oferta con la que se trabaja, el tipo de documento, filtros;
+ *   tinta (--text)             → el contenido.
+ * Sin verde, azul ni turquesa en el acento: el color vivo es solo de los estados (éxito, advertencia, error).
  * Lo elegido se distingue de la acción por el valor (tinte claro con borde fuerte frente a relleno sólido) y de un
  * simple hover por el relleno: el hover solo oscurece el borde. Siempre se acompaña de un icono o texto: nunca se
  * comunica solo con color.

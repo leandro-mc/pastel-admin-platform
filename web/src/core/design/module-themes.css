@@ -70,19 +70,20 @@
 }
 
 /*
- * Huella: el fondo y el texto del perfil público (papel gris frío, superficies blancas, tinta casi negra) con una sola
- * familia de color fría para que todo armonice (decisión del propietario, 2026-11-17):
- *   Azul petróleo sólido (--accent*): lo que se puede hacer — botón principal, enlaces, foco, navegación y pestaña activas.
- *   Tinte del mismo petróleo (--hl*): lo que está elegido — oferta con la que se trabaja, tipo de documento, filtros
+ * Huella: el fondo y el texto del perfil público (papel gris frío, superficies blancas, tinta casi negra) con un acento
+ * neutro de baja saturación, sin verde, azul ni turquesa (decisión del propietario, 2026-11-17: el petróleo cansaba la
+ * vista). El color vivo queda solo para los estados.
+ *   Grafito sólido (--accent*): lo que se puede hacer — botón principal, enlaces, foco, navegación y pestaña activas.
+ *   Tinte gris del mismo grafito (--hl*): lo que está elegido — oferta con la que se trabaja, tipo de documento, filtros
  *   activos. Se distingue de la acción por el valor (tinte claro con borde fuerte frente a relleno sólido) y siempre
  *   lleva un icono de verificación; nunca se comunica solo con color.
  * Tres niveles de superficie (modelo de contenedores de Material 3): fondo de la página → panel blanco → tarjeta hundida
  * (--surface-sunken) dentro del panel; así cada grupo se reconoce sin depender de sombras fuertes.
- * Estados con su propio color, siempre con texto o icono: éxito verde, advertencia ámbar, error rojo e información en el
- * mismo petróleo (no es una acción: va en tinte, nunca en sólido).
- * Contrastes (WCAG AA): texto 16,9:1; blanco sobre el petróleo 6,4:1 (fuerte 8,3:1); petróleo fuerte sobre el fondo
- * 7:1; tinta sobre el tinte de lo elegido 14,8:1; texto de cada estado sobre su fondo ≥ 5,6:1; bordes de controles ≥ 3:1
- * sobre las tres superficies.
+ * Estados con su propio color, siempre con texto o icono: éxito verde apagado, advertencia ámbar, error rojo e
+ * información en pizarra gris (no es una acción: va en tinte, nunca en sólido).
+ * Contrastes (WCAG AA): texto 16,9:1; blanco sobre el grafito 10,3:1 (fuerte 14:1); grafito sobre el fondo 8,7:1; tinta
+ * sobre el tinte de lo elegido 14,7:1; texto de cada estado sobre su fondo ≥ 5,6:1; bordes de controles ≥ 3:1 sobre las
+ * tres superficies.
  */
 [data-module="huella"] {
   --app-bg: #eaecf0;
@@ -96,14 +97,14 @@
   --border: #d5dae1;
   --border-strong: #808896;
   --input: #ffffff;
-  --accent: #2b6777;
-  --accent-strong: #1f5562;
-  --accent-soft: #e4eff1;
-  --accent-subtle: #f2f7f8;
+  --accent: #3a414b;
+  --accent-strong: #272c33;
+  --accent-soft: #e6e9ee;
+  --accent-subtle: #f1f3f6;
   --on-accent: #ffffff;
-  --hl: #d3e7eb;
-  --hl-soft: #eef6f7;
-  --hl-edge: #1f5562;
+  --hl: #dfe3e9;
+  --hl-soft: #eef0f4;
+  --hl-edge: #3a414b;
   --hl-ink: #0d1117;
   --danger: #b42318;
   --danger-soft: #fdecea;
@@ -111,15 +112,15 @@
   --success-soft: #e5f3ec;
   --warning: #8a5300;
   --warning-soft: #fdf1d8;
-  --info: #1f5562;
-  --info-soft: #e4eff1;
-  --focus: rgba(43, 103, 119, 0.38);
+  --info: #475262;
+  --info-soft: #eceff3;
+  --focus: rgba(58, 65, 75, 0.38);
   --shadow: 0 16px 40px rgba(13, 17, 23, 0.08);
   --shadow-soft: 0 1px 2px rgba(13, 17, 23, 0.06), 0 4px 14px rgba(13, 17, 23, 0.05);
   --shadow-bottom-nav: 0 -6px 20px rgba(13, 17, 23, 0.06);
 }
 
-/* Oscuro neutro (el del perfil público), con el petróleo y los estados aclarados para fondo oscuro y lo elegido en tinte profundo. */
+/* Oscuro neutro (el del perfil público), con el grafito y los estados aclarados para fondo oscuro y lo elegido en tinte profundo. */
 [data-theme="dark"] [data-module="huella"],
 [data-theme="dark"][data-module="huella"] {
   --app-bg: #0e1116;
@@ -133,14 +134,14 @@
   --border: #2a313c;
   --border-strong: #6b7584;
   --input: #12161c;
-  --accent: #79b8c6;
-  --accent-strong: #79b8c6;
-  --accent-soft: #142a30;
-  --accent-subtle: #111c20;
+  --accent: #c9d0da;
+  --accent-strong: #c9d0da;
+  --accent-soft: #232932;
+  --accent-subtle: #1a1f26;
   --on-accent: #0d1117;
-  --hl: #1f3d45;
-  --hl-soft: #13252a;
-  --hl-edge: #79b8c6;
+  --hl: #2a313b;
+  --hl-soft: #1b2027;
+  --hl-edge: #9aa4b2;
   --hl-ink: #eceff4;
   --danger: #ff8a80;
   --danger-soft: #3a1d1d;
@@ -148,9 +149,9 @@
   --success-soft: #15301f;
   --warning: #f2c26b;
   --warning-soft: #3a2c12;
-  --info: #79b8c6;
-  --info-soft: #142a30;
-  --focus: rgba(121, 184, 198, 0.45);
+  --info: #b4bdca;
+  --info-soft: #1f252d;
+  --focus: rgba(201, 208, 218, 0.5);
   --shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
   --shadow-soft: 0 4px 18px rgba(0, 0, 0, 0.22);
   --shadow-bottom-nav: 0 -6px 22px rgba(0, 0, 0, 0.35);
