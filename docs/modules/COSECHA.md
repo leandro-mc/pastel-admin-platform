@@ -84,11 +84,11 @@ Estados:
 | Ruta | Pantalla | Notas de UX |
 |---|---|---|
 | `/cosecha` | **Hoy** | Próximos envíos, solicitudes sin confirmar, recepciones pendientes, pagos por vencer; accesos grandes a "Nuevo pedido" y "Nuevo envío" |
-| `/cosecha/envios` · `/envios/:id` | Envíos | Lista por estado y fecha; detalle con pestañas *Pedidos · Productores · Recepción · Entrega · Resumen*; asistente de planificación paso a paso |
+| `/cosecha/envios` · `/envios/nuevo` · `/envios/:id` | Envíos | Lista por estado y fecha; planificación en dos pasos (fecha, margen y pedidos; luego el reparto entre productores en el detalle); detalle con las cifras arriba y pestañas *Pedidos · Productores · Recepción · Entrega · Cambios* |
 | `/cosecha/pedidos` · `/pedidos/nuevo` · `/pedidos/:id` | Pedidos | Formulario corto; lista con filtros guardados en la URL |
-| `/cosecha/compradores` · `/:id` | Compradores | Ficha con contactos, ubicación (botón "Abrir en el mapa"), historial |
-| `/cosecha/productores` · `/:id` | Productores | Ficha con capacidad, historial de entregas, saldo |
-| `/cosecha/liquidacion` | Liquidación | Por productor; registrar pagos; fechas previstas |
+| `/cosecha/compradores` · `/nuevo` · `/:id` | Compradores | Ficha con contactos, ubicación (botón "Abrir en el mapa") y acceso a sus pedidos |
+| `/cosecha/productores` · `/nuevo` · `/:id` | Productores | Ficha con capacidad por temporada y acceso a su estado de cuenta (entregas y saldo) |
+| `/cosecha/liquidacion` · `/:producerId` | Liquidación | Saldos por productor y estado de cuenta; registrar pagos (con confirmación) y anularlos con motivo; fechas previstas |
 | `/cosecha/reportes` | Reportes | Selector de período y exportación |
 | `/cosecha/configuracion` | Temporadas, productos y parámetros de pago y reclamos | Solo gestor |
 | `/cosecha/mis-pedidos` | Comprador | Solo lectura, texto grande, estado claro por pedido |
