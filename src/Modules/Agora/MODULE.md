@@ -24,8 +24,18 @@ El rol `Administrator` no recibe los permisos de esta app al sincronizar el cat�
 ## Reglas de servidor (de la ficha)
 
 - Las rutas públicas se marcan con `AllowAnonymousExplicit()` y llevan límite de tasa.
-- Quien edita una pieza no puede otorgarse su propia verificación (regla del servidor).
+- **Sello** (`Domain/Seal.cs`, `SealCalculator`): «Verificado» exige tantas verificaciones vigentes de **personas distintas** para la **versión sustantiva actual** como `Agora:Verification:RequiredReviewers`; si no, «Modificada tras la verificación» (hubo verificaciones vigentes de una versión anterior) o «Pendiente de verificación». Una verificación retirada no cuenta.
+- **Contenido sustantivo** (`SubstantiveContent.Fingerprint()`): titular, resumen, tipo, «Se sabe / No se sabe / Por qué importa», cuerpo y fuentes. Si cambia, `Article.SubstantiveVersion` sube. Etiquetas, categoría, serie y video no cuentan.
+- **Separación de funciones** (`VerificationPolicy`): quien escribió o editó una pieza (`article_contributors`) no puede verificarla (403 `agora.verification.self`), con cualquier cantidad de revisores. Solo se verifican piezas publicadas y una persona verifica una versión una sola vez.
+- **Markdown** (`MarkdownSanitizer`): sin HTML crudo, sin scripts ni imágenes remotas, solo enlaces `http`, `https`, `mailto` o ancla. El cliente además renderiza sin HTML.
+- **Video** (`YouTubeVideoId`): solo se guarda el id de 11 caracteres; una URL de otro sitio o un id manipulado se rechaza.
 - No hay moderación, comentarios, foros ni aprobación previa en el MVP: el autor publica directo; el sello «Verificado» lo da un revisor.
+
+## Configuración
+
+| Clave | Variable de entorno | Valor |
+|---|---|---|
+| `Agora:Verification:RequiredReviewers` | `Agora__Verification__RequiredReviewers` | Revisores distintos necesarios para «Verificado». Por defecto `1`; se acota entre 1 y 10. Cambiarla no requiere código (AG-VER-02). |
 
 ## Endpoints
 
@@ -55,6 +65,16 @@ Migraciones: `InitialAgoraSchema` (esquema vacío) y `AddAgoraContentModel` (tod
 | Código | Estado | Cuándo |
 |---|---|---|
 | `agora.resource.not_found` | 404 | El recurso pedido no existe |
+| `agora.article.not_found`, `agora.category.not_found`, `agora.series.not_found`, `agora.news.not_found`, `agora.error_report.not_found`, `agora.verification.not_found` | 404 | No existe lo pedido (o no es público) |
+| `agora.verification.self` | 403 | Quien escribió o editó la pieza intenta verificarla |
+| `agora.verification.not_published` | 409 | La pieza no está publicada |
+| `agora.verification.duplicate` | 409 | La persona ya verificó esta versión |
+| `agora.verification.already_withdrawn` | 409 | La verificación ya estaba retirada |
+| `agora.article.invalid_state` | 409 | La acción no corresponde al estado de la pieza |
+| `agora.daily_pick.limit` | 409 | «Hoy en 5 minutos» ya tiene 5 piezas |
+| `agora.daily_pick.not_published` | 409 | Solo las piezas publicadas pueden destacarse |
+| `agora.taxonomy.name_taken` | 409 | Ya existe una categoría o serie con ese nombre |
+| `agora.share_card.unavailable` | 404 | La tarjeta PNG depende de CCR-2 y aún no está disponible |
 
 ## Pendiente
 
