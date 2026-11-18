@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Routing;
+using Pastel.Modules.Agora.Features.Editorial;
 using Pastel.Modules.Agora.Features.Interaction;
 using Pastel.Modules.Agora.Features.Public;
 using Pastel.Modules.Agora.Features.Share;
@@ -17,5 +19,12 @@ internal static class AgoraEndpoints
         ShareEndpoints.Map(api);
         SavedAndFollowEndpoints.Map(api);
         ReactionAndReportEndpoints.Map(api);
+
+        var editorial = api.MapGroup("/editorial");
+        ArticleEditorialEndpoints.Map(editorial);
+        DailyPicksEndpoints.Map(editorial);
+        TaxonomyEditorialEndpoints.Map(editorial);
+        NewsEditorialEndpoints.Map(editorial);
+        ErrorReportsEditorialEndpoints.Map(editorial);
     }
 }

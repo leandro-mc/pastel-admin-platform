@@ -63,6 +63,22 @@ Personas registradas: sesión y `agora.saved.manage`, límite de tasa `agora-int
 | `PUT` / `DELETE /articles/{slug}/reactions/{kind}` | `agora.saved.manage` | `kind`: `helped` o `moreSources`; sin contadores públicos |
 | `POST /articles/{slug}/error-reports` | `agora.saved.manage` | `{ text }` de 10 a 500 caracteres; 201 con `{ id }`; máximo 3 avisos pendientes por persona y pieza |
 
+Panel editorial: rutas bajo `/api/agora/editorial`, con `agora.content.manage` salvo que se indique otro permiso.
+
+| Método y ruta | Nota |
+|---|---|
+| `GET /articles` | Todas las piezas (filtros `status`, `q`), con sello y avisos de error pendientes |
+| `GET /articles/{id}` | Pieza completa para el editor, con `version` (token de concurrencia) |
+| `POST /articles` | Crea un borrador; quien lo crea queda como colaborador. Devuelve 201 |
+| `PUT /articles/{id}` | Edita (exige `version`; choque → 409 `agora.article.concurrency`). Si cambia el contenido sustantivo, sube `SubstantiveVersion` y quien edita queda como colaborador |
+| `POST /articles/{id}/publish` | Exige ≥ 2 fuentes, cuerpo, tipo y resumen (400 `agora.article.not_ready`). Auditado |
+| `POST /articles/{id}/unpublish`, `/archive` | Vuelve a borrador / archiva; ambos quitan la pieza de «Hoy en 5 minutos». Auditados |
+| `POST /articles/{id}/corrections` | `{ text }` de 10 a 600 caracteres; solo piezas publicadas. Auditado |
+| `GET` / `PUT /daily-picks` | «Hoy en 5 minutos»: `PUT { articleIds: [...] }` reemplaza el conjunto ordenado (máx. 5, publicadas) |
+| `GET /taxonomy`, `POST` / `PUT /categories`, `POST` / `PUT /series` | Categorías y series con su `id`; el `slug` sale del nombre al crear y no cambia |
+| `POST /news`, `PUT` / `DELETE /news/{id}` | Noticias enlazadas con contexto propio (el listado es el público `GET /news`) |
+| `GET /error-reports`, `POST /error-reports/{id}/resolve` | Bandeja de errores señalados (por defecto, pendientes); `{ outcome: resolved \| dismissed, note }` |
+
 `agora.saved.manage` agrupa lo que hace una persona registrada: guardar, seguir, reaccionar y señalar errores. **Hoy el rol `Member` no recibe ese permiso** (Identity no asigna permisos de módulos al registrarse): hasta que exista esa asignación, quien lo necesite lo recibe por rol o por concesión individual.
 
 Los enums viajan como texto en camelCase (`facts`, `modifiedAfterVerification`).
@@ -102,6 +118,10 @@ Migraciones: `InitialAgoraSchema` (esquema vacío) y `AddAgoraContentModel` (tod
 | `agora.error_report.invalid` | 400 | El aviso de error no tiene entre 10 y 500 caracteres |
 | `agora.error_report.limit` | 409 | Ya hay 3 avisos pendientes de esa persona sobre la pieza |
 | `agora.reaction.invalid` | 400 | La reacción no existe |
+| `agora.article.invalid`, `agora.news.invalid`, `agora.taxonomy.invalid`, `agora.correction.invalid` | 400 | Datos inválidos, con el detalle por campo |
+| `agora.article.not_ready` | 400 | La pieza no cumple la lista de control de publicación |
+| `agora.article.concurrency` | 409 | Otra persona editó la pieza; hay que recargar |
+| `agora.error_report.already_closed` | 409 | El aviso ya fue atendido |
 | `agora.share_card.unavailable` | 404 | La tarjeta PNG depende de CCR-2 y aún no está disponible |
 
 ## Pendiente

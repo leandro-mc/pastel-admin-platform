@@ -33,6 +33,13 @@ internal static class AgoraErrors
     public static readonly Error ArticleInvalidState = Error.Conflict(
         "agora.article.invalid_state", "La pieza no está en un estado que permita esta acción.");
 
+    public static readonly Error ArticleConcurrency = Error.Conflict(
+        "agora.article.concurrency",
+        "Otra persona editó esta pieza mientras usted la trabajaba. Recargue la página para ver los cambios y vuelva a intentar.");
+
+    public static readonly Error ErrorReportClosed = Error.Conflict(
+        "agora.error_report.already_closed", "Ese aviso ya fue atendido.");
+
     public static readonly Error DailyPickLimit = Error.Conflict(
         "agora.daily_pick.limit", "«Hoy en 5 minutos» admite hasta 5 piezas. Quite una antes de agregar otra.");
 

@@ -62,3 +62,9 @@ internal sealed record HomeDto(
     IReadOnlyList<NewsDto> News);
 
 internal sealed record TaxonomyDto(IReadOnlyList<CategoryDto> Categories, IReadOnlyList<SeriesDto> Series, IReadOnlyList<TagDto> Tags);
+
+internal sealed record EditorialListItemDto(ArticleCardDto Card, string Status, DateTimeOffset UpdatedAt, int? DailyPickOrder, int OpenErrorReports);
+
+/// <summary>Pieza completa para el editor. <c>Version</c> es el token de concurrencia que se devuelve en el <c>PUT</c>.</summary>
+internal sealed record EditorialArticleDto(
+    ArticleDetailDto Detail, string Status, long Version, Guid CategoryId, Guid? SeriesId, int? DailyPickOrder, int SubstantiveVersion);

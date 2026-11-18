@@ -91,6 +91,12 @@ internal static partial class MarkdownSanitizer
             && !string.IsNullOrEmpty(uri.Host);
     }
 
+    /// <summary>Dirección web <c>http</c> o <c>https</c> segura (fuentes y noticias enlazadas).</summary>
+    public static bool IsHttpUrl(string? url) =>
+        IsAllowedUrl(url)
+        && Uri.TryCreate(url, UriKind.Absolute, out var uri)
+        && (uri.Scheme == Uri.UriSchemeHttps || uri.Scheme == Uri.UriSchemeHttp);
+
     private static string SanitizeProse(string text)
     {
         var current = text;
