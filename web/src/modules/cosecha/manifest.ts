@@ -1,4 +1,4 @@
-import { ClipboardList, Package, Settings, Sprout, Store, Truck, Users } from "lucide-react";
+import { ClipboardList, Package, Settings, Sprout, Store, Truck, Users, Wallet } from "lucide-react";
 import type { ModuleManifest } from "@/core/modules/types";
 import { cosechaPermissions } from "./paths";
 import { strings } from "./strings";
@@ -13,6 +13,12 @@ export default {
   access: "permission",
   requiredPermission: cosechaPermissions.access,
   nav: [
+    {
+      label: strings.settlements.title,
+      to: "liquidacion",
+      icon: Wallet,
+      requiredPermission: cosechaPermissions.settlementsRead,
+    },
     {
       label: strings.shipments.title,
       to: "envios",
@@ -56,6 +62,12 @@ export default {
   ],
   routes: [
     { index: true, lazy: () => import("./pages/HomePage") },
+    {
+      path: "liquidacion",
+      crumb: strings.settlements.title,
+      lazy: () => import("./pages/SettlementPage"),
+    },
+    { path: "liquidacion/:producerId", lazy: () => import("./pages/StatementPage") },
     {
       path: "envios",
       crumb: strings.shipments.title,
