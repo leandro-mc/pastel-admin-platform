@@ -35,8 +35,20 @@ El rol `Administrator` no recibe los permisos de esta app al sincronizar el cat�
 
 ## Datos
 
-Esquema `agora` sin tablas. `AgoraDbContext` usa `HasDefaultSchema("agora")` y su historial de migraciones vive en `agora.__EFMigrationsHistory`.
-**La migración inicial la genera Build** con `dotnet ef` (ver `Persistence/AgoraDbContextFactory.cs`); mientras no exista, el host no arranca con este módulo incluido.
+Esquema `agora` (tablas en snake_case, ids Guid v7 asignados por el servidor, fechas en UTC, sin claves foráneas hacia otros esquemas). `AgoraDbContext` usa `HasDefaultSchema("agora")` y su historial vive en `agora.__EFMigrationsHistory`.
+
+| Tabla | Contenido |
+|---|---|
+| `categories`, `series`, `tags`, `article_tags` | Taxonomía de las piezas |
+| `articles` | Pieza: titular, «En 20 segundos», tipo (`Facts`/`Analysis`/`Opinion`), «Se sabe / No se sabe / Por qué importa», cuerpo Markdown ya sanitizado, estado (`Draft`/`Published`/`Archived`), `SubstantiveVersion`, `DailyPickOrder` (1 a 5, «Hoy en 5 minutos») y `xmin` como token de concurrencia |
+| `article_contributors` | Quién escribió o editó la pieza (no puede verificarla) |
+| `sources`, `video_embeds`, `corrections` | Fuentes, video (solo el id de YouTube) y correcciones visibles |
+| `verifications` | Revisión de una persona: alcance, nota, estado (`Active`/`Withdrawn`) y versión sustantiva que avaló |
+| `news_links` | Noticias enlazadas con contexto propio |
+| `saved_articles`, `followed_categories`, `reactions`, `error_reports` | Interacción de personas registradas |
+
+Migraciones: `InitialAgoraSchema` (esquema vacío) y `AddAgoraContentModel` (todas las tablas).
+**Por verificar:** `AddAgoraContentModel`, su `Designer` y el `ModelSnapshot` se escribieron a mano (el entorno de desarrollo no tenía `dotnet`). Antes de integrar, Build debe ejecutar `dotnet ef migrations has-pending-model-changes` (o regenerarla con `dotnet ef migrations add`) y aplicarla a una base real.
 
 ## Códigos de error
 
