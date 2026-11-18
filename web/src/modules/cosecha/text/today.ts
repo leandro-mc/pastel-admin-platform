@@ -1,0 +1,23 @@
+export const today = {
+  title: "Hoy",
+  description: "Lo que requiere su atención ahora.",
+  planShipment: "Planificar envío",
+  newOrder: "Nuevo pedido",
+  shipmentsTitle: "Envíos abiertos",
+  shipmentsEmpty: "No hay envíos abiertos. Planifique el siguiente.",
+  open: "Abrir envío",
+  target: "Objetivo",
+  requested: "Solicitado",
+  difference: "Diferencia",
+  unconfirmed: (count: number) =>
+    count === 0 ? "Todos los productores confirmados" : `${count} productor(es) sin confirmar`,
+  receptions: (count: number) => (count === 0 ? "Recepciones al día" : `${count} recepción(es) por registrar`),
+  deliveries: (count: number) => (count === 0 ? "Entregas al día" : `${count} entrega(s) por registrar`),
+  paymentsTitle: "Pagos de los próximos 7 días",
+  paymentsEmpty: "No hay pagos previstos en los próximos 7 días.",
+  producer: "Productor",
+  amount: "Por pagar",
+  dueOn: "Fecha prevista",
+  payNow: "Ver estado de cuenta",
+  noAccess: "Su cuenta todavía no tiene pantallas disponibles en Cosecha. Pida acceso a quien administra las cuentas.",
+} as const;
