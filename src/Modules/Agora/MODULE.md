@@ -39,9 +39,19 @@ El rol `Administrator` no recibe los permisos de esta app al sincronizar el cat�
 
 ## Endpoints
 
+Todas las rutas cuelgan de `/api/agora`. Las públicas son anónimas (`AllowAnonymousExplicit`), solo ven piezas **publicadas** y llevan el límite de tasa `agora-public` (120 por minuto por IP).
+
 | Método y ruta | Permiso | Nota |
 |---|---|---|
-| `GET /api/agora/ping` | `agora.access` | Comprobación del esqueleto; se retira con la primera funcionalidad real |
+| `GET /home` | Público | Inicio finito: «Hoy en 5 minutos» (hasta 5 elegidas por el equipo), recientes con tope de 12, series, categorías y 5 noticias |
+| `GET /taxonomy` | Público | Categorías, series y etiquetas con su cantidad de piezas publicadas |
+| `GET /articles` | Público | Filtros `category`, `series`, `tag` (slugs) y `q` (título y etiquetas); paginado; con `series` ordena por posición en la serie |
+| `GET /articles/{slug}` | Público | Detalle con fuentes, video, correcciones y sello. Borrador o archivada: 404 |
+| `GET /news` | Público | Noticias enlazadas (destacadas primero); filtro `topic` |
+| `GET /share/{slug}` | Público | HTML de vista previa (`og:*` y JSON-LD) que lleva a `/agora/p/{slug}`; el sello viaja en la descripción |
+| `GET /share/{slug}/card.png` | Público | Tarjeta PNG detrás de `IShareCardRenderer`; 404 `agora.share_card.unavailable` hasta CCR-2 |
+
+Los enums viajan como texto en camelCase (`facts`, `modifiedAfterVerification`).
 
 ## Datos
 
@@ -78,4 +88,7 @@ Migraciones: `InitialAgoraSchema` (esquema vacío) y `AddAgoraContentModel` (tod
 
 ## Pendiente
 
-Todo lo funcional de la ficha de producto, empezando por el inventario de migración si aplica.
+- Interacción de personas registradas, panel editorial y verificación (siguientes bloques de la F1).
+- Tarjetas PNG: dependen de CCR-2 (`Pastel.Documents`). Hoy `UnavailableShareCardRenderer`; para activarlas se registra otra implementación de `IShareCardRenderer`.
+- Caché HTTP de lecturas públicas: la plataforma fuerza `Cache-Control: no-store` en toda la API (`SecurityHeadersMiddleware`), así que no se puede fijar desde el módulo; es una decisión de zona compartida.
+- HTML con metadatos en la ruta pública `/agora/p/{slug}` (AG-SEO-01): requiere que nginx sirva metadatos a rastreadores; es zona compartida. Mientras tanto el enlace para compartir es `/api/agora/share/{slug}`.
