@@ -7,7 +7,7 @@ using Pastel.Modules.Huella.Domain;
 namespace Pastel.Modules.Huella.Cv;
 
 /// <summary>Qué CV se pide: nivel, papel y los idiomas a generar (uno o los dos; cada idioma es una versión completa).</summary>
-internal sealed record CvComposeRequest(string Level, string Paper, IReadOnlyList<string> Languages, string Format = CvFormats.Standard)
+internal sealed record CvComposeRequest(string Level, string Paper, IReadOnlyList<string> Languages, string Format = CvFormats.Standard, bool HighlightAi = false)
 {
     public bool IsCompetencies => Format == CvFormats.Competencies;
 }
@@ -87,6 +87,14 @@ internal static class CvAiCompose
         sb.AppendLine("- Calificativos que debilitan una cifra: «estimado», «aproximado», «aprox.», «según mi estimación», «sin medición formal» o similares. Las cifras del banco se escriben de forma directa («Reduje de 40 a menos de 3 minutos el tiempo de emisión…»); si preguntan cómo se midió, la persona lo explica en la entrevista.");
         sb.AppendLine("- Conteos de commits, porcentajes de autoría o cualquier métrica de historial de un repositorio: no son logros. Mide por resultados, alcance, usuarios, tiempo, calidad o funcionalidades.");
         sb.AppendLine("- Remuneración, horas semanales, si un cargo fue o no empleo formal, ni otras aclaraciones administrativas.");
+        if (request.HighlightAi)
+        {
+            sb.AppendLine("- Uso de IA: la oferta (o el enfoque) menciona IA, así que SÍ destaca con hechos la experiencia con IA del banco: integración de APIs de IA generativa y desarrollo dirigido con agentes de IA (definir requerimientos, reglas y arquitectura, revisar y validar). Sin afirmar que la persona escribió a mano todo el código.");
+        }
+        else
+        {
+            sb.AppendLine("- Uso de IA: la oferta (o el enfoque) NO menciona IA. No le des protagonismo: no escribas «con asistencia de IA», «con agentes de IA», «asistido por IA», «bajo reglas escritas» ni nada parecido, y no elijas habilidades o competencias sobre trabajar con IA (desarrollo asistido por IA, prompt engineering, agentes). Describe cada proyecto por lo que logra y por la tecnología que la oferta valora. En proyectos hechos con agentes de IA usa verbos que no atribuyan la escritura manual de todo el código: «Diseñé», «Definí la arquitectura», «Dirigí el desarrollo», «Integré», «Validé». Una función de IA de un producto (p. ej. integrar la API de OpenAI) solo vale como integración de APIs si aporta a la oferta.");
+        }
         sb.AppendLine();
         sb.AppendLine("## Cómo escribir cada parte");
         sb.AppendLine("- `headline`: el título del puesto de la oferta (p. ej. «Desarrollador Fullstack») o, sin oferta, el rol que mejor vende a la persona, más 3 o 4 tecnologías clave que el banco respalde. Sin «junior», institución, año ni paréntesis.");
@@ -201,7 +209,7 @@ internal static class CvAiCompose
         var data = bank.Data;
         var records = bank.Records;
 
-        var headline = CvPolish.Header(TextInput.CleanLine(Str(item, "headline")), data);
+        var headline = Ai(CvPolish.Header(TextInput.CleanLine(Str(item, "headline")), data), request);
         if (CvGuardian.ValidateWritten(headline, HeadlineMax, bank.Numbers, data) is { } headlineReason)
         {
             warnings.Add($"Titular: {headlineReason} Se conserva el de su perfil.");
@@ -215,7 +223,7 @@ internal static class CvAiCompose
             Header = new CvHeader { Name = data.Header.Name, Headline = headline, ContactLine1 = [.. data.Header.ContactLine1], ContactLine2 = [.. data.Header.ContactLine2] },
         };
 
-        var summary = CvPolish.Header(TextInput.CleanLine(Str(item, "summary")), data);
+        var summary = Ai(CvPolish.Header(TextInput.CleanLine(Str(item, "summary")), data), request);
         if (CvGuardian.ValidateWritten(summary, int.MaxValue, bank.Numbers, data) is { } summaryReason)
         {
             warnings.Add($"Perfil: {summaryReason}");
@@ -225,7 +233,7 @@ internal static class CvAiCompose
             doc.Summary = summary;
         }
 
-        doc.Experience = Experiences(item, language, bank, limits, warnings);
+        doc.Experience = Experiences(item, language, bank, limits, warnings, request.HighlightAi);
 
         // Proyectos: en el orden de importancia de la IA (ninguno en el formato de competencias).
         var projectIds = new HashSet<Guid>();
@@ -240,9 +248,9 @@ internal static class CvAiCompose
             var cv = new CvEntry
             {
                 Title = project.Name,
-                Subtitle = StackOf(entry, project.Stack, bank),
+                Subtitle = StackOf(entry, project.Stack, bank, request.HighlightAi),
                 LineBudget = doc.Projects.Count < limits.ProjectLines.Count ? limits.ProjectLines[doc.Projects.Count] : 0,
-                Bullets = Bullets(entry, [project.Id], project.Name, bank, limits, warnings),
+                Bullets = Bullets(entry, [project.Id], project.Name, bank, limits, warnings, request.HighlightAi),
             };
             if (cv.Bullets.Count > 0)
             {
@@ -251,8 +259,18 @@ internal static class CvAiCompose
         }
 
         doc.Skills = Skills(item, bank, limits, warnings);
-        CompleteSkills(doc, bank, limits, analysis, warnings);
-        doc.Competencies = request.IsCompetencies ? Competencies(item, bank, limits, labels, warnings) : [];
+        if (!request.HighlightAi)
+        {
+            foreach (var group in doc.Skills)
+            {
+                group.Items.RemoveAll(CvPolish.IsAiSkill);
+            }
+
+            doc.Skills.RemoveAll(g => g.Items.Count == 0);
+        }
+
+        CompleteSkills(doc, bank, limits, analysis, warnings, request.HighlightAi);
+        doc.Competencies = request.IsCompetencies ? Competencies(item, bank, limits, labels, warnings, request.HighlightAi) : [];
 
         var seenEducation = new HashSet<Guid>();
         foreach (var entry in Items(item, "education"))
@@ -318,7 +336,7 @@ internal static class CvAiCompose
     /// (<c>alsoIds</c>). El cargo vigente siempre aparece: si la IA lo omitió se arma con los logros del banco. Se muestran de la
     /// más reciente a la más antigua y cada una recibe el presupuesto de líneas de su posición.
     /// </summary>
-    private static List<CvEntry> Experiences(JsonElement item, string language, AiBank bank, CvLimits limits, List<string> warnings)
+    private static List<CvEntry> Experiences(JsonElement item, string language, AiBank bank, CvLimits limits, List<string> warnings, bool highlightAi = true)
     {
         var records = bank.Records;
         var used = new HashSet<Guid>();
@@ -384,7 +402,7 @@ internal static class CvAiCompose
                 Location = latest.Location,
                 Context = ordered.All(e => e.EmploymentType == "internship") ? ContextOf(ordered, Str(entry, "context"), language, bank) : null,
                 Dates = MonthDate.CvRange(start, end, language),
-                Bullets = Bullets(entry, group.Select(g => g.Id).ToList(), $"{latest.Company} · {latest.Role}", bank, limits, warnings),
+                Bullets = Bullets(entry, group.Select(g => g.Id).ToList(), $"{latest.Company} · {latest.Role}", bank, limits, warnings, highlightAi),
             };
             if (cv.Bullets.Count == 0)
             {
@@ -540,7 +558,7 @@ internal static class CvAiCompose
     /// nombre: la evidencia la dan las viñetas de experiencia. El nombre puede venir traducido y pasa por el guardián; las
     /// marcadas «siempre en el CV» entran aunque la IA no las elija (desplazan a la última).
     /// </summary>
-    private static List<CvCompetencyGroup> Competencies(JsonElement item, AiBank bank, CvLimits limits, CvLabels labels, List<string> warnings)
+    private static List<CvCompetencyGroup> Competencies(JsonElement item, AiBank bank, CvLimits limits, CvLabels labels, List<string> warnings, bool highlightAi = true)
     {
         var result = new List<CvCompetencyGroup>();
         var root = item.ValueKind == JsonValueKind.Object && item.TryGetProperty("competencies", out var found) && found.ValueKind == JsonValueKind.Object
@@ -575,6 +593,11 @@ internal static class CvAiCompose
                     name = competency.Name;
                 }
 
+                if (!highlightAi && !competency.AlwaysInclude && CvPolish.MentionsAi(competency.Name))
+                {
+                    continue;
+                }
+
                 group.Items.Add(new CvCompetency { Id = id, Name = name });
             }
 
@@ -604,6 +627,9 @@ internal static class CvAiCompose
         return result;
     }
 
+    /// <summary>Sin el uso de IA como protagonista cuando la oferta no la pide.</summary>
+    private static string Ai(string text, CvComposeRequest request) => request.HighlightAi ? text : CvPolish.WithoutAiAssistance(text);
+
     /// <summary>Nivel de idioma en palabras con su marco común («Intermedio (B1)»), si la IA o el banco solo traen el código.</summary>
     internal static string LevelText(string level, string language)
     {
@@ -626,7 +652,7 @@ internal static class CvAiCompose
     /// muestra el CV: son las palabras que compara el ATS y la IA a veces entrega pocas. Solo habilidades visibles del banco,
     /// dentro de los topes del nivel; se agregan al grupo de su categoría, a uno con espacio o a uno nuevo.
     /// </summary>
-    private static void CompleteSkills(CvDocument doc, AiBank bank, CvLimits limits, OfferAnalysis? analysis, List<string> warnings)
+    private static void CompleteSkills(CvDocument doc, AiBank bank, CvLimits limits, OfferAnalysis? analysis, List<string> warnings, bool highlightAi = true)
     {
         if (limits.SkillGroups == 0)
         {
@@ -644,6 +670,7 @@ internal static class CvAiCompose
         var candidates = (analysis?.Terms ?? []).OrderByDescending(t => t.Weight).Select(t => Find(t.Term))
             .Concat(doc.Projects.SelectMany(p => p.Subtitle.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)).Select(Find))
             .OfType<BankSkill>()
+            .Where(s => highlightAi || !CvPolish.IsAiSkill(s.Name))
             .DistinctBy(s => s.Name)
             .Where(s => !present.Contains(s.Name))
             .ToList();
@@ -683,17 +710,18 @@ internal static class CvAiCompose
     }
 
     /// <summary>Tecnologías del proyecto: las que eligió la IA (solo las que el banco menciona, hasta 90 caracteres); si no, las primeras del banco.</summary>
-    private static string StackOf(JsonElement entry, string? bankStack, AiBank bank)
+    private static string StackOf(JsonElement entry, string? bankStack, AiBank bank, bool highlightAi = true)
     {
         var chosen = TextInput.CleanLine(Str(entry, "stack"))
             .Split([',', ';'], StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
             .Where(bank.Data.Mentions)
+            .Where(t => highlightAi || !CvPolish.IsAiSkill(t))
             .Distinct(StringComparer.OrdinalIgnoreCase);
         var stack = CvComposer.ShortStack(string.Join(", ", chosen));
         return stack.Length > 0 ? stack : CvComposer.ShortStack(bankStack);
     }
 
-    private static List<CvBullet> Bullets(JsonElement entry, IReadOnlyList<Guid> sourceIds, string label, AiBank bank, CvLimits limits, List<string> warnings)
+    private static List<CvBullet> Bullets(JsonElement entry, IReadOnlyList<Guid> sourceIds, string label, AiBank bank, CvLimits limits, List<string> warnings, bool highlightAi = true)
     {
         var known = sourceIds.SelectMany(bank.NumbersOf).ToHashSet(StringComparer.Ordinal);
         var bullets = new List<CvBullet>();
@@ -701,6 +729,7 @@ internal static class CvAiCompose
         foreach (var raw in Items(entry, "bullets"))
         {
             var text = CvPolish.Strength(TextInput.CleanLine(raw.ValueKind == JsonValueKind.String ? raw.GetString() : Str(raw, "text")));
+            text = highlightAi ? text : CvPolish.WithoutAiAssistance(text);
             var reason = text.Length < BulletMin
                 ? "Viñeta demasiado corta o vacía."
                 : CvGuardian.ValidateWritten(text, limits.BulletMax, known, bank.Data);
@@ -712,6 +741,7 @@ internal static class CvAiCompose
 
             // Variante corta de una línea: la usa el ajuste a página antes de retirar la viñeta. Pasa el mismo guardián.
             var shortText = raw.ValueKind == JsonValueKind.Object ? CvPolish.Strength(TextInput.CleanLine(Str(raw, "short"))) : string.Empty;
+            shortText = highlightAi ? shortText : CvPolish.WithoutAiAssistance(shortText);
             string? variant = shortText.Length >= BulletMin && shortText.Length < text.Length
                 && CvGuardian.ValidateWritten(shortText, limits.BulletCharsPerLine, known, bank.Data) is null
                     ? shortText

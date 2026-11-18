@@ -25,4 +25,21 @@ public sealed class CvPolishTests
 
         Assert.NotNull(CvGuardian.ValidateWritten("Documenté la auditoría con 79 commits propios.", 200, new HashSet<string> { "79" }, bank.Data));
     }
+
+    // Decisión del propietario: la asistencia de IA solo se destaca si la oferta la menciona; si no, se quita la frase y el
+    // hecho queda igual (sin tocar nombres como «.NET»).
+    [Fact]
+    public void AiAssistanceIsOnlyHighlightedWhenTheOfferMentionsAi()
+    {
+        Assert.False(CvPolish.MentionsAi("React en el frontend, Java en el backend, APIs REST, Docker y Kafka."));
+        Assert.True(CvPolish.MentionsAi("Experiencia con IA generativa y LLMs."));
+        Assert.Equal(
+            "Desarrollé una plataforma web con más de 50 endpoints REST.",
+            CvPolish.WithoutAiAssistance("Desarrollé con asistencia de IA una plataforma web con más de 50 endpoints REST."));
+        Assert.Equal(
+            "Dirijo el desarrollo de una plataforma modular en React 19 y .NET 10.",
+            CvPolish.WithoutAiAssistance("Dirijo con agentes de IA, bajo reglas escritas, el desarrollo de una plataforma modular en React 19 y .NET 10."));
+        Assert.True(CvPolish.IsAiSkill("Prompt Engineering"));
+        Assert.False(CvPolish.IsAiSkill("React"));
+    }
 }

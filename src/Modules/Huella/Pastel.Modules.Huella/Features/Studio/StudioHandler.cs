@@ -497,7 +497,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
             }
         }
 
-        return new ComposeContext(profile.Value, loaded.Bank, new CvComposeRequest(level, paper, languages, format), existing, offer, offer is null ? focus : null, name);
+        return new ComposeContext(profile.Value, loaded.Bank, new CvComposeRequest(level, paper, languages, format, CvPolish.MentionsAi(offer?.RawText ?? focus)), existing, offer, offer is null ? focus : null, name);
     }
 
     /// <summary>Prompt del CV: oferta (o enfoque) y banco en crudo. Es el mismo texto para el proveedor configurado y para una IA externa.</summary>
