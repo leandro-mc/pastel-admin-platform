@@ -102,14 +102,40 @@ export function SectionEditor<S extends { id: string }, R extends VisibleRow>({
       actions={<SaveStatus state={list.state} />}
     >
       <div className="flex flex-col gap-4">
-        {list.rows.length > 0 ? (
-          <SearchField
-            value={query}
-            onChange={setQuery}
-            label={searchLabel}
-            placeholder={strings.list.search}
-          />
-        ) : null}
+        {/* Agregar arriba, junto al buscador, para no tener que bajar hasta el final de la lista. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          {list.rows.length > 0 ? (
+            <div className="min-w-0 flex-1">
+              <SearchField
+                value={query}
+                onChange={setQuery}
+                label={searchLabel}
+                placeholder={strings.list.search}
+              />
+            </div>
+          ) : null}
+          <div className="shrink-0">
+            <Button
+              variant="secondary"
+              type="button"
+              disabled={list.rows.length >= maxItems}
+              onClick={() => {
+                const row = blank();
+                setQuery("");
+                setOpen((current) => new Set(current).add(row.key));
+                list.add(row);
+                // El elemento nuevo queda al final: se lleva la vista hasta él.
+                window.setTimeout(() => {
+                  document
+                    .querySelector(`[data-row-key="${CSS.escape(row.key)}"]`)
+                    ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                }, 50);
+              }}
+            >
+              {addLabel}
+            </Button>
+          </div>
+        </div>
         {list.rows.length === 0 ? (
           <p className="text-sm text-muted">{empty}</p>
         ) : null}
@@ -117,8 +143,8 @@ export function SectionEditor<S extends { id: string }, R extends VisibleRow>({
           <p className="text-sm text-muted">{strings.list.noResults}</p>
         ) : null}
         {shown.map((row) => (
+          <div key={row.key} data-row-key={row.key}>
           <Collapsible
-            key={row.key}
             title={heading(row) || addLabel}
             expanded={open.has(row.key)}
             onToggle={() => toggle(row.key)}
@@ -158,22 +184,8 @@ export function SectionEditor<S extends { id: string }, R extends VisibleRow>({
               {extra ? extra(row) : null}
             </div>
           </Collapsible>
+          </div>
         ))}
-        <div>
-          <Button
-            variant="secondary"
-            type="button"
-            disabled={list.rows.length >= maxItems}
-            onClick={() => {
-              const row = blank();
-              setQuery("");
-              setOpen((current) => new Set(current).add(row.key));
-              list.add(row);
-            }}
-          >
-            {addLabel}
-          </Button>
-        </div>
         <ErrorNotice error={list.error} />
       </div>
 
