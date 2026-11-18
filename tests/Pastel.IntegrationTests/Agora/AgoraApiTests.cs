@@ -149,6 +149,55 @@ public sealed class AgoraApiTests : IClassFixture<IdentityApiFactory>
         Assert.Equal("pending", seal.GetProperty("state").GetString());
     }
 
+    [RequiresPostgresFact]
+    public async Task Nobody_verifies_their_own_piece_and_verifying_needs_the_review_permission()
+    {
+        using var author = QaSupport.NewClient(_factory);
+        await QaSupport.LoginAsync(author, OwnerEmail, OwnerPassword);
+        var id = await CreateAndPublishAsync(author);
+
+        // La persona que escribió la pieza no puede verificarla, aunque tenga el permiso de revisión (el Owner lo tiene).
+        using var self = await QaSupport.SendAsync(
+            author, HttpMethod.Post, $"/api/agora/editorial/articles/{id}/verify", new { scope = "Revisé las fuentes y las cifras citadas." });
+        var problem = await QaSupport.AssertProblemAsync(self, HttpStatusCode.Forbidden);
+        Assert.Equal("agora.verification.self", problem.GetProperty("code").GetString());
+
+        using var member = QaSupport.NewClient(_factory);
+        await QaSupport.LoginAsync(member, MemberEmail, MemberPassword);
+        Assert.Equal(
+            HttpStatusCode.Forbidden,
+            await QaSupport.StatusOfAsync(member, HttpMethod.Post, $"/api/agora/editorial/articles/{id}/verify", new { scope = "Revisé las fuentes y las cifras citadas." }));
+        Assert.Equal(HttpStatusCode.Forbidden, await QaSupport.StatusOfAsync(member, HttpMethod.Get, "/api/agora/editorial/review"));
+    }
+
+    private async Task<Guid> CreateAndPublishAsync(HttpClient author)
+    {
+        var suffix = Guid.NewGuid().ToString("N")[..8];
+        using var category = await QaSupport.SendAsync(author, HttpMethod.Post, "/api/agora/editorial/categories", new { name = $"Sociedad {suffix}" });
+        var categoryId = (await ReadAsync(category)).GetProperty("id").GetGuid();
+        using var created = await QaSupport.SendAsync(
+            author,
+            HttpMethod.Post,
+            "/api/agora/editorial/articles",
+            new
+            {
+                title = $"Pieza para verificar {suffix}",
+                summary = "Un resumen breve de la pieza.",
+                contentType = "analysis",
+                body = "Cuerpo de la pieza.",
+                categoryId,
+                sources = new object[]
+                {
+                    new { title = "Fuente uno", url = "https://example.org/uno" },
+                    new { title = "Fuente dos", url = "https://example.org/dos" },
+                },
+            });
+        Assert.Equal(HttpStatusCode.Created, created.StatusCode);
+        var id = (await ReadAsync(created)).GetProperty("detail").GetProperty("card").GetProperty("id").GetGuid();
+        Assert.Equal(HttpStatusCode.OK, await QaSupport.StatusOfAsync(author, HttpMethod.Post, $"/api/agora/editorial/articles/{id}/publish"));
+        return id;
+    }
+
     private static async Task<JsonElement> ReadAsync(HttpResponseMessage response)
     {
         using var document = JsonDocument.Parse(await response.Content.ReadAsStringAsync());

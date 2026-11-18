@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Routing;
 using Pastel.Modules.Agora.Features.Editorial;
 using Pastel.Modules.Agora.Features.Interaction;
 using Pastel.Modules.Agora.Features.Public;
+using Pastel.Modules.Agora.Features.Review;
 using Pastel.Modules.Agora.Features.Share;
 
 namespace Pastel.Modules.Agora.Features;
@@ -26,5 +27,6 @@ internal static class AgoraEndpoints
         TaxonomyEditorialEndpoints.Map(editorial);
         NewsEditorialEndpoints.Map(editorial);
         ErrorReportsEditorialEndpoints.Map(editorial);
+        ReviewEndpoints.Map(editorial);
     }
 }

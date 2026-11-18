@@ -79,6 +79,15 @@ Panel editorial: rutas bajo `/api/agora/editorial`, con `agora.content.manage` s
 | `POST /news`, `PUT` / `DELETE /news/{id}` | Noticias enlazadas con contexto propio (el listado es el público `GET /news`) |
 | `GET /error-reports`, `POST /error-reports/{id}/resolve` | Bandeja de errores señalados (por defecto, pendientes); `{ outcome: resolved \| dismissed, note }` |
 
+Revisión (`agora.content.review`), bajo `/api/agora/editorial`:
+
+| Método y ruta | Nota |
+|---|---|
+| `GET /review` | Cola: piezas publicadas sin sello «Verificado» para su versión actual (modificadas primero, luego las que más esperan). Excluye lo que la persona escribió o editó y lo que ya verificó en esa versión |
+| `GET /review/verifications` | Verificaciones vigentes con su pieza, para revisarlas o retirarlas |
+| `POST /articles/{id}/verify` | `{ scope, note? }`; el alcance (10 a 500 caracteres) es obligatorio. 403 `agora.verification.self` si la persona escribió o editó la pieza. 201. Auditado |
+| `POST /verifications/{id}/withdraw` | `{ note }` obligatoria (10 a 500 caracteres); 204. Auditado |
+
 `agora.saved.manage` agrupa lo que hace una persona registrada: guardar, seguir, reaccionar y señalar errores. **Hoy el rol `Member` no recibe ese permiso** (Identity no asigna permisos de módulos al registrarse): hasta que exista esa asignación, quien lo necesite lo recibe por rol o por concesión individual.
 
 Los enums viajan como texto en camelCase (`facts`, `modifiedAfterVerification`).
@@ -119,6 +128,7 @@ Migraciones: `InitialAgoraSchema` (esquema vacío) y `AddAgoraContentModel` (tod
 | `agora.error_report.limit` | 409 | Ya hay 3 avisos pendientes de esa persona sobre la pieza |
 | `agora.reaction.invalid` | 400 | La reacción no existe |
 | `agora.article.invalid`, `agora.news.invalid`, `agora.taxonomy.invalid`, `agora.correction.invalid` | 400 | Datos inválidos, con el detalle por campo |
+| `agora.verification.invalid` | 400 | Falta el alcance revisado o la nota de retiro |
 | `agora.article.not_ready` | 400 | La pieza no cumple la lista de control de publicación |
 | `agora.article.concurrency` | 409 | Otra persona editó la pieza; hay que recargar |
 | `agora.error_report.already_closed` | 409 | El aviso ya fue atendido |
@@ -126,7 +136,6 @@ Migraciones: `InitialAgoraSchema` (esquema vacío) y `AddAgoraContentModel` (tod
 
 ## Pendiente
 
-- Panel editorial y verificación (siguientes bloques de la F1).
 - Tarjetas PNG: dependen de CCR-2 (`Pastel.Documents`). Hoy `UnavailableShareCardRenderer`; para activarlas se registra otra implementación de `IShareCardRenderer`.
 - Caché HTTP de lecturas públicas: la plataforma fuerza `Cache-Control: no-store` en toda la API (`SecurityHeadersMiddleware`), así que no se puede fijar desde el módulo; es una decisión de zona compartida.
 - HTML con metadatos en la ruta pública `/agora/p/{slug}` (AG-SEO-01): requiere que nginx sirva metadatos a rastreadores; es zona compartida. Mientras tanto el enlace para compartir es `/api/agora/share/{slug}`.
