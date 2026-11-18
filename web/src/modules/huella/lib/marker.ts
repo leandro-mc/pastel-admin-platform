@@ -2,16 +2,17 @@ import { focusClass } from "@/core/ui/styles";
 
 /*
  * Lenguaje visual de Huella (tokens en core/design/module-themes.css):
- *   azul (--accent*)      → lo que se puede hacer: botones principales, enlaces, foco, navegación y pestaña activas;
- *   marcador (--hl*)      → lo que está elegido o destacado: la oferta con la que se trabaja, el tipo de documento, filtros;
- *   tinta (--text)        → el contenido.
+ *   petróleo (--accent*)  → lo que se puede hacer: botones principales, enlaces, foco, navegación y pestaña activas;
+ *   dorado (--hl*)        → lo que está elegido o destacado: la oferta con la que se trabaja, el tipo de documento, filtros;
+ *   borgoña (--brand)     → el título de cada página (lo aplica module-themes.css);
+ *   grafito (--text)      → el contenido.
  * Lo elegido siempre se acompaña de un icono o texto: nunca se comunica solo con color.
  */
 
 /** Superficie marcada: la oferta seleccionada o la barra con la oferta de trabajo. */
 export const markedSurface = "border-[var(--hl-edge)] bg-[var(--hl-soft)]";
 
-/** Etiqueta pequeña con el marcador («Seleccionada»). */
+/** Etiqueta pequeña con el dorado («Seleccionada»). */
 export const markedBadge =
   "inline-flex items-center gap-1 rounded-full border border-[var(--hl-edge)] bg-[var(--hl)] px-2.5 py-0.5 text-xs font-semibold text-[var(--hl-ink)]";
 

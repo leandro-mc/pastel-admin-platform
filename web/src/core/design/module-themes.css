@@ -70,68 +70,77 @@
 }
 
 /*
- * Huella: la identidad del perfil público llevada al panel (decisión del propietario, 2026-11-17).
- *   Fondos: papel gris frío y superficies blancas; texto en tinta casi negra (como el perfil público).
- *   Azul océano (tono 213°): lo que se puede hacer — botón principal, enlaces, foco, navegación y pestaña activas.
- *   Marcador amarillo (el del perfil público): lo que está elegido o destacado — oferta con la que se trabaja, tipo de
- *   documento, filtros activos (--hl*, solo en componentes de Huella; siempre con un icono, nunca solo color).
- * Contrastes (WCAG AA): texto 16,9:1; blanco sobre el azul 6,3:1; azul fuerte sobre el fondo 7,5:1; tinta sobre el
- * marcador 14,5:1; bordes de controles y del marcador ≥ 3:1.
+ * Huella: paleta del propietario (coolors.co, 2026-11-17) — borgoña, azul petróleo y dorado envejecido sobre papel cálido.
+ *   Fondos: papel #F4F3F0 y superficies blancas; texto en tinta grafito #252329.
+ *   Azul petróleo #356B79: lo que se puede hacer — botón principal, enlaces, foco, navegación y pestaña activas.
+ *   Dorado envejecido #D7B26A: lo que está elegido o destacado — oferta con la que se trabaja, tipo de documento,
+ *   filtros activos (--hl*, solo en componentes de Huella; siempre con un icono o texto, nunca solo color).
+ *   Borgoña (--brand): el carácter de la app, solo en el título de cada página. El #743248 original (tono 340°) cae en
+ *   el rango que la regla dura considera morado (235–345°), así que se usa el vino #7A2E3B (350°).
+ * Contrastes (WCAG AA): tinta 14:1 sobre el papel; texto atenuado 6:1; blanco sobre el petróleo 6:1 (fuerte 8:1);
+ * tinta sobre el dorado 7,8:1; borgoña 8,3:1; bordes de controles y del dorado ≥ 3:1.
  */
 [data-module="huella"] {
-  --app-bg: #f1f2f4;
+  --app-bg: #f4f3f0;
   --surface: #ffffff;
   --surface-raised: #ffffff;
-  --sidebar-bg: #e9ebef;
-  --text: #0d1117;
-  --text-secondary: #2f3743;
-  --muted: #4d5666;
-  --border: #dde1e7;
-  --border-strong: #8a929f;
+  --sidebar-bg: #ebe8e2;
+  --text: #252329;
+  --text-secondary: #45424b;
+  --muted: #5f5b64;
+  --border: #e2ded6;
+  --border-strong: #857f76;
   --input: #ffffff;
-  --accent: #0a5cc2;
-  --accent-strong: #0f4c99;
-  --accent-soft: #e7f0fb;
-  --accent-subtle: #f3f7fd;
+  --accent: #356b79;
+  --accent-strong: #2a5662;
+  --accent-soft: #e6eff1;
+  --accent-subtle: #f2f7f8;
   --on-accent: #ffffff;
-  --hl: #ffe14d;
-  --hl-soft: #fff6c7;
-  --hl-edge: #b38f00;
-  --hl-ink: #0d1117;
+  --hl: #d7b26a;
+  --hl-soft: #f6edda;
+  --hl-edge: #8a6a26;
+  --hl-ink: #252329;
+  --brand: #7a2e3b;
   --danger: #b42318;
   --danger-soft: #fdecea;
-  --focus: rgba(10, 92, 194, 0.35);
-  --shadow: 0 16px 40px rgba(13, 17, 23, 0.08);
-  --shadow-soft: 0 4px 16px rgba(13, 17, 23, 0.05);
-  --shadow-bottom-nav: 0 -6px 20px rgba(13, 17, 23, 0.06);
+  --focus: rgba(53, 107, 121, 0.4);
+  --shadow: 0 16px 40px rgba(37, 35, 41, 0.08);
+  --shadow-soft: 0 4px 16px rgba(37, 35, 41, 0.05);
+  --shadow-bottom-nav: 0 -6px 20px rgba(37, 35, 41, 0.06);
 }
 
-/* Oscuro neutro (el del perfil público), con el azul y el marcador ajustados para fondo oscuro. */
+/* Oscuro: el grafito de la paleta como superficie, papel como texto y los tres tonos aclarados para fondo oscuro. */
 [data-theme="dark"] [data-module="huella"],
 [data-theme="dark"][data-module="huella"] {
-  --app-bg: #0e1116;
-  --surface: #161b22;
-  --surface-raised: #1c222b;
-  --sidebar-bg: #12161c;
-  --text: #eceff4;
-  --text-secondary: #c9d1db;
-  --muted: #a3adbb;
-  --border: #2a313c;
-  --border-strong: #6b7584;
-  --input: #12161c;
-  --accent: #6cb2ff;
-  --accent-strong: #8cc4ff;
-  --accent-soft: #13283f;
-  --accent-subtle: #111c29;
-  --on-accent: #0d1117;
-  --hl: #ffe14d;
-  --hl-soft: #2b2610;
-  --hl-edge: #ffe14d;
-  --hl-ink: #0d1117;
+  --app-bg: #1b1a1e;
+  --surface: #252329;
+  --surface-raised: #2d2b32;
+  --sidebar-bg: #201f24;
+  --text: #f4f3f0;
+  --text-secondary: #d6d2cb;
+  --muted: #aaa59c;
+  --border: #3a3840;
+  --border-strong: #75717b;
+  --input: #201f24;
+  --accent: #7fb3c1;
+  --accent-strong: #7fb3c1;
+  --accent-soft: #1f363d;
+  --accent-subtle: #1c2a2f;
+  --on-accent: #252329;
+  --hl: #d7b26a;
+  --hl-soft: #3a311d;
+  --hl-edge: #d7b26a;
+  --hl-ink: #252329;
+  --brand: #e3a7b1;
   --danger: #ff8a80;
   --danger-soft: #3a1d1d;
-  --focus: rgba(108, 178, 255, 0.45);
+  --focus: rgba(127, 179, 193, 0.45);
   --shadow: 0 18px 44px rgba(0, 0, 0, 0.35);
   --shadow-soft: 0 4px 18px rgba(0, 0, 0, 0.22);
   --shadow-bottom-nav: 0 -6px 22px rgba(0, 0, 0, 0.35);
+}
+
+/* Título de cada página de Huella (PageHeader) en borgoña: el sello de la app, sin tocar el componente compartido. */
+[data-module="huella"].module-route header > div > h1.text-fg {
+  color: var(--brand);
 }
