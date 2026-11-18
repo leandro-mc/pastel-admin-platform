@@ -1,7 +1,20 @@
-import { ClipboardList, Package, Settings, Sprout, Store, Truck, Users, Wallet } from "lucide-react";
+import {
+  BarChart3,
+  ClipboardList,
+  LayoutDashboard,
+  Package,
+  Settings,
+  Sprout,
+  Store,
+  Truck,
+  Users,
+  Wallet,
+} from "lucide-react";
 import type { ModuleManifest } from "@/core/modules/types";
 import { cosechaPermissions } from "./paths";
 import { strings } from "./strings";
+
+const p = cosechaPermissions;
 
 export default {
   code: "cosecha",
@@ -11,63 +24,72 @@ export default {
   order: 40,
   basePath: "/cosecha",
   access: "permission",
-  requiredPermission: cosechaPermissions.access,
+  requiredPermission: p.access,
   nav: [
     {
-      label: strings.settlements.title,
-      to: "liquidacion",
-      icon: Wallet,
-      requiredPermission: cosechaPermissions.settlementsRead,
-    },
-    {
-      label: strings.shipments.title,
-      to: "envios",
-      icon: Truck,
-      requiredPermission: cosechaPermissions.shipmentsRead,
-      alsoActiveOn: ["envios/nuevo"],
-    },
-    {
-      label: strings.orders.title,
-      to: "pedidos",
-      icon: ClipboardList,
-      requiredPermission: cosechaPermissions.ordersRead,
-      alsoActiveOn: ["pedidos/nuevo"],
+      label: strings.today.title,
+      to: "",
+      icon: LayoutDashboard,
+      requiredPermission: p.shipmentsRead,
     },
     {
       label: strings.orders.mine.title,
       to: "mis-pedidos",
       icon: Package,
-      requiredPermission: cosechaPermissions.ordersReadOwn,
+      requiredPermission: p.ordersReadOwn,
+    },
+    {
+      label: strings.shipments.title,
+      to: "envios",
+      icon: Truck,
+      requiredPermission: p.shipmentsRead,
+      group: strings.nav.operation,
+    },
+    {
+      label: strings.orders.title,
+      to: "pedidos",
+      icon: ClipboardList,
+      requiredPermission: p.ordersRead,
+      group: strings.nav.operation,
     },
     {
       label: strings.people.buyers.title,
       to: "compradores",
       icon: Store,
-      requiredPermission: cosechaPermissions.buyersRead,
-      alsoActiveOn: ["compradores/nuevo"],
+      requiredPermission: p.buyersRead,
+      group: strings.nav.people,
     },
     {
       label: strings.people.producers.title,
       to: "productores",
       icon: Users,
-      requiredPermission: cosechaPermissions.producersRead,
-      alsoActiveOn: ["productores/nuevo"],
+      requiredPermission: p.producersRead,
+      group: strings.nav.people,
+    },
+    {
+      label: strings.settlements.title,
+      to: "liquidacion",
+      icon: Wallet,
+      requiredPermission: p.settlementsRead,
+      group: strings.nav.money,
+    },
+    {
+      label: strings.reports.title,
+      to: "reportes",
+      icon: BarChart3,
+      requiredPermission: p.reportsRead,
+      group: strings.nav.money,
     },
     {
       label: strings.settings.title,
       to: "configuracion",
       icon: Settings,
-      requiredPermission: cosechaPermissions.catalogRead,
+      requiredPermission: p.catalogRead,
+      group: strings.nav.admin,
     },
   ],
   routes: [
     { index: true, lazy: () => import("./pages/HomePage") },
-    {
-      path: "liquidacion",
-      crumb: strings.settlements.title,
-      lazy: () => import("./pages/SettlementPage"),
-    },
-    { path: "liquidacion/:producerId", lazy: () => import("./pages/StatementPage") },
     {
       path: "envios",
       crumb: strings.shipments.title,
@@ -118,6 +140,20 @@ export default {
       lazy: () => import("./pages/ProducerPage"),
     },
     { path: "productores/:id", lazy: () => import("./pages/ProducerPage") },
+    {
+      path: "liquidacion",
+      crumb: strings.settlements.title,
+      lazy: () => import("./pages/SettlementPage"),
+    },
+    {
+      path: "liquidacion/:producerId",
+      lazy: () => import("./pages/StatementPage"),
+    },
+    {
+      path: "reportes",
+      crumb: strings.reports.title,
+      lazy: () => import("./pages/ReportsPage"),
+    },
     {
       path: "configuracion",
       crumb: strings.settings.title,

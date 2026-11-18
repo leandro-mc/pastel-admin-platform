@@ -1,18 +1,23 @@
-import { Sprout } from "lucide-react";
+import { Navigate } from "react-router";
+import { useAuth } from "@/core/auth";
+import { StateView } from "@/core/ui";
+import { cosechaPaths, cosechaPermissions } from "../paths";
 import { strings } from "../strings";
+import { TodayPage } from "./TodayPage";
 
-/** Portada provisional del módulo; la reemplaza «Hoy» cuando esté la pantalla de envíos. */
+/**
+ * Portada del módulo según lo que la cuenta puede ver: el gestor entra a «Hoy»; un comprador va directo a «Mis pedidos»;
+ * una cuenta sin pantallas disponibles recibe una explicación en vez de una página vacía.
+ */
 export function Component() {
+  const { hasPermission } = useAuth();
+  if (hasPermission(cosechaPermissions.shipmentsRead)) return <TodayPage />;
+  if (hasPermission(cosechaPermissions.ordersReadOwn)) {
+    return <Navigate to={cosechaPaths.myOrders} replace />;
+  }
   return (
-    <section
-      data-module="cosecha"
-      className="mx-auto flex max-w-xl flex-col items-center gap-4 p-8 text-center"
-    >
-      <span className="flex size-16 items-center justify-center rounded-2xl bg-accent-soft text-accent-strong">
-        <Sprout aria-hidden="true" className="size-8" />
-      </span>
-      <h1 className="text-2xl font-semibold text-fg">{strings.name}</h1>
-      <p className="text-muted">{strings.tagline}</p>
+    <section data-module="cosecha" className="mx-auto max-w-xl p-8">
+      <StateView status="empty" title={strings.name} description={strings.today.noAccess} />
     </section>
   );
 }
