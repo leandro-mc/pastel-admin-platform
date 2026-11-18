@@ -194,6 +194,8 @@ internal sealed record CvLimits(
             "senior" => new CvLimits("senior", 2, 380, 6, 180, 36, 6, [11, 9, 7, 5, 3, 0], 180, 1, [3], 2, 5, a4 ? 118 : 111, a4 ? 95 : 98, a4 ? 92 : 95),
             _ => new CvLimits("mid", 2, 300, 5, 180, 30, 5, [9, 8, 6, 4, 2], 175, 2, [3, 3], 2, 4, a4 ? 114 : 107, a4 ? 90 : 93, a4 ? 88 : 91),
         };
+        // Una viñeta puede usar dos líneas completas: así se entiende la idea entera (fórmula de Google) sin recortes.
+        limits = limits with { BulletMax = 2 * limits.BulletCharsPerLine };
         if (format != CvFormats.Competencies)
         {
             return limits;

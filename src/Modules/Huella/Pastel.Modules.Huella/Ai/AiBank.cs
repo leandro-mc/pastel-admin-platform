@@ -151,12 +151,12 @@ internal sealed class AiBank
         purpose == AiPurpose.Cv ? a.Visibility is "cv" or "both" : a.Visibility is "public" or "both";
 
     /// <summary>JSON del banco para el prompt. Mismo contenido para el proveedor configurado y para una IA externa.</summary>
-    public string ContextJson(AiPurpose purpose, bool withCompetencies = false, string? competencySeed = null)
+    public string ContextJson(AiPurpose purpose, bool withCompetencies = false, string? seed = null)
     {
         var json = string.Empty;
         foreach (var cap in NarrativeCaps)
         {
-            json = JsonSerializer.Serialize(Context(purpose, cap, withCompetencies, competencySeed), HuellaJson.Options);
+            json = JsonSerializer.Serialize(Context(purpose, cap, withCompetencies, seed), HuellaJson.Options);
             if (json.Length <= ContextBudgetChars)
             {
                 break;
@@ -166,7 +166,7 @@ internal sealed class AiBank
         return json;
     }
 
-    private object Context(AiPurpose purpose, int olderNarrativeCap, bool withCompetencies, string? competencySeed)
+    private object Context(AiPurpose purpose, int olderNarrativeCap, bool withCompetencies, string? seed)
     {
         var records = Records;
         var forProfile = purpose == AiPurpose.Profile;
@@ -177,7 +177,7 @@ internal sealed class AiBank
             .OrderByDescending(e => e.EndDate ?? DateOnly.MaxValue).ThenByDescending(e => e.StartDate)
             .Select((e, rank) =>
             {
-                var achievements = records.AchievementsOf(e).Where(a => Usable(a, purpose)).ToList();
+                var achievements = Shuffle(records.AchievementsOf(e).Where(a => Usable(a, purpose)), a => a.Id, seed);
                 return new
                 {
                     id = e.Id,
@@ -198,12 +198,13 @@ internal sealed class AiBank
                 };
             }).ToList();
 
-        var projects = records.Projects
-            .Where(p => !forProfile || p.IsVisible)
-            .OrderByDescending(p => p.EndYear ?? int.MaxValue).ThenByDescending(p => p.StartYear)
+        var projects = Shuffle(
+                records.Projects.Where(p => !forProfile || p.IsVisible).OrderByDescending(p => p.EndYear ?? int.MaxValue).ThenByDescending(p => p.StartYear),
+                p => p.Id,
+                seed)
             .Select(p =>
             {
-                var achievements = records.AchievementsOf(p).Where(a => Usable(a, purpose)).ToList();
+                var achievements = Shuffle(records.AchievementsOf(p).Where(a => Usable(a, purpose)), a => a.Id, seed);
                 return new
                 {
                     id = p.Id,
@@ -224,7 +225,7 @@ internal sealed class AiBank
 
         var competencies = withCompetencies
             ? records.Competencies.Where(c => c.IsVisible)
-                .OrderBy(c => SeededOrder(competencySeed ?? string.Empty, c.Id))
+                .OrderBy(c => SeededOrder(seed ?? string.Empty, c.Id))
                 .Select(c => new { id = c.Id, kind = c.Kind, name = c.Name, meaning = c.Description, evidence = c.Evidence, alwaysInclude = c.AlwaysInclude }).ToList()
             : null;
 
@@ -281,6 +282,10 @@ internal sealed class AiBank
 
         return months;
     }
+
+    /// <summary>Con semilla (un CV), el orden pseudoaleatorio estable de <see cref="SeededOrder"/>; sin semilla, el orden de siempre.</summary>
+    private static List<T> Shuffle<T>(IEnumerable<T> items, Func<T, Guid> id, string? seed) =>
+        seed is null ? items.ToList() : items.OrderBy(x => SeededOrder(seed, id(x))).ToList();
 
     /// <summary>
     /// Orden del catálogo de competencias para el prompt: pseudoaleatorio pero estable para la misma oferta o enfoque (FNV-1a),

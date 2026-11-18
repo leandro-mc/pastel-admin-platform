@@ -100,6 +100,11 @@ internal static class CvGuardian
             return $"Excede el tope ({text.Length} de {maxChars} caracteres).";
         }
 
+        if (System.Text.RegularExpressions.Regex.IsMatch(text, @"\d[\d.,]*\s*(?:%\s*)?(?:de\s+(?:los\s+)?\d[\d.,]*\s+)?commits?\b", System.Text.RegularExpressions.RegexOptions.IgnoreCase))
+        {
+            return "No se usan conteos de commits como métrica.";
+        }
+
         var invented = AchievementRules.Numbers(text).FirstOrDefault(n => !knownNumbers.Contains(n));
         if (invented is not null)
         {
