@@ -5,6 +5,7 @@ import {
   Landmark,
   Newspaper,
   ScrollText,
+  SquarePen,
 } from "lucide-react";
 import type { ModuleManifest } from "@/core/modules/types";
 import { agoraPermissions } from "./permissions";
@@ -35,6 +36,12 @@ export default {
       requiredPermission: agoraPermissions.saved,
     },
     { label: strings.nav.standards, to: "estandares", icon: ScrollText },
+    {
+      label: strings.nav.editorial,
+      to: "editorial",
+      icon: SquarePen,
+      requiredPermission: agoraPermissions.access,
+    },
   ],
   routes: [
     { index: true, lazy: () => import("./pages/HomePage") },
@@ -58,6 +65,46 @@ export default {
       path: "estandares",
       crumb: strings.nav.standards,
       lazy: () => import("./pages/StandardsPage"),
+    },
+    {
+      path: "editorial",
+      crumb: strings.nav.editorial,
+      lazy: () => import("./pages/editorial/EditorialListPage"),
+    },
+    {
+      path: "editorial/piezas/nueva",
+      crumb: strings.editorial.editor.newTitle,
+      lazy: () => import("./pages/editorial/ArticleEditorPage"),
+    },
+    {
+      path: "editorial/piezas/:id",
+      crumb: strings.editorial.editor.editTitle,
+      lazy: () => import("./pages/editorial/ArticleEditorPage"),
+    },
+    {
+      path: "editorial/hoy",
+      crumb: strings.editorial.nav.picks,
+      lazy: () => import("./pages/editorial/DailyPicksPage"),
+    },
+    {
+      path: "editorial/revision",
+      crumb: strings.editorial.nav.review,
+      lazy: () => import("./pages/editorial/ReviewPage"),
+    },
+    {
+      path: "editorial/actualidad",
+      crumb: strings.editorial.nav.news,
+      lazy: () => import("./pages/editorial/NewsAdminPage"),
+    },
+    {
+      path: "editorial/errores",
+      crumb: strings.editorial.nav.reports,
+      lazy: () => import("./pages/editorial/ErrorReportsPage"),
+    },
+    {
+      path: "editorial/organizacion",
+      crumb: strings.editorial.nav.organization,
+      lazy: () => import("./pages/editorial/OrganizationPage"),
     },
   ],
 } satisfies ModuleManifest;

@@ -1,6 +1,6 @@
 # Ágora — ficha técnica (frontend)
 
-Estado: **marcador** (esqueleto generado por `tools/new-module`).
+Estado: **F1 implementada** (sin ejecutar pruebas ni recorrer en navegador; ver «Por verificar»).
 
 - Código `agora` · ruta `/agora` · icono `Landmark` (Lucide) · identidad visual por definir (tokens provisionales en `web/src/core/design/module-themes.css`).
 - Acceso en el manifiesto: `public`; permiso `agora.access`.
@@ -27,6 +27,18 @@ Reglas: no importar de otro módulo, solo de `@/core/*`; utilidades de Tailwind 
 | `/agora/actualidad` | `NewsPage`: noticias enlazadas; con el modo calma activo no se muestran | Público |
 | `/agora/guardados` | `SavedPage` | Sesión y `agora.saved.manage` (la pantalla guía a iniciar sesión) |
 | `/agora/estandares` | `StandardsPage`: qué significa el sello y cómo se corrige | Público |
+
+Panel editorial (`EditorialShell` pide sesión y el permiso de la sección; el servidor autoriza cada acción):
+
+| Ruta | Página | Permiso |
+|---|---|---|
+| `/agora/editorial` | `EditorialListPage`: piezas por estado, con sello y avisos pendientes (quien solo revisa pasa a la cola) | `agora.content.manage` |
+| `/agora/editorial/piezas/nueva`, `/agora/editorial/piezas/:id` | `ArticleEditorPage`: contenido, fuentes, video, lista de control de publicación, publicar / despublicar / archivar y correcciones | `agora.content.manage` |
+| `/agora/editorial/hoy` | `DailyPicksPage`: elegir y ordenar hasta 5 piezas de «Hoy en 5 minutos» | `agora.content.manage` |
+| `/agora/editorial/revision` | `ReviewPage`: cola de revisión, verificar con alcance por escrito y retirar con nota | `agora.content.review` |
+| `/agora/editorial/actualidad` | `NewsAdminPage`: noticias enlazadas con contexto propio | `agora.content.manage` |
+| `/agora/editorial/errores` | `ErrorReportsPage`: bandeja de errores señalados | `agora.content.manage` |
+| `/agora/editorial/organizacion` | `OrganizationPage`: temas y series | `agora.content.manage` |
 
 Una persona sin sesión puede leer todo, seguir temas (en su navegador) y compartir. Guardar, reaccionar y señalar errores piden sesión: se la lleva a iniciar sesión y la acción se retoma al volver (`?accion=guardar|ayudo|fuentes`). El servidor decide siempre con `agora.saved.manage`.
 
