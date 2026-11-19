@@ -30,9 +30,10 @@ public sealed class ShareHtmlTests
     [Fact]
     public void TheSealTravelsInThePreviewText()
     {
-        var verified = new SealDto("verified", 1, 1, [new SealVerifierDto("Ana Rojas", DateTimeOffset.UnixEpoch)]);
+        // 18:00 UTC es el mediodía del 2 de noviembre en Costa Rica (UTC-6).
+        var verified = new SealDto("verified", 1, 1, [new SealVerifierDto("Ana Rojas", new DateTimeOffset(2026, 11, 2, 18, 0, 0, TimeSpan.Zero))]);
 
-        Assert.Equal("Verificada por Ana Rojas", ShareHtml.SealText(verified));
+        Assert.Equal("Verificada por Ana Rojas el 2 de noviembre de 2026", ShareHtml.SealText(verified));
         Assert.Equal("Pendiente de verificación", ShareHtml.SealText(new SealDto("pending", 0, 1, [])));
         Assert.Equal("Modificada tras la verificación", ShareHtml.SealText(new SealDto("modifiedAfterVerification", 0, 1, [])));
     }

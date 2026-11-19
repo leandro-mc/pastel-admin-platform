@@ -64,7 +64,8 @@ export const strings = {
 
   seal: {
     verified: "Verificado",
-    verifiedBy: (names: string) => `Verificado por ${names}`,
+    verifiedBy: (names: string, date: string) =>
+      `Verificado por ${names} el ${date}`,
     pending: "Pendiente de verificación",
     modified: "Modificada tras la verificación",
     progress: (current: number, required: number) =>
@@ -75,7 +76,6 @@ export const strings = {
       "Todavía no la revisó otra persona. Lea las fuentes y forme su propio criterio.",
     explainModified:
       "El contenido cambió después de la última verificación. La pieza volvió a la cola de revisión.",
-    verifiedOn: (date: string) => `el ${date}`,
   },
 
   contentType: {

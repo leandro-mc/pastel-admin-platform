@@ -22,7 +22,9 @@ internal static class ShareHtml
 {
     public static string SealText(SealDto seal) => seal.State switch
     {
-        "verified" => "Verificada por " + string.Join(", ", seal.Verifiers.Select(v => v.Name)),
+        "verified" when seal.Verifiers.Count > 0 =>
+            $"Verificada por {string.Join(", ", seal.Verifiers.Select(v => v.Name))} el {SpanishDate.Format(seal.Verifiers.Max(v => v.VerifiedAt))}",
+        "verified" => "Verificada",
         "modifiedAfterVerification" => "Modificada tras la verificación",
         _ => "Pendiente de verificación",
     };

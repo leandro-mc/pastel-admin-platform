@@ -77,7 +77,7 @@ describe("agora · sello de verificación", () => {
     expect(screen.getByText(strings.seal.modified)).toBeInTheDocument();
 
     rerender(<SealBadge seal={seal("verified", ["Ana Rojas"])} />);
-    expect(screen.getByText(strings.seal.verifiedBy("Ana Rojas"))).toBeInTheDocument();
+    expect(screen.getByText(/^Verificado por Ana Rojas el .+/)).toBeInTheDocument();
   });
 
   it("no tiene problemas de accesibilidad detectables", async () => {

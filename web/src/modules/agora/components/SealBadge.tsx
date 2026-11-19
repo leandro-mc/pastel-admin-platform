@@ -10,7 +10,10 @@ export function sealLabel(seal: Seal, compact = false): string {
     case "verified":
       return compact || seal.verifiers.length === 0
         ? strings.seal.verified
-        : strings.seal.verifiedBy(seal.verifiers.map((v) => v.name).join(", "));
+        : strings.seal.verifiedBy(
+            seal.verifiers.map((v) => v.name).join(", "),
+            formatDate(seal.verifiers[seal.verifiers.length - 1]?.verifiedAt),
+          );
     case "modifiedAfterVerification":
       return strings.seal.modified;
     case "pending":
@@ -54,16 +57,11 @@ export function SealExplanation({ seal }: { seal: Seal }) {
     pending: strings.seal.explainPending,
     modifiedAfterVerification: strings.seal.explainModified,
   }[seal.state];
-  const when =
-    seal.state === "verified" && seal.verifiers[0]
-      ? ` ${strings.seal.verifiedOn(formatDate(seal.verifiers[seal.verifiers.length - 1]?.verifiedAt))}`
-      : "";
   return (
     <div className="flex flex-col gap-2">
       <SealBadge seal={seal} />
       <p className="text-sm leading-relaxed text-fg-secondary">
         {explanation}
-        {when}
       </p>
       {seal.requiredReviews > 1 && seal.state !== "verified" ? (
         <p className="text-sm text-muted">
