@@ -17,7 +17,7 @@ Divulgación humanística y de actualidad, centrada en Costa Rica, para ayudar a
 
 **Decisión de alcance:** no hay moderador, comentarios ni foros en el MVP (requieren moderación y normas operativas; pertenecen a la etapa "Comunidad"). **Tampoco hay flujo de aprobación previa:** el autor publica directamente. La diferencia de confianza se muestra con el **sello "Verificado"**, que solo aparece cuando un revisor especialista lo otorga.
 
-Permisos: `agora.access` (solo para el panel editorial), `agora.content.manage` (autor), `agora.content.review` (revisor), `agora.saved.manage` (registrado: guardar). Lo público no requiere permiso. Quien edita el contenido no puede otorgarse su propia verificación (regla del servidor).
+Permisos: `agora.access` (solo para el panel editorial), `agora.content.manage` (autor), `agora.content.review` (revisor), `agora.saved.manage` (registrado: guardar, seguir categorías, reaccionar y señalar errores). Lo público no requiere permiso. Quien edita el contenido no puede otorgarse su propia verificación (regla del servidor).
 
 ## 3. Modelo (esquema `agora`)
 `Category`, `Series`, `Tag`, `Article` (pieza: título, `slug`, resumen, cuerpo Markdown, categoría, serie y orden, etiquetas, periodo/fechas relevantes, estado Borrador/Publicada/Archivada, fechas de publicación y actualización, autor), `Source` (por pieza: título, autor o entidad, fecha, URL, tipo de fuente, nota de contexto), `VideoEmbed` (id de YouTube validado, título, nota), `NewsLink` (actualidad: titular, medio, fecha, URL, nota de contexto, tema, destacado), `Verification` (pieza, revisor, fecha, alcance revisado, nota, estado Vigente/Retirada, versión de la pieza verificada), `Correction` (pieza, fecha, texto visible de la corrección), `SavedArticle` (usuario, pieza), `FollowedCategory` (usuario, categoría).
@@ -47,7 +47,7 @@ Permisos: `agora.access` (solo para el panel editorial), `agora.content.manage` 
 - **Búsqueda:** MVP con filtro por título/etiqueta; búsqueda de texto completo en etapa posterior.
 - **Endpoints públicos:** anónimos, con límite de tasa y caché corta; nunca devuelven borradores ni piezas archivadas.
 - Auditoría: publicar, archivar, verificar, retirar verificación, correcciones.
-- **Revisores:** la cantidad de revisores iniciales es **configurable** (decisión del propietario, 2026-11-13); no se fija un número en el diseño. Se mantienen la separación de funciones y la prohibición de verificar la propia pieza.
+- **Revisores:** la cantidad de revisores iniciales es **configurable** (decisión del propietario, 2026-11-13); no se fija un número en el diseño. Se mantienen la separación de funciones y la prohibición de verificar la propia pieza. Implementación: `Agora:Verification:RequiredReviewers` (variable `Agora__Verification__RequiredReviewers`, por defecto 1, entre 1 y 10) es la cantidad de personas distintas cuya verificación vigente de la versión actual hace falta para mostrar «Verificado»; «Verificado por <nombre> el <fecha>» muestra a quienes verificaron.
 - **Voz de la interfaz:** trato de **usted** por defecto. **Resumen semanal por correo:** fase F2, siempre opcional y con consentimiento; no entra en la primera versión.
 
 ## 6. Fuera del MVP
