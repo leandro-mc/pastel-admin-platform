@@ -12,6 +12,7 @@ import {
   aiSettingsSchema,
   aiTaskOutcomeSchema,
   aiTaskPackageSchema,
+  bankImportResultSchema,
   bankSchema,
   contentViewSchema,
   letterSchema,
@@ -525,6 +526,26 @@ export async function downloadCvDocx(id: string, fileName: string) {
     retries: 0,
   });
   saveFile(blob, fileName);
+}
+
+/** Descarga el respaldo del banco (perfil y banco completo) como un archivo JSON con la sesión vigente. */
+export async function downloadBankBackup(fileName: string) {
+  const blob = await api.blob(`${base}/bank/export`, { retries: 0 });
+  saveFile(blob, fileName);
+}
+
+/**
+ * Importa un respaldo: reemplaza el perfil y el banco por los del archivo, todo o nada (si algo no es válido el servidor
+ * no cambia nada y dice dónde está el problema). Tras importar se refresca todo lo del módulo.
+ */
+export function useImportBank() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (document: unknown) => api.post(`${base}/bank/import`, bankImportResultSchema, document),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: huellaKeys.all });
+    },
+  });
 }
 
 /** Entrega un archivo generado en el navegador (PDF, Word o el prompt para una IA externa). */

@@ -1,6 +1,7 @@
 import {
   BookOpenText,
   ClipboardList,
+  DatabaseBackup,
   FileText,
   Footprints,
   Globe,
@@ -37,6 +38,7 @@ export default {
     { label: strings.nav.history, to: "historial", icon: ClipboardList },
     { label: strings.nav.ai, to: "ia", icon: KeyRound },
     { label: strings.nav.appearance, to: "apariencia", icon: Palette },
+    { label: strings.nav.backup, to: "respaldo", icon: DatabaseBackup },
     {
       label: strings.nav.interview,
       to: "pronto/entrevistas",
@@ -75,6 +77,11 @@ export default {
       path: "apariencia",
       crumb: strings.nav.appearance,
       lazy: () => import("./pages/AppearancePage"),
+    },
+    {
+      path: "respaldo",
+      crumb: strings.nav.backup,
+      lazy: () => import("./pages/BackupPage"),
     },
     {
       path: "pronto",

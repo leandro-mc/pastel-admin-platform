@@ -80,6 +80,18 @@ internal static class HuellaErrors
     public static readonly Error AiProviderInvalidJson = Error.Validation(
         "huella.ai.provider_invalid_json", "La IA respondió con algo que no es el JSON esperado. Intente de nuevo; no se cambió nada.");
 
+    public static readonly Error BankBackupNotRecognized = Error.Validation(
+        "huella.bank.backup_not_recognized",
+        "Este archivo no parece un respaldo del banco de Huella. Use un archivo descargado desde «Respaldo»; no se cambió nada.");
+
+    public static readonly Error BankBackupTooNew = Error.Validation(
+        "huella.bank.backup_too_new",
+        "Este respaldo es de una versión más nueva de Huella. Actualice la aplicación e intente de nuevo; no se cambió nada.");
+
+    /// <summary>El respaldo trae datos que no pasan las reglas del banco: nada se importó (cada clave dice sección y campo).</summary>
+    public static Error BankBackupInvalid(IReadOnlyDictionary<string, string[]> details) =>
+        Error.Validation("huella.bank.backup_invalid", "El respaldo tiene datos que no se pueden importar. No se cambió nada: revise lo marcado.", details);
+
     public static Error Invalid(IReadOnlyDictionary<string, string[]> details) =>
         Error.Validation("huella.input.invalid", "Revise los campos marcados.", details);
 

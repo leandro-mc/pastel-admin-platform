@@ -8,6 +8,7 @@ export const strings = {
     profile: "Perfil público",
     ai: "Configurar IA",
     appearance: "Apariencia",
+    backup: "Respaldo",
     history: "Historial",
     soon: "En preparación",
     interview: "Entrevistas",
@@ -269,6 +270,72 @@ export const strings = {
     languages: { es: "Español", en: "Inglés" },
     papers: { letter: "Carta (Letter)", a4: "A4" },
     levels: ["Nativo", "C2", "C1", "B2", "B1", "A2", "A1"],
+  },
+  backup: {
+    title: "Respaldo",
+    description:
+      "Lleve todo su banco en un archivo: para no perderlo, para guardarlo antes de un cambio grande o para usarlo en otra computadora.",
+    export: {
+      title: "Exportar",
+      description: "Descargue su perfil y su banco completo en un archivo JSON.",
+      today: "Hoy tiene en su banco:",
+      includesTitle: "Qué incluye",
+      includes:
+        "Perfil (nombre, contacto y enlaces), notas privadas, experiencias y proyectos con sus logros, habilidades, competencias, educación, certificaciones e idiomas.",
+      excludesTitle: "Qué no incluye",
+      excludes:
+        "Las claves de IA, el enlace público, las ofertas, los CV ni las cartas. Cada computadora conserva lo suyo en esas partes.",
+      privacy:
+        "El archivo lleva sus datos personales sin cifrar (contacto, expectativa salarial, notas privadas). Guárdelo en un lugar privado y no lo comparta.",
+      download: "Descargar respaldo (.json)",
+      downloading: "Preparando el archivo…",
+      done: "Respaldo descargado.",
+      fileName: (date: string) => `huella-banco-${date}.json`,
+    },
+    import: {
+      title: "Importar",
+      description: "Cargue un respaldo descargado desde Huella para reemplazar con él su banco.",
+      warning:
+        "Importar reemplaza por completo su perfil y su banco actuales por lo que trae el archivo. Si algo del archivo no es válido, no se cambia nada.",
+      pick: "Archivo de respaldo (.json)",
+      reading: "Leyendo el archivo…",
+      exportedOn: "Exportado el",
+      compare: "Qué cambia",
+      fileColumn: "Archivo",
+      todayColumn: "Hoy",
+      profile: "El archivo también trae su perfil (nombre, contacto y enlaces) y lo reemplaza.",
+      noProfile: "El archivo no trae el perfil: se conserva el actual.",
+      saveFirst: "Descargar copia de lo actual antes",
+      saveFirstHint: "Si el archivo no es lo que esperaba, esa copia le permite volver atrás.",
+      replace: "Reemplazar mi banco con este archivo",
+      clear: "Elegir otro archivo",
+      confirmTitle: "Reemplazar el banco",
+      confirmMessage: (counts: string) =>
+        `Su banco actual se reemplazará por el del archivo (${counts}). Esto no se puede deshacer, salvo con una copia que haya descargado antes.`,
+      confirm: "Reemplazar",
+      working: "Importando…",
+      success: "Banco importado.",
+      successDetail: "Ahora tiene:",
+      problemsTitle: "No se importó nada. Corrija esto en el archivo e intente de nuevo:",
+      reasons: {
+        too_big: "El archivo pesa más de 1 MB, que es el máximo que acepta el servidor.",
+        not_json: "El archivo no es un JSON válido.",
+        not_backup:
+          "Este archivo no parece un respaldo del banco de Huella. Use uno descargado desde esta pantalla.",
+        too_new:
+          "Este respaldo es de una versión más nueva de Huella. Actualice la aplicación e intente de nuevo.",
+      },
+    },
+    counts: {
+      experiences: "Experiencias",
+      projects: "Proyectos",
+      achievements: "Logros",
+      skills: "Habilidades",
+      competencies: "Competencias",
+      educations: "Educación",
+      certifications: "Certificaciones",
+      languages: "Idiomas",
+    },
   },
   appearance: {
     title: "Apariencia",

@@ -28,6 +28,15 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
     private static readonly string[] LanguageLevels = ["Nativo", "C2", "C1", "B2", "B1", "A2", "A1"];
     private static readonly string[] Sources = ["rules", "ai", "manual"];
 
+    /// <summary>
+    /// Solo durante una importación de respaldo (<see cref="BankBackupHandler"/>): ids que se pueden crear con ese mismo
+    /// <c>Id</c> en lugar de uno nuevo, porque no existen en ningún perfil. Así reimportar el mismo archivo actualiza en lugar
+    /// de recrear y lo que cita una fila (un CV que cita un logro) sigue valiendo. Vacío fuera de una importación.
+    /// </summary>
+    private HashSet<Guid> restorable = [];
+
+    public void AllowRestoredIds(IEnumerable<Guid> ids) => restorable = ids.ToHashSet();
+
     public async Task<Result<BankView>> GetAsync(CancellationToken cancellationToken)
     {
         var profile = await owners.GetOrCreateAsync(cancellationToken);
@@ -172,7 +181,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                     x.UpdatedAt = now;
                 };
             },
-            (profileId, now) => new Experience { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
+            (profileId, now, id) => new Experience { Id = id ?? Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
             cancellationToken);
 
     // ───────────────────────────── Proyectos ─────────────────────────────
@@ -203,7 +212,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                     x.UpdatedAt = now;
                 };
             },
-            (profileId, now) => new Project { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
+            (profileId, now, id) => new Project { Id = id ?? Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
             cancellationToken);
 
     // ───────────────────────────── Habilidades ─────────────────────────────
@@ -246,7 +255,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                     x.UpdatedAt = now;
                 };
             },
-            (profileId, now) => new Skill { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
+            (profileId, now, id) => new Skill { Id = id ?? Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
             cancellationToken);
     }
 
@@ -282,7 +291,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                     x.UpdatedAt = now;
                 };
             },
-            (profileId, now) => new Competency { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
+            (profileId, now, id) => new Competency { Id = id ?? Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
             cancellationToken);
     }
 
@@ -310,7 +319,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                     x.UpdatedAt = now;
                 };
             },
-            (profileId, now) => new Education { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
+            (profileId, now, id) => new Education { Id = id ?? Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
             cancellationToken);
 
     public Task<Result<BankView>> SaveCertificationsAsync(IReadOnlyList<CertificationInput>? items, CancellationToken cancellationToken) =>
@@ -336,7 +345,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                     x.UpdatedAt = now;
                 };
             },
-            (profileId, now) => new Certification { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
+            (profileId, now, id) => new Certification { Id = id ?? Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
             cancellationToken);
 
     public Task<Result<BankView>> SaveLanguagesAsync(IReadOnlyList<LanguageInput>? items, CancellationToken cancellationToken) =>
@@ -358,7 +367,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
                     x.UpdatedAt = now;
                 };
             },
-            (profileId, now) => new LanguageSkill { Id = Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
+            (profileId, now, id) => new LanguageSkill { Id = id ?? Guid.CreateVersion7(), ProfileId = profileId, CreatedAt = now },
             cancellationToken);
 
     /// <summary>
@@ -372,7 +381,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
         Func<TEntity, Guid> idOf,
         Func<TInput, Guid?> inputIdOf,
         Func<int, TInput, FieldErrors, Action<TEntity, int, DateTimeOffset>> validate,
-        Func<Guid, DateTimeOffset, TEntity> create,
+        Func<Guid, DateTimeOffset, Guid?, TEntity> create,
         CancellationToken cancellationToken)
         where TEntity : class, IProfileOwned
     {
@@ -400,7 +409,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
         var existing = await set.Where(x => x.ProfileId == profileId).ToListAsync(cancellationToken);
         var byId = existing.ToDictionary(idOf);
         var requested = list.Select(inputIdOf).Where(id => id is not null).Select(id => id!.Value).ToList();
-        if (requested.Count != requested.Distinct().Count() || requested.Any(id => !byId.ContainsKey(id)))
+        if (requested.Count != requested.Distinct().Count() || requested.Any(id => !byId.ContainsKey(id) && !restorable.Contains(id)))
         {
             return HuellaErrors.NotFound;
         }
@@ -408,12 +417,16 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
         var now = clock.UtcNow;
         for (var i = 0; i < list.Count; i++)
         {
-            var entity = inputIdOf(list[i]) is { } id ? byId[id] : create(profileId, now);
-            if (inputIdOf(list[i]) is null)
+            var wanted = inputIdOf(list[i]);
+            if (wanted is { } id && byId.TryGetValue(id, out var found))
             {
-                set.Add(entity);
+                appliers[i](found, i, now);
+                continue;
             }
 
+            // Nuevo: con el id del respaldo si se permitió (solo en una importación) o con uno del servidor.
+            var entity = create(profileId, now, wanted);
+            set.Add(entity);
             appliers[i](entity, i, now);
         }
 
@@ -484,7 +497,7 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
             : await db.Achievements.Where(a => a.ExperienceId == parentId).ToListAsync(cancellationToken);
         var byId = existing.ToDictionary(a => a.Id);
         var requested = list.Where(x => x.Id is not null).Select(x => x.Id!.Value).ToList();
-        if (requested.Count != requested.Distinct().Count() || requested.Any(id => !byId.ContainsKey(id)))
+        if (requested.Count != requested.Distinct().Count() || requested.Any(id => !byId.ContainsKey(id) && !restorable.Contains(id)))
         {
             return HuellaErrors.NotFound;
         }
@@ -497,14 +510,15 @@ internal sealed class BankHandler(HuellaDbContext db, OwnerProfiles owners, Bank
         for (var i = 0; i < list.Count; i++)
         {
             var item = list[i];
-            var a = item.Id is { } id ? byId[id] : new Achievement
+            var isNew = !(item.Id is { } known && byId.ContainsKey(known));
+            var a = isNew ? new Achievement
             {
-                Id = Guid.CreateVersion7(),
+                Id = item.Id ?? Guid.CreateVersion7(),
                 ExperienceId = kind == "projects" ? null : parentId,
                 ProjectId = kind == "projects" ? parentId : null,
                 CreatedAt = now,
-            };
-            if (item.Id is null)
+            } : byId[item.Id!.Value];
+            if (isNew)
             {
                 db.Achievements.Add(a);
             }

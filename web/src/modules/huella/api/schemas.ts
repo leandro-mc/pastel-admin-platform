@@ -594,3 +594,45 @@ export type ContentView = z.infer<typeof contentViewSchema>;
 export type AiTaskPackage = z.infer<typeof aiTaskPackageSchema>;
 export type AiTaskOutcome = z.infer<typeof aiTaskOutcomeSchema>;
 export type PublicationStatus = z.infer<typeof statusSchema>;
+
+// ───────── Respaldo del banco ─────────
+export const BACKUP_FORMAT = "pastel-huella-bank";
+/** La versión del documento que esta pantalla entiende (la misma que escribe el servidor). */
+export const BACKUP_VERSION = 1;
+
+const backupParent = z.looseObject({ achievements: z.array(z.unknown()).default([]) });
+
+/**
+ * Lo mínimo que la pantalla necesita del archivo para mostrar qué trae antes de importarlo. El servidor valida todo lo
+ * demás; al importar se envía el documento tal cual se leyó (no esta versión recortada).
+ */
+export const bankBackupSchema = z.looseObject({
+  format: z.literal(BACKUP_FORMAT),
+  version: z.number().int().min(1),
+  exportedAt: z.string().optional(),
+  profile: z.unknown().optional(),
+  bank: z.looseObject({
+    experiences: z.array(backupParent).default([]),
+    projects: z.array(backupParent).default([]),
+    skills: z.array(z.unknown()).default([]),
+    competencies: z.array(z.unknown()).default([]),
+    educations: z.array(z.unknown()).default([]),
+    certifications: z.array(z.unknown()).default([]),
+    languages: z.array(z.unknown()).default([]),
+  }),
+});
+
+export const bankImportResultSchema = z.object({
+  profileUpdated: z.boolean(),
+  experiences: z.number(),
+  projects: z.number(),
+  achievements: z.number(),
+  skills: z.number(),
+  competencies: z.number(),
+  educations: z.number(),
+  certifications: z.number(),
+  languages: z.number(),
+});
+
+export type BankBackup = z.infer<typeof bankBackupSchema>;
+export type BankImportResult = z.infer<typeof bankImportResultSchema>;

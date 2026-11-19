@@ -17,6 +17,7 @@ Toda lectura/escritura privada pasa por el perfil del Owner de la sesión (`Prof
 | `GET /profile/content` · `PUT /profile/content/{overview\|experience\|projects\|skills\|credentials}` | Contenido del perfil público (`ProfileContent`: `es` editable, `en` sincronizado) con el estado por sección (`empty`, `ready`, `stale`); la edición valida máximos y toma empresa, fechas e institución del banco |
 | `GET/PUT /profile` | Perfil y enlaces (máx. 8; solo `https`; cada uno con `icon` opcional del catálogo cerrado `LinkIcons.Keys`, `null` = el del tipo; otro valor → 400); contacto, ubicación y disponibilidad con interruptor, ocultos por defecto |
 | `GET /bank` · `PUT /bank/{notes\|experiences\|projects\|skills\|competencies\|education\|certifications\|languages}` | Banco completo / reemplazo de una sección (`competencies`: catálogo personal/técnico, máx. 60, sin repetir nombre por tipo; `alwaysInclude` = siempre en el CV de competencias) |
+| `GET /bank/export` · `POST /bank/import` | **Respaldo** (`BankBackupHandler`): descarga el perfil (nombre, contacto, enlaces) y el banco completo con sus logros como JSON versionado (`format: pastel-huella-bank`, `version: 1`; `Cache-Control: no-store`; auditoría `huella.bank.exported`) e importa uno reemplazando todo, **todo o nada**: reutiliza los guardados por sección (mismas validaciones y máximos) dentro de una transacción; si algo falla se deshace todo y los errores traen la sección y el campo (`experiences.items[2].start`). Los ids del archivo que ya son del perfil o que no existen en ninguna fila se conservan (reimportar actualiza en lugar de recrear y un CV que cita un logro sigue valiendo); los de otro perfil nunca se tocan. No incluye claves de IA, enlace público, ofertas, CV ni cartas. Límite práctico: 1 MB (nginx) |
 | `PUT /bank/{experiences\|projects}/{id}/achievements` | Logros de una experiencia o proyecto |
 | `POST …/{id}/derive` · `…/ai-package` · `…/ai-run` · `…/ai-result` | Logros por reglas; prompt para una IA externa; propuestas del proveedor configurado; validación del JSON importado |
 | `GET/POST /studio/offers` · `GET/DELETE …/{id}` | Ofertas (texto = dato no confiable; máx. 50) con mapa de evidencia y filtros duros; la lista trae el seguimiento y la cobertura de requisitos obligatorios contra el banco de hoy |
@@ -58,6 +59,9 @@ Migraciones: `InitialHuellaSchema`, `AddHuellaProfileModel`, `AddHuellaAiCredent
 | `huella.input.invalid` | 400 | Campos inválidos (`errors` por campo) |
 | `huella.publication.empty` | 400 | Falta nombre o titular para publicar |
 | `huella.cv.empty_bank` · `huella.letter.empty_bank` · `huella.profile.empty_bank` | 400 | El banco no tiene experiencias ni proyectos para redactar un CV, una carta o el perfil |
+| `huella.bank.backup_not_recognized` | 400 | El archivo no es un respaldo de Huella (formato, versión o banco ausentes) |
+| `huella.bank.backup_too_new` | 400 | El respaldo es de una versión más nueva que la que entiende esta aplicación |
+| `huella.bank.backup_invalid` | 400 | El respaldo trae datos que no pasan las reglas del banco; no se cambió nada (`errors` por sección y campo) |
 | `huella.cv.no_achievements` | 400 | El borrador sin IA necesita al menos un logro derivado |
 | `huella.cv.line_rejected` | 400 | El guardián rechazó la línea |
 | `huella.cv.not_public` | 404 | La publicación no incluye CV |

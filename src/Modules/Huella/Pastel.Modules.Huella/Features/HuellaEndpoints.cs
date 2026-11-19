@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.RateLimiting;
@@ -35,6 +36,7 @@ internal static class HuellaEndpoints
         services.AddScoped<Persistence.BankLoader>();
         services.AddScoped<ProfileHandler>();
         services.AddScoped<BankHandler>();
+        services.AddScoped<BankBackupHandler>();
         services.AddScoped<StudioHandler>();
         services.AddScoped<ContentHandler>();
         services.AddScoped<LetterHandler>();
@@ -57,6 +59,9 @@ internal static class HuellaEndpoints
         }).RedactLoggedHeaders(_ => true);
         return services;
     }
+
+    /// <summary>El archivo de respaldo va con sangría: se puede leer, comparar y corregir a mano.</summary>
+    private static readonly JsonSerializerOptions BackupJson = new(JsonSerializerDefaults.Web) { WriteIndented = true };
 
     public static void Map(IEndpointRouteBuilder api)
     {
@@ -84,6 +89,22 @@ internal static class HuellaEndpoints
         // Banco
         var bank = api.MapGroup("/bank");
         bank.MapGet("/", async (BankHandler h, HttpContext http, CancellationToken ct) => (await h.GetAsync(ct)).ToResponse(http)).RequirePermission(read);
+
+        // Respaldo: descargar el perfil y el banco como JSON portable e importarlo (reemplaza todo, todo o nada).
+        bank.MapGet("/export", async (BankBackupHandler h, HttpContext http, CancellationToken ct) =>
+        {
+            var export = await h.ExportAsync(ct);
+            if (export.IsFailure)
+            {
+                return PastelProblem.From(export.Error, http);
+            }
+
+            // Datos personales: que ningún intermediario ni el navegador lo guarde.
+            http.Response.Headers.CacheControl = "no-store";
+            var bytes = JsonSerializer.SerializeToUtf8Bytes(export.Value, BackupJson);
+            return Results.File(bytes, "application/json", $"huella-banco-{export.Value.ExportedAt:yyyy-MM-dd}.json");
+        }).RequirePermission(read);
+        bank.MapPost("/import", async (BankBackup input, BankBackupHandler h, HttpContext http, CancellationToken ct) => (await h.ImportAsync(input, ct)).ToResponse(http)).RequirePermission(write);
         bank.MapPut("/notes", async (NotesInput i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveNotesAsync(i, ct)).ToResponse(http)).RequirePermission(write);
         bank.MapPut("/experiences", async (ListInput<ExperienceInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveExperiencesAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);
         bank.MapPut("/projects", async (ListInput<ProjectInput> i, BankHandler h, HttpContext http, CancellationToken ct) => (await h.SaveProjectsAsync(i.Items, ct)).ToResponse(http)).RequirePermission(write);
