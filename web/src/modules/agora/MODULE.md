@@ -19,9 +19,16 @@ Reglas: no importar de otro módulo, solo de `@/core/*`; utilidades de Tailwind 
 
 ## Rutas
 
-| Ruta | Página |
-|---|---|
-| `/agora` | `pages/HomePage.tsx` (marcador) |
+| Ruta | Página | Acceso |
+|---|---|---|
+| `/agora` | `HomePage`: inicio finito («Hoy en 5 minutos», recientes con tope, cierre «Está al día») | Público |
+| `/agora/explorar` | `ExplorePage`: temas, series, etiquetas y búsqueda; los filtros viven en la dirección (`?categoria=&serie=&etiqueta=&q=&pagina=`) | Público |
+| `/agora/p/:slug` | `ArticlePage`: pieza completa, fuentes, correcciones y «Cómo sabemos esto» | Público |
+| `/agora/actualidad` | `NewsPage`: noticias enlazadas; con el modo calma activo no se muestran | Público |
+| `/agora/guardados` | `SavedPage` | Sesión y `agora.saved.manage` (la pantalla guía a iniciar sesión) |
+| `/agora/estandares` | `StandardsPage`: qué significa el sello y cómo se corrige | Público |
+
+Una persona sin sesión puede leer todo, seguir temas (en su navegador) y compartir. Guardar, reaccionar y señalar errores piden sesión: se la lleva a iniciar sesión y la acción se retoma al volver (`?accion=guardar|ayudo|fuentes`). El servidor decide siempre con `agora.saved.manage`.
 
 ## Pendiente
 

@@ -107,6 +107,8 @@ export const strings = {
       document: "Documento",
       other: "Otra",
     },
+    previousVersion: "Versión anterior",
+    tagsLabel: "Etiquetas",
     howWeKnow: "Cómo sabemos esto",
     scope: "Alcance de la verificación",
     note: "Nota de la persona revisora",

@@ -1,10 +1,12 @@
 import { cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter } from "react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { axe } from "vitest-axe";
+import { HomeView } from "../../src/modules/agora/components/HomeView";
 import { SealBadge } from "../../src/modules/agora/components/SealBadge";
 import { VideoFacade } from "../../src/modules/agora/components/VideoFacade";
-import type { Seal } from "../../src/modules/agora/api/schemas";
+import type { ArticleCard, Home, Seal } from "../../src/modules/agora/api/schemas";
 import { MarkdownView } from "../../src/modules/agora/lib/MarkdownView";
 import { isSafeHref, parseMarkdown } from "../../src/modules/agora/lib/markdown";
 import { strings } from "../../src/modules/agora/strings";
@@ -111,6 +113,76 @@ describe("agora · video con fachada", () => {
     );
 
     expect(container).toBeEmptyDOMElement();
+  });
+});
+
+const card = (n: number, category = "historia"): ArticleCard => ({
+  id: `id-${n}`,
+  slug: `pieza-${n}`,
+  title: `Pieza número ${n}`,
+  summary: "Resumen breve.",
+  contentType: "facts",
+  categorySlug: category,
+  categoryName: category,
+  seriesSlug: null,
+  seriesName: null,
+  seriesOrder: null,
+  publishedAt: "2026-11-01T12:00:00Z",
+  authorName: "Autoría",
+  readingMinutes: 4,
+  sourceCount: 2,
+  seal: seal("pending"),
+});
+
+const home: Home = {
+  dailyPicks: [card(1), card(2), card(3)],
+  dailyPicksMinutes: 12,
+  recent: [card(4), card(5, "filosofia")],
+  series: [],
+  categories: [{ slug: "historia", name: "Historia", description: null, articleCount: 3 }],
+  news: [
+    {
+      id: "n1",
+      headline: "Una noticia de actualidad",
+      outlet: "Un medio",
+      publishedOn: "2026-11-01",
+      url: "https://example.org/nota",
+      contextNote: "Contexto de Ágora.",
+      topic: null,
+      isFeatured: false,
+    },
+  ],
+};
+
+describe("agora · inicio finito (AG-INI-01)", () => {
+  const view = (calm: boolean, followed: string[] = []) =>
+    render(
+      <MemoryRouter>
+        <HomeView data={home} followed={followed} calm={calm} />
+      </MemoryRouter>,
+    );
+
+  it("termina con «Está al día» y no ofrece cargar más ni desplazamiento infinito", () => {
+    view(false);
+
+    expect(screen.getByRole("heading", { name: strings.home.endTitle })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /cargar más|ver más|más resultados/i })).toBeNull();
+    expect(screen.getAllByRole("article")).toHaveLength(5);
+  });
+
+  it("el modo calma oculta la actualidad", () => {
+    const { unmount } = view(false);
+    expect(screen.getByRole("heading", { name: strings.home.newsTitle })).toBeInTheDocument();
+    unmount();
+
+    view(true);
+    expect(screen.queryByRole("heading", { name: strings.home.newsTitle })).toBeNull();
+  });
+
+  it("separa lo de los temas que la persona sigue", () => {
+    view(false, ["filosofia"]);
+
+    expect(screen.getByRole("heading", { name: strings.home.forYouTitle })).toBeInTheDocument();
   });
 });
 
