@@ -1,7 +1,7 @@
 import type { ReactNode } from "react";
 
 export type BadgeVariant =
-  "neutral" | "accent" | "success" | "warning" | "danger";
+  "neutral" | "accent" | "info" | "success" | "warning" | "danger";
 type BadgeProps = {
   children: ReactNode;
   variant?: BadgeVariant;
@@ -10,11 +10,13 @@ type BadgeProps = {
 };
 
 const variants: Record<BadgeVariant, string> = {
-  neutral: "border-line bg-surface-raised text-fg-secondary",
+  // Neutro: dato informativo (contorno, sin relleno de color). El resto lleva el color de su estado (texto ≥ 4,5:1).
+  neutral: "border-line-strong/60 bg-surface text-fg-secondary",
   accent: "border-transparent bg-accent-soft text-accent-strong",
-  success: "border-line bg-accent-soft text-accent-strong",
-  warning: "border-line-strong bg-surface-raised text-fg",
-  danger: "border-danger bg-danger-soft text-danger",
+  info: "border-info/30 bg-info-soft text-info",
+  success: "border-success/30 bg-success-soft text-success",
+  warning: "border-warning/40 bg-warning-soft text-warning",
+  danger: "border-danger/40 bg-danger-soft text-danger",
 };
 
 /** Etiqueta de estado con texto legible; el significado no depende solo del color. */

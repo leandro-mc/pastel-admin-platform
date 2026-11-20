@@ -7,17 +7,46 @@
 <meta name="color-scheme" content="light dark">
 <title>Huella · Estudio de CV (prototipo)</title>
 <!-- Fuentes solo para ver el diseño; en producción van autoalojadas (CSP). Hay respaldo del sistema. -->
-<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..900&family=Atkinson+Hyperlegible:wght@400;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,500..850&family=Atkinson+Hyperlegible:wght@400;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../../_shared/devkit.css">
 <link rel="stylesheet" href="estudio.css">
 </head>
 <body>
-<header class="bar">
-  <div class="logo"><b>Huella</b> · Estudio <span class="mut">prototipo · persona ficticia · la IA está simulada: no hay red ni claves</span></div>
-  <nav id="tabs" aria-label="Secciones"></nav>
-</header>
-<main id="view" tabindex="-1"></main>
+<div class="app-shell">
+  <aside class="app-sidebar" aria-label="Navegación principal">
+    <a class="brand" href="#" aria-label="Huella, ir al Banco" data-a="tab" data-id="banco">
+      <span class="brand-mark">h<span>.</span></span>
+      <span class="brand-copy"><strong>Huella</strong><small>ESTUDIO PROFESIONAL</small></span>
+    </a>
+
+    <div class="sidebar-caption">TU ESPACIO DE TRABAJO</div>
+    <nav id="tabs" class="primary-nav" aria-label="Herramientas principales"></nav>
+
+    <div class="sidebar-divider"></div>
+    <div class="sidebar-caption muted-caption">EN PREPARACIÓN</div>
+    <nav class="future-nav" aria-label="Próximos módulos">
+      <button type="button" data-a="tab" data-id="carta"><span class="nav-mark">03</span><span class="nav-copy">Carta de recomendación</span><small>Pronto</small></button>
+      <button type="button" data-a="tab" data-id="historial"><span class="nav-mark">04</span><span class="nav-copy">Historial de postulaciones</span><small>Pronto</small></button>
+      <button type="button" data-a="tab" data-id="entrevistas"><span class="nav-mark">05</span><span class="nav-copy">Preparación de entrevistas</span><small>Pronto</small></button>
+    </nav>
+
+    <div class="sidebar-bottom">
+      <div class="sidebar-note"><span class="note-rule"></span><p>Tu trayectoria, organizada en un solo lugar.</p></div>
+      <div class="sidebar-footer"><span class="local-indicator"></span> Prototipo local · datos ficticios</div>
+    </div>
+  </aside>
+
+  <div class="main-column">
+    <header class="bar">
+      <div class="breadcrumb"><span>Huella</span><span class="crumb-divider">/</span><strong id="current-section">Banco</strong></div>
+      <div class="bar-note"><span class="bar-dot"></span> Estudio de CV <span class="bar-separator">·</span> Persona ficticia</div>
+    </header>
+    <main id="view" tabindex="-1"></main>
+    <footer class="main-footer"><span>HUELLA <i>·</i> ESTUDIO PROFESIONAL</span><span>Un perfil completo. Cada candidatura, con su propio enfoque.</span></footer>
+  </div>
+</div>
 <div id="toast" role="status" aria-live="polite" hidden></div>
 <script src="../../_shared/devkit.js"></script>
 <script src="seed.js"></script>

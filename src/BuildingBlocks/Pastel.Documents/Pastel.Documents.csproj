@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>Pastel.Documents</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="../Pastel.SharedKernel/Pastel.SharedKernel.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Fuentes autoalojadas (OFL): viajan con la aplicación publicada; Typst no usa las del sistema. -->
+    <None Include="Fonts/**" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" LinkBase="Fonts" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Pastel.Documents.Tests" />
+  </ItemGroup>
+</Project>

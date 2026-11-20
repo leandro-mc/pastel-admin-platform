@@ -4,11 +4,17 @@ import {
   ghostButton,
   linkButton,
   primaryButton,
+  quietDangerButton,
   secondaryButton,
+  tonalButton,
 } from "./styles";
 
+/**
+ * Jerarquía (de más a menos énfasis): primary (una por vista) → tonal (principal de una tarjeta) → secondary (contorno)
+ * → ghost / link (opcionales). danger confirma una destrucción; quietDanger la inicia desde una tarjeta.
+ */
 export type ButtonVariant =
-  "primary" | "secondary" | "danger" | "ghost" | "link";
+  "primary" | "tonal" | "secondary" | "danger" | "quietDanger" | "ghost" | "link";
 
 export type ButtonProps = Omit<
   ButtonHTMLAttributes<HTMLButtonElement>,
@@ -22,8 +28,10 @@ export type ButtonProps = Omit<
 
 const variants: Record<ButtonVariant, string> = {
   primary: primaryButton,
+  tonal: tonalButton,
   secondary: secondaryButton,
   danger: dangerButton,
+  quietDanger: quietDangerButton,
   ghost: ghostButton,
   link: linkButton,
 };

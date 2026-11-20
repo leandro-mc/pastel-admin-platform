@@ -24,7 +24,11 @@ function toRoute(route: ModuleRoute): RouteObject {
 
 /** Rutas de plataforma (absolutas) que aporta un módulo: públicas o con sesión. */
 function toPlatformRoute(route: PlatformRoute): RouteObject {
-  return { path: route.path, lazy: route.lazy };
+  return {
+    path: route.path,
+    handle: route.bare ? { bare: true } : undefined,
+    lazy: route.lazy,
+  };
 }
 
 /**
