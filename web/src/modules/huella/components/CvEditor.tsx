@@ -24,8 +24,10 @@ import { strings } from "../strings";
 import { AiTaskPanel } from "./AiTaskPanel";
 import { formatDateTime } from "../lib/format";
 import { ErrorNotice, TextAreaField } from "./Form";
+import { CvFreeEditor, LeaveGuard } from "./CvFreeEditor";
 import { EvidenceList } from "./OfferPanel";
 import { PdfPreview } from "./PdfPreview";
+import { useCvDraft } from "../lib/useCvDraft";
 
 const t = strings.studio.editor;
 
@@ -188,12 +190,15 @@ export function CvEditor({ version }: { version: CvVersion }) {
   const sent = useSetSentVersion();
   const [name, setName] = useState(summary.name);
   const [editingSummary, setEditingSummary] = useState(false);
+  const free = useCvDraft(doc);
   const failed = report.checks.filter((c) => !c.passed);
 
   return (
+    <>
     <Tabs defaultSelectedKey="content">
       <TabList aria-label={t.tabs.label}>
         <Tab id="content">{t.tabs.content}</Tab>
+        <Tab id="free">{t.tabs.free}</Tab>
         <Tab id="preview">{t.tabs.preview}</Tab>
         <Tab id="send">{t.tabs.send}</Tab>
         <Tab id="review">
@@ -382,6 +387,10 @@ export function CvEditor({ version }: { version: CvVersion }) {
       </Panel>
       </TabPanel>
 
+      <TabPanel id="free">
+        <CvFreeEditor version={version} free={free} />
+      </TabPanel>
+
       <TabPanel id="preview">
         <PdfPreview
           title={strings.studio.preview.cvFrame}
@@ -465,6 +474,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
             ))}
           </ul>
         )}
+        {failed.length > 0 ? <p className="mt-3 text-sm text-muted">{t.checksInfo}</p> : null}
         {report.fitLog.length > 0 ? (
           <details className="mt-4">
             <summary className="cursor-pointer text-sm font-medium text-fg">
@@ -499,6 +509,8 @@ export function CvEditor({ version }: { version: CvVersion }) {
         <AiRegenerate version={version} />
       </TabPanel>
     </Tabs>
+    <LeaveGuard blocker={free.blocker} />
+    </>
   );
 }
 

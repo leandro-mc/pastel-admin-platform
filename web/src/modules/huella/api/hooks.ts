@@ -321,6 +321,12 @@ export const useEditLine = () =>
     api.put(`${base}/studio/versions/${id}/line`, versionSchema, body),
   );
 
+/** Guarda el CV completo editado a mano (sin topes de estilo; ver `CvFreeEdit` en el servidor). */
+export const useSaveDocument = () =>
+  useVersionMutation<unknown>((id, body) =>
+    api.put(`${base}/studio/versions/${id}/document`, versionSchema, body),
+  );
+
 export const useSetSentVersion = () =>
   useVersionMutation<boolean>((id, sent) =>
     api.put(

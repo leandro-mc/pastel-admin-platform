@@ -340,6 +340,42 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         return ViewOf(version, document, report);
     }
 
+    /// <summary>
+    /// Edición libre: reemplaza el documento por el que la persona dejó (<see cref="CvFreeEdit"/>), sin tope de caracteres, de
+    /// viñetas ni de páginas y sin el guardián de cifras. El PDF y el Word salen de este documento tal cual. Las
+    /// comprobaciones del reporte se recalculan (son informativas).
+    /// </summary>
+    public async Task<Result<CvVersionView>> SaveDocumentAsync(Guid versionId, CvDocumentInput input, CancellationToken cancellationToken)
+    {
+        var loaded = await LoadVersionAsync(versionId, cancellationToken);
+        if (loaded.IsFailure)
+        {
+            return loaded.Error;
+        }
+
+        var (version, current) = loaded.Value;
+        var built = CvFreeEdit.Build(input, current);
+        if (built.IsFailure)
+        {
+            return built.Error;
+        }
+
+        var document = built.Value;
+        var profile = await owners.GetOrCreateAsync(cancellationToken);
+        var bank = await LoadBankAsync(profile.Value, cancellationToken);
+        var limits = CvLimits.For(version.Level, version.Paper, version.Format);
+        var previous = ReportOf(version);
+        var fitLog = previous.FitLog.Where(line => line != FreeEditNote).Append(FreeEditNote).ToList();
+        var report = new CvReport(CvGuardian.Checks(document, bank.Data, limits, version.Language), fitLog, previous.Evidence, previous.HardFilters);
+        version.Source = version.Source == "ai" ? "ai" : "manual";
+        Apply(version, document, report, limits);
+        version.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return ViewOf(version, document, report);
+    }
+
+    private const string FreeEditNote = "Edición libre: el contenido lo decide la persona; no se aplicó el ajuste automático de páginas ni el tope de caracteres.";
+
     public async Task<Result<CvVersionView>> RenameAsync(Guid versionId, RenameInput input, CancellationToken cancellationToken)
     {
         var loaded = await LoadVersionAsync(versionId, cancellationToken);

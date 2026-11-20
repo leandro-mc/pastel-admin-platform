@@ -106,7 +106,7 @@
 #let skills-section() = if d.skills.len() > 0 {
   heading(level: 2, d.labels.skills)
   for g in d.skills {
-    block(below: 0.5em, { text(weight: "bold", g.label + ": "); g.items.join(", ") })
+    block(below: 0.5em, { if g.label != "" { text(weight: "bold", g.label + ": ") }; g.items.join(", ") })
   }
 }
 
@@ -124,7 +124,7 @@
 #let competencies-sections() = if d.competencies.len() > 0 {
   heading(level: 2, d.labels.at("competencies", default: "Competencias"))
   for g in d.competencies {
-    block(below: 0.5em, { text(weight: "bold", g.label + ": "); g.items.map(c => c.name).join(", ") })
+    block(below: 0.5em, { if g.label != "" { text(weight: "bold", g.label + ": ") }; g.items.map(c => c.name).join(", ") })
   }
 }
 

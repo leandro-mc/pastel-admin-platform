@@ -112,7 +112,7 @@ function OpenDocument({
 
 function OpenCv({ id }: { id: string }) {
   const version = useVersion(id);
-  return <Loaded query={version}>{(data) => <CvEditor version={data} />}</Loaded>;
+  return <Loaded query={version}>{(data) => <CvEditor key={data.summary.id} version={data} />}</Loaded>;
 }
 
 function OpenLetter({ id }: { id: string }) {

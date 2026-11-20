@@ -95,7 +95,7 @@ internal static class CvDocx
             body.Append(Paragraph("Heading1", Run(labels.Skills)));
             foreach (var group in doc.Skills)
             {
-                body.Append(Paragraph(null, Run(group.Label + ": ", bold: true) + Run(string.Join(", ", group.Items)), spaceAfter: 40));
+                body.Append(Paragraph(null, (group.Label.Length > 0 ? Run(group.Label + ": ", bold: true) : string.Empty) + Run(string.Join(", ", group.Items)), spaceAfter: 40));
             }
         }
 
@@ -109,7 +109,7 @@ internal static class CvDocx
             body.Append(Paragraph("Heading1", Run(labels.Competencies)));
             foreach (var group in doc.Competencies)
             {
-                body.Append(Paragraph(null, Run(group.Label + ": ", bold: true) + Run(string.Join(", ", group.Items.Select(c => c.Name))), spaceAfter: 40));
+                body.Append(Paragraph(null, (group.Label.Length > 0 ? Run(group.Label + ": ", bold: true) : string.Empty) + Run(string.Join(", ", group.Items.Select(c => c.Name))), spaceAfter: 40));
             }
         }
 
