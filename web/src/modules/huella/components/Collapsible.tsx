@@ -10,6 +10,8 @@ type Props = {
   expanded: boolean;
   onToggle: () => void;
   heading?: "h3" | "h4" | "h5";
+  /** Menos relleno (listas largas, como la edición libre del CV). */
+  dense?: boolean;
   children: ReactNode;
 };
 
@@ -23,6 +25,7 @@ export function Collapsible({
   expanded,
   onToggle,
   heading: Heading = "h3",
+  dense = false,
   children,
 }: Props) {
   const panelId = useId();
@@ -49,7 +52,7 @@ export function Collapsible({
         ) : null}
       </div>
       {expanded ? (
-        <div id={panelId} className="border-t border-line p-4">
+        <div id={panelId} className={`border-t border-line ${dense ? "p-3" : "p-4"}`}>
           {children}
         </div>
       ) : null}
