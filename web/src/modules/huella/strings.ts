@@ -885,6 +885,16 @@ export const strings = {
         review: "Revisión ATS",
         redo: "Volver a redactar",
       },
+      pair: {
+        title: (language: string) => `Actualizando la versión en ${language} con IA`,
+        step: (name: string) => `Reflejar los cambios en «${name}»`,
+        stale: (language: string, name: string) =>
+          `Esta versión está desactualizada: se cambió la versión en ${language} («${name}») y falta reflejarlo aquí.`,
+        update: "Actualizar con IA",
+        languages: { es: "español", en: "inglés" } as Record<string, string>,
+        freeNote: (language: string) =>
+          `Esta versión se generó junto con la de ${language}: al guardar, la IA actualiza en esa versión solo las secciones que cambió.`,
+      },
       checksInfo:
         "Las comprobaciones son informativas: en la edición libre usted decide qué se queda, aunque no pasen.",
       sendTitle: "Envío y descarga",

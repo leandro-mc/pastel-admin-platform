@@ -12,7 +12,7 @@ namespace Pastel.Modules.Huella.Features.Studio;
 /// Estudio de CV: ofertas, generación determinista desde el banco, edición validada por el guardián de verdad,
 /// versiones, y la redacción del CV con IA (la IA solo devuelve JSON; nada de lo que llega se guarda sin validar).
 /// </summary>
-internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, OfferTracking tracking, IClock clock)
+internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, BankLoader loader, ICvRenderer renderer, OfferTracking tracking, AiAssistant ai, IClock clock)
 {
     public const int MaxOffers = 50;
     public const int MaxVersions = 300;
@@ -196,7 +196,12 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     public async Task<Result<CvVersionView>> GetVersionAsync(Guid versionId, CancellationToken cancellationToken)
     {
         var loaded = await LoadVersionAsync(versionId, cancellationToken);
-        return loaded.IsFailure ? loaded.Error : ViewOf(loaded.Value.Version, loaded.Value.Document, ReportOf(loaded.Value.Version));
+        if (loaded.IsFailure)
+        {
+            return loaded.Error;
+        }
+
+        return await ViewAsync(loaded.Value.Version, loaded.Value.Document, ReportOf(loaded.Value.Version), cancellationToken);
     }
 
     public async Task<Result<CvVersionView>> GenerateAsync(GenerateCvInput input, CancellationToken cancellationToken)
@@ -262,6 +267,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         {
             Id = Guid.CreateVersion7(),
             ProfileId = profile.Value.Id,
+            PairId = await AcceptPairAsync(input.PairId, profile.Value.Id, cancellationToken),
             JobOfferId = offer?.Id,
             Name = Trim(name ?? defaultName, HuellaLimits.CvVersion.Name),
             Level = level,
@@ -276,7 +282,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         Apply(version, document, report, limits);
         db.CvVersions.Add(version);
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(version, document, report);
+        return await ViewAsync(version, document, report, cancellationToken);
     }
 
     public async Task<Result<CvVersionView>> EditLineAsync(Guid versionId, EditLineInput input, CancellationToken cancellationToken)
@@ -288,6 +294,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var (version, document) = loaded.Value;
+        var before = HuellaJson.Deserialize<CvDocument>(version.ContentJson)!;
         var profile = await owners.GetOrCreateAsync(cancellationToken);
         var bank = await LoadBankAsync(profile.Value, cancellationToken);
         var limits = CvLimits.For(version.Level, version.Paper, version.Format);
@@ -334,10 +341,11 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var previous = ReportOf(version);
         var report = new CvReport(CvGuardian.Checks(document, bank.Data, limits, version.Language), previous.FitLog, previous.Evidence, previous.HardFilters);
         version.Source = version.Source == "ai" ? "ai" : "manual";
+        await RecordPairAsync(version, before, document, cancellationToken);
         Apply(version, document, report, limits);
         version.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(version, document, report);
+        return await ViewAsync(version, document, report, cancellationToken);
     }
 
     /// <summary>
@@ -368,10 +376,11 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var fitLog = previous.FitLog.Where(line => line != FreeEditNote).Append(FreeEditNote).ToList();
         var report = new CvReport(CvGuardian.Checks(document, bank.Data, limits, version.Language), fitLog, previous.Evidence, previous.HardFilters);
         version.Source = version.Source == "ai" ? "ai" : "manual";
+        await RecordPairAsync(version, current, document, cancellationToken);
         Apply(version, document, report, limits);
         version.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(version, document, report);
+        return await ViewAsync(version, document, report, cancellationToken);
     }
 
     private const string FreeEditNote = "Edición libre: el contenido lo decide la persona; no se aplicó el ajuste automático de páginas ni el tope de caracteres.";
@@ -394,7 +403,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         loaded.Value.Version.Name = name;
         loaded.Value.Version.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(loaded.Value.Version, loaded.Value.Document, ReportOf(loaded.Value.Version));
+        return await ViewAsync(loaded.Value.Version, loaded.Value.Document, ReportOf(loaded.Value.Version), cancellationToken);
     }
 
     /// <summary>Marca una versión como el CV público (solo una a la vez) o la desmarca.</summary>
@@ -419,7 +428,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         version.IsPublic = isPublic;
         version.UpdatedAt = clock.UtcNow;
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(version, loaded.Value.Document, ReportOf(version));
+        return await ViewAsync(version, loaded.Value.Document, ReportOf(version), cancellationToken);
     }
 
     /// <summary>Marca una versión como enviada (o la desmarca). Enviarla a una oferta guardada la pasa a «postulada».</summary>
@@ -440,7 +449,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         await db.SaveChangesAsync(cancellationToken);
-        return ViewOf(version, loaded.Value.Document, ReportOf(version));
+        return await ViewAsync(version, loaded.Value.Document, ReportOf(version), cancellationToken);
     }
 
     public async Task<Result> DeleteVersionAsync(Guid versionId, CancellationToken cancellationToken)
@@ -588,6 +597,8 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var ids = new List<Guid>();
+        // Las dos versiones (español e inglés) que se generan juntas quedan emparejadas para mantenerse al día entre sí.
+        Guid? pairId = c.Existing is null && composed.Count == 2 ? Guid.CreateVersion7() : null;
         foreach (var item in composed)
         {
             var log = CvLayout.Fit(item.Document, limits);
@@ -600,6 +611,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
                 {
                     Id = Guid.CreateVersion7(),
                     ProfileId = c.Profile.Id,
+                    PairId = pairId,
                     JobOfferId = c.Offer?.Id,
                     Name = Trim(composed.Count > 1 ? $"{baseName} · {item.Language.ToUpperInvariant()}" : baseName, HuellaLimits.CvVersion.Name),
                     Level = c.Request.Level,
@@ -689,8 +701,121 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     private static CvReport ReportOf(CvVersion version) =>
         HuellaJson.Deserialize<CvReport>(version.ReportJson) ?? new CvReport([], [], [], []);
 
-    private CvVersionView ViewOf(CvVersion version, CvDocument document, CvReport report) =>
-        new(SummaryOf(version), document, report, CvGuardian.AtsText(document, version.Language), renderer.IsAvailable);
+    private async Task<CvVersionView> ViewAsync(CvVersion version, CvDocument document, CvReport report, CancellationToken cancellationToken)
+    {
+        CvPairView? pair = null;
+        if (version.PairId is { } pairId)
+        {
+            var twin = await db.CvVersions.AsNoTracking()
+                .Where(v => v.ProfileId == version.ProfileId && v.PairId == pairId && v.Id != version.Id)
+                .Select(v => new { v.Id, v.Language, v.Name, v.PairPendingJson })
+                .FirstOrDefaultAsync(cancellationToken);
+            if (twin is not null)
+            {
+                pair = new CvPairView(twin.Id, twin.Language, twin.Name, !string.IsNullOrEmpty(version.PairPendingJson), !string.IsNullOrEmpty(twin.PairPendingJson));
+            }
+        }
+
+        return new(SummaryOf(version), document, report, CvGuardian.AtsText(document, version.Language), renderer.IsAvailable, pair);
+    }
+
+    // ───────────────────────────── Versiones emparejadas (español / inglés) ─────────────────────────────
+    /// <summary>Acepta el id de pareja de una generación en dos idiomas solo si aún no tiene las dos versiones.</summary>
+    private async Task<Guid?> AcceptPairAsync(Guid? pairId, Guid profileId, CancellationToken cancellationToken) =>
+        pairId is { } id && await db.CvVersions.CountAsync(v => v.ProfileId == profileId && v.PairId == id, cancellationToken) < 2 ? id : null;
+
+    /// <summary>
+    /// Anota en la versión hermana (si la hay) las secciones que esta edición cambió. Se guarda con el mismo
+    /// <c>SaveChanges</c> que el cambio; la IA las refleja después (<see cref="SyncPairAsync"/>).
+    /// </summary>
+    private async Task RecordPairAsync(CvVersion version, CvDocument before, CvDocument after, CancellationToken cancellationToken)
+    {
+        if (version.PairId is not { } pairId)
+        {
+            return;
+        }
+
+        var twin = await db.CvVersions.FirstOrDefaultAsync(v => v.ProfileId == version.ProfileId && v.PairId == pairId && v.Id != version.Id, cancellationToken);
+        if (twin is not null)
+        {
+            twin.PairPendingJson = CvPairSync.WritePending(CvPairSync.Record(CvPairSync.ReadPending(twin.PairPendingJson), before, after));
+        }
+    }
+
+    /// <summary>
+    /// Pone al día esta versión con lo que se cambió en su pareja (la generada junta en el otro idioma): la IA configurada
+    /// deja las secciones afectadas como traducción fiel de las del origen y conserva el resto tal cual. Todo se valida
+    /// (misma estructura, ninguna cifra nueva); lo que no pasa se rechaza y queda pendiente para reintentar.
+    /// </summary>
+    public async Task<Result<AiTaskOutcome>> SyncPairAsync(Guid versionId, CancellationToken cancellationToken)
+    {
+        var loaded = await LoadVersionAsync(versionId, cancellationToken);
+        if (loaded.IsFailure)
+        {
+            return loaded.Error;
+        }
+
+        var (target, targetDoc) = loaded.Value;
+        var pending = CvPairSync.ReadPending(target.PairPendingJson);
+        if (target.PairId is not { } pairId || pending.Count == 0)
+        {
+            return HuellaErrors.PairNothingPending;
+        }
+
+        var source = await db.CvVersions.FirstOrDefaultAsync(v => v.ProfileId == target.ProfileId && v.PairId == pairId && v.Id != target.Id, cancellationToken);
+        var sourceDoc = source is null ? null : HuellaJson.Deserialize<CvDocument>(source.ContentJson);
+        if (source is null || sourceDoc is null)
+        {
+            target.PairId = null;
+            target.PairPendingJson = null;
+            await db.SaveChangesAsync(cancellationToken);
+            return HuellaErrors.PairMissing;
+        }
+
+        var plan = CvPairSync.Plan(sourceDoc, targetDoc, pending, source.Language, target.Language);
+        string? raw = null;
+        if (plan.Prompt is not null)
+        {
+            var profile = await owners.GetOrCreateAsync(cancellationToken);
+            if (profile.IsFailure)
+            {
+                return profile.Error;
+            }
+
+            var answer = await ai.RunAsync(profile.Value, plan.Prompt, cancellationToken);
+            if (answer.IsFailure)
+            {
+                return answer.Error;
+            }
+
+            raw = answer.Value;
+        }
+
+        var result = CvPairSync.Apply(plan, raw);
+        if (result.Applied.Count == 0)
+        {
+            return new AiTaskOutcome("cv-sync", 0, result.Rejected, [], []);
+        }
+
+        var built = CvFreeEdit.Build(result.Input, targetDoc);
+        if (built.IsFailure)
+        {
+            return new AiTaskOutcome("cv-sync", 0, [..result.Rejected, "El resultado no pasó la limpieza del texto."], [], []);
+        }
+
+        var document = built.Value;
+        var ownerProfile = await owners.GetOrCreateAsync(cancellationToken);
+        var bank = await LoadBankAsync(ownerProfile.Value, cancellationToken);
+        var limits = CvLimits.For(target.Level, target.Paper, target.Format);
+        var previous = ReportOf(target);
+        var fitLog = previous.FitLog.Where(line => line != FreeEditNote).Append(FreeEditNote).ToList();
+        var report = new CvReport(CvGuardian.Checks(document, bank.Data, limits, target.Language), fitLog, previous.Evidence, previous.HardFilters);
+        Apply(target, document, report, limits);
+        target.PairPendingJson = CvPairSync.WritePending(result.Remaining);
+        target.UpdatedAt = clock.UtcNow;
+        await db.SaveChangesAsync(cancellationToken);
+        return new AiTaskOutcome("cv-sync", result.Applied.Count, result.Rejected, [target.Id], result.Applied);
+    }
 
     private static CvVersionSummary SummaryOf(CvVersion v) =>
         new(v.Id, v.Name, v.Level, v.Paper, v.Language, v.Format, v.Mode, v.Source, v.Pages, v.LinesUsed, v.LineBudget, v.IsPublic, v.SentAt, v.JobOfferId, v.CreatedAt, v.UpdatedAt);

@@ -121,10 +121,13 @@ function CvForm({
     setDrafting(true);
     try {
       let last: string | null = null;
+      // Las dos versiones (español e inglés) generadas juntas quedan emparejadas para mantenerse al día entre sí.
+      const pairId = languages.length === 2 ? crypto.randomUUID() : null;
       for (const lang of languages) {
         const version = await generate.mutateAsync({
           ...taskInput(),
           language: lang,
+          pairId,
         });
         last = version.summary.id;
       }

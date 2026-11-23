@@ -27,6 +27,7 @@ import {
   type SkillGroupRow,
 } from "../lib/cvDraft";
 import type { useCvDraft } from "../lib/useCvDraft";
+import { languageName } from "../lib/usePairSync";
 import { strings } from "../strings";
 import { Collapsible } from "./Collapsible";
 import { ErrorNotice, fieldError } from "./Form";
@@ -380,7 +381,7 @@ const SECTIONS = ["header", "summary", "skills", "competencies", "experience", "
  * habilidades, agregar y ordenar. Sin topes de caracteres, de viñetas ni de páginas: el servidor solo limpia el texto (sin
  * HTML) y el PDF y el Word salen tal cual con el estilo de siempre. Nada se guarda hasta pulsar «Guardar cambios».
  */
-export function CvFreeEditor({ version, free }: { version: CvVersion; free: Free }) {
+export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; free: Free; onSaved?: (saved: CvVersion) => void }) {
   const { draft, setDraft, dirty, reset } = free;
   const save = useSaveDocument();
   const notify = useNotify();
@@ -407,6 +408,7 @@ export function CvFreeEditor({ version, free }: { version: CvVersion; free: Free
         onSuccess: (saved) => {
           reset(saved.document);
           notify(strings.common.saved, "success");
+          onSaved?.(saved);
         },
       },
     );
@@ -432,6 +434,7 @@ export function CvFreeEditor({ version, free }: { version: CvVersion; free: Free
     >
       <div className="flex flex-col gap-3">
         <p className="text-xs text-muted">{f.note}</p>
+        {version.pair ? <p className="text-xs text-fg-secondary">{strings.studio.editor.pair.freeNote(languageName(version.pair.twinLanguage))}</p> : null}
 
         <Block title={f.header.title} present open={open("header")} onToggle={() => toggle("header")}>
           <div className="flex flex-col gap-2">

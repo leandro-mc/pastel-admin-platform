@@ -268,8 +268,10 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
             e.Property(x => x.ReportJson).HasColumnType("jsonb");
             e.Property(x => x.LinesUsed).HasPrecision(6, 1);
             e.Property(x => x.Source).HasMaxLength(24).IsRequired();
+            e.Property(x => x.PairPendingJson).HasColumnType("jsonb");
             e.Property(x => x.Version).IsRowVersion();
             e.HasIndex(x => new { x.ProfileId, x.CreatedAt });
+            e.HasIndex(x => x.PairId);
             e.HasIndex(x => x.JobOfferId);
             e.HasIndex(x => x.ProfileId).IsUnique().HasFilter("\"IsPublic\"");
             e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();

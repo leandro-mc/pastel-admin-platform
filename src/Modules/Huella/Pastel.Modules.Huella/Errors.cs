@@ -92,6 +92,12 @@ internal static class HuellaErrors
     public static Error BankBackupInvalid(IReadOnlyDictionary<string, string[]> details) =>
         Error.Validation("huella.bank.backup_invalid", "El respaldo tiene datos que no se pueden importar. No se cambió nada: revise lo marcado.", details);
 
+    public static readonly Error PairNothingPending = Error.Validation(
+        "huella.cv.pair_nothing_pending", "Esta versión ya está al día con la otra: no hay cambios por reflejar.");
+
+    public static readonly Error PairMissing = Error.NotFound(
+        "huella.cv.pair_missing", "La otra versión (español o inglés) ya no existe, así que no hay con qué ponerla al día.");
+
     public static Error Invalid(IReadOnlyDictionary<string, string[]> details) =>
         Error.Validation("huella.input.invalid", "Revise los campos marcados.", details);
 

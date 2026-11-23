@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNotify } from "@/core/notifications";
 import {
+  Alert,
   Badge,
   Button,
   Panel,
@@ -28,6 +29,7 @@ import { CvFreeEditor, LeaveGuard } from "./CvFreeEditor";
 import { EvidenceList } from "./OfferPanel";
 import { PdfPreview } from "./PdfPreview";
 import { useCvDraft } from "../lib/useCvDraft";
+import { languageName, usePairSync } from "../lib/usePairSync";
 
 const t = strings.studio.editor;
 
@@ -49,12 +51,15 @@ function LineEditor({
   initial,
   sourceIds,
   onDone,
+  onSaved,
 }: {
   versionId: string;
   target: Target;
   initial: string;
   sourceIds: readonly string[];
   onDone: () => void;
+  /** Tras guardar: la versión en el otro idioma, si la hay, se pone al día. */
+  onSaved?: (saved: CvVersion) => void;
 }) {
   const edit = useEditLine();
   const [text, setText] = useState(initial);
@@ -76,9 +81,10 @@ function LineEditor({
               },
       },
       {
-        onSuccess: () => {
+        onSuccess: (saved) => {
           notify(strings.common.saved);
           onDone();
+          onSaved?.(saved);
         },
       },
     );
@@ -117,10 +123,12 @@ function Bullets({
   versionId,
   section,
   entries,
+  onSaved,
 }: {
   versionId: string;
   section: "experience" | "projects";
   entries: CvDocument["experience"];
+  onSaved?: (saved: CvVersion) => void;
 }) {
   const [editing, setEditing] = useState<string | null>(null);
   return (
@@ -156,6 +164,7 @@ function Bullets({
                       initial={bullet.text}
                       sourceIds={bullet.sourceIds}
                       onDone={() => setEditing(null)}
+                      onSaved={onSaved}
                     />
                   ) : (
                     <>
@@ -191,10 +200,33 @@ export function CvEditor({ version }: { version: CvVersion }) {
   const [name, setName] = useState(summary.name);
   const [editingSummary, setEditingSummary] = useState(false);
   const free = useCvDraft(doc);
+  const pair = usePairSync();
+  const twin = version.pair;
   const failed = report.checks.filter((c) => !c.passed);
 
   return (
     <>
+    {twin?.pending ? (
+      <div className="mb-4">
+        <Alert
+          variant="warning"
+          message={
+            <span className="flex flex-wrap items-center gap-3">
+              <span>{t.pair.stale(languageName(twin.twinLanguage), twin.twinName)}</span>
+              <Button
+                variant="tonal"
+                type="button"
+                loading={pair.running}
+                loadingLabel={strings.common.saving}
+                onClick={() => void pair.run({ id: summary.id, language: summary.language, name: summary.name })}
+              >
+                {t.pair.update}
+              </Button>
+            </span>
+          }
+        />
+      </div>
+    ) : null}
     <Tabs defaultSelectedKey="content">
       <TabList aria-label={t.tabs.label}>
         <Tab id="content">{t.tabs.content}</Tab>
@@ -286,6 +318,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
                   initial={doc.summary}
                   sourceIds={[]}
                   onDone={() => setEditingSummary(false)}
+                  onSaved={pair.after}
                 />
               ) : (
                 <>
@@ -341,6 +374,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
                   versionId={summary.id}
                   section="experience"
                   entries={doc.experience}
+                  onSaved={pair.after}
                 />
               </section>
             ) : null}
@@ -353,6 +387,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
                   versionId={summary.id}
                   section="projects"
                   entries={doc.projects}
+                  onSaved={pair.after}
                 />
               </section>
             ) : null}
@@ -388,7 +423,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
       </TabPanel>
 
       <TabPanel id="free">
-        <CvFreeEditor version={version} free={free} />
+        <CvFreeEditor version={version} free={free} onSaved={pair.after} />
       </TabPanel>
 
       <TabPanel id="preview">
@@ -510,6 +545,7 @@ export function CvEditor({ version }: { version: CvVersion }) {
       </TabPanel>
     </Tabs>
     <LeaveGuard blocker={free.blocker} />
+    {pair.dialog}
     </>
   );
 }

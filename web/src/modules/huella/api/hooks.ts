@@ -396,6 +396,10 @@ export const runAiTask = (kind: AiTaskKind, input: AiTaskInput) =>
     timeoutMs: AI_TIMEOUT_MS,
   });
 
+/** Pone al día una versión con lo que se cambió en su pareja (español/inglés) con la IA configurada (tarda: nginx da 150 s). */
+export const syncPair = (versionId: string) =>
+  api.post(`${base}/studio/versions/${versionId}/sync/ai-run`, aiTaskOutcomeSchema, {}, { timeoutMs: AI_TIMEOUT_MS });
+
 /** Importa la respuesta que devolvió una IA externa. */
 export const importAiTask = (
   kind: AiTaskKind,

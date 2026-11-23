@@ -424,6 +424,12 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.Property<short>("Pages")
                         .HasColumnType("smallint");
 
+                    b.Property<Guid?>("PairId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PairPendingJson")
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("Paper")
                         .IsRequired()
                         .HasMaxLength(8)
@@ -455,6 +461,8 @@ namespace Pastel.Modules.Huella.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("JobOfferId");
+
+                    b.HasIndex("PairId");
 
                     b.HasIndex("ProfileId")
                         .IsUnique()

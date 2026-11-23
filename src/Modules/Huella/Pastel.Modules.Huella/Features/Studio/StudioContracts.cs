@@ -35,7 +35,8 @@ internal sealed record OfferView(
     IReadOnlyList<HardFilterRow> HardFilters,
     DateTimeOffset CreatedAt);
 
-internal sealed record GenerateCvInput(Guid? OfferId, string? Focus, string? Level, string? Paper, string? Language, string? Name);
+/// <summary><c>PairId</c>: el borrador sin IA en dos idiomas crea una versión por llamada; ambas llevan el mismo id para quedar emparejadas.</summary>
+internal sealed record GenerateCvInput(Guid? OfferId, string? Focus, string? Level, string? Paper, string? Language, string? Name, Guid? PairId = null);
 
 internal sealed record CvVersionSummary(
     Guid Id,
@@ -61,12 +62,16 @@ internal sealed record CvReport(
     IReadOnlyList<EvidenceItem> Evidence,
     IReadOnlyList<HardFilterRow> HardFilters);
 
+/// <summary>La otra versión de una pareja generada junta (español e inglés): <c>Pending</c> = esta versión no refleja aún cambios de la otra; <c>TwinPending</c> = la otra no refleja cambios de esta.</summary>
+internal sealed record CvPairView(Guid TwinId, string TwinLanguage, string TwinName, bool Pending, bool TwinPending);
+
 internal sealed record CvVersionView(
     CvVersionSummary Summary,
     CvDocument Document,
     CvReport Report,
     string AtsText,
-    bool PdfAvailable);
+    bool PdfAvailable,
+    CvPairView? Pair);
 
 /// <summary>Edición de una línea: <c>Target</c> es <c>summary</c> o <c>bullet</c> (con <c>Section</c> experience|projects, <c>Entry</c> e <c>Index</c>).</summary>
 internal sealed record EditLineInput(string? Target, string? Section, int? Entry, int? Index, string? Text, IReadOnlyList<Guid>? SourceIds);

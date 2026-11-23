@@ -367,6 +367,19 @@ export const versionSchema = z.object({
   }),
   atsText: text,
   pdfAvailable: z.boolean(),
+  /** La otra versión (español o inglés) generada junta con esta; `null` si no tiene pareja. */
+  pair: z
+    .object({
+      twinId: id,
+      twinLanguage: text,
+      twinName: text,
+      /** Esta versión no refleja aún cambios hechos en la otra. */
+      pending: z.boolean(),
+      /** La otra versión no refleja aún cambios hechos en esta. */
+      twinPending: z.boolean(),
+    })
+    .nullable()
+    .default(null),
 });
 
 // ── Tareas de IA (CV, perfil público, traducción) ──

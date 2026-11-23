@@ -44,6 +44,18 @@ internal sealed class CvVersion : IProfileOwned
 
     public string Source { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Identificador compartido por las dos versiones (español e inglés) que se generaron juntas con «Español e inglés (dos
+    /// versiones)». <c>null</c> = sin pareja. Solo las versiones emparejadas se mantienen al día entre sí.
+    /// </summary>
+    public Guid? PairId { get; set; }
+
+    /// <summary>
+    /// Cambios hechos en la versión hermana que todavía no se reflejan aquí (<c>CvPairSync</c>): por sección, cómo estaba
+    /// antes de que se editara. <c>null</c> = al día. Se vacía cuando la IA actualiza esta versión.
+    /// </summary>
+    public string? PairPendingJson { get; set; }
+
     public DateTimeOffset CreatedAt { get; set; }
 
     public DateTimeOffset UpdatedAt { get; set; }
