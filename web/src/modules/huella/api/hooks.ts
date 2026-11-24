@@ -408,6 +408,14 @@ export const runAiTask = (kind: AiTaskKind, input: AiTaskInput) =>
 export const regenerateSection = (versionId: string, body: { section: string; draft: unknown }) =>
   api.post(`${base}/studio/versions/${versionId}/section/ai-run`, cvSectionSchema, body, { timeoutMs: AI_TIMEOUT_MS });
 
+/** El prompt de una sección para una IA externa (mismo texto que recibe el proveedor configurado). */
+export const fetchSectionPackage = (versionId: string, body: { section: string; draft: unknown }) =>
+  api.post(`${base}/studio/versions/${versionId}/section/ai-package`, aiTaskPackageSchema, body);
+
+/** Aplica la respuesta de una IA externa a una sección, con las mismas validaciones. No guarda. */
+export const importSection = (versionId: string, body: { section: string; draft: unknown; json: string }) =>
+  api.post(`${base}/studio/versions/${versionId}/section/ai-result`, cvSectionSchema, body);
+
 /** Pone al día una versión con lo que se cambió en su pareja (español/inglés) con la IA configurada (tarda: nginx da 150 s). */
 export const syncPair = (versionId: string) =>
   api.post(`${base}/studio/versions/${versionId}/sync/ai-run`, aiTaskOutcomeSchema, {}, { timeoutMs: AI_TIMEOUT_MS });

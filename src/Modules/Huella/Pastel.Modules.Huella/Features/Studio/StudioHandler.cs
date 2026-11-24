@@ -734,6 +734,36 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     /// </summary>
     public async Task<Result<CvSectionView>> RegenerateSectionAsync(Guid versionId, CvSectionInput input, CancellationToken cancellationToken)
     {
+        var plan = await PlanSectionAsync(versionId, input, cancellationToken);
+        if (plan.IsFailure)
+        {
+            return plan.Error;
+        }
+
+        var answer = await ai.RunAsync(plan.Value.Profile, plan.Value.Package.Prompt, cancellationToken);
+        return answer.IsFailure ? answer.Error : ApplySection(plan.Value, answer.Value, HuellaErrors.AiProviderInvalidJson);
+    }
+
+    /// <summary>El prompt de la sección, para llevarlo a una IA externa: el mismo texto que recibe el proveedor configurado.</summary>
+    public async Task<Result<AiTaskPackage>> SectionPackageAsync(Guid versionId, CvSectionInput input, CancellationToken cancellationToken)
+    {
+        var plan = await PlanSectionAsync(versionId, input, cancellationToken);
+        return plan.IsFailure
+            ? plan.Error
+            : new AiTaskPackage("cv-section", $"Sección «{CvPairSync.Title(plan.Value.Only)}» del CV", $"huella-seccion-{plan.Value.Name}", plan.Value.Package.Prompt, plan.Value.Package.Schema);
+    }
+
+    /// <summary>Aplica la respuesta pegada de una IA externa con las mismas validaciones que la del proveedor. Tampoco guarda.</summary>
+    public async Task<Result<CvSectionView>> ImportSectionAsync(Guid versionId, CvSectionInput input, CancellationToken cancellationToken)
+    {
+        var plan = await PlanSectionAsync(versionId, input, cancellationToken);
+        return plan.IsFailure ? plan.Error : ApplySection(plan.Value, input.Json, HuellaErrors.AiResultInvalid);
+    }
+
+    private sealed record SectionPlan(string Name, string Only, CvComposeRequest Request, OfferAnalysis Analysis, LoadedBank Bank, AiPackage Package, Profile Profile);
+
+    private async Task<Result<SectionPlan>> PlanSectionAsync(Guid versionId, CvSectionInput input, CancellationToken cancellationToken)
+    {
         var loaded = await LoadVersionAsync(versionId, cancellationToken);
         if (loaded.IsFailure)
         {
@@ -790,13 +820,18 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var others = "{" + string.Join(",", CvPairSync.SectionsOf(current).Where(kv => kv.Key != name).Select(kv => $"\"{kv.Key}\":{kv.Value}")) + "}";
         var package = CvAiCompose.BuildPackage(bank.Bank, analysis, offer?.RawText, version.Focus, request, new CvSectionMode(only, CvPairSync.Title(only), others));
 
-        var answer = await ai.RunAsync(profile.Value, package.Prompt, cancellationToken);
-        if (answer.IsFailure)
+        return new SectionPlan(name, only, request, analysis, bank, package, profile.Value);
+    }
+
+    private static Result<CvSectionView> ApplySection(SectionPlan plan, string? raw, Error invalid)
+    {
+        var (name, only) = (plan.Name, plan.Only);
+        var (document, warnings) = CvAiCompose.ParseSection(raw, plan.Bank.Bank, plan.Request, plan.Analysis, only);
+        if (document is null && warnings.Count == 0)
         {
-            return answer.Error;
+            return invalid;
         }
 
-        var (document, warnings) = CvAiCompose.ParseSection(answer.Value, bank.Bank, request, analysis, only);
         var filled = document is not null && only switch
         {
             "headline" => document.Header.Headline.Length > 0,

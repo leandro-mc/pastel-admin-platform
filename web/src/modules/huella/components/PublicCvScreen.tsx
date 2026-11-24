@@ -79,6 +79,19 @@ function CvReadOnly({ doc, lang }: { doc: CvDocument; lang: Lang }) {
         <h2>{t.sections.summary}</h2>
         <p>{doc.summary}</p>
       </section>
+      {doc.competencies.length > 0 ? (
+        <section>
+          <h2>{t.sections.competencies}</h2>
+          <ul>
+            {doc.competencies.map((g) => (
+              <li key={g.kind + g.label}>
+                <strong>{g.label}: </strong>
+                {g.items.map((c) => c.name).join(", ")}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
       {doc.skills.length > 0 ? (
         <section>
           <h2>{doc.format === "combined" ? t.sections.skills : t.sections.tools}</h2>

@@ -916,7 +916,13 @@ export const strings = {
           confirmMessage: (section: string, target: string) =>
             `La IA volverá a redactar «${section}» desde su banco, ${target}. Lo que hay ahora en esta sección, incluidos los cambios que hizo a mano, se pierde y se reemplaza. Nada se guarda hasta «Guardar cambios»; con «Descartar cambios» vuelve a lo último guardado.`,
           headlineNote: " Solo se vuelve a redactar el titular: el nombre y el contacto no cambian.",
-          confirm: "Regenerar y reemplazar",
+          generateTitle: (section: string) => `Generar «${section}» con IA`,
+          generateMessage: (section: string, target: string) =>
+            `La IA redactará «${section}» desde su banco, ${target}. Se agrega al borrador; nada se guarda hasta «Guardar cambios» y «Descartar cambios» la quita.`,
+          run: (label: string, model: string) => `Redactar con ${label} (${model})`,
+          externalHint:
+            "1. Descargue las instrucciones: llevan la oferta (o el enfoque), su banco y las reglas de esta sección. Péguelas completas en la IA que prefiera; con su respuesta tendrá la sección.",
+          doneWarnings: (n: number) => `Sección aplicada al borrador, con ${n} aviso${n === 1 ? "" : "s"} de lo que no pasó la validación. Revísela y pulse «Guardar cambios».`,
           targetOffer: (title: string) => `contra la oferta «${title}»`,
           targetFocus: "según el enfoque de este CV",
           title: (section: string) => `Redactando «${section}» con IA`,

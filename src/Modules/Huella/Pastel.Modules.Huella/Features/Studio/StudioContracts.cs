@@ -77,7 +77,8 @@ internal sealed record CvVersionView(
 internal sealed record EditLineInput(string? Target, string? Section, int? Entry, int? Index, string? Text, IReadOnlyList<Guid>? SourceIds);
 
 /// <summary>Regenerar una sección en la edición libre: cuál y cómo está el borrador (para que la IA no repita lo que dicen las demás).</summary>
-internal sealed record CvSectionInput(string? Section, CvDocumentInput? Draft);
+/// <remarks><c>Json</c> solo se usa al importar la respuesta de una IA externa (<c>section/ai-result</c>).</remarks>
+internal sealed record CvSectionInput(string? Section, CvDocumentInput? Draft, string? Json = null);
 
 /// <summary>La sección regenerada: un documento con solo esa parte llena y lo que se descartó. No se guarda: la persona la revisa y guarda.</summary>
 internal sealed record CvSectionView(string Section, CvDocument Document, IReadOnlyList<string> Warnings);

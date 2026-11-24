@@ -143,25 +143,12 @@
   list(..d.extras)
 }
 
-#if combined {
-  // Un solo apartado de habilidades (las competencias personales son su primera categoría), tras la experiencia.
-  summary-section()
-  experience-section()
-  skills-section()
-  education-section()
-  extras-section()
-} else if competencies {
-  // Las competencias van tras la experiencia, en el mismo lugar que las habilidades del CV propio.
-  summary-section()
-  experience-section()
-  competencies-sections()
-  education-section()
-  extras-section()
-} else {
-  summary-section()
-  experience-section()
-  projects-section()
-  skills-section()
-  education-section()
-  extras-section()
-}
+// Todas las secciones con contenido salen en el mismo orden, sea cual sea el formato (el formato solo cambia los títulos y
+// lo que redacta la IA): lo que se agrega en la edición libre, por ejemplo proyectos en un CV combinado, también se imprime.
+#summary-section()
+#experience-section()
+#projects-section()
+#competencies-sections()
+#skills-section()
+#education-section()
+#extras-section()

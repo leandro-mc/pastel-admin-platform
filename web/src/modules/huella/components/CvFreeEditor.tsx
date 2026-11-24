@@ -29,6 +29,7 @@ import {
   type SkillGroupRow,
 } from "../lib/cvDraft";
 import { useAiJob } from "../lib/useAiJob";
+import { SectionAiDialog } from "./SectionAiDialog";
 import type { useCvDraft } from "../lib/useCvDraft";
 import { languageName } from "../lib/usePairSync";
 import { strings } from "../strings";
@@ -419,7 +420,7 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
   const [closed, setClosed] = useState<ReadonlySet<string>>(new Set());
   const job = useAiJob();
   const offers = useOffers();
-  const [confirming, setConfirming] = useState<SectionKey | null>(null);
+  const [confirming, setConfirming] = useState<{ key: SectionKey; generate: boolean } | null>(null);
   const offer = offers.data?.find((o) => o.id === version.summary.offerId);
   // En un CV de competencias y habilidades las personales son una categoría del apartado «Habilidades».
   const skillsTitle = version.document.format === "combined" ? f.skills.combinedTitle : sectionTitles.tools;
@@ -453,7 +454,8 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
       },
     ]);
   };
-  const ai = (key: SectionKey) => ({ onRegenerate: () => setConfirming(key), onGenerate: () => void regenerate(key), busy: job.running });
+  const ai = (key: SectionKey) => ({ onRegenerate: () => setConfirming({ key, generate: false }), onGenerate: () => setConfirming({ key, generate: true }), busy: job.running });
+  const aiTarget = offer ? f.ai.targetOffer(offer.company ? `${offer.title} · ${offer.company}` : offer.title) : f.ai.targetFocus;
   const patch = (changes: Partial<Draft>) => setDraft((d) => ({ ...d, ...changes }));
   const hasCompetencies = draft.competencies !== null || version.document.format === "competencies";
   const nameMissing = draft.name.trim() === "";
@@ -586,20 +588,27 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
 
       {job.dialog}
       {confirming ? (
-        <ConfirmDialog
-          title={f.ai.confirmTitle(sectionTitle(confirming))}
+        <SectionAiDialog
+          versionId={version.summary.id}
+          section={confirming.key}
+          title={confirming.generate ? f.ai.generateTitle(sectionTitle(confirming.key)) : f.ai.confirmTitle(sectionTitle(confirming.key))}
           message={
-            f.ai.confirmMessage(sectionTitle(confirming), offer ? f.ai.targetOffer(offer.company ? `${offer.title} · ${offer.company}` : offer.title) : f.ai.targetFocus) +
-            (confirming === "header" ? f.ai.headlineNote : "")
+            (confirming.generate ? f.ai.generateMessage : f.ai.confirmMessage)(sectionTitle(confirming.key), aiTarget) +
+            (confirming.key === "header" ? f.ai.headlineNote : "")
           }
-          confirmLabel={f.ai.confirm}
-          cancelLabel={strings.common.cancel}
-          onClose={() => setConfirming(null)}
-          onConfirm={() => {
-            const key = confirming;
+          draft={() => toInput(draft)}
+          onRun={() => {
+            const key = confirming.key;
             setConfirming(null);
             void regenerate(key);
           }}
+          onImported={(section) => {
+            const key = confirming.key;
+            setConfirming(null);
+            setDraft((d) => applySection(d, key, section.document));
+            notify(section.warnings.length > 0 ? f.ai.doneWarnings(section.warnings.length) : f.ai.done, "success");
+          }}
+          onClose={() => setConfirming(null)}
         />
       ) : null}
 

@@ -160,4 +160,19 @@ public sealed class CvCombinedFormatTests
         Assert.True(ats.IndexOf("Experiencia", StringComparison.Ordinal) < ats.IndexOf("Habilidades", StringComparison.Ordinal));
         Assert.True(ats.IndexOf("Personales: Adaptabilidad", StringComparison.Ordinal) < ats.IndexOf("Lenguajes: Java", StringComparison.Ordinal));
     }
+
+    // Lo que se agrega a mano en la edición libre (proyectos en un CV combinado, competencias en uno estándar) también se imprime.
+    [Fact]
+    public void SectionsAddedByHandArePrintedWhateverTheFormat()
+    {
+        var doc = new CvDocument { Format = CvFormats.Combined, Language = "es", Summary = "Resumen." };
+        doc.Experience.Add(new CvEntry { Title = "Dev", Subtitle = "X", Dates = "2024" });
+        doc.Projects.Add(new CvEntry { Title = "TrayectorIA", Subtitle = "Java", Dates = string.Empty });
+        doc.Competencies.Add(new CvCompetencyGroup { Kind = "personal", Label = "Personales", Items = [new CvCompetency { Id = Guid.NewGuid(), Name = "Liderazgo" }] });
+
+        var ats = CvGuardian.AtsText(doc, "es");
+
+        Assert.Contains("TrayectorIA", ats);
+        Assert.Contains("Personales: Liderazgo", ats);
+    }
 }

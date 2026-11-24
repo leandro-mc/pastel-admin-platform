@@ -217,28 +217,13 @@ internal static class CvGuardian
             }
         }
 
-        if (doc.Format == CvFormats.Combined)
-        {
-            Experience();
-            Skills();
-            Education();
-            Extras();
-        }
-        else if (doc.Format == CvFormats.Competencies)
-        {
-            Experience();
-            Competencies();
-            Education();
-            Extras();
-        }
-        else
-        {
-            Experience();
-            Projects();
-            Skills();
-            Education();
-            Extras();
-        }
+        // Mismo orden para todos los formatos: lo agregado en la edición libre también cuenta para el ATS.
+        Experience();
+        Projects();
+        Competencies();
+        Skills();
+        Education();
+        Extras();
 
         return sb.ToString().TrimEnd();
     }

@@ -142,28 +142,14 @@ internal static class CvDocx
         }
 
         Summary();
-        if (doc.Format == CvFormats.Combined)
-        {
-            AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
-            Skills();
-            Education();
-            Extras();
-        }
-        else if (doc.Format == CvFormats.Competencies)
-        {
-            AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
-            Competencies();
-            Education();
-            Extras();
-        }
-        else
-        {
-            AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
-            AppendEntries(body, labels.Projects, doc.Projects, textWidth, experience: false);
-            Skills();
-            Education();
-            Extras();
-        }
+        // Todas las secciones con contenido salen en el mismo orden, sea cual sea el formato: lo que se agrega en la edición libre
+        // (por ejemplo proyectos en un CV combinado) también debe imprimirse.
+        AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
+        AppendEntries(body, labels.Projects, doc.Projects, textWidth, experience: false);
+        Competencies();
+        Skills();
+        Education();
+        Extras();
 
         return Package(body.ToString(), pageWidth, pageHeight, marginTop, marginSide, marginBottom, $"{labels.DocumentTitle} — {doc.Header.Name}", doc.Header.Name, en, "Arial", 20, links);
     }
