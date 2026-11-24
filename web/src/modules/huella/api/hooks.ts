@@ -16,6 +16,8 @@ import {
   bankSchema,
   cvSectionSchema,
   contentViewSchema,
+  emailSchema,
+  emailSummarySchema,
   letterSchema,
   letterSummarySchema,
   cvDocumentSchema,
@@ -44,6 +46,8 @@ export const huellaKeys = {
   versions: ["huella", "versions"] as const,
   letters: ["huella", "letters"] as const,
   letter: (id: string) => ["huella", "letter", id] as const,
+  emails: ["huella", "emails"] as const,
+  email: (id: string) => ["huella", "email", id] as const,
   version: (id: string) => ["huella", "version", id] as const,
   status: ["huella", "publication"] as const,
   preview: ["huella", "preview"] as const,
@@ -382,7 +386,7 @@ export type AiTaskInput = {
 };
 
 /** Tareas: `cv` (redacta el CV desde el banco), `profile` (redacta secciones del perfil) y `profile-translate` (reescribe el inglés). */
-export type AiTaskKind = "cv" | "letter" | "profile" | "profile-translate";
+export type AiTaskKind = "cv" | "letter" | "email" | "profile" | "profile-translate";
 
 const taskPath = (kind: AiTaskKind, action: "ai-package" | "ai-run" | "ai-result") =>
   `${base}/tasks/${kind}/${action}`;
@@ -419,6 +423,7 @@ export const importAiTask = (
 export function refreshAfterAiTask(client: QueryClient) {
   void client.invalidateQueries({ queryKey: huellaKeys.versions });
   void client.invalidateQueries({ queryKey: huellaKeys.letters });
+  void client.invalidateQueries({ queryKey: huellaKeys.emails });
   void client.invalidateQueries({ queryKey: huellaKeys.offers });
   void client.invalidateQueries({ queryKey: huellaKeys.content });
   void client.invalidateQueries({ queryKey: huellaKeys.profile });
@@ -518,6 +523,68 @@ export async function downloadLetter(
     retries: 0,
   });
   saveFile(blob, fileName);
+}
+
+// ───────── Correos de postulación ─────────
+export const useEmails = () =>
+  useQuery({
+    queryKey: huellaKeys.emails,
+    queryFn: ({ signal }) =>
+      api.get(`${base}/studio/emails`, z.array(emailSummarySchema), { signal }),
+  });
+
+export const useEmail = (id: string | null) =>
+  useQuery({
+    queryKey: huellaKeys.email(id ?? ""),
+    enabled: id !== null,
+    queryFn: ({ signal }) =>
+      api.get(`${base}/studio/emails/${id}`, emailSchema, { signal }),
+  });
+
+/** Mutaciones que devuelven el correo completo y lo dejan en caché. */
+function useEmailMutation<TVars>(
+  request: (id: string, vars: TVars) => Promise<z.infer<typeof emailSchema>>,
+) {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, vars }: { id: string; vars: TVars }) => request(id, vars),
+    onSuccess: (data) => {
+      client.setQueryData(huellaKeys.email(data.summary.id), data);
+      void client.invalidateQueries({ queryKey: huellaKeys.emails });
+      // Marcar un envío puede pasar la oferta a «postulada».
+      void client.invalidateQueries({ queryKey: huellaKeys.offers });
+    },
+  });
+}
+
+export const useSaveEmail = () =>
+  useEmailMutation<unknown>((id, body) =>
+    api.put(`${base}/studio/emails/${id}/content`, emailSchema, body),
+  );
+
+export const useRenameEmail = () =>
+  useEmailMutation<string>((id, name) =>
+    api.put(`${base}/studio/emails/${id}/name`, emailSchema, { name }),
+  );
+
+export const useSetSentEmail = () =>
+  useEmailMutation<boolean>((id, sent) =>
+    api.put(
+      `${base}/studio/emails/${id}/sent?sent=${sent ? "true" : "false"}`,
+      emailSchema,
+    ),
+  );
+
+export function useDeleteEmail() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      api.send("DELETE", `${base}/studio/emails/${id}`),
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: huellaKeys.emails });
+      void client.invalidateQueries({ queryKey: huellaKeys.offers });
+    },
+  });
 }
 
 /** El PDF de una versión del CV (para la vista previa), pedido con la sesión vigente. */

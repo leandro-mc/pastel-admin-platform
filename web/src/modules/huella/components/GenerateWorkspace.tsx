@@ -22,9 +22,10 @@ const languageChoices: Record<LanguageChoice, readonly string[]> = {
 
 const g = strings.studio.generate;
 const l = strings.studio.letter;
+const m = strings.studio.email;
 
-/** Lo que se puede generar: el CV propio, el CV de competencias (formato de intermediación laboral) o la carta. */
-type GenKind = "cv" | "competencies" | "combined" | "letter";
+/** Lo que se puede generar: el CV (propio, de competencias o de competencias y habilidades), la carta o el correo de postulación. */
+type GenKind = "cv" | "competencies" | "combined" | "letter" | "email";
 
 type Props = {
   offerId: string | null;
@@ -34,7 +35,7 @@ type Props = {
 };
 
 /**
- * Generar un CV o una carta de presentación. A la izquierda lo que se pide (y las tres vías de IA); a la derecha, el
+ * Generar un CV, una carta de presentación o un correo de postulación. A la izquierda lo que se pide (y las tres vías de IA); a la derecha, el
  * análisis de la oferta elegida. Las acciones solo aparecen con un destino: una oferta seleccionada o, para el CV, un
  * enfoque escrito. CV y carta son pedidos distintos (prompt y respuesta propios) en la misma pantalla.
  */
@@ -44,7 +45,7 @@ export function GenerateWorkspace({ offerId, onGenerated, onPickOffer }: Props) 
     <div className="flex flex-col gap-5">
       <div role="group" aria-label={g.kindLabel} className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-semibold text-fg">{g.kindLabel}</span>
-        {(["cv", "competencies", "combined", "letter"] as const).map((value) => (
+        {(["cv", "competencies", "combined", "letter", "email"] as const).map((value) => (
           <button
             key={value}
             type="button"
@@ -60,6 +61,8 @@ export function GenerateWorkspace({ offerId, onGenerated, onPickOffer }: Props) 
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
         {kind === "letter" ? (
           <LetterForm offerId={offerId} onGenerated={onGenerated} onPickOffer={onPickOffer} />
+        ) : kind === "email" ? (
+          <EmailForm offerId={offerId} onGenerated={onGenerated} onPickOffer={onPickOffer} />
         ) : (
           <CvForm
             key={kind}
@@ -320,6 +323,80 @@ function LetterForm({ offerId, onGenerated, onPickOffer }: Props) {
           </ActionArea>
         ) : (
           <NeedTarget text={l.needOffer} onPickOffer={onPickOffer} />
+        )}
+      </div>
+    </Panel>
+  );
+}
+
+function EmailForm({ offerId, onGenerated, onPickOffer }: Props) {
+  const bank = useBank();
+  const [tone, setTone] = useState("formal");
+  const [language, setLanguage] = useState<LanguageChoice>("es");
+  const [name, setName] = useState("");
+  const hasContent = bank.data
+    ? bank.data.experiences.length + bank.data.projects.length > 0
+    : null;
+  const languages = languageChoices[language];
+
+  return (
+    <Panel title={m.title} description={m.description}>
+      <div className="flex flex-col gap-5">
+        {hasContent === false ? <Alert variant="warning" message={g.emptyBank} /> : null}
+        <fieldset className="flex flex-col gap-3">
+          <legend className="mb-3 text-sm font-semibold text-fg">{g.options}</legend>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <SelectField
+              label={m.language}
+              options={Object.entries(g.languageChoices).map(
+                ([value, label]) => ({ value, label }),
+              )}
+              value={language}
+              onChange={(e) => setLanguage(e.target.value as LanguageChoice)}
+            />
+            <SelectField
+              label={m.tone}
+              options={Object.entries(m.tones).map(([value, label]) => ({
+                value,
+                label,
+              }))}
+              value={tone}
+              onChange={(e) => setTone(e.target.value)}
+            />
+            <div className="sm:col-span-2">
+              <TextField
+                label={g.name}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+          </div>
+          <p className="text-sm text-muted">{m.languageHint}</p>
+        </fieldset>
+
+        {offerId !== null ? (
+          <ActionArea>
+            <AiTaskPanel
+              kind="email"
+              title={m.aiTitle(languages.length)}
+              fileBase={`huella-correo-${languages.join("-")}`}
+              disabled={hasContent === false}
+              input={() => ({
+                offerId,
+                languages: [...languages],
+                tone,
+                name: name || null,
+              })}
+              runLabel={(label, model) => m.run(label, model)}
+              externalHint={m.externalHint}
+              onDone={(outcomes) => {
+                const id = outcomes[0]?.versionIds[0];
+                if (id) onGenerated("correo", id);
+              }}
+            />
+          </ActionArea>
+        ) : (
+          <NeedTarget text={m.needOffer} onPickOffer={onPickOffer} />
         )}
       </div>
     </Panel>

@@ -1,7 +1,8 @@
 import { Button, PageHeader, Tab, TabList, TabPanel, Tabs } from "@/core/ui";
-import { useLetter, useLetters, useVersion, useVersions } from "../api/hooks";
+import { useEmail, useEmails, useLetter, useLetters, useVersion, useVersions } from "../api/hooks";
 import { CvEditor } from "../components/CvEditor";
 import { DocumentsList } from "../components/DocumentsList";
+import { EmailEditor } from "../components/EmailEditor";
 import { Loaded } from "../components/Form";
 import { GenerateWorkspace } from "../components/GenerateWorkspace";
 import { LetterEditor } from "../components/LetterEditor";
@@ -13,16 +14,19 @@ import { strings } from "../strings";
 const tabs = strings.studio.tabs;
 
 /**
- * Crear CV y carta, en tres pestañas con una barra fija que dice con qué oferta se trabaja: Ofertas (elegir), Generar (pedir
- * el CV o la carta) y Documentos (lo generado, con su estado de envío). El lugar queda en la dirección: se puede recargar,
+ * Crear CV, carta y correo de postulación, en tres pestañas con una barra fija que dice con qué oferta se trabaja: Ofertas (elegir), Generar (pedir
+ * el CV, la carta o el correo) y Documentos (lo generado, con su estado de envío). El lugar queda en la dirección: se puede recargar,
  * volver atrás y llegar desde el historial directo a los documentos de una oferta.
  */
 export function Component() {
   const { offerId, docId, docKind, tab, go } = useStudioState();
   const versions = useVersions();
   const letters = useLetters();
+  const emails = useEmails();
   const count =
-    versions.data && letters.data ? versions.data.length + letters.data.length : null;
+    versions.data && letters.data && emails.data
+      ? versions.data.length + letters.data.length + emails.data.length
+      : null;
   return (
     <div
       data-module="huella"
@@ -105,7 +109,7 @@ function OpenDocument({
           {strings.studio.docs.back}
         </Button>
       </div>
-      {kind === "carta" ? <OpenLetter id={id} /> : <OpenCv id={id} />}
+      {kind === "carta" ? <OpenLetter id={id} /> : kind === "correo" ? <OpenEmail id={id} /> : <OpenCv id={id} />}
     </div>
   );
 }
@@ -113,6 +117,11 @@ function OpenDocument({
 function OpenCv({ id }: { id: string }) {
   const version = useVersion(id);
   return <Loaded query={version}>{(data) => <CvEditor key={data.summary.id} version={data} />}</Loaded>;
+}
+
+function OpenEmail({ id }: { id: string }) {
+  const email = useEmail(id);
+  return <Loaded query={email}>{(data) => <EmailEditor email={data} />}</Loaded>;
 }
 
 function OpenLetter({ id }: { id: string }) {

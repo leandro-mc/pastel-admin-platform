@@ -614,11 +614,77 @@ export const strings = {
           `Redactar de nuevo con ${label} (${model})`,
       },
     },
+    email: {
+      title: "Correo de postulación",
+      description:
+        "La IA escribe un correo corto para postularse por email a la oferta: dice que está en búsqueda de empleo, que vio la oferta y que comparte su CV (que usted adjunta), en una frase por qué encaja y su disposición. Se escribe siempre para una oferta.",
+      tone: "Tono",
+      tones: { formal: "Formal", cercano: "Cercano" },
+      language: "Idioma del correo",
+      languageHint:
+        "Se escribe completo en el idioma que elija, aunque su banco o la oferta estén en otro. Con «ambos» se crea un correo por idioma.",
+      needOffer:
+        "El correo se escribe para una oferta concreta: elíjala en la pestaña Ofertas.",
+      aiTitle: (n: number) =>
+        n === 1 ? "Redactando su correo" : "Redactando su correo en español e inglés",
+      run: (label: string, model: string) =>
+        `Redactar el correo con ${label} (${model})`,
+      externalHint:
+        "1. Descargue las instrucciones: llevan la oferta, su banco y las reglas del correo. Péguelas completas en la IA que prefiera; con una sola respuesta tendrá el correo en el idioma o idiomas elegidos.",
+      editor: {
+        tabs: {
+          label: "Secciones del correo",
+          content: "Contenido",
+          send: "Enviar",
+          redo: "Volver a redactar",
+        },
+        title: "Texto del correo",
+        description:
+          "Un correo corto se lee completo: asunto, saludo, de dos a cuatro párrafos y despedida. La firma (su nombre, correo y teléfono) sale del banco; lo que escriba no puede traer cifras que su banco o la oferta no tengan.",
+        sender: "Firma (del banco)",
+        to: "Para",
+        toHint:
+          "El correo de la oferta, si lo trae. Déjelo vacío si la oferta pide postular en un sitio o si lo pegará usted.",
+        subject: "Asunto",
+        greeting: "Saludo",
+        paragraph: (n: number) => `Párrafo ${n}`,
+        closing: "Despedida",
+        addParagraph: "Agregar párrafo",
+        counter: (n: number, max: number) => `${n} de ${max} caracteres`,
+        total: (n: number, max: number) =>
+          `${n} de unos ${max} caracteres entre todos los párrafos`,
+        save: "Guardar cambios",
+        removeParagraph: "este párrafo",
+        sendTitle: "Enviar el correo",
+        sendHint:
+          "Ábralo en su correo con el asunto y el texto ya puestos, adjunte su CV en PDF y envíelo. Al marcarlo como enviado, el historial queda al día.",
+        attachTitle: "No olvide adjuntar su CV",
+        attachBody:
+          "Los enlaces no pueden adjuntar archivos: descargue el CV de esta oferta en PDF (pestaña Documentos) y adjúntelo antes de enviar. El correo ya lo menciona.",
+        previewTitle: "Así se ve",
+        noRecipient: "Sin destinatario: escriba la dirección en «Para» (pestaña Contenido) o péguela en su correo.",
+        openMail: "Abrir en mi correo",
+        openGmail: "Abrir en Gmail",
+        copySubject: "Copiar asunto",
+        copyBody: "Copiar cuerpo",
+        copyAll: "Copiar todo",
+        copiedSubject: "Asunto copiado.",
+        copiedBody: "Cuerpo copiado.",
+        copiedAll: "Correo copiado.",
+        redoTitle: "Volver a redactar con IA",
+        redoDescription:
+          "Redacta de nuevo este correo desde su banco y la oferta, con el mismo idioma y tono, y reemplaza su texto.",
+        redoBusy: "Redactando de nuevo su correo",
+        redoRun: (label: string, model: string) =>
+          `Redactar de nuevo con ${label} (${model})`,
+      },
+    },
     docs: {
       title: "Documentos generados",
       typeFilter: "Tipo",
-      types: { all: "CV y cartas", cv: "Solo CV", letter: "Solo cartas" },
+      types: { all: "CV, cartas y correos", cv: "Solo CV", letter: "Solo cartas", email: "Solo correos" },
       letterKind: "Carta",
+      emailKind: "Correo",
       searchLabel: "Buscar documento",
       searchPlaceholder: "Buscar por nombre u oferta",
       sort: "Ordenar por",
@@ -706,6 +772,7 @@ export const strings = {
         competencies: "CV competencias",
         combined: "CV competencias y habilidades",
         letter: "Carta de presentación",
+        email: "Correo de postulación",
       },
       combined: {
         title: "Generar CV de competencias y habilidades",

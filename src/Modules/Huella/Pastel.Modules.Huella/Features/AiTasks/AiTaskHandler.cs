@@ -1,4 +1,5 @@
 using Pastel.Modules.Huella.Ai;
+using Pastel.Modules.Huella.Features.Emails;
 using Pastel.Modules.Huella.Features.Letters;
 using Pastel.Modules.Huella.Features.PublicContent;
 using Pastel.Modules.Huella.Features.Studio;
@@ -9,7 +10,7 @@ namespace Pastel.Modules.Huella.Features.AiTasks;
 
 /// <summary>
 /// Datos de una tarea de IA. Cada tarea usa los campos que le corresponden: <c>cv</c> (oferta o enfoque, nivel, papel,
-/// idiomas, formato —<c>standard</c> o <c>competencies</c>—, nombre y, opcional, la versión a reemplazar), <c>letter</c> (oferta, idiomas, tono, nombre y, opcional, la carta a
+/// idiomas, formato —<c>standard</c> o <c>competencies</c>—, nombre y, opcional, la versión a reemplazar), <c>letter</c> y <c>email</c> (oferta, idiomas, tono, nombre y, opcional, la carta o el correo a
 /// reemplazar en <c>VersionId</c>), <c>profile</c> y <c>profile-translate</c> (secciones) y, al
 /// importar, <c>Json</c> con la respuesta de la IA externa.
 /// </summary>
@@ -38,20 +39,22 @@ internal sealed record AiTaskOutcome(string Kind, int Accepted, IReadOnlyList<st
 /// completo, para llevarlo a una IA externa), <b>ejecutar</b> (lo envía al proveedor configurado y aplica la respuesta) e
 /// <b>importar</b> (aplica el JSON que devolvió la IA externa). Nada se guarda sin pasar por el guardián de verdad.
 /// </summary>
-internal sealed class AiTaskHandler(OwnerProfiles owners, StudioHandler studio, LetterHandler letters, ContentHandler content, AiAssistant ai)
+internal sealed class AiTaskHandler(OwnerProfiles owners, StudioHandler studio, LetterHandler letters, EmailHandler emails, ContentHandler content, AiAssistant ai)
 {
     public const string Cv = "cv";
     public const string Letter = "letter";
+    public const string Email = "email";
     public const string Profile = "profile";
     public const string ProfileTranslate = "profile-translate";
 
-    public static bool IsKnown(string? kind) => kind is Cv or Letter or Profile or ProfileTranslate;
+    public static bool IsKnown(string? kind) => kind is Cv or Letter or Email or Profile or ProfileTranslate;
 
     public Task<Result<AiTaskPackage>> PackageAsync(string kind, AiTaskInput input, CancellationToken cancellationToken) =>
         kind switch
         {
             Cv => studio.ComposePackageAsync(input, cancellationToken),
             Letter => letters.ComposePackageAsync(input, cancellationToken),
+            Email => emails.ComposePackageAsync(input, cancellationToken),
             Profile => content.GeneratePackageAsync(input.Sections, cancellationToken),
             ProfileTranslate => content.TranslatePackageAsync(input.Sections, cancellationToken),
             _ => Task.FromResult<Result<AiTaskPackage>>(HuellaErrors.NotFound),
@@ -85,6 +88,7 @@ internal sealed class AiTaskHandler(OwnerProfiles owners, StudioHandler studio, 
         {
             Cv => studio.ComposeApplyAsync(input, raw, invalid, cancellationToken),
             Letter => letters.ComposeApplyAsync(input, raw, invalid, cancellationToken),
+            Email => emails.ComposeApplyAsync(input, raw, invalid, cancellationToken),
             Profile => content.ApplyGeneratedAsync(input.Sections, raw, invalid, cancellationToken),
             ProfileTranslate => content.ApplyTranslationAsync(input.Sections, raw, invalid, cancellationToken),
             _ => Task.FromResult<Result<AiTaskOutcome>>(HuellaErrors.NotFound),

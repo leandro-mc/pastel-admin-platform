@@ -1,4 +1,5 @@
 import type {
+  EmailSummary,
   LetterSummary,
   OfferStatus,
   OfferSummary,
@@ -60,9 +61,9 @@ export const needsFollowUp = (offer: OfferSummary) =>
   followUpState(offer.followUpAt)?.kind !== undefined &&
   followUpState(offer.followUpAt)?.kind !== "soon";
 
-/** Un documento de una oferta, sea CV o carta. */
+/** Un documento de una oferta: CV, carta o correo de postulación. */
 export type OfferDoc = {
-  kind: "cv" | "letter";
+  kind: "cv" | "letter" | "email";
   id: string;
   name: string;
   language: string;
@@ -70,11 +71,12 @@ export type OfferDoc = {
   createdAt: string;
 };
 
-/** Documentos (CV y cartas) de una oferta y cuántos se enviaron. */
+/** Documentos (CV, cartas y correos) de una oferta y cuántos se enviaron. */
 export function documentsOf(
   offerId: string,
   versions: readonly VersionSummary[],
   letters: readonly LetterSummary[] = [],
+  emails: readonly EmailSummary[] = [],
 ) {
   const docs: OfferDoc[] = [
     ...versions
@@ -83,6 +85,9 @@ export function documentsOf(
     ...letters
       .filter((l) => l.offerId === offerId)
       .map((l) => ({ kind: "letter" as const, id: l.id, name: l.name, language: l.language, sentAt: l.sentAt, createdAt: l.createdAt })),
+    ...emails
+      .filter((e) => e.offerId === offerId)
+      .map((e) => ({ kind: "email" as const, id: e.id, name: e.name, language: e.language, sentAt: e.sentAt, createdAt: e.createdAt })),
   ];
   return { docs, sent: docs.filter((d) => d.sentAt !== null).length };
 }

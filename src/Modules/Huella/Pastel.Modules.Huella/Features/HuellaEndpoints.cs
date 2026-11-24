@@ -9,6 +9,7 @@ using Pastel.Modules.Huella.Features.AiSettings;
 using Pastel.Modules.Huella.Features.AiTasks;
 using Pastel.Modules.Huella.Features.Bank;
 using Pastel.Modules.Huella.Features.Common;
+using Pastel.Modules.Huella.Features.Emails;
 using Pastel.Modules.Huella.Features.Letters;
 using Pastel.Modules.Huella.Features.MyProfile;
 using Pastel.Modules.Huella.Features.PublicContent;
@@ -40,6 +41,7 @@ internal static class HuellaEndpoints
         services.AddScoped<StudioHandler>();
         services.AddScoped<ContentHandler>();
         services.AddScoped<LetterHandler>();
+        services.AddScoped<EmailHandler>();
         services.AddScoped<OfferTracking>();
         services.AddScoped<AiTaskHandler>();
         services.AddScoped<PublicationHandler>();
@@ -176,6 +178,15 @@ internal static class HuellaEndpoints
             var docx = await h.RenderDocxAsync(letterId, ct);
             return docx.IsFailure ? PastelProblem.From(docx.Error, http) : Results.File(docx.Value, CvDocx.ContentType, "carta.docx");
         }).RequirePermission(read);
+
+        // Correos de postulación (se redactan con las acciones de IA `email`; aquí se leen, editan y envían)
+        var emails = studio.MapGroup("/emails");
+        emails.MapGet("/", async (EmailHandler h, HttpContext http, CancellationToken ct) => (await h.ListAsync(ct)).ToResponse(http)).RequirePermission(read);
+        emails.MapGet("/{emailId:guid}", async (Guid emailId, EmailHandler h, HttpContext http, CancellationToken ct) => (await h.GetAsync(emailId, ct)).ToResponse(http)).RequirePermission(read);
+        emails.MapPut("/{emailId:guid}/content", async (Guid emailId, EmailEditInput i, EmailHandler h, HttpContext http, CancellationToken ct) => (await h.SaveAsync(emailId, i, ct)).ToResponse(http)).RequirePermission(write);
+        emails.MapPut("/{emailId:guid}/name", async (Guid emailId, RenameInput i, EmailHandler h, HttpContext http, CancellationToken ct) => (await h.RenameAsync(emailId, i, ct)).ToResponse(http)).RequirePermission(write);
+        emails.MapPut("/{emailId:guid}/sent", async (Guid emailId, bool sent, EmailHandler h, HttpContext http, CancellationToken ct) => (await h.SetSentAsync(emailId, sent, ct)).ToResponse(http)).RequirePermission(write);
+        emails.MapDelete("/{emailId:guid}", async (Guid emailId, EmailHandler h, HttpContext http, CancellationToken ct) => (await h.DeleteAsync(emailId, ct)).ToNoContent(http)).RequirePermission(write);
 
         // IA automática: la clave entra una vez, se guarda cifrada y nunca se devuelve. Solo quien edita el perfil la gestiona.
         var ai = api.MapGroup("/ai");

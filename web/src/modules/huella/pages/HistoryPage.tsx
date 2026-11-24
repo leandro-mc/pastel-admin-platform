@@ -5,12 +5,14 @@ import { useNotify } from "@/core/notifications";
 import { Badge, Button, PageHeader, Panel, SelectField, TextField } from "@/core/ui";
 import { secondaryButton } from "@/core/ui/styles";
 import {
+  useEmails,
   useLetters,
   useOffers,
   useUpdateTracking,
   useVersions,
 } from "../api/hooks";
 import type {
+  EmailSummary,
   LetterSummary,
   OfferStatus,
   OfferSummary,
@@ -74,6 +76,7 @@ export function Component() {
   const offers = useOffers();
   const versions = useVersions();
   const letters = useLetters();
+  const emails = useEmails();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
   const [filter, setFilter] = useState<Filter>("all");
@@ -153,6 +156,7 @@ export function Component() {
                       offer={offer}
                       versions={versions.data ?? []}
                       letters={letters.data ?? []}
+                      emails={emails.data ?? []}
                     />
                   ))}
                 </ul>
@@ -182,13 +186,15 @@ function HistoryRow({
   offer,
   versions,
   letters,
+  emails,
 }: {
   offer: OfferSummary;
   versions: readonly VersionSummary[];
   letters: readonly LetterSummary[];
+  emails: readonly EmailSummary[];
 }) {
   const [open, setOpen] = useState(false);
-  const { docs, sent } = documentsOf(offer.id, versions, letters);
+  const { docs, sent } = documentsOf(offer.id, versions, letters, emails);
   const sentDocs = docs.filter((d) => d.sentAt !== null);
   const url = offer.sourceUrl ? safeHref(offer.sourceUrl) : null;
   const target = `/huella/cv?oferta=${offer.id}`;
@@ -234,7 +240,8 @@ function HistoryRow({
           {sentDocs.map((d) => (
             <li key={d.id}>
               <span className="font-medium text-fg">{d.name}</span> ·{" "}
-              {d.kind === "cv" ? strings.studio.docs.cvKind : strings.studio.docs.letterKind} · {d.language.toUpperCase()} ·{" "}
+              {d.kind === "cv" ? strings.studio.docs.cvKind : d.kind === "letter" ? strings.studio.docs.letterKind : strings.studio.docs.emailKind} ·{" "}
+              {d.language.toUpperCase()} ·{" "}
               {formatDateTime(d.sentAt ?? d.createdAt)}
             </li>
           ))}

@@ -354,6 +354,37 @@ export const letterSchema = z.object({
   }),
 });
 
+/** Correo de postulación: el CV siempre va adjunto; `body` es el cuerpo completo en texto plano (saludo, párrafos, despedida y firma). */
+export const emailSummarySchema = z.object({
+  id,
+  name: text,
+  language: text,
+  tone: text,
+  source: text,
+  sentAt: maybe,
+  offerId: z.string().nullable(),
+  createdAt: text,
+  updatedAt: text,
+});
+
+export const emailDocSchema = z.object({
+  language: text,
+  /** Correo al que se postula, si la oferta lo trae; puede quedar vacío. */
+  to: text,
+  subject: text,
+  greeting: text,
+  paragraphs: z.array(text),
+  closing: text,
+  signature: text,
+  contact: z.array(text),
+});
+
+export const emailSchema = z.object({
+  summary: emailSummarySchema,
+  document: emailDocSchema,
+  body: text,
+});
+
 /** Una sección del CV regenerada con IA (no guardada): un documento con solo esa parte llena y lo que se descartó. */
 export const cvSectionSchema = z.object({
   section: text,
@@ -605,6 +636,8 @@ export type Evidence = z.infer<typeof evidenceSchema>;
 export type CvVersion = z.infer<typeof versionSchema>;
 export type LetterSummary = z.infer<typeof letterSummarySchema>;
 export type Letter = z.infer<typeof letterSchema>;
+export type EmailSummary = z.infer<typeof emailSummarySchema>;
+export type Email = z.infer<typeof emailSchema>;
 export type VersionSummary = z.infer<typeof versionSummarySchema>;
 export type CvDocument = z.infer<typeof cvDocumentSchema>;
 export type CvSection = z.infer<typeof cvSectionSchema>;

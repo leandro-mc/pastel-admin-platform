@@ -4,10 +4,13 @@ import { useNotify } from "@/core/notifications";
 import { Badge, Button, ConfirmDialog, Panel, SelectField } from "@/core/ui";
 import { secondaryButton } from "@/core/ui/styles";
 import {
+  useDeleteEmail,
   useDeleteLetter,
   useDeleteVersion,
+  useEmails,
   useLetters,
   useOffers,
+  useSetSentEmail,
   useSetSentLetter,
   useSetSentVersion,
   useVersions,
@@ -32,7 +35,7 @@ type TypeFilter = keyof typeof t.types;
 const typeKeys = Object.keys(t.types) as TypeFilter[];
 
 type Doc = {
-  kind: "cv" | "letter";
+  kind: "cv" | "letter" | "email";
   id: string;
   name: string;
   offerId: string | null;
@@ -49,19 +52,25 @@ type Props = {
   onDeleted: (kind: DocKind, id: string) => void;
 };
 
+/** Tipo de documento de la dirección (`?tipo=`) para cada clase de documento. */
+const docKindOf = (kind: Doc["kind"]): DocKind => (kind === "cv" ? "cv" : kind === "letter" ? "carta" : "correo");
+
 /**
- * Documentos generados (CV y cartas): buscador, filtros (tipo, envío, oferta), orden y páginas de 5. Cada tarjeta dice de qué
+ * Documentos generados (CV, cartas y correos de postulación): buscador, filtros (tipo, envío, oferta), orden y páginas de 5. Cada tarjeta dice de qué
  * oferta es, de qué tipo y si se envió.
  */
 export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
   const notify = useNotify();
   const versions = useVersions();
   const letters = useLetters();
+  const emails = useEmails();
   const offers = useOffers();
   const sentCv = useSetSentVersion();
   const sentLetter = useSetSentLetter();
+  const sentEmail = useSetSentEmail();
   const removeCv = useDeleteVersion();
   const removeLetter = useDeleteLetter();
+  const removeEmail = useDeleteEmail();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
   const [sentFilter, setSentFilter] = useState<SentFilter>("all");
@@ -111,8 +120,21 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
         ].join(" · "),
         source: v.source[item.source as "ai" | "manual"] ?? item.source,
       })),
+      ...(emails.data ?? []).map((item) => ({
+        kind: "email" as const,
+        id: item.id,
+        name: item.name,
+        offerId: item.offerId,
+        createdAt: item.createdAt,
+        sentAt: item.sentAt,
+        meta: [
+          item.language.toUpperCase(),
+          strings.studio.email.tones[item.tone as "formal" | "cercano"] ?? item.tone,
+        ].join(" · "),
+        source: v.source[item.source as "ai" | "manual"] ?? item.source,
+      })),
     ],
-    [versions.data, letters.data],
+    [versions.data, letters.data, emails.data],
   );
 
   const filtered = useMemo(() => {
@@ -142,12 +164,10 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
       onSuccess: () => notify(doc.sentAt === null ? t.markedSent : strings.common.saved),
     };
     const vars = { id: doc.id, vars: doc.sentAt === null };
-    if (doc.kind === "cv") sentCv.mutate(vars, options);
-    else sentLetter.mutate(vars, options);
+    sentFor(doc.kind).mutate(vars, options);
   };
-  const sending = (doc: Doc) =>
-    (doc.kind === "cv" ? sentCv : sentLetter).isPending &&
-    (doc.kind === "cv" ? sentCv : sentLetter).variables?.id === doc.id;
+  const sentFor = (kind: Doc["kind"]) => (kind === "cv" ? sentCv : kind === "letter" ? sentLetter : sentEmail);
+  const sending = (doc: Doc) => sentFor(doc.kind).isPending && sentFor(doc.kind).variables?.id === doc.id;
 
   return (
     <Panel title={t.title}>
@@ -205,7 +225,7 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
                         <div className="min-w-0">
                           <p className="flex flex-wrap items-center gap-2">
                             <Badge variant={doc.kind === "cv" ? "neutral" : "accent"}>
-                              {doc.kind === "cv" ? t.cvKind : t.letterKind}
+                              {doc.kind === "cv" ? t.cvKind : doc.kind === "letter" ? t.letterKind : t.emailKind}
                             </Badge>
                             <span className="text-base font-semibold break-words text-fg">{doc.name}</span>
                           </p>
@@ -233,19 +253,21 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
                         <Button
                           variant="tonal"
                           type="button"
-                          onClick={() => onOpen(doc.kind === "cv" ? "cv" : "carta", doc.id)}
+                          onClick={() => onOpen(docKindOf(doc.kind), doc.id)}
                         >
                           {t.open}
                         </Button>
-                        <a
-                          className={`${secondaryButton} no-underline`}
-                          href={`/huella/pdf/${doc.kind === "cv" ? "cv" : "carta"}/${doc.id}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          aria-label={strings.studio.preview.openPdfLabel(doc.name)}
-                        >
-                          {strings.studio.preview.openPdf}
-                        </a>
+                        {doc.kind === "email" ? null : (
+                          <a
+                            className={`${secondaryButton} no-underline`}
+                            href={`/huella/pdf/${doc.kind === "cv" ? "cv" : "carta"}/${doc.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            aria-label={strings.studio.preview.openPdfLabel(doc.name)}
+                          >
+                            {strings.studio.preview.openPdf}
+                          </a>
+                        )}
                         <Button
                           variant="secondary"
                           type="button"
@@ -270,7 +292,7 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
             )
           }
         </Loaded>
-        <ErrorNotice error={sentCv.error ?? sentLetter.error} />
+        <ErrorNotice error={sentCv.error ?? sentLetter.error ?? sentEmail.error} />
         <Pager paging={paging} />
       </div>
 
@@ -280,12 +302,12 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
           message={`«${toDelete.name}»: ${v.deleteMessage}`}
           confirmLabel={strings.common.delete}
           cancelLabel={strings.common.cancel}
-          pending={removeCv.isPending || removeLetter.isPending}
+          pending={removeCv.isPending || removeLetter.isPending || removeEmail.isPending}
           onClose={() => setToDelete(null)}
           onConfirm={() =>
-            (toDelete.kind === "cv" ? removeCv : removeLetter).mutate(toDelete.id, {
+            (toDelete.kind === "cv" ? removeCv : toDelete.kind === "letter" ? removeLetter : removeEmail).mutate(toDelete.id, {
               onSuccess: () => {
-                onDeleted(toDelete.kind === "cv" ? "cv" : "carta", toDelete.id);
+                onDeleted(docKindOf(toDelete.kind), toDelete.id);
                 setToDelete(null);
                 notify(strings.common.saved);
               },

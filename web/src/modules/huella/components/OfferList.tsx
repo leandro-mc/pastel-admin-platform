@@ -13,6 +13,7 @@ import {
 import {
   useCreateOffer,
   useDeleteOffer,
+  useEmails,
   useLetters,
   useOffer,
   useOffers,
@@ -69,6 +70,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
   const offers = useOffers();
   const versions = useVersions();
   const letters = useLetters();
+  const emails = useEmails();
   const remove = useDeleteOffer();
   const [query, setQuery] = useState("");
   const [sort, setSort] = useState<SortKey>("recent");
@@ -130,7 +132,7 @@ export function OfferList({ selectedId, onUse, onDocuments, onClear }: Props) {
             ) : (
               <ul className="flex flex-col gap-3">
                 {paging.slice.map((offer) => {
-                  const { docs, sent } = documentsOf(offer.id, versions.data ?? [], letters.data ?? []);
+                  const { docs, sent } = documentsOf(offer.id, versions.data ?? [], letters.data ?? [], emails.data ?? []);
                   const follow = needsFollowUp(offer) ? followUpState(offer.followUpAt) : null;
                   const isSelected = selectedId === offer.id;
                   return (

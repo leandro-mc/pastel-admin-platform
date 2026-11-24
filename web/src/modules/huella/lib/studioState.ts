@@ -1,8 +1,8 @@
 import { useSearchParams } from "react-router";
 
 export type StudioTab = "ofertas" | "generar" | "documentos";
-/** Tipo de documento abierto: CV o carta de presentación. */
-export type DocKind = "cv" | "carta";
+/** Tipo de documento abierto: CV, carta de presentación o correo de postulación. */
+export type DocKind = "cv" | "carta" | "correo";
 const tabs: readonly StudioTab[] = ["ofertas", "generar", "documentos"];
 
 /**
@@ -13,7 +13,8 @@ export function useStudioState() {
   const [params, setParams] = useSearchParams();
   const offerId = params.get("oferta");
   const docId = params.get("doc");
-  const docKind: DocKind = params.get("tipo") === "carta" ? "carta" : "cv";
+  const requestedKind = params.get("tipo");
+  const docKind: DocKind = requestedKind === "carta" || requestedKind === "correo" ? requestedKind : "cv";
   const requested = params.get("vista");
   const tab: StudioTab = tabs.find((t) => t === requested) ?? "ofertas";
 

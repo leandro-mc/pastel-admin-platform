@@ -42,6 +42,8 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
 
     public DbSet<CoverLetter> CoverLetters => Set<CoverLetter>();
 
+    public DbSet<ApplicationEmail> ApplicationEmails => Set<ApplicationEmail>();
+
     public DbSet<Achievement> Achievements => Set<Achievement>();
 
     public DbSet<AchievementSkill> AchievementSkills => Set<AchievementSkill>();
@@ -240,6 +242,22 @@ internal sealed class HuellaDbContext(DbContextOptions<HuellaDbContext> options)
         modelBuilder.Entity<CoverLetter>(e =>
         {
             e.ToTable("cover_letters");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.Name).HasMaxLength(120).IsRequired();
+            e.Property(x => x.Language).HasMaxLength(2).IsRequired();
+            e.Property(x => x.Tone).HasMaxLength(10).IsRequired();
+            e.Property(x => x.ContentJson).HasColumnType("jsonb").IsRequired();
+            e.Property(x => x.Source).HasMaxLength(24).IsRequired();
+            e.Property(x => x.Version).IsRowVersion();
+            e.HasIndex(x => new { x.ProfileId, x.UpdatedAt });
+            e.HasIndex(x => x.JobOfferId);
+            e.HasOne<Profile>().WithMany().HasForeignKey(x => x.ProfileId).OnDelete(DeleteBehavior.Cascade).IsRequired();
+            e.HasOne<JobOffer>().WithMany().HasForeignKey(x => x.JobOfferId).OnDelete(DeleteBehavior.SetNull);
+        });
+
+        modelBuilder.Entity<ApplicationEmail>(e =>
+        {
+            e.ToTable("application_emails");
             e.HasKey(x => x.Id);
             e.Property(x => x.Name).HasMaxLength(120).IsRequired();
             e.Property(x => x.Language).HasMaxLength(2).IsRequired();

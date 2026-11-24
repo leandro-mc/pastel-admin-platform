@@ -1,7 +1,7 @@
 import { Link } from "react-router";
 import { Button } from "@/core/ui";
 import { secondaryButton } from "@/core/ui/styles";
-import { useLetters, useOffers, useVersions } from "../api/hooks";
+import { useEmails, useLetters, useOffers, useVersions } from "../api/hooks";
 import { markedSurface } from "../lib/marker";
 import { documentsOf } from "../lib/tracking";
 import { strings } from "../strings";
@@ -23,6 +23,7 @@ export function StudioContextBar({ offerId, onPick, onClear }: Props) {
   const offers = useOffers();
   const versions = useVersions();
   const letters = useLetters();
+  const emails = useEmails();
   const offer = offers.data?.find((x) => x.id === offerId) ?? null;
 
   if (!offer) {
@@ -42,7 +43,7 @@ export function StudioContextBar({ offerId, onPick, onClear }: Props) {
     );
   }
 
-  const { docs, sent } = documentsOf(offer.id, versions.data ?? [], letters.data ?? []);
+  const { docs, sent } = documentsOf(offer.id, versions.data ?? [], letters.data ?? [], emails.data ?? []);
   return (
     <div
       role="status"
