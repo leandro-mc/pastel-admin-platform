@@ -92,7 +92,7 @@ internal static class CvDocx
                 return;
             }
 
-            body.Append(Paragraph("Heading1", Run(labels.Skills)));
+            body.Append(Paragraph("Heading1", Run(doc.Format == CvFormats.Combined ? labels.SkillsAll : labels.Skills)));
             foreach (var group in doc.Skills)
             {
                 body.Append(Paragraph(null, (group.Label.Length > 0 ? Run(group.Label + ": ", bold: true) : string.Empty) + Run(string.Join(", ", group.Items)), spaceAfter: 40));
@@ -145,7 +145,6 @@ internal static class CvDocx
         if (doc.Format == CvFormats.Combined)
         {
             AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
-            Competencies();
             Skills();
             Education();
             Extras();

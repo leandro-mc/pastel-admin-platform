@@ -81,7 +81,7 @@ function CvReadOnly({ doc, lang }: { doc: CvDocument; lang: Lang }) {
       </section>
       {doc.skills.length > 0 ? (
         <section>
-          <h2>{t.sections.tools}</h2>
+          <h2>{doc.format === "combined" ? t.sections.skills : t.sections.tools}</h2>
           <ul>
             {doc.skills.map((g) => (
               <li key={g.label}>

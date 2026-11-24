@@ -137,7 +137,7 @@ internal static class CvGuardian
                 return;
             }
 
-            sb.AppendLine().AppendLine(labels.Skills);
+            sb.AppendLine().AppendLine(doc.Format == CvFormats.Combined ? labels.SkillsAll : labels.Skills);
             foreach (var g in doc.Skills)
             {
                 sb.AppendLine(g.Line);
@@ -220,7 +220,6 @@ internal static class CvGuardian
         if (doc.Format == CvFormats.Combined)
         {
             Experience();
-            Competencies();
             Skills();
             Education();
             Extras();
@@ -262,7 +261,7 @@ internal static class CvGuardian
             new("Sin frases prohibidas", BannedIn(text, bank) is null, null),
             new("Cada viñeta cita su logro de origen (sourceIds)", bullets.All(b => b.SourceIds.Count > 0 && b.SourceIds.All(bank.IsSource)), null),
             new("Todas las cifras existen en el banco", bullets.All(b => !(ValidateBullet(b.Text, b.SourceIds, bank, limits)?.StartsWith("Cifra", StringComparison.Ordinal) ?? false)), null),
-            new("Ninguna habilidad inventada (todas están en el banco)", doc.Skills.SelectMany(g => g.Items).All(bank.Mentions), null),
+            new("Ninguna habilidad inventada (todas están en el banco)", doc.Skills.Where(g => !g.Soft).SelectMany(g => g.Items).All(bank.Mentions), null),
             new("Toda competencia pertenece al catálogo del banco", doc.Competencies.SelectMany(g => g.Items).All(c => bank.IsCompetency(c.Id)), null),
         ];
     }

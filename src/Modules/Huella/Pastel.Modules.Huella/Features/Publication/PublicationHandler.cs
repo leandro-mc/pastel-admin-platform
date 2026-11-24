@@ -48,7 +48,7 @@ internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owner
         }
 
         var (_, cvJson) = await BuildAsync(profile.Value, cancellationToken);
-        var cv = HuellaJson.Deserialize<CvDocument>(cvJson);
+        var cv = CvDocument.FromJson(cvJson);
         return cv is null ? HuellaErrors.PublicCvMissing : cv;
     }
 
@@ -176,7 +176,7 @@ internal sealed class PublicationHandler(HuellaDbContext db, OwnerProfiles owner
         var content = await db.ProfileContents.AsNoTracking().SingleOrDefaultAsync(c => c.ProfileId == p.Id, cancellationToken);
         var document = PublicProfileBuilder.Build(p, records, content, clock.UtcNow.Year, cvVersion is not null);
         string? cvJson = null;
-        if (cvVersion is not null && HuellaJson.Deserialize<CvDocument>(cvVersion.ContentJson) is { } cv)
+        if (cvVersion is not null && CvDocument.FromJson(cvVersion.ContentJson) is { } cv)
         {
             cv.Header.ContactLine1 = [];
             if (p.ShowLocation && p.Location is not null)

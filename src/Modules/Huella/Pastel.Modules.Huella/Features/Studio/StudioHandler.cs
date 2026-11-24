@@ -294,7 +294,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var (version, document) = loaded.Value;
-        var before = HuellaJson.Deserialize<CvDocument>(version.ContentJson)!;
+        var before = CvDocument.FromJson(version.ContentJson)!;
         var profile = await owners.GetOrCreateAsync(cancellationToken);
         var bank = await LoadBankAsync(profile.Value, cancellationToken);
         var limits = CvLimits.For(version.Level, version.Paper, version.Format);
@@ -686,7 +686,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var version = await db.CvVersions.SingleOrDefaultAsync(v => v.Id == versionId && v.ProfileId == profile.Value.Id, cancellationToken);
-        var document = version is null ? null : HuellaJson.Deserialize<CvDocument>(version.ContentJson);
+        var document = version is null ? null : CvDocument.FromJson(version.ContentJson);
         return version is null || document is null ? HuellaErrors.NotFound : (version, document);
     }
 
@@ -776,12 +776,14 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         var bank = await LoadBankAsync(profile.Value, cancellationToken);
         var analysis = OfferAnalyzer.Analyze(target, isFocus: offer is null, bank.Data);
 
-        // Proyectos y habilidades se piden con las reglas del CV propio y las competencias con las de un formato que las lleva,
-        // aunque este CV sea de otro formato: así una sección agregada de nuevo se puede generar.
+        // Proyectos y habilidades se piden con las reglas del CV propio (las habilidades de un CV combinado, con las personales
+        // dentro) y las competencias con las del formato que las lleva, aunque este CV sea de otro formato: así una sección
+        // agregada de nuevo se puede generar.
         var format = only switch
         {
-            "projects" or "skills" => CvFormats.Standard,
-            "competencies" => version.Format == CvFormats.Competencies ? CvFormats.Competencies : CvFormats.Combined,
+            "projects" => CvFormats.Standard,
+            "skills" => version.Format == CvFormats.Combined ? CvFormats.Combined : CvFormats.Standard,
+            "competencies" => CvFormats.Competencies,
             _ => version.Format,
         };
         var request = new CvComposeRequest(version.Level, version.Paper, [version.Language], format, CvPolish.MentionsAi(target));
@@ -852,7 +854,7 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         }
 
         var source = await db.CvVersions.FirstOrDefaultAsync(v => v.ProfileId == target.ProfileId && v.PairId == pairId && v.Id != target.Id, cancellationToken);
-        var sourceDoc = source is null ? null : HuellaJson.Deserialize<CvDocument>(source.ContentJson);
+        var sourceDoc = source is null ? null : CvDocument.FromJson(source.ContentJson);
         if (source is null || sourceDoc is null)
         {
             target.PairId = null;

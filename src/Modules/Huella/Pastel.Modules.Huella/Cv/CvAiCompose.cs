@@ -54,17 +54,18 @@ internal static class CvAiCompose
 
     private const string CombinedSchema =
         "{\"versions\":[{\"language\":\"es|en\",\"plan\":[{\"requirement\":\"string\",\"evidence\":\"string\"}],\"headline\":\"string\",\"summary\":\"string\","
-        + "\"competencies\":{\"personal\":[{\"id\":\"uuid\",\"name\":\"string\"}],\"technical\":[{\"id\":\"uuid\",\"name\":\"string\"}]},"
+        + "\"competencies\":{\"personal\":[{\"id\":\"uuid\",\"name\":\"string\"}]},"
         + "\"skills\":[{\"label\":\"string\",\"items\":[\"string\"]}],"
         + ExperienceSchema + ","
         + TailSchema;
 
-    private static string SectionSchema(string section)
+    private static string SectionSchema(string section, bool combined)
     {
         var part = section switch
         {
             "headline" => "\"headline\":\"string\"",
             "summary" => "\"summary\":\"string\"",
+            "skills" when combined => "\"competencies\":{\"personal\":[{\"id\":\"uuid\",\"name\":\"string\"}]},\"skills\":[{\"label\":\"string\",\"items\":[\"string\"]}]",
             "skills" => "\"skills\":[{\"label\":\"string\",\"items\":[\"string\"]}]",
             "competencies" => "\"competencies\":{\"personal\":[{\"id\":\"uuid\",\"name\":\"string\"}],\"technical\":[{\"id\":\"uuid\",\"name\":\"string\"}]}",
             "experience" => ExperienceSchema,
@@ -165,10 +166,10 @@ internal static class CvAiCompose
         }
         else if (request.IsCombined)
         {
-            sb.AppendLine("- Este CV lo leen a la vez personas de recursos humanos y sistemas ATS: explica cada experiencia en lenguaje claro (qué se necesitaba, qué hizo la persona y qué cambió) y nombra las tecnologías que la oferta pide cuando aporten. Esta versión NO lleva proyectos: las competencias y las habilidades técnicas muestran el perfil completo, y las viñetas de experiencia deben probarlo.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre {MinCompetencies(request, limits.PersonalCompetencies)} y {limits.PersonalCompetencies} personales y entre {MinCompetencies(request, limits.TechnicalCompetencies)} y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). SOLO el nombre, sin notas: se muestran en dos renglones y la evidencia la dan las viñetas de experiencia. Las que tienen `alwaysInclude: true` van SIEMPRE. El catálogo llega en orden aleatorio: el orden no indica importancia. Elige con criterio según la OFERTA o el ENFOQUE, no siempre las mismas, y considera TODO el catálogo. Las personales deben equilibrar tres tipos: al menos una de pensamiento (analítico y crítico, resolución de problemas), una de relación con otras personas (comunicación, trabajo en equipo, liderazgo) y una de autogestión (adaptabilidad, iniciativa y toma de decisiones, gestión del tiempo, aprendizaje). Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión.");
+            sb.AppendLine("- Este CV lo leen a la vez personas de recursos humanos y sistemas ATS: explica cada experiencia en lenguaje claro (qué se necesitaba, qué hizo la persona y qué cambió) y nombra las tecnologías que la oferta pide cuando aporten. Esta versión NO lleva proyectos: UN solo apartado de «Habilidades» muestra el perfil completo (primero las competencias personales y luego las habilidades técnicas por categoría), y las viñetas de experiencia deben probarlo.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: SOLO personales (`personal`; no incluyas `technical`: las técnicas van en `skills`), entre {MinCompetencies(request, limits.PersonalCompetencies)} y {limits.PersonalCompetencies}, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). SOLO el nombre, sin notas: la evidencia la dan las viñetas de experiencia. Las que tienen `alwaysInclude: true` van SIEMPRE. El catálogo llega en orden aleatorio: el orden no indica importancia. Elige con criterio según la OFERTA o el ENFOQUE, no siempre las mismas, y considera TODO el catálogo. Deben equilibrar tres tipos: al menos una de pensamiento (analítico y crítico, resolución de problemas), una de relación con otras personas (comunicación, trabajo en equipo, liderazgo) y una de autogestión (adaptabilidad, iniciativa y toma de decisiones, gestión del tiempo, aprendizaje). Se mostrarán juntas, en una sola línea, como la PRIMERA categoría de «Habilidades» (el servidor le pone el título). `name`: el nombre del catálogo en el idioma de la versión.");
             sb.AppendLine("- Las viñetas de experiencia deben DEMOSTRAR con hechos las competencias elegidas, sin nombrarlas: que cada competencia personal quede respaldada por al menos una viñeta.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"- skills: es la sección que más pesa en los filtros ATS. Entre {Math.Min(12, limits.SkillsTotal)} y {limits.SkillsTotal} habilidades en hasta {limits.SkillGroups} grupos (una línea por grupo: «etiqueta: a, b, c», máximo {limits.SkillLineChars} caracteres). Usa SOLO nombres de `skills` del BANCO (o uno de sus `aliases`), escritos tal cual. Primero TODAS las que pide la oferta y el banco respalda, luego el resto del stack principal. Repetir aquí tecnologías de las viñetas es correcto: el ATS las cuenta. No pongas idiomas, competencias blandas ni palabras genéricas como «API».");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- skills: las habilidades TÉCNICAS, la parte que más pesa en los filtros ATS (no repitas aquí las competencias personales ni pongas competencias técnicas del catálogo, como metodologías: solo habilidades del banco). Entre {Math.Min(12, limits.SkillsTotal - limits.PersonalCompetencies)} y {limits.SkillsTotal - limits.PersonalCompetencies} habilidades en hasta {limits.SkillGroups - 1} grupos (una línea por grupo: «etiqueta: a, b, c», máximo {limits.SkillLineChars} caracteres). Usa SOLO nombres de `skills` del BANCO (o uno de sus `aliases`), escritos tal cual. Primero TODAS las que pide la oferta y el banco respalda, luego el resto del stack principal. Repetir aquí tecnologías de las viñetas es correcto: el ATS las cuenta. No pongas idiomas, competencias blandas ni palabras genéricas como «API».");
         }
         else
         {
@@ -214,7 +215,7 @@ internal static class CvAiCompose
 
         sb.AppendLine();
         sb.AppendLine("## ESQUEMA DE SALIDA");
-        var schema = section is not null ? SectionSchema(section.Section) : request.IsCompetencies ? CompetenciesSchema : request.IsCombined ? CombinedSchema : Schema;
+        var schema = section is not null ? SectionSchema(section.Section, request.IsCombined) : request.IsCompetencies ? CompetenciesSchema : request.IsCombined ? CombinedSchema : Schema;
         sb.AppendLine(schema);
         return new AiPackage(section is null ? "cv_compose" : "cv_section", sb.ToString(), schema);
     }
@@ -359,7 +360,12 @@ internal static class CvAiCompose
 
         if (only is null or "skills")
         {
-            doc.Skills = Skills(item, bank, limits, warnings);
+            // Formato combinado: las competencias personales son la primera categoría del mismo apartado, así que las técnicas
+            // reciben un grupo y tantas habilidades menos como ocupan las personales.
+            var technical = request.IsCombined
+                ? limits with { SkillGroups = Math.Max(1, limits.SkillGroups - 1), SkillsTotal = Math.Max(1, limits.SkillsTotal - limits.PersonalCompetencies) }
+                : limits;
+            doc.Skills = Skills(item, bank, technical, warnings);
             if (!request.HighlightAi)
             {
                 foreach (var group in doc.Skills)
@@ -370,10 +376,15 @@ internal static class CvAiCompose
                 doc.Skills.RemoveAll(g => g.Items.Count == 0);
             }
 
-            CompleteSkills(doc, bank, limits, analysis, warnings, request.HighlightAi);
+            CompleteSkills(doc, bank, technical, analysis, warnings, request.HighlightAi);
+            if (request.IsCombined && Competencies(item, bank, limits, labels, warnings, request.HighlightAi).FirstOrDefault(g => g.Kind == Domain.CompetencyKinds.Personal) is { } personal)
+            {
+                doc.Skills.Insert(0, new CvSkillGroup { Label = labels.SoftSkills, Soft = true, Items = [.. personal.Items.Select(c => c.Name)] });
+            }
         }
 
-        doc.Competencies = request.HasCompetencies && only is null or "competencies" ? Competencies(item, bank, limits, labels, warnings, request.HighlightAi) : [];
+        // El formato combinado ya no lleva un apartado de competencias: las personales van dentro de las habilidades.
+        doc.Competencies = request.IsCompetencies && only is null or "competencies" ? Competencies(item, bank, limits, labels, warnings, request.HighlightAi) : [];
 
         if (only is null or "education")
         {

@@ -57,8 +57,28 @@ public sealed class CvSectionRegenerationTests
 
         var competencies = CvAiCompose.ParseSection(
             Reply(new { language = "es", competencies = new { personal = new object[] { new { id = personal[0].Id, name = "Adaptabilidad" }, new { id = Guid.NewGuid(), name = "Inventada" } }, technical = Array.Empty<object>() } }),
-            bank, new CvComposeRequest("mid", "letter", ["es"], CvFormats.Combined), null, "competencies");
+            bank, new CvComposeRequest("mid", "letter", ["es"], CvFormats.Competencies), null, "competencies");
         Assert.Equal(["Adaptabilidad"], competencies.Document!.Competencies.Single().Items.Select(c => c.Name));
+    }
+
+    // Combinado: regenerar las habilidades trae la categoría de personales (del catálogo) y las técnicas juntas, en un solo apartado.
+    [Fact]
+    public void RegeneratingTheSkillsOfACombinedCvBringsThePersonalCategoryToo()
+    {
+        var (bank, _, personal) = Build();
+        var raw = Reply(new
+        {
+            language = "es",
+            competencies = new { personal = new object[] { new { id = personal[0].Id, name = "Adaptabilidad" }, new { id = Guid.NewGuid(), name = "Inventada" } } },
+            skills = new[] { new { label = "Lenguajes", items = new[] { "Java", "Kubernetes" } } },
+        });
+
+        var skills = CvAiCompose.ParseSection(raw, bank, new CvComposeRequest("mid", "letter", ["es"], CvFormats.Combined), null, "skills");
+
+        Assert.Empty(skills.Document!.Competencies);
+        Assert.True(skills.Document.Skills[0].Soft);
+        Assert.Equal(["Adaptabilidad"], skills.Document.Skills[0].Items);
+        Assert.Equal(["Java"], skills.Document.Skills.Skip(1).SelectMany(g => g.Items));
     }
 
     // Verdad: una viñeta con una cifra que el banco no respalda se descarta (con aviso), igual que al generar el CV completo.

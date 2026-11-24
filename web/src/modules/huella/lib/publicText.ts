@@ -17,6 +17,8 @@ type PublicText = {
     path: string;
     projects: string;
     tools: string;
+    /** Título del apartado de habilidades de un CV combinado (competencias personales y técnicas juntas). */
+    skills: string;
     education: string;
     contact: string;
   };
@@ -64,6 +66,7 @@ export const publicText: Record<Lang, PublicText> = {
       path: "Experience",
       projects: "Projects",
       tools: "Skills",
+      skills: "Skills",
       education: "Education",
       contact: "Contact",
     },
@@ -111,6 +114,7 @@ export const publicText: Record<Lang, PublicText> = {
       path: "Trayectoria",
       projects: "Proyectos",
       tools: "Herramientas",
+      skills: "Habilidades",
       education: "Formación",
       contact: "Contacto",
     },

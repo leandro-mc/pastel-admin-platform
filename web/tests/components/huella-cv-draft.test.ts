@@ -72,4 +72,25 @@ describe("borrador de la edición libre", () => {
     expect(remove(bullets, bullets[0]!.key).map((b) => b.text)).toEqual(["Dos"]);
     expect([...bullets, newBullet("Tres")]).toHaveLength(3);
   });
+
+  // CV de competencias y habilidades: las personales son una categoría más de «Habilidades»; se renombra como cualquier otra y
+  // conserva su marca al guardar (así el servidor sabe cuál es y no la trata como técnica).
+  it("la categoría de competencias personales conserva su marca al renombrarla", () => {
+    const combined = {
+      ...doc,
+      format: "combined",
+      skills: [
+        { label: "Personales", items: ["Adaptabilidad", "Comunicación"], soft: true },
+        { label: "Lenguajes", items: ["Java"] },
+      ],
+    } as unknown as CvDocument;
+    const draft = toDraft(combined);
+    expect(draft.skills!.map((g) => g.soft)).toEqual([true, false]);
+
+    const renamed = { ...draft, skills: update(draft.skills!, draft.skills![0]!.key, { label: "Blandas" }) };
+    const sent = toInput(renamed).skills;
+    expect(sent.map((g) => g.label)).toEqual(["Blandas", "Lenguajes"]);
+    expect(sent.map((g) => g.soft)).toEqual([true, false]);
+    expect(fingerprintOf(renamed)).not.toBe(fingerprintOf(draft));
+  });
 });

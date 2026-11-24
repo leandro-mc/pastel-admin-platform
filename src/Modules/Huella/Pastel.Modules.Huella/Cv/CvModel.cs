@@ -37,6 +37,32 @@ internal sealed class CvDocument
     public string? ExtrasLabel { get; set; }
 
     public IEnumerable<CvBullet> AllBullets() => Experience.Concat(Projects).SelectMany(e => e.Bullets);
+
+    /// <summary>
+    /// Lee un documento guardado. Los CV combinados anteriores guardaban las competencias aparte de las habilidades: aquí se funden en
+    /// un solo apartado de habilidades (las personales como primera categoría; las técnicas ya están en las habilidades).
+    /// </summary>
+    public static CvDocument? FromJson(string? json)
+    {
+        var doc = HuellaJson.Deserialize<CvDocument>(json);
+        doc?.FoldLegacyCombined();
+        return doc;
+    }
+
+    private void FoldLegacyCombined()
+    {
+        if (Format != CvFormats.Combined || Competencies.Count == 0)
+        {
+            return;
+        }
+
+        if (Competencies.FirstOrDefault(g => g.Kind == Domain.CompetencyKinds.Personal && g.Items.Count > 0) is { } personal)
+        {
+            Skills.Insert(0, new CvSkillGroup { Label = personal.Label, Soft = true, Items = [.. personal.Items.Select(c => c.Name)] });
+        }
+
+        Competencies = [];
+    }
 }
 
 internal sealed class CvHeader
@@ -55,6 +81,12 @@ internal sealed class CvHeader
 internal sealed class CvSkillGroup
 {
     public string Label { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Categoría de competencias personales (blandas) dentro de las habilidades del formato combinado. La IA la arma con competencias
+    /// del catálogo del banco (por su id) y la persona la renombra a gusto; la marca solo evita que el reporte la trate como técnica.
+    /// </summary>
+    public bool Soft { get; set; }
 
     public List<string> Items { get; set; } = [];
 
@@ -88,7 +120,7 @@ internal static class CvFormats
     public const string Standard = "standard";
     public const string Competencies = "competencies";
 
-    /// <summary>Competencias (personales y técnicas del catálogo) y habilidades técnicas por categoría en un mismo CV, sin proyectos.</summary>
+    /// <summary>Un solo apartado de habilidades (las competencias personales como primera categoría y las técnicas por categoría), sin proyectos.</summary>
     public const string Combined = "combined";
 
     public static readonly IReadOnlyList<string> All = [Standard, Competencies, Combined];
@@ -201,17 +233,14 @@ internal sealed record CvLimits(
         limits = limits with { BulletMax = 2 * limits.BulletCharsPerLine };
         if (format == CvFormats.Combined)
         {
-            // Competencias y habilidades técnicas juntas: sin proyectos (su espacio pasa a las competencias, que se muestran en
-            // dos renglones) y con una categoría y seis habilidades menos que el CV propio para que quepan las dos listas.
-            var (personalC, technicalC) = level == "junior" ? (5, 4) : (6, 5);
+            // Un solo apartado de habilidades: sin proyectos y con las competencias personales como una categoría más. Los topes de
+            // categorías y de habilidades del CV propio ya la incluyen: las técnicas son una categoría y las personales menos.
             return limits with
             {
                 ProjectCount = 0,
                 ProjectLines = [],
-                SkillGroups = Math.Max(3, limits.SkillGroups - 1),
-                SkillsTotal = limits.SkillsTotal - 6,
-                PersonalCompetencies = personalC,
-                TechnicalCompetencies = technicalC,
+                PersonalCompetencies = level == "junior" ? 5 : 6,
+                TechnicalCompetencies = 0,
             };
         }
 

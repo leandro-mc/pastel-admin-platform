@@ -144,10 +144,9 @@
 }
 
 #if combined {
-  // Competencias y habilidades técnicas juntas: tras la experiencia, primero las competencias y luego las habilidades.
+  // Un solo apartado de habilidades (las competencias personales son su primera categoría), tras la experiencia.
   summary-section()
   experience-section()
-  competencies-sections()
   skills-section()
   education-section()
   extras-section()

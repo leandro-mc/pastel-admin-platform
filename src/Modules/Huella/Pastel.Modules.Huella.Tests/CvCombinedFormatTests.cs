@@ -7,7 +7,10 @@ using Xunit;
 
 namespace Pastel.Modules.Huella.Tests;
 
-/// <summary>Formato combinado: competencias del catálogo y habilidades técnicas por categoría en un mismo CV, sin proyectos.</summary>
+/// <summary>
+/// Formato combinado: un solo apartado de «Habilidades» con las competencias personales del catálogo como primera categoría y las
+/// habilidades técnicas por categoría después, sin proyectos y sin duplicar nada.
+/// </summary>
 public sealed class CvCombinedFormatTests
 {
     private static (AiBank Bank, Experience Current, Competency[] Personal, Competency[] Technical) Build()
@@ -27,25 +30,26 @@ public sealed class CvCombinedFormatTests
         return (new AiBank(profile, new PrivateNote { ProfileId = profileId }, records, 2026, new DateOnly(2026, 11, 23)), current, personal, technical);
     }
 
-    // Los otros dos formatos no cambian y el combinado reparte el espacio: sin proyectos, con competencias y menos habilidades.
+    // Los otros dos formatos no cambian: el combinado no lleva proyectos y las personales caben en los topes de las habilidades.
     [Fact]
-    public void CombinedLimitsDropProjectsAndKeepBothLists()
+    public void CombinedLimitsDropProjectsAndCountThePersonalGroupAmongTheSkills()
     {
         var combined = CvLimits.For("mid", "letter", CvFormats.Combined);
 
         Assert.Equal(0, combined.ProjectCount);
         Assert.Equal(6, combined.PersonalCompetencies);
-        Assert.Equal(5, combined.TechnicalCompetencies);
-        Assert.Equal(4, combined.SkillGroups);
-        Assert.Equal(24, combined.SkillsTotal);
+        Assert.Equal(0, combined.TechnicalCompetencies);
+        Assert.Equal(CvLimits.For("mid", "letter", CvFormats.Standard).SkillGroups, combined.SkillGroups);
+        Assert.Equal(CvLimits.For("mid", "letter", CvFormats.Standard).SkillsTotal, combined.SkillsTotal);
         Assert.Equal(2, CvLimits.For("mid", "letter", CvFormats.Standard).ProjectCount);
         Assert.Equal(0, CvLimits.For("mid", "letter", CvFormats.Competencies).SkillGroups);
         Assert.Contains(CvFormats.Combined, CvFormats.All);
     }
 
-    // Integridad: la respuesta trae competencias del catálogo (por id) y habilidades del banco; ninguna se inventa.
+    // Integridad: las personales (del catálogo, por id) pasan a ser la primera categoría de las habilidades; las técnicas del catálogo
+    // no se duplican y las habilidades vienen del banco. Ninguna se inventa.
     [Fact]
-    public void ACombinedAnswerKeepsCatalogCompetenciesAndBankSkillsAndNoProjects()
+    public void ACombinedAnswerMergesPersonalCompetenciesIntoTheFirstSkillGroup()
     {
         var (bank, current, personal, technical) = Build();
         var json = JsonSerializer.Serialize(new
@@ -76,8 +80,53 @@ public sealed class CvCombinedFormatTests
         var doc = Assert.Single(versions).Document;
         Assert.Equal(CvFormats.Combined, doc.Format);
         Assert.Empty(doc.Projects);
-        Assert.Equal(["Adaptabilidad", "Comunicación efectiva"], doc.Competencies.Single(g => g.Kind == "personal").Items.Select(c => c.Name));
-        Assert.Equal(["Java"], doc.Skills.SelectMany(g => g.Items));
+        Assert.Empty(doc.Competencies);
+        var soft = doc.Skills[0];
+        Assert.True(soft.Soft);
+        Assert.Equal("Personales", soft.Label);
+        Assert.Equal(["Adaptabilidad", "Comunicación efectiva"], soft.Items);
+        Assert.Equal(["Java"], doc.Skills.Skip(1).SelectMany(g => g.Items));
+        Assert.DoesNotContain(doc.Skills.SelectMany(g => g.Items), i => i is "Pruebas de software" or "Inventada" or "Kubernetes");
+    }
+
+    // Un CV combinado guardado con el formato anterior (competencias aparte) se lee ya fundido, sin duplicados ni apartado propio.
+    [Fact]
+    public void ALegacyCombinedDocumentIsReadWithThePersonalGroupInsideTheSkills()
+    {
+        var legacy = new CvDocument { Format = CvFormats.Combined, Language = "es", Summary = "Resumen." };
+        legacy.Skills.Add(new CvSkillGroup { Label = "Lenguajes", Items = ["Java"] });
+        legacy.Competencies.Add(new CvCompetencyGroup { Kind = "personal", Label = "Personales", Items = [new CvCompetency { Id = Guid.NewGuid(), Name = "Adaptabilidad" }] });
+        legacy.Competencies.Add(new CvCompetencyGroup { Kind = "technical", Label = "Técnicas", Items = [new CvCompetency { Id = Guid.NewGuid(), Name = "Pruebas de software" }] });
+
+        var doc = CvDocument.FromJson(HuellaJson.Serialize(legacy))!;
+
+        Assert.Empty(doc.Competencies);
+        Assert.Equal(["Personales", "Lenguajes"], doc.Skills.Select(g => g.Label));
+        Assert.True(doc.Skills[0].Soft);
+        Assert.Equal(["Adaptabilidad"], doc.Skills[0].Items);
+        Assert.Equal(CvFormats.Standard, CvDocument.FromJson(HuellaJson.Serialize(new CvDocument()))!.Format);
+    }
+
+    // Edición libre: la categoría de personales se renombra como cualquier otra y conserva su marca (solo en el formato combinado).
+    [Fact]
+    public void FreeEditKeepsTheSoftMarkAfterRenamingTheCategoryOnlyInTheCombinedFormat()
+    {
+        var current = new CvDocument { Format = CvFormats.Combined, Language = "es" };
+        var input = new CvDocumentInput(
+            new CvHeaderInput("Ana Pérez", "Desarrolladora", [], []),
+            "Resumen.",
+            [new CvSkillGroupInput("Blandas", ["Adaptabilidad"], true), new CvSkillGroupInput("Lenguajes", ["Java"], null)],
+            [], [], [], [], [], null);
+
+        var combined = CvFreeEdit.Build(input, current);
+        var standard = CvFreeEdit.Build(input, new CvDocument { Format = CvFormats.Standard, Language = "es" });
+
+        Assert.True(combined.IsSuccess);
+        Assert.Equal(["Blandas", "Lenguajes"], combined.Value.Skills.Select(g => g.Label));
+        Assert.True(combined.Value.Skills[0].Soft);
+        Assert.False(combined.Value.Skills[1].Soft);
+        Assert.True(standard.IsSuccess);
+        Assert.All(standard.Value.Skills, g => Assert.False(g.Soft));
     }
 
     // El pedido a la IA y el orden del documento siguen al formato.
@@ -91,20 +140,24 @@ public sealed class CvCombinedFormatTests
         var standard = CvAiCompose.BuildPackage(bank, analysis, "Java", null, new CvComposeRequest("mid", "letter", ["es"]));
         var competencies = CvAiCompose.BuildPackage(bank, analysis, "Java", null, new CvComposeRequest("mid", "letter", ["es"], CvFormats.Competencies));
 
-        Assert.Contains("- competencies:", combined.Prompt);
-        Assert.Contains("- skills:", combined.Prompt);
+        Assert.Contains("- competencies: SOLO personales", combined.Prompt);
+        Assert.Contains("- skills: las habilidades TÉCNICAS", combined.Prompt);
+        Assert.DoesNotContain("\"technical\"", combined.Schema);
         Assert.DoesNotContain("- projects:", combined.Prompt);
         Assert.Contains("- projects:", standard.Prompt);
         Assert.DoesNotContain("- competencies:", standard.Prompt);
         Assert.DoesNotContain("- skills:", competencies.Prompt);
 
         var doc = new CvDocument { Format = CvFormats.Combined, Language = "es", Summary = "Resumen." };
-        doc.Competencies.Add(new CvCompetencyGroup { Kind = "personal", Label = "Personales", Items = [new CvCompetency { Id = Guid.NewGuid(), Name = "Adaptabilidad" }] });
+        doc.Skills.Add(new CvSkillGroup { Label = "Personales", Soft = true, Items = ["Adaptabilidad"] });
         doc.Skills.Add(new CvSkillGroup { Label = "Lenguajes", Items = ["Java"] });
         doc.Experience.Add(new CvEntry { Title = "Dev", Subtitle = "X", Dates = "2024" });
         var ats = CvGuardian.AtsText(doc, "es");
 
-        Assert.True(ats.IndexOf("Competencias", StringComparison.Ordinal) < ats.IndexOf("Habilidades", StringComparison.Ordinal));
-        Assert.True(ats.IndexOf("Experiencia", StringComparison.Ordinal) < ats.IndexOf("Competencias", StringComparison.Ordinal));
+        // Un solo apartado «Habilidades» (no «Habilidades técnicas» ni «Competencias») tras la experiencia, con las personales primero.
+        Assert.DoesNotContain("Competencias", ats);
+        Assert.DoesNotContain("Habilidades técnicas", ats);
+        Assert.True(ats.IndexOf("Experiencia", StringComparison.Ordinal) < ats.IndexOf("Habilidades", StringComparison.Ordinal));
+        Assert.True(ats.IndexOf("Personales: Adaptabilidad", StringComparison.Ordinal) < ats.IndexOf("Lenguajes: Java", StringComparison.Ordinal));
     }
 }

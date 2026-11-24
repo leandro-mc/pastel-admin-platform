@@ -237,7 +237,10 @@ function SkillGroups({ groups, onChange }: { groups: SkillGroupRow[]; onChange: 
     <div className="flex flex-col gap-2">
       {groups.map((group, i) => (
         <div key={group.key} className="flex flex-wrap items-start gap-x-2 gap-y-1 border-b border-line pb-2 last:border-b-0">
-          <Input hideLabel className="w-44 shrink-0" label={s.label} value={group.label} onChange={(label) => onChange(update(groups, group.key, { label }))} />
+          <div className="flex w-44 shrink-0 flex-col gap-0.5">
+            <Input hideLabel label={s.label} value={group.label} onChange={(label) => onChange(update(groups, group.key, { label }))} />
+            {group.soft ? <p className="text-xs text-muted">{s.softHint}</p> : null}
+          </div>
           <Chips rows={group.items} label={s.item} addLabel={s.addItem} onChange={(items) => onChange(update(groups, group.key, { items }))} />
           <RowTools what={s.group(i + 1)} index={i} count={groups.length} onMove={(d) => onChange(move(groups, group.key, d))} onRemove={() => onChange(remove(groups, group.key))} />
         </div>
@@ -418,11 +421,13 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
   const offers = useOffers();
   const [confirming, setConfirming] = useState<SectionKey | null>(null);
   const offer = offers.data?.find((o) => o.id === version.summary.offerId);
+  // En un CV de competencias y habilidades las personales son una categoría del apartado «Habilidades».
+  const skillsTitle = version.document.format === "combined" ? f.skills.combinedTitle : sectionTitles.tools;
   const sectionTitle = (key: SectionKey) =>
     ({
       header: f.header.title,
       summary: sectionTitles.summary,
-      skills: sectionTitles.tools,
+      skills: skillsTitle,
       competencies: f.competencies.title,
       experience: sectionTitles.path,
       projects: sectionTitles.projects,
@@ -450,7 +455,7 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
   };
   const ai = (key: SectionKey) => ({ onRegenerate: () => setConfirming(key), onGenerate: () => void regenerate(key), busy: job.running });
   const patch = (changes: Partial<Draft>) => setDraft((d) => ({ ...d, ...changes }));
-  const hasCompetencies = draft.competencies !== null || version.document.format === "competencies" || version.document.format === "combined";
+  const hasCompetencies = draft.competencies !== null || version.document.format === "competencies";
   const nameMissing = draft.name.trim() === "";
 
   const toggle = (key: string) =>
@@ -519,7 +524,7 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
           <Area hideLabel label={f.summary.label} value={draft.summary ?? ""} onChange={(summary) => patch({ summary })} />
         </Block>
 
-        <Block {...ai("skills")} title={sectionTitles.tools} count={draft.skills?.length} present={draft.skills !== null} open={open("skills")} onToggle={() => toggle("skills")} onRemove={() => patch({ skills: null })} onAdd={() => patch({ skills: [newSkillGroup()] })}>
+        <Block {...ai("skills")} title={skillsTitle} count={draft.skills?.length} present={draft.skills !== null} open={open("skills")} onToggle={() => toggle("skills")} onRemove={() => patch({ skills: null })} onAdd={() => patch({ skills: [newSkillGroup()] })}>
           <SkillGroups groups={draft.skills ?? []} onChange={(skills) => patch({ skills: skills && skills.length > 0 ? skills : null })} />
         </Block>
 

@@ -277,7 +277,7 @@ internal static class CvPairSync
                         return "no respetó el número de habilidades de una categoría.";
                     }
 
-                    groups.Add(new CvSkillGroupInput(Str(g, "label"), items));
+                    groups.Add(new CvSkillGroupInput(Str(g, "label"), items, source.Skills[i].Soft));
                 }
 
                 if (NewNumbers(section, Flatten(groups.Select(g => g.Label).Concat(groups.SelectMany(g => g.Items!)))) is { } bad)
@@ -440,7 +440,7 @@ internal static class CvPairSync
     public static CvDocumentInput InputOf(CvDocument doc) => new(
         new CvHeaderInput(doc.Header.Name, doc.Header.Headline, doc.Header.ContactLine1, doc.Header.ContactLine2),
         doc.Summary,
-        doc.Skills.Select(g => new CvSkillGroupInput(g.Label, g.Items)).ToList(),
+        doc.Skills.Select(g => new CvSkillGroupInput(g.Label, g.Items, g.Soft)).ToList(),
         doc.Competencies.Select(g => new CvCompetencyGroupInput(g.Kind, g.Label, g.Items.Select(c => new CvCompetencyInput(c.Id, c.Name, c.Note)).ToList())).ToList(),
         doc.Experience.Select(EntryInput).ToList(),
         doc.Projects.Select(EntryInput).ToList(),

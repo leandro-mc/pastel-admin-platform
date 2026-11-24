@@ -267,7 +267,8 @@ export const cvDocumentSchema = z.object({
     contactLine2: z.array(text),
   }),
   summary: text,
-  skills: z.array(z.object({ label: text, items: z.array(text) })),
+  /** `soft`: la categoría de competencias personales dentro de las habilidades de un CV combinado. */
+  skills: z.array(z.object({ label: text, items: z.array(text), soft: z.boolean().optional() })),
   competencies: z
     .array(
       z.object({

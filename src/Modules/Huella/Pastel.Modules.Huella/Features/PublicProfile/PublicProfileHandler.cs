@@ -35,7 +35,7 @@ internal sealed class PublicProfileHandler(HuellaDbContext db)
             return HuellaErrors.PublicProfileUnavailable;
         }
 
-        var cv = HuellaJson.Deserialize<CvDocument>(snapshot.CvContentJson);
+        var cv = CvDocument.FromJson(snapshot.CvContentJson);
         return cv is null ? HuellaErrors.PublicCvMissing : cv;
     }
 

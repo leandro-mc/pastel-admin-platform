@@ -777,7 +777,7 @@ export const strings = {
       combined: {
         title: "Generar CV de competencias y habilidades",
         description:
-          "Un CV que muestra a la vez sus competencias (personales y técnicas, del catálogo de su banco) y sus habilidades técnicas por categoría (lenguajes, backend, datos…), con la experiencia explicada en lenguaje claro. No lleva proyectos, para que quepan las dos listas; puede agregarlos después en la edición libre.",
+          "Un CV con un solo apartado de «Habilidades»: primero una categoría con sus competencias personales (del catálogo de su banco; en la edición libre puede cambiarle el nombre, por ejemplo a «Blandas») y después sus habilidades técnicas por categoría (lenguajes, backend, datos…), sin duplicar nada. La experiencia va explicada en lenguaje claro. No lleva proyectos; puede agregarlos después en la edición libre.",
         aiTitle: (n: number) =>
           n === 1
             ? "Redactando su CV de competencias y habilidades"
@@ -931,6 +931,9 @@ export const strings = {
           addItem: "Agregar habilidad",
           addGroup: "Agregar categoría",
           group: (n: number) => `categoría ${n}`,
+          /** Título del apartado en un CV de competencias y habilidades (las personales son una categoría más). */
+          combinedTitle: "Habilidades",
+          softHint: "Competencias personales: puede cambiarle el nombre",
         },
         competencies: {
           title: "Competencias",

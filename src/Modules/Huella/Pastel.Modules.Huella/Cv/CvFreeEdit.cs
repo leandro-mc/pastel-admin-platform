@@ -18,7 +18,7 @@ internal sealed record CvDocumentInput(
 
 internal sealed record CvHeaderInput(string? Name, string? Headline, IReadOnlyList<string>? ContactLine1, IReadOnlyList<string>? ContactLine2);
 
-internal sealed record CvSkillGroupInput(string? Label, IReadOnlyList<string>? Items);
+internal sealed record CvSkillGroupInput(string? Label, IReadOnlyList<string>? Items, bool? Soft = null);
 
 internal sealed record CvCompetencyGroupInput(string? Kind, string? Label, IReadOnlyList<CvCompetencyInput>? Items);
 
@@ -81,7 +81,7 @@ internal static class CvFreeEdit
             var label = errors.OptionalLine($"skills[{i}].label", skills[i].Label, MaxLine) ?? string.Empty;
             if (items.Count > 0 || label.Length > 0)
             {
-                document.Skills.Add(new CvSkillGroup { Label = label, Items = items });
+                document.Skills.Add(new CvSkillGroup { Label = label, Items = items, Soft = current.Format == CvFormats.Combined && skills[i].Soft == true });
             }
         }
 

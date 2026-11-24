@@ -20,7 +20,7 @@ export type EntryRow = {
   dates: string;
   bullets: BulletRow[];
 };
-export type SkillGroupRow = { key: string; label: string; items: Row[] };
+export type SkillGroupRow = { key: string; label: string; items: Row[]; /** Categoría de competencias personales (CV combinado). */ soft: boolean };
 export type CompetencyRow = { key: string; id: string | null; name: string; note: string };
 export type CompetencyGroupRow = { key: string; kind: string; label: string; items: CompetencyRow[] };
 export type EducationRow = { key: string; degree: string; institution: string; dates: string; detail: string };
@@ -77,7 +77,7 @@ export const newEntry = (): EntryRow => ({
   dates: "",
   bullets: [newBullet()],
 });
-export const newSkillGroup = (): SkillGroupRow => ({ key: nextKey(), label: "", items: [newRow()] });
+export const newSkillGroup = (): SkillGroupRow => ({ key: nextKey(), label: "", items: [newRow()], soft: false });
 export const newCompetency = (): CompetencyRow => ({ key: nextKey(), id: null, name: "", note: "" });
 export const newEducation = (): EducationRow => ({ key: nextKey(), degree: "", institution: "", dates: "", detail: "" });
 
@@ -105,7 +105,7 @@ export function toDraft(doc: CvDocument): Draft {
     skills:
       doc.skills.length === 0
         ? null
-        : doc.skills.map((g) => ({ key: nextKey(), label: g.label, items: g.items.map((value) => newRow(value)) })),
+        : doc.skills.map((g) => ({ key: nextKey(), label: g.label, items: g.items.map((value) => newRow(value)), soft: g.soft === true })),
     competencies:
       doc.competencies.length === 0
         ? null
@@ -154,7 +154,7 @@ export function toInput(draft: Draft) {
       contactLine2: draft.contact2.map((r) => r.value),
     },
     summary: draft.summary ?? "",
-    skills: (draft.skills ?? []).map((g) => ({ label: g.label, items: g.items.map((r) => r.value) })),
+    skills: (draft.skills ?? []).map((g) => ({ label: g.label, items: g.items.map((r) => r.value), soft: g.soft })),
     competencies: (draft.competencies ?? []).map((g) => ({
       kind: g.kind,
       label: g.label,

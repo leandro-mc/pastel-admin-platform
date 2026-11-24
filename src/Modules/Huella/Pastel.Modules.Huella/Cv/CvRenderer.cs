@@ -82,7 +82,7 @@ internal sealed class TypstCvRenderer(IDocumentRenderer documents) : ICvRenderer
             contact1 = doc.Header.ContactLine1,
             contact2 = doc.Header.ContactLine2,
             summary = doc.Summary,
-            labels = new { summary = l.Summary, skills = l.Skills, experience = l.Experience, projects = l.Projects, education = l.Education, extras = doc.ExtrasLabel ?? l.Extras, competencies = l.Competencies },
+            labels = new { summary = l.Summary, skills = doc.Format == CvFormats.Combined ? l.SkillsAll : l.Skills, experience = l.Experience, projects = l.Projects, education = l.Education, extras = doc.ExtrasLabel ?? l.Extras, competencies = l.Competencies },
             skills = doc.Skills.Select(g => new { label = g.Label, items = g.Items }),
             competencies = doc.Competencies.Select(g => new { label = g.Label, items = g.Items.Select(c => new { name = c.Name, note = c.Note }) }),
             experience = doc.Experience.Select(Entry),
@@ -128,10 +128,12 @@ internal sealed record CvLabels(
     string TechnicalCompetencies,
     string Competencies,
     string PersonalShort,
-    string TechnicalShort)
+    string TechnicalShort,
+    string SkillsAll,
+    string SoftSkills)
 {
     public static CvLabels For(bool en) =>
         en
-            ? new("Resume", "Summary", "Skills", "Experience", "Projects", "Education", "Certifications and languages", "Languages", "Certifications", "Personal competencies", "Technical competencies", "Competencies", "Personal", "Technical")
-            : new("CV", "Perfil profesional", "Habilidades técnicas", "Experiencia laboral", "Proyectos", "Educación", "Certificaciones e idiomas", "Idiomas", "Certificaciones", "Competencias personales", "Competencias técnicas", "Competencias", "Personales", "Técnicas");
+            ? new("Resume", "Summary", "Skills", "Experience", "Projects", "Education", "Certifications and languages", "Languages", "Certifications", "Personal competencies", "Technical competencies", "Competencies", "Personal", "Technical", "Skills", "Soft skills")
+            : new("CV", "Perfil profesional", "Habilidades técnicas", "Experiencia laboral", "Proyectos", "Educación", "Certificaciones e idiomas", "Idiomas", "Certificaciones", "Competencias personales", "Competencias técnicas", "Competencias", "Personales", "Técnicas", "Habilidades", "Personales");
 }
