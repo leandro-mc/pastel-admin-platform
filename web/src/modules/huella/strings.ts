@@ -704,7 +704,20 @@ export const strings = {
       kinds: {
         cv: "CV",
         competencies: "CV competencias",
+        combined: "CV competencias y habilidades",
         letter: "Carta de presentación",
+      },
+      combined: {
+        title: "Generar CV de competencias y habilidades",
+        description:
+          "Un CV que muestra a la vez sus competencias (personales y técnicas, del catálogo de su banco) y sus habilidades técnicas por categoría (lenguajes, backend, datos…), con la experiencia explicada en lenguaje claro. No lleva proyectos, para que quepan las dos listas; puede agregarlos después en la edición libre.",
+        aiTitle: (n: number) =>
+          n === 1
+            ? "Redactando su CV de competencias y habilidades"
+            : "Redactando su CV de competencias y habilidades en español e inglés",
+        externalHint:
+          "1. Descargue las instrucciones: llevan su oferta o enfoque, su banco con el catálogo de competencias y sus habilidades, y los límites del nivel. Péguelas completas en la IA que prefiera.",
+        badge: "Competencias y habilidades",
       },
       competencies: {
         title: "Generar CV competencias",

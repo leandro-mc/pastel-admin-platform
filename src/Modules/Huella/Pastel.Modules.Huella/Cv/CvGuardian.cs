@@ -217,7 +217,15 @@ internal static class CvGuardian
             }
         }
 
-        if (doc.Format == CvFormats.Competencies)
+        if (doc.Format == CvFormats.Combined)
+        {
+            Experience();
+            Competencies();
+            Skills();
+            Education();
+            Extras();
+        }
+        else if (doc.Format == CvFormats.Competencies)
         {
             Experience();
             Competencies();

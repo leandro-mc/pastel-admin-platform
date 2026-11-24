@@ -388,7 +388,7 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
   const [discarding, setDiscarding] = useState(false);
   const [closed, setClosed] = useState<ReadonlySet<string>>(new Set());
   const patch = (changes: Partial<Draft>) => setDraft((d) => ({ ...d, ...changes }));
-  const hasCompetencies = draft.competencies !== null || version.document.format === "competencies";
+  const hasCompetencies = draft.competencies !== null || version.document.format === "competencies" || version.document.format === "combined";
   const nameMissing = draft.name.trim() === "";
 
   const toggle = (key: string) =>

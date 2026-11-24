@@ -368,7 +368,7 @@ export type AiTaskInput = {
   level?: string;
   paper?: string;
   languages?: string[];
-  /** `standard` (CV propio) o `competencies` (formato de intermediación laboral). */
+  /** `standard` (CV propio), `competencies` (formato de intermediación laboral) o `combined` (competencias y habilidades técnicas). */
   format?: string;
   name?: string | null;
   /** Versión del CV (o carta) que se vuelve a redactar. */

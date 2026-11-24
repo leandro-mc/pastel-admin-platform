@@ -13,7 +13,7 @@ internal sealed class CvDocument
     /// <summary>Idioma en que está redactado (<c>es</c> o <c>en</c>); lo usa la vista pública del CV para sus títulos.</summary>
     public string? Language { get; set; }
 
-    /// <summary><see cref="CvFormats.Standard"/> (CV propio, pensado para filtros ATS) o <see cref="CvFormats.Competencies"/> (formato de intermediación laboral).</summary>
+    /// <summary><see cref="CvFormats.Standard"/> (CV propio, pensado para filtros ATS), <see cref="CvFormats.Competencies"/> (formato de intermediación laboral) o <see cref="CvFormats.Combined"/> (competencias y habilidades técnicas juntas).</summary>
     public string Format { get; set; } = CvFormats.Standard;
 
     public CvHeader Header { get; set; } = new();
@@ -88,7 +88,10 @@ internal static class CvFormats
     public const string Standard = "standard";
     public const string Competencies = "competencies";
 
-    public static readonly IReadOnlyList<string> All = [Standard, Competencies];
+    /// <summary>Competencias (personales y técnicas del catálogo) y habilidades técnicas por categoría en un mismo CV, sin proyectos.</summary>
+    public const string Combined = "combined";
+
+    public static readonly IReadOnlyList<string> All = [Standard, Competencies, Combined];
 }
 
 /// <summary>Experiencia o proyecto. En un proyecto, <see cref="Title"/> es el nombre y <see cref="Subtitle"/> la tecnología.</summary>
@@ -196,6 +199,22 @@ internal sealed record CvLimits(
         };
         // Una viñeta puede usar dos líneas completas: así se entiende la idea entera (fórmula de Google) sin recortes.
         limits = limits with { BulletMax = 2 * limits.BulletCharsPerLine };
+        if (format == CvFormats.Combined)
+        {
+            // Competencias y habilidades técnicas juntas: sin proyectos (su espacio pasa a las competencias, que se muestran en
+            // dos renglones) y con una categoría y seis habilidades menos que el CV propio para que quepan las dos listas.
+            var (personalC, technicalC) = level == "junior" ? (5, 4) : (6, 5);
+            return limits with
+            {
+                ProjectCount = 0,
+                ProjectLines = [],
+                SkillGroups = Math.Max(3, limits.SkillGroups - 1),
+                SkillsTotal = limits.SkillsTotal - 6,
+                PersonalCompetencies = personalC,
+                TechnicalCompetencies = technicalC,
+            };
+        }
+
         if (format != CvFormats.Competencies)
         {
             return limits;

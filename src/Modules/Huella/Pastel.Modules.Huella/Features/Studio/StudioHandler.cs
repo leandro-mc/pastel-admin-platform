@@ -595,6 +595,10 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
         {
             defaultName += " · Competencias";
         }
+        else if (c.Request.IsCombined)
+        {
+            defaultName += " · Competencias y habilidades";
+        }
 
         var ids = new List<Guid>();
         // Las dos versiones (español e inglés) que se generan juntas quedan emparejadas para mantenerse al día entre sí.

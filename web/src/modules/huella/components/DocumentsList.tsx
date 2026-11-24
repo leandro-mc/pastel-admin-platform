@@ -88,7 +88,9 @@ export function DocumentsList({ offerId, onOpen, onDeleted }: Props) {
           item.language.toUpperCase(),
           item.format === "competencies"
             ? strings.studio.generate.competencies.badge
-            : null,
+            : item.format === "combined"
+              ? strings.studio.generate.combined.badge
+              : null,
           strings.studio.generate.levels[item.level as "junior" | "mid" | "senior"] ?? item.level,
           t.pagesShort(item.pages),
         ]

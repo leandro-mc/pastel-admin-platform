@@ -142,7 +142,15 @@ internal static class CvDocx
         }
 
         Summary();
-        if (doc.Format == CvFormats.Competencies)
+        if (doc.Format == CvFormats.Combined)
+        {
+            AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
+            Competencies();
+            Skills();
+            Education();
+            Extras();
+        }
+        else if (doc.Format == CvFormats.Competencies)
         {
             AppendEntries(body, labels.Experience, doc.Experience, textWidth, experience: true);
             Competencies();

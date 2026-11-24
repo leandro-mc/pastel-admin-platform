@@ -24,7 +24,7 @@ const g = strings.studio.generate;
 const l = strings.studio.letter;
 
 /** Lo que se puede generar: el CV propio, el CV de competencias (formato de intermediación laboral) o la carta. */
-type GenKind = "cv" | "competencies" | "letter";
+type GenKind = "cv" | "competencies" | "combined" | "letter";
 
 type Props = {
   offerId: string | null;
@@ -44,7 +44,7 @@ export function GenerateWorkspace({ offerId, onGenerated, onPickOffer }: Props) 
     <div className="flex flex-col gap-5">
       <div role="group" aria-label={g.kindLabel} className="flex flex-wrap items-center gap-2">
         <span className="text-sm font-semibold text-fg">{g.kindLabel}</span>
-        {(["cv", "competencies", "letter"] as const).map((value) => (
+        {(["cv", "competencies", "combined", "letter"] as const).map((value) => (
           <button
             key={value}
             type="button"
@@ -63,7 +63,7 @@ export function GenerateWorkspace({ offerId, onGenerated, onPickOffer }: Props) 
         ) : (
           <CvForm
             key={kind}
-            format={kind === "competencies" ? "competencies" : "standard"}
+            format={kind === "competencies" || kind === "combined" ? kind : "standard"}
             offerId={offerId}
             onGenerated={onGenerated}
             onPickOffer={onPickOffer}
@@ -80,8 +80,12 @@ function CvForm({
   onGenerated,
   onPickOffer,
   format,
-}: Props & { format: "standard" | "competencies" }) {
+}: Props & { format: "standard" | "competencies" | "combined" }) {
   const competencies = format === "competencies";
+  const combined = format === "combined";
+  // Los dos formatos con competencias usan el catálogo del banco y no ofrecen borrador sin IA.
+  const withCompetencies = competencies || combined;
+  const copy = competencies ? g.competencies : combined ? g.combined : null;
   const bank = useBank();
   const generate = useGenerateCv();
   const [focus, setFocus] = useState("");
@@ -141,12 +145,12 @@ function CvForm({
 
   return (
     <Panel
-      title={competencies ? g.competencies.title : g.title}
-      description={competencies ? g.competencies.description : g.description}
+      title={copy ? copy.title : g.title}
+      description={copy ? copy.description : g.description}
     >
       <div className="flex flex-col gap-5">
         {hasContent === false ? <Alert variant="warning" message={g.emptyBank} /> : null}
-        {competencies && catalogEmpty ? (
+        {withCompetencies && catalogEmpty ? (
           <Alert variant="warning" message={g.competencies.needCatalog} />
         ) : null}
 
@@ -202,22 +206,22 @@ function CvForm({
           <ActionArea>
             <AiTaskPanel
               kind="cv"
-              title={(competencies ? g.competencies.aiTitle : g.aiTitle)(
+              title={(copy ? copy.aiTitle : g.aiTitle)(
                 languages.length,
               )}
-              fileBase={`huella-cv${competencies ? "-competencias" : ""}-${level}-${languages.join("-")}`}
-              disabled={hasContent === false || (competencies && catalogEmpty)}
+              fileBase={`huella-cv${competencies ? "-competencias" : combined ? "-completo" : ""}-${level}-${languages.join("-")}`}
+              disabled={hasContent === false || (withCompetencies && catalogEmpty)}
               input={taskInput}
               runLabel={(label, model) => g.run(label, model)}
               externalHint={
-                competencies ? g.competencies.externalHint : g.externalHint
+                copy ? copy.externalHint : g.externalHint
               }
               onDone={(outcomes) => {
                 const id = outcomes[0]?.versionIds[0];
                 if (id) onGenerated("cv", id);
               }}
             />
-            {competencies ? null : (
+            {withCompetencies ? null : (
             <div className="flex flex-col gap-2 border-t border-line pt-4">
               <p className="text-sm text-muted">{g.draftHint}</p>
               <div>

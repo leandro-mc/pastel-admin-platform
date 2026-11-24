@@ -1,10 +1,11 @@
 // Plantilla fija del CV de Huella (CCR-2). Los datos llegan SOLO por data.json: cada cadena se imprime como texto y
 // nunca se evalúa como marcado ni código. Reglas ATS: una columna, texto real, sin iconos, ligaduras desactivadas,
 // contacto en el cuerpo de la primera página (nunca en cabecera o pie). Un solo diseño para los dos formatos
-// (d.format = "standard" | "competencies"); cambian las secciones y su orden, no el aspecto.
+// (d.format = "standard" | "competencies" | "combined"); cambian las secciones y su orden, no el aspecto.
 #let d = json("data.json")
 #let muted = luma(85)
 #let competencies = d.at("format", default: "standard") == "competencies"
+#let combined = d.at("format", default: "standard") == "combined"
 
 #set document(title: d.title, author: d.name)
 #set page(
@@ -142,7 +143,15 @@
   list(..d.extras)
 }
 
-#if competencies {
+#if combined {
+  // Competencias y habilidades técnicas juntas: tras la experiencia, primero las competencias y luego las habilidades.
+  summary-section()
+  experience-section()
+  competencies-sections()
+  skills-section()
+  education-section()
+  extras-section()
+} else if competencies {
   // Las competencias van tras la experiencia, en el mismo lugar que las habilidades del CV propio.
   summary-section()
   experience-section()

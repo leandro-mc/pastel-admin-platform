@@ -9,7 +9,14 @@ namespace Pastel.Modules.Huella.Cv;
 /// <summary>Qué CV se pide: nivel, papel y los idiomas a generar (uno o los dos; cada idioma es una versión completa).</summary>
 internal sealed record CvComposeRequest(string Level, string Paper, IReadOnlyList<string> Languages, string Format = CvFormats.Standard, bool HighlightAi = false)
 {
+    /// <summary>Formato de competencias (sin habilidades sueltas ni proyectos).</summary>
     public bool IsCompetencies => Format == CvFormats.Competencies;
+
+    /// <summary>Formato combinado: competencias y habilidades técnicas, sin proyectos.</summary>
+    public bool IsCombined => Format == CvFormats.Combined;
+
+    /// <summary>El CV lleva competencias del catálogo (formato de competencias o combinado).</summary>
+    public bool HasCompetencies => IsCompetencies || IsCombined;
 }
 
 /// <summary>Un CV ya armado y validado en un idioma, con lo que se rechazó al validar.</summary>
@@ -42,16 +49,27 @@ internal static class CvAiCompose
         + ExperienceSchema + ","
         + TailSchema;
 
+    private const string CombinedSchema =
+        "{\"versions\":[{\"language\":\"es|en\",\"plan\":[{\"requirement\":\"string\",\"evidence\":\"string\"}],\"headline\":\"string\",\"summary\":\"string\","
+        + "\"competencies\":{\"personal\":[{\"id\":\"uuid\",\"name\":\"string\"}],\"technical\":[{\"id\":\"uuid\",\"name\":\"string\"}]},"
+        + "\"skills\":[{\"label\":\"string\",\"items\":[\"string\"]}],"
+        + ExperienceSchema + ","
+        + TailSchema;
+
+    private static int MinCompetencies(CvComposeRequest request, int max) => Math.Min(request.IsCombined ? 4 : 5, max);
+
     public static AiPackage BuildPackage(AiBank bank, OfferAnalysis analysis, string? offerText, string? focus, CvComposeRequest request)
     {
         var limits = CvLimits.For(request.Level, request.Paper, request.Format);
-        var competencies = request.IsCompetencies;
+        var competencies = request.HasCompetencies;
         var hasOffer = !string.IsNullOrWhiteSpace(offerText);
         var languageNames = request.Languages.Select(l => l == "en" ? "inglés (en)" : "español (es)").ToList();
         var sb = new StringBuilder();
-        sb.AppendLine(competencies
+        sb.AppendLine(request.IsCompetencies
             ? "# Tarea: redactar un CV de competencias para una agencia de intermediación laboral y personas de recursos humanos"
-            : "# Tarea: redactar un CV que pase los filtros ATS y consiga entrevistas");
+            : request.IsCombined
+                ? "# Tarea: redactar un CV que muestre a la vez las competencias y las habilidades técnicas de la persona, y pase los filtros ATS"
+                : "# Tarea: redactar un CV que pase los filtros ATS y consiga entrevistas");
         sb.AppendLine();
         sb.AppendLine("Eres una persona consultora sénior en estrategia de carrera, selección de talento tecnológico y optimización de CV para ATS. Vas a redactar el CV de la persona dueña del BANCO, que son notas en bruto sin pulir, para que la VENDA con la máxima fuerza ante la OFERTA o el ENFOQUE y consiga entrevistas. La persona prioriza la fuerza: lo que se puede aclarar en una entrevista no va en el CV.");
         sb.AppendLine("Devuelve SOLO un objeto JSON válido que cumpla el ESQUEMA DE SALIDA, sin texto antes ni después y sin cercos de código.");
@@ -73,7 +91,7 @@ internal static class CvAiCompose
         sb.AppendLine("## Reglas de verdad");
         sb.AppendLine("1. El BANCO es material en bruto: no copies sus frases tal cual; reescríbelas con redacción profesional.");
         sb.AppendLine("2. Usa SOLO hechos del BANCO. No inventes cifras, empresas, fechas, títulos ni logros. Puedes describir con otras palabras lo que el banco implica (por ejemplo, integrar un módulo a un sistema existente implica trabajar con su base de datos), pero no agregues tecnologías, sistemas ni resultados que no se deduzcan del banco. Toda cifra que escribas debe aparecer en el texto de la experiencia o del proyecto de donde sale. No escribas cifras que solo estén en la OFERTA (p. ej. «Java 17+» o «2 años»): usa la versión o la cifra que respalde el banco.");
-        sb.AppendLine("3. Tú eliges qué experiencias" + (competencies ? string.Empty : " y proyectos") + " incluir. Cita cada una con su id exacto del banco. SIEMPRE incluye el cargo vigente (`current: true`), con al menos una viñeta.");
+        sb.AppendLine("3. Tú eliges qué experiencias" + (request.IsCompetencies || request.IsCombined ? string.Empty : " y proyectos") + " incluir. Cita cada una con su id exacto del banco. SIEMPRE incluye el cargo vigente (`current: true`), con al menos una viñeta.");
         var merged = limits.EntryLines.Count >= 3 ? $"[{limits.EntryLines[0]}, {limits.EntryLines[1] + limits.EntryLines[2]}]" : "más líneas";
         sb.AppendLine(CultureInfo.InvariantCulture, $"4. Si dos experiencias son de la MISMA organización y son continuas o con menos de tres meses entre una y otra, DECIDE tú si conviene unirlas en una sola entrada: pon el id de la más reciente en `id` y los demás en `alsoIds`; el servidor une las fechas y su contexto. Al unirlas se ahorra una cabecera y la entrada unida recibe también el presupuesto de la que desaparece (con [{string.Join(", ", limits.EntryLines.Take(limits.Entries))}], pasa a {merged}). Únelas cuando eso te deje sumar viñetas de impacto o un proyecto relevante; déjalas separadas si cada etapa aporta por sí sola algo que se pide.");
         sb.AppendLine("5. Para cada término de <TERMINOS_DETECTADOS> con `mustHave: true` que el BANCO respalde, usa su escritura exacta al menos una vez (titular, perfil, habilidades o viñetas), incluida su grafía («Fullstack» o «full-stack», «servicios web», «integración de sistemas», «pruebas», «seguridad»), porque los sistemas ATS comparan palabras. Si el banco no lo respalda, no lo menciones ni lo insinúes.");
@@ -117,11 +135,18 @@ internal static class CvAiCompose
         var bulletCounts = string.Join(", ", limits.EntryLines.Take(limits.Entries).Select(l => (l + 1) / 2));
         sb.AppendLine(CultureInfo.InvariantCulture, $"- experience: como máximo {limits.Entries}. Presupuesto de LÍNEAS por entrada, de la más reciente a la más antigua: [{string.Join(", ", limits.EntryLines.Take(limits.Entries))}]. Una viñeta de hasta {limits.BulletCharsPerLine} caracteres ocupa 1 línea; una de hasta {limits.BulletMax} ocupa 2: usa las dos líneas cuando la idea lo necesite para entenderse completa. CALIDAD ANTES QUE CANTIDAD: unas [{bulletCounts}] viñetas por entrada, cada una COMPLETA; mejor dos viñetas que digan algo que cuatro que se quedan cortas. No te pases del presupuesto: lo que sobra se retira, empezando por la viñeta menos importante.");
         sb.AppendLine(CultureInfo.InvariantCulture, $"- Cada viñeta (de experiencia y de proyectos) es un objeto {{\"text\", \"short\"}}: `text` es la versión completa ({BulletMin} a {limits.BulletMax} caracteres) y `short` la misma idea en una línea (máximo {limits.BulletCharsPerLine} caracteres) CONSERVANDO el resultado o la cifra; si no se puede sin perderlo, repite `text`. `short` es solo un último recurso del servidor: nunca se usa en la viñeta principal de una entrada.");
-        if (competencies)
+        if (request.IsCompetencies)
         {
             sb.AppendLine("- Este CV lo leen personas de recursos humanos y agencias de empleo que NO son de TI: explica cada experiencia en lenguaje claro (qué se necesitaba, qué hizo la persona y qué cambió). Nombra tecnologías solo cuando aporten (máximo dos por viñeta) y no uses siglas sin explicarlas. Da peso a la gestión, el trabajo en equipo, la planificación, la coordinación y la comunicación.");
-            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre 5 y {limits.PersonalCompetencies} personales y entre 5 y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). SOLO el nombre, sin notas: se muestran en dos renglones y la evidencia la dan las viñetas de experiencia. Las que tienen `alwaysInclude: true` van SIEMPRE. El catálogo llega en orden aleatorio: el orden no indica importancia. Elige con criterio según la OFERTA o el ENFOQUE, no siempre las mismas, y considera TODO el catálogo. Las personales deben equilibrar tres tipos: al menos una de pensamiento (analítico y crítico, resolución de problemas), una de relación con otras personas (comunicación, trabajo en equipo, liderazgo) y una de autogestión (adaptabilidad, iniciativa y toma de decisiones, gestión del tiempo, aprendizaje). Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre {MinCompetencies(request, limits.PersonalCompetencies)} y {limits.PersonalCompetencies} personales y entre {MinCompetencies(request, limits.TechnicalCompetencies)} y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). SOLO el nombre, sin notas: se muestran en dos renglones y la evidencia la dan las viñetas de experiencia. Las que tienen `alwaysInclude: true` van SIEMPRE. El catálogo llega en orden aleatorio: el orden no indica importancia. Elige con criterio según la OFERTA o el ENFOQUE, no siempre las mismas, y considera TODO el catálogo. Las personales deben equilibrar tres tipos: al menos una de pensamiento (analítico y crítico, resolución de problemas), una de relación con otras personas (comunicación, trabajo en equipo, liderazgo) y una de autogestión (adaptabilidad, iniciativa y toma de decisiones, gestión del tiempo, aprendizaje). Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión.");
             sb.AppendLine("- Las viñetas de experiencia deben DEMOSTRAR con hechos las competencias elegidas, sin nombrarlas: que cada competencia personal quede respaldada por al menos una viñeta.");
+        }
+        else if (request.IsCombined)
+        {
+            sb.AppendLine("- Este CV lo leen a la vez personas de recursos humanos y sistemas ATS: explica cada experiencia en lenguaje claro (qué se necesitaba, qué hizo la persona y qué cambió) y nombra las tecnologías que la oferta pide cuando aporten. Esta versión NO lleva proyectos: las competencias y las habilidades técnicas muestran el perfil completo, y las viñetas de experiencia deben probarlo.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- competencies: entre {MinCompetencies(request, limits.PersonalCompetencies)} y {limits.PersonalCompetencies} personales y entre {MinCompetencies(request, limits.TechnicalCompetencies)} y {limits.TechnicalCompetencies} técnicas, ELEGIDAS del catálogo `competencies` del BANCO por su id (nunca inventes una). SOLO el nombre, sin notas: se muestran en dos renglones y la evidencia la dan las viñetas de experiencia. Las que tienen `alwaysInclude: true` van SIEMPRE. El catálogo llega en orden aleatorio: el orden no indica importancia. Elige con criterio según la OFERTA o el ENFOQUE, no siempre las mismas, y considera TODO el catálogo. Las personales deben equilibrar tres tipos: al menos una de pensamiento (analítico y crítico, resolución de problemas), una de relación con otras personas (comunicación, trabajo en equipo, liderazgo) y una de autogestión (adaptabilidad, iniciativa y toma de decisiones, gestión del tiempo, aprendizaje). Las técnicas, primero las que pide la oferta. `name`: el nombre del catálogo en el idioma de la versión.");
+            sb.AppendLine("- Las viñetas de experiencia deben DEMOSTRAR con hechos las competencias elegidas, sin nombrarlas: que cada competencia personal quede respaldada por al menos una viñeta.");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"- skills: es la sección que más pesa en los filtros ATS. Entre {Math.Min(12, limits.SkillsTotal)} y {limits.SkillsTotal} habilidades en hasta {limits.SkillGroups} grupos (una línea por grupo: «etiqueta: a, b, c», máximo {limits.SkillLineChars} caracteres). Usa SOLO nombres de `skills` del BANCO (o uno de sus `aliases`), escritos tal cual. Primero TODAS las que pide la oferta y el banco respalda, luego el resto del stack principal. Repetir aquí tecnologías de las viñetas es correcto: el ATS las cuenta. No pongas idiomas, competencias blandas ni palabras genéricas como «API».");
         }
         else
         {
@@ -155,7 +180,7 @@ internal static class CvAiCompose
         sb.AppendLine("<BANCO>").AppendLine(bank.ContextJson(AiPurpose.Cv, withCompetencies: competencies, seed: offerText ?? focus ?? string.Empty)).AppendLine("</BANCO>");
         sb.AppendLine();
         sb.AppendLine("## ESQUEMA DE SALIDA");
-        var schema = competencies ? CompetenciesSchema : Schema;
+        var schema = request.IsCompetencies ? CompetenciesSchema : request.IsCombined ? CombinedSchema : Schema;
         sb.AppendLine(schema);
         return new AiPackage("cv_compose", sb.ToString(), schema);
     }
@@ -235,7 +260,7 @@ internal static class CvAiCompose
 
         doc.Experience = Experiences(item, language, bank, limits, warnings, request.HighlightAi);
 
-        // Proyectos: en el orden de importancia de la IA (ninguno en el formato de competencias).
+        // Proyectos: en el orden de importancia de la IA (ninguno en los formatos de competencias y combinado: su tope es 0).
         var projectIds = new HashSet<Guid>();
         foreach (var entry in Items(item, "projects"))
         {
@@ -270,7 +295,7 @@ internal static class CvAiCompose
         }
 
         CompleteSkills(doc, bank, limits, analysis, warnings, request.HighlightAi);
-        doc.Competencies = request.IsCompetencies ? Competencies(item, bank, limits, labels, warnings, request.HighlightAi) : [];
+        doc.Competencies = request.HasCompetencies ? Competencies(item, bank, limits, labels, warnings, request.HighlightAi) : [];
 
         var seenEducation = new HashSet<Guid>();
         foreach (var entry in Items(item, "education"))
