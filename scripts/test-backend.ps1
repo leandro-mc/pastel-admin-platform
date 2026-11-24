@@ -66,6 +66,27 @@ echo "=== Compilar solucion en Release ==="
 dotnet build Pastel.slnx --configuration Release --no-restore
 build_status=$?
 
+echo ""
+echo "=== Instalar Typst (motor documental, CCR-2) ==="
+# Misma version y sumas que src/Host/Pastel.Host/Dockerfile.
+typst_version=0.15.1
+case "$(uname -m)" in
+  x86_64) typst_arch=x86_64; typst_sum=a6d077d0a95eed5a2eba715b2dae06be954f624ccbf85758a03f389ded33118c ;;
+  aarch64) typst_arch=aarch64; typst_sum=5aa8d74a3d906e60ea12a66ac2f37f8eef1b14cbad7182a745e393a10c23dcee ;;
+  *) typst_arch=unsupported; typst_sum=none ;;
+esac
+typst_status=1
+if (command -v xz >/dev/null 2>&1 || (apt-get update -qq && apt-get install -y -qq --no-install-recommends xz-utils >/dev/null)) \
+  && curl -fsSL -o /tmp/typst.tar.xz "https://github.com/typst/typst/releases/download/v${typst_version}/typst-${typst_arch}-unknown-linux-musl.tar.xz" \
+  && echo "$typst_sum  /tmp/typst.tar.xz" | sha256sum -c - \
+  && tar -xJf /tmp/typst.tar.xz -C /tmp; then
+  export Documents__TypstPath="/tmp/typst-${typst_arch}-unknown-linux-musl/typst"
+  "$Documents__TypstPath" --version && typst_status=0
+fi
+if [ "$typst_status" -ne 0 ]; then
+  echo "FALLO: no se pudo instalar Typst; las pruebas del motor documental fallaran."
+fi
+
 test_status=125
 if [ "$build_status" -eq 0 ]; then
   echo ""
@@ -79,8 +100,8 @@ else
   echo "Se omiten las pruebas unitarias porque fallo la compilacion."
 fi
 
-printf '\nResumen de fases: vulnerabilidades=%s; formato=%s; build=%s; pruebas=%s\n' "$vulnerability_status" "$format_status" "$build_status" "$test_status"
-if [ "$vulnerability_status" -ne 0 ] || [ "$format_status" -ne 0 ] || [ "$build_status" -ne 0 ] || [ "$test_status" -ne 0 ]; then
+printf '\nResumen de fases: vulnerabilidades=%s; formato=%s; build=%s; typst=%s; pruebas=%s\n' "$vulnerability_status" "$format_status" "$build_status" "$typst_status" "$test_status"
+if [ "$vulnerability_status" -ne 0 ] || [ "$format_status" -ne 0 ] || [ "$build_status" -ne 0 ] || [ "$typst_status" -ne 0 ] || [ "$test_status" -ne 0 ]; then
   exit 1
 fi
 exit 0

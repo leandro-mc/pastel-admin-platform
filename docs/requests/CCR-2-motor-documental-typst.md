@@ -2,7 +2,7 @@
 
 | Dato | Valor |
 |---|---|
-| Estado | **Borrador preparado el 2026-11-13. No está autorizado ni aplicado.** La decisión de fondo ya fue aprobada por el propietario (Typst como motor documental, fuentes autoalojadas y el proyecto compartido `Pastel.Documents`); falta su autorización expresa para tocar las zonas compartidas de abajo. |
+| Estado | **Aplicado el 2026-11-15** en `feat/huella-mvp`, con autorización expresa del propietario, salvo el punto 4 (fuentes de la interfaz), que espera la identidad visual. Ver «Aplicación» al final. |
 | Origen | `docs/requirements/DECISIONES-Y-HALLAZGOS.md` D-03 y D-06; investigación de Huella, Cosecha y Ágora en `docs/requirements/` |
 | Zonas compartidas que tocaría | `src/Host/Pastel.Host/Dockerfile`, `src/BuildingBlocks/**` (proyecto nuevo), `Pastel.slnx`, `compose.yaml`, `.github/workflows/ci.yml`, `web/src/core/design/**` y archivos estáticos de `web/` (fuentes), `docs/ARCHITECTURE.md`, `docs/DESIGN_SYSTEM.md`, `docs/OPERATIONS.md`, `docs/SECURITY.md` |
 | Relación con otras solicitudes | **No es CCR-1.** CCR-1 (reglas de diseño del frontend por módulo, rama `docs/module-rules-precedence`) trata otro asunto y se reaplica por separado, adaptado a las reglas actuales. Esta solicitud no depende de CCR-1 ni lo sustituye; pueden aplicarse en cualquier orden. Tampoco cubre D-04 (metadatos `og:*`), que lleva su propio ADR. |
@@ -39,6 +39,11 @@ Tres aplicaciones necesitan generar documentos desde datos estructurados: el **C
 ## Lo que no cambia
 Todo lo que no sea lo anterior: reglas de módulos, fronteras entre módulos, autenticación y permisos, errores y logs, y el flujo de trabajo. Esta solicitud no incluye código de ningún módulo (la plantilla de CV y las de Cosecha y Ágora se implementan con cada módulo).
 
-## Pendiente
-- Autorización expresa del propietario para tocar las zonas compartidas listadas.
-- Resolver los datos por verificar antes de fijar versiones.
+## Aplicación (2026-11-15)
+- **Punto 1:** `src/BuildingBlocks/Pastel.Documents` (`IDocumentRenderer`, `TypstDocumentRenderer`, `DocumentErrors`, `AddPastelDocuments`), sin paquetes NuGet nuevos.
+- **Punto 2:** Typst **0.15.1** (licencia Apache-2.0) en una etapa propia del `Dockerfile` del host, con SHA-256 verificado para amd64 y arm64; fuentes **Source Sans 3 3.052R** (SIL OFL 1.1, licencia en `Fonts/OFL-SourceSans3.md`) copiadas a `/app/Fonts`.
+- **Punto 3:** raíz en un temporal propio, `--ignore-system-fonts`, caché de paquetes vacía, entorno vacío, 20 s, `ulimit -v` de 512 MB y salida validada. Verificado en el contenedor con `--read-only`, `tmpfs /tmp` de 32 MB `noexec`, `cap_drop ALL`, `--network none` y usuario `app`: compila sin red. El `tmpfs` actual alcanza (el CV ocupa menos de 100 kB).
+- **Punto 5:** `scripts/test-backend.ps1` (el que usa el CI) instala la misma versión con su suma antes de las pruebas.
+- **Punto 6:** `ARCHITECTURE.md`, `SECURITY.md`, `OPERATIONS.md` y `DECISIONS.md` actualizados. `DESIGN_SYSTEM.md` no cambia mientras el punto 4 siga pendiente.
+- **Criterios de aceptación verificados:** PDF con fuentes incrustadas y texto extraíble en orden de lectura; un dato con `#panic(…)`, `read(…)` e `#import` se imprime como texto (prueba `MaliciousDataIsPrintedAsTextAndNeverExecuted`); compilación y pruebas existentes en verde.
+- **Pendiente:** punto 4 (fuentes de la interfaz) con la identidad visual; tamaño de la imagen y tiempo de compilación en el hardware real de despliegue; comprobar con un validador externo (p. ej. veraPDF) el etiquetado del PDF.

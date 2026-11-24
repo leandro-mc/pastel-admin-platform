@@ -8,10 +8,10 @@ Monolito modular: un proceso, una base PostgreSQL y un esquema por módulo; **m�
 
 ## 2. Reglas de frontera (obligatorias; las verifican pruebas de arquitectura)
 
-1. Un módulo **no referencia** el interior de otro. Solo puede usar `Pastel.SharedKernel`, `Pastel.Platform` y, si existe, el `*.Contracts` del otro módulo.
+1. Un módulo **no referencia** el interior de otro. Solo puede usar `Pastel.SharedKernel`, `Pastel.Platform`, `Pastel.Documents` (motor documental) y, si existe, el `*.Contracts` del otro módulo.
 2. Los tipos son `internal` por defecto. Lo público de un módulo vive en su `*.Contracts`.
 3. Un esquema por módulo (`identity`, `brisa`, `balance`, `agora`, `cosecha`, `huella`). **Sin claves foráneas ni joins entre esquemas**; se referencia por ID.
-4. `Pastel.Platform` y `Pastel.SharedKernel` **no referencian módulos**. `Pastel.Host` no contiene reglas de negocio.
+4. `Pastel.Platform`, `Pastel.SharedKernel` y `Pastel.Documents` **no referencian módulos**. `Pastel.Host` no contiene reglas de negocio.
 5. Todo permiso funcional de una aplicación empieza con el código del módulo: `cosecha.orders.manage`. Identity puede declarar permisos transversales de plataforma bajo el grupo `platform` y el prefijo `platform.*`; esos permisos son reservados y no se conceden desde la administración de roles de una aplicación.
 6. Frontend: `web/src/modules/<m>` solo importa de `@/core/*`. `core` y `app` solo conocen los módulos por el manifiesto generado.
 7. Quitar un módulo = borrar sus carpetas. El resto debe compilar y pasar sus pruebas.
@@ -36,7 +36,8 @@ pastel/
 │   ├── Host/Pastel.Host/               # Program.cs, middleware, Dockerfile
 │   ├── BuildingBlocks/
 │   │   ├── Pastel.SharedKernel/        # Result<T>, IClock, Paging, Guard (≤ 10 archivos)
-│   │   └── Pastel.Platform/            # IPastelModule, ICurrentUser, permisos, auditoría, migrador
+│   │   ├── Pastel.Platform/            # IPastelModule, ICurrentUser, permisos, auditoría, migrador
+│   │   └── Pastel.Documents/           # CCR-2: IDocumentRenderer (Typst como proceso acotado) y fuentes autoalojadas
 │   └── Modules/
 │       ├── Identity/   Brisa/   Balance/   Agora/   Cosecha/   Huella/
 ├── tests/

@@ -30,22 +30,22 @@ const presentation: Record<AlertVariant, AlertPresentation> = {
   warning: {
     Icon: TriangleAlert,
     className:
-      "rounded-xl border border-line-strong bg-surface-raised px-4 py-3 text-sm text-fg",
-    iconClass: "text-fg-secondary",
+      "rounded-xl border border-warning/40 border-l-4 border-l-warning bg-warning-soft px-4 py-3 text-sm text-fg",
+    iconClass: "text-warning",
     role: "status",
   },
   success: {
     Icon: CircleCheck,
     className:
-      "rounded-xl border border-line bg-accent-soft px-4 py-3 text-sm text-fg",
-    iconClass: "text-accent-strong",
+      "rounded-xl border border-success/30 border-l-4 border-l-success bg-success-soft px-4 py-3 text-sm text-fg",
+    iconClass: "text-success",
     role: "status",
   },
   info: {
     Icon: Info,
     className:
-      "rounded-xl border border-line bg-surface-raised px-4 py-3 text-sm text-fg",
-    iconClass: "text-accent-strong",
+      "rounded-xl border border-info/30 border-l-4 border-l-info bg-info-soft px-4 py-3 text-sm text-fg",
+    iconClass: "text-info",
     role: "status",
   },
 };

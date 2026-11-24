@@ -52,6 +52,18 @@ La protección se aplica tanto en la tarea como en `ProductionSecurityValidation
 - Registrar cambios administrativos sin guardar credenciales; auditar antes/después cuando corresponda.
 - Rotar claves y secretos, restringir la conectividad a PostgreSQL y usar HTTPS en despliegue real.
 
+## Motor documental (Typst, CCR-2)
+
+`Pastel.Documents` ejecuta Typst (versión y SHA-256 fijados en el `Dockerfile` del host) como proceso hijo del usuario sin privilegios: directorio temporal propio como raíz, sin fuentes del sistema, caché de paquetes vacía (sin descargas), entorno vacío, 20 s de tiempo, `ulimit -v` de 512 MB en Linux y salida validada por firma y tamaño (10 MB). La plantilla es código fijo del módulo; los datos (incluido lo que produzca una IA) entran solo como `data.json` y se imprimen como texto. El contenido de los documentos no se registra; ante un fallo solo se registra el código de salida y la primera línea del diagnóstico del compilador.
+
+## Enlace público de Huella
+
+El token del enlace (`/huella/p/:token`, 32 bytes aleatorios) se busca por su SHA-256 y se guarda además cifrado con AES-GCM (misma clave derivada de `Jwt:SigningKey`, datos asociados perfil + `public-link`), de modo que solo el propietario autenticado con `huella.access` puede recuperarlo para copiarlo. Nunca está en claro en la base, en logs ni en auditoría; una filtración de la base sin el secreto no lo revela. Rotar `JWT_SIGNING_KEY` vuelve irrecuperables los enlaces guardados (siguen funcionando para quien ya los tiene; se regeneran para volver a verlos).
+
+## Claves de IA de Huella
+
+El Owner puede guardar la clave de su cuenta de Gemini, OpenAI o Anthropic. Se cifra con AES-256-GCM con una clave derivada de `Jwt:SigningKey` (HMAC-SHA256 con propósito propio) y queda atada a su perfil y proveedor; nunca se devuelve por la API (solo sus 4 últimos caracteres), no se registra y viaja al proveedor en una cabecera, nunca en la URL. Rotar `JWT_SIGNING_KEY` vuelve ilegibles las claves guardadas (la interfaz pide ingresarlas de nuevo). Las URL de los proveedores son fijas y el modelo se valida contra `^[A-Za-z0-9][A-Za-z0-9._-]*$`, así que no hay SSRF ni manipulación de la ruta. El cuerpo de los errores del proveedor no se reenvía ni se registra. Lo que se envía es el banco tal como lo escribió la persona (relatos, historia y voz), la oferta y los límites del documento; excluye siempre nombre, correo, teléfono y enlaces, y lo marcado «nunca» o fuera del documento va como `doNotUse`. Lo que vuelve pasa por las mismas validaciones que el JSON pegado a mano: empresas, fechas y contacto salen del banco y las cifras y habilidades escritas por la IA deben existir en él.
+
 ## Límites conocidos
 
 No incluye confirmación de correo, recuperación de contraseña por email, MFA ni notificaciones administrativas. Google OAuth 2.0/OIDC ya está implementado de forma opcional, conforme a la sección «Ingreso con Google»; requiere configurar las credenciales en el entorno. La verificación de bloqueo/versionado de usuario se hace por petición; cualquier optimización debe mantener el mismo modelo de permisos. Antes de producción, agregar pruebas de integración completas de los flujos de seguridad, evaluación de dependencias y revisión independiente.

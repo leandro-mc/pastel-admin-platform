@@ -141,11 +141,54 @@ function viewCrear() {
   return `<div class="mk"><div>${left}</div>${right}</div>`;
 }
 
+const PLACEHOLDERS = {
+  carta: {
+    title: "Carta de recomendación",
+    intro: "Un espacio para preparar solicitudes y borradores de cartas respaldados por referencias reales.",
+    detail: "La persona que recomienda conserva la última palabra: podrá revisar, ajustar y autorizar el texto antes de compartirlo.",
+    items: ["Personas de referencia y relación profesional", "Contexto de la oportunidad que solicita la carta", "Borradores para revisión y autorización"]
+  },
+  historial: {
+    title: "Historial de postulaciones",
+    intro: "Un registro ordenado de cada oportunidad a la que decidas aplicar.",
+    detail: "Aquí podrás consultar qué enviaste, cuándo lo enviaste y en qué etapa se encuentra cada proceso.",
+    items: ["Empresa, puesto y fuente de la oferta", "CV y carta exactos utilizados", "Estado, fechas, contactos y seguimiento"]
+  },
+  entrevistas: {
+    title: "Preparación de entrevistas",
+    intro: "Un espacio para preparar cada conversación a partir de la oferta y de tu experiencia documentada.",
+    detail: "La preparación se adaptará al puesto y utilizará ejemplos reales de tu trayectoria, sin inventar respuestas.",
+    items: ["Preguntas probables según el puesto", "Ejemplos de experiencia que puedes desarrollar", "Práctica técnica, administrativa o situacional"]
+  }
+};
+function viewPlaceholder(id) {
+  const p = PLACEHOLDERS[id];
+  if (!p) return "";
+  return `<section class="placeholder">
+    <div class="placeholder-head"><span class="eyebrow">EN PREPARACIÓN</span><span class="placeholder-index">0${id === "carta" ? "3" : id === "historial" ? "4" : "5"}</span></div>
+    <h1>${p.title}</h1>
+    <p class="placeholder-lead">${p.intro}</p>
+    <div class="placeholder-rule"></div>
+    <p class="placeholder-detail">${p.detail}</p>
+    <h2>Está previsto incluir</h2>
+    <ul>${p.items.map((item) => `<li>${item}</li>`).join("")}</ul>
+    <p class="placeholder-foot">Este módulo todavía no está implementado.</p>
+  </section>`;
+}
+
 const view = $("#view"), toast = (t) => { const n = $("#toast"); n.textContent = t; n.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(() => (n.hidden = true), 2800); };
 function render() {
   const a = document.activeElement, key = a && a.dataset && (a.dataset.k || a.dataset.p), attr = a && a.dataset && (a.dataset.k ? "k" : "p"), pos = a && a.selectionStart;
-  BANK = deriveBank(B); view.innerHTML = S.tab === "banco" ? viewBanco() : viewCrear();
-  $("#tabs").innerHTML = [["banco", "Banco"], ["crear", "Crear CV"]].map(([v, t]) => `<button data-a="tab" data-id="${v}" ${v === S.tab ? 'aria-current="page"' : ""}>${t}</button>`).join("");
+  BANK = deriveBank(B);
+  view.innerHTML = S.tab === "banco" ? viewBanco() : S.tab === "crear" ? viewCrear() : viewPlaceholder(S.tab);
+  $("#tabs").innerHTML = [["banco", "Banco"], ["crear", "Crear CV"]].map(([v, t]) => `<button data-a="tab" data-id="${v}" ${v === S.tab ? 'aria-current="page"' : ""}><span class="nav-mark">${v === "banco" ? "01" : "02"}</span><span>${t}</span></button>`).join("");
+  $$(".future-nav [data-a='tab']").forEach((button) => {
+    if (button.dataset.id === S.tab) button.setAttribute("aria-current", "page");
+    else button.removeAttribute("aria-current");
+  });
+  const labels = { banco: "Banco", crear: "Crear CV", carta: "Carta de recomendación", historial: "Historial de postulaciones", entrevistas: "Preparación de entrevistas" };
+  const current = $("#current-section");
+  if (current) current.textContent = labels[S.tab] || "Huella";
   if (key) { const n = view.querySelector(`[data-${attr}="${key}"]`); if (n && n.type !== "radio" && n.type !== "checkbox") { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) { /* select */ } } }
 }
 const tick = () => new Promise((r) => setTimeout(r, window.__NOWAIT ? 0 : 160));
