@@ -95,6 +95,12 @@ internal static class HuellaErrors
     public static readonly Error PairNothingPending = Error.Validation(
         "huella.cv.pair_nothing_pending", "Esta versión ya está al día con la otra: no hay cambios por reflejar.");
 
+    /// <summary>La IA respondió, pero nada de la sección pasó la validación (hechos y cifras del banco): no se cambió nada.</summary>
+    public static Error SectionNotGenerated(IReadOnlyList<string> warnings) => Error.Validation(
+        "huella.cv.section_not_generated",
+        "La IA no devolvió una versión válida de esta sección y no se cambió nada. Puede intentarlo de nuevo.",
+        warnings.Count == 0 ? null : new Dictionary<string, string[]> { ["section"] = [.. warnings] });
+
     public static readonly Error PairMissing = Error.NotFound(
         "huella.cv.pair_missing", "La otra versión (español o inglés) ya no existe, así que no hay con qué ponerla al día.");
 

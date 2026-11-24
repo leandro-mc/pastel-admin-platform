@@ -14,6 +14,7 @@ import {
   aiTaskPackageSchema,
   bankImportResultSchema,
   bankSchema,
+  cvSectionSchema,
   contentViewSchema,
   letterSchema,
   letterSummarySchema,
@@ -395,6 +396,13 @@ export const runAiTask = (kind: AiTaskKind, input: AiTaskInput) =>
   api.post(taskPath(kind, "ai-run"), aiTaskOutcomeSchema, input, {
     timeoutMs: AI_TIMEOUT_MS,
   });
+
+/**
+ * Regenera UNA sección del CV con la IA configurada, contra su oferta (o su enfoque) y el banco. No guarda: devuelve la
+ * sección y el borrador decide si la usa. `draft` (el borrador actual) solo da contexto para no repetir lo de las demás secciones.
+ */
+export const regenerateSection = (versionId: string, body: { section: string; draft: unknown }) =>
+  api.post(`${base}/studio/versions/${versionId}/section/ai-run`, cvSectionSchema, body, { timeoutMs: AI_TIMEOUT_MS });
 
 /** Pone al día una versión con lo que se cambió en su pareja (español/inglés) con la IA configurada (tarda: nginx da 150 s). */
 export const syncPair = (versionId: string) =>

@@ -840,6 +840,22 @@ export const strings = {
           contactItem: (n: number) => `Dato de contacto ${n}`,
           linkItem: (n: number) => `Enlace ${n}`,
         },
+        ai: {
+          regenerate: "Regenerar con IA",
+          regenerateHeadline: "Regenerar titular",
+          generate: "Generar con IA",
+          blank: "Agregar en blanco",
+          confirmTitle: (section: string) => `Regenerar «${section}»`,
+          confirmMessage: (section: string, target: string) =>
+            `La IA volverá a redactar «${section}» desde su banco, ${target}. Lo que hay ahora en esta sección, incluidos los cambios que hizo a mano, se pierde y se reemplaza. Nada se guarda hasta «Guardar cambios»; con «Descartar cambios» vuelve a lo último guardado.`,
+          headlineNote: " Solo se vuelve a redactar el titular: el nombre y el contacto no cambian.",
+          confirm: "Regenerar y reemplazar",
+          targetOffer: (title: string) => `contra la oferta «${title}»`,
+          targetFocus: "según el enfoque de este CV",
+          title: (section: string) => `Redactando «${section}» con IA`,
+          step: (section: string) => `Redactar «${section}»`,
+          done: "Sección redactada. Revísela y pulse «Guardar cambios» para conservarla.",
+        },
         summary: { label: "Texto del perfil" },
         skills: {
           label: "Categoría",

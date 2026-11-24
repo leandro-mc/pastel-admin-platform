@@ -39,6 +39,32 @@ export type Draft = {
   extras: { label: string; items: Row[] } | null;
 };
 
+/** Las secciones de la edición libre que se pueden regenerar con IA (`header` regenera solo el titular). */
+export type SectionKey = "header" | "summary" | "skills" | "competencies" | "experience" | "projects" | "education" | "extras";
+
+/** Pone en el borrador la sección que regeneró la IA (el servidor devuelve un documento con solo esa parte llena). */
+export function applySection(draft: Draft, key: SectionKey, doc: CvDocument): Draft {
+  const fresh = toDraft(doc);
+  switch (key) {
+    case "header":
+      return { ...draft, headline: fresh.headline };
+    case "summary":
+      return { ...draft, summary: fresh.summary ?? "" };
+    case "skills":
+      return { ...draft, skills: fresh.skills };
+    case "competencies":
+      return { ...draft, competencies: fresh.competencies };
+    case "experience":
+      return { ...draft, experience: fresh.experience };
+    case "projects":
+      return { ...draft, projects: fresh.projects };
+    case "education":
+      return { ...draft, education: fresh.education };
+    case "extras":
+      return { ...draft, extras: fresh.extras };
+  }
+}
+
 // ── Filas nuevas ──
 export const newRow = (value = ""): Row => ({ key: nextKey(), value });
 export const newBullet = (text = ""): BulletRow => ({ key: nextKey(), text, sourceIds: [] });

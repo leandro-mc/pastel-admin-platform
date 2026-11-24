@@ -724,6 +724,91 @@ internal sealed class StudioHandler(HuellaDbContext db, OwnerProfiles owners, Ba
     }
 
     // ───────────────────────────── Versiones emparejadas (español / inglés) ─────────────────────────────
+    private static readonly string[] RegenerableSections = ["header", "summary", "skills", "competencies", "experience", "projects", "education", "extras"];
+
+    /// <summary>
+    /// Edición libre: vuelve a redactar UNA sección con la IA configurada, contra la oferta de esta versión (o su enfoque) y el
+    /// banco, con las mismas validaciones de un CV nuevo (hechos y cifras del banco, competencias del catálogo, habilidades
+    /// conocidas). No guarda nada: devuelve la sección y la persona la revisa y guarda (o descarta). El borrador que se envía
+    /// solo sirve de contexto para no repetir lo que dicen las demás secciones. En «header» solo se redacta el titular.
+    /// </summary>
+    public async Task<Result<CvSectionView>> RegenerateSectionAsync(Guid versionId, CvSectionInput input, CancellationToken cancellationToken)
+    {
+        var loaded = await LoadVersionAsync(versionId, cancellationToken);
+        if (loaded.IsFailure)
+        {
+            return loaded.Error;
+        }
+
+        var (version, saved) = loaded.Value;
+        var name = (input.Section ?? string.Empty).Trim();
+        if (!RegenerableSections.Contains(name))
+        {
+            return HuellaErrors.Invalid(new Dictionary<string, string[]> { ["section"] = ["Indique qué sección regenerar."] });
+        }
+
+        var only = name == "header" ? "headline" : name;
+        var current = saved;
+        if (input.Draft is { } draft)
+        {
+            var built = CvFreeEdit.Build(draft, saved);
+            if (built.IsFailure)
+            {
+                return built.Error;
+            }
+
+            current = built.Value;
+        }
+
+        var profile = await owners.GetOrCreateAsync(cancellationToken);
+        if (profile.IsFailure)
+        {
+            return profile.Error;
+        }
+
+        JobOffer? offer = null;
+        if (version.JobOfferId is { } offerId)
+        {
+            offer = await db.JobOffers.SingleOrDefaultAsync(o => o.Id == offerId && o.ProfileId == profile.Value.Id, cancellationToken);
+        }
+
+        var target = offer?.RawText ?? version.Focus ?? string.Empty;
+        var bank = await LoadBankAsync(profile.Value, cancellationToken);
+        var analysis = OfferAnalyzer.Analyze(target, isFocus: offer is null, bank.Data);
+
+        // Proyectos y habilidades se piden con las reglas del CV propio y las competencias con las de un formato que las lleva,
+        // aunque este CV sea de otro formato: así una sección agregada de nuevo se puede generar.
+        var format = only switch
+        {
+            "projects" or "skills" => CvFormats.Standard,
+            "competencies" => version.Format == CvFormats.Competencies ? CvFormats.Competencies : CvFormats.Combined,
+            _ => version.Format,
+        };
+        var request = new CvComposeRequest(version.Level, version.Paper, [version.Language], format, CvPolish.MentionsAi(target));
+        var others = "{" + string.Join(",", CvPairSync.SectionsOf(current).Where(kv => kv.Key != name).Select(kv => $"\"{kv.Key}\":{kv.Value}")) + "}";
+        var package = CvAiCompose.BuildPackage(bank.Bank, analysis, offer?.RawText, version.Focus, request, new CvSectionMode(only, CvPairSync.Title(only), others));
+
+        var answer = await ai.RunAsync(profile.Value, package.Prompt, cancellationToken);
+        if (answer.IsFailure)
+        {
+            return answer.Error;
+        }
+
+        var (document, warnings) = CvAiCompose.ParseSection(answer.Value, bank.Bank, request, analysis, only);
+        var filled = document is not null && only switch
+        {
+            "headline" => document.Header.Headline.Length > 0,
+            "summary" => document.Summary.Length > 0,
+            "skills" => document.Skills.Count > 0,
+            "competencies" => document.Competencies.Count > 0,
+            "experience" => document.Experience.Count > 0,
+            "projects" => document.Projects.Count > 0,
+            "education" => document.Education.Count > 0,
+            _ => document.Extras.Count > 0,
+        };
+        return filled ? new CvSectionView(name, document!, warnings) : HuellaErrors.SectionNotGenerated(warnings);
+    }
+
     /// <summary>Acepta el id de pareja de una generación en dos idiomas solo si aún no tiene las dos versiones.</summary>
     private async Task<Guid?> AcceptPairAsync(Guid? pairId, Guid profileId, CancellationToken cancellationToken) =>
         pairId is { } id && await db.CvVersions.CountAsync(v => v.ProfileId == profileId && v.PairId == id, cancellationToken) < 2 ? id : null;

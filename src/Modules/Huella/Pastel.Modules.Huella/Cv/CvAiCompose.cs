@@ -6,6 +6,9 @@ using Pastel.Modules.Huella.Domain;
 
 namespace Pastel.Modules.Huella.Cv;
 
+/// <summary>Regenerar una sola sección: cuál, su nombre para el texto del pedido y las demás secciones del CV (JSON) como contexto.</summary>
+internal sealed record CvSectionMode(string Section, string Title, string OthersJson);
+
 /// <summary>Qué CV se pide: nivel, papel y los idiomas a generar (uno o los dos; cada idioma es una versión completa).</summary>
 internal sealed record CvComposeRequest(string Level, string Paper, IReadOnlyList<string> Languages, string Format = CvFormats.Standard, bool HighlightAi = false)
 {
@@ -56,16 +59,35 @@ internal static class CvAiCompose
         + ExperienceSchema + ","
         + TailSchema;
 
+    private static string SectionSchema(string section)
+    {
+        var part = section switch
+        {
+            "headline" => "\"headline\":\"string\"",
+            "summary" => "\"summary\":\"string\"",
+            "skills" => "\"skills\":[{\"label\":\"string\",\"items\":[\"string\"]}]",
+            "competencies" => "\"competencies\":{\"personal\":[{\"id\":\"uuid\",\"name\":\"string\"}],\"technical\":[{\"id\":\"uuid\",\"name\":\"string\"}]}",
+            "experience" => ExperienceSchema,
+            "projects" => "\"projects\":[{\"id\":\"uuid\",\"stack\":\"string\",\"bullets\":[{\"text\":\"string\",\"short\":\"string\"}]}]",
+            "education" => "\"education\":[{\"id\":\"uuid\",\"degree\":\"string\",\"detail\":\"string|null\"}]",
+            "extras" => "\"certifications\":[{\"id\":\"uuid\",\"name\":\"string\"}],\"languages\":[{\"id\":\"uuid\",\"language\":\"string\",\"level\":\"string\"}]",
+            _ => string.Empty,
+        };
+        return "{\"versions\":[{\"language\":\"es|en\"," + part + "}]}";
+    }
+
     private static int MinCompetencies(CvComposeRequest request, int max) => Math.Min(request.IsCombined ? 4 : 5, max);
 
-    public static AiPackage BuildPackage(AiBank bank, OfferAnalysis analysis, string? offerText, string? focus, CvComposeRequest request)
+    public static AiPackage BuildPackage(AiBank bank, OfferAnalysis analysis, string? offerText, string? focus, CvComposeRequest request, CvSectionMode? section = null)
     {
         var limits = CvLimits.For(request.Level, request.Paper, request.Format);
         var competencies = request.HasCompetencies;
         var hasOffer = !string.IsNullOrWhiteSpace(offerText);
         var languageNames = request.Languages.Select(l => l == "en" ? "inglés (en)" : "español (es)").ToList();
         var sb = new StringBuilder();
-        sb.AppendLine(request.IsCompetencies
+        sb.AppendLine(section is not null
+            ? "# Tarea: volver a redactar UNA sola sección de un CV ya hecho, con la misma fuerza y las mismas reglas"
+            : request.IsCompetencies
             ? "# Tarea: redactar un CV de competencias para una agencia de intermediación laboral y personas de recursos humanos"
             : request.IsCombined
                 ? "# Tarea: redactar un CV que muestre a la vez las competencias y las habilidades técnicas de la persona, y pase los filtros ATS"
@@ -179,10 +201,22 @@ internal static class CvAiCompose
 
         sb.AppendLine("<BANCO>").AppendLine(bank.ContextJson(AiPurpose.Cv, withCompetencies: competencies, seed: offerText ?? focus ?? string.Empty)).AppendLine("</BANCO>");
         sb.AppendLine();
+        if (section is not null)
+        {
+            sb.AppendLine();
+            sb.AppendLine("## MODO: REGENERAR UNA SOLA SECCIÓN");
+            sb.AppendLine(CultureInfo.InvariantCulture, $"Esta persona ya tiene un CV para esta misma oferta o enfoque y quiere volver a redactar SOLO la sección «{section.Title}». Devuelve una sola versión (el idioma pedido) con ÚNICAMENTE esa parte, con la forma del ESQUEMA DE SALIDA de este modo: no incluyas `plan`, `headline` ni ninguna otra sección, e ignora las instrucciones de las demás secciones.");
+            sb.AppendLine("- Redáctala de nuevo desde el BANCO contra la OFERTA o el ENFOQUE, con la mejor versión posible: no se te muestra el texto anterior de esta sección y no debes buscarlo.");
+            sb.AppendLine("- Sé coherente con el resto del CV (<CV_ACTUAL>) y no repitas lo que ya dicen las otras secciones: un hecho va en un solo lugar (por ejemplo, las viñetas no repiten el perfil).");
+            sb.AppendLine("- Siguen valiendo todas las reglas de verdad y de fuerza de arriba.");
+            sb.AppendLine("<CV_ACTUAL>").AppendLine(section.OthersJson).AppendLine("</CV_ACTUAL>");
+        }
+
+        sb.AppendLine();
         sb.AppendLine("## ESQUEMA DE SALIDA");
-        var schema = request.IsCompetencies ? CompetenciesSchema : request.IsCombined ? CombinedSchema : Schema;
+        var schema = section is not null ? SectionSchema(section.Section) : request.IsCompetencies ? CompetenciesSchema : request.IsCombined ? CombinedSchema : Schema;
         sb.AppendLine(schema);
-        return new AiPackage("cv_compose", sb.ToString(), schema);
+        return new AiPackage(section is null ? "cv_compose" : "cv_section", sb.ToString(), schema);
     }
 
     /// <summary>Lee la respuesta (propia o importada) y arma un CV por idioma pedido. Lo que no pasa el guardián se descarta con su motivo.</summary>
@@ -227,15 +261,46 @@ internal static class CvAiCompose
         return (result, rejected);
     }
 
-    private static CvDocument? Assemble(JsonElement item, string language, AiBank bank, CvComposeRequest request, List<string> warnings, OfferAnalysis? analysis = null)
+    /// <summary>
+    /// Lee la respuesta de la IA en modo sección y arma solo esa parte con las mismas validaciones que un CV completo (hechos y
+    /// cifras del banco, competencias del catálogo, habilidades conocidas). Devuelve un documento con únicamente esa sección
+    /// llena (o <c>null</c> si la respuesta no se pudo leer) y los avisos de lo que se descartó.
+    /// </summary>
+    public static (CvDocument? Document, IReadOnlyList<string> Warnings) ParseSection(string? raw, AiBank bank, CvComposeRequest request, OfferAnalysis? analysis, string section)
+    {
+        using var json = CvAiResult.TryParse(raw);
+        if (json is null || json.RootElement.ValueKind != JsonValueKind.Object)
+        {
+            return (null, []);
+        }
+
+        var item = json.RootElement;
+        if (item.TryGetProperty("versions", out var versions) && versions.ValueKind == JsonValueKind.Array)
+        {
+            var first = versions.EnumerateArray().FirstOrDefault(v => v.ValueKind == JsonValueKind.Object);
+            if (first.ValueKind != JsonValueKind.Object)
+            {
+                return (null, []);
+            }
+
+            item = first;
+        }
+
+        var warnings = new List<string>();
+        var document = Assemble(item, request.Languages[0], bank, request, warnings, analysis, section);
+        return (document, warnings);
+    }
+
+    /// <param name="only">Si se indica (<c>headline</c>, <c>summary</c>, <c>skills</c>, <c>competencies</c>, <c>experience</c>, <c>projects</c>, <c>education</c> o <c>extras</c>), solo se arma esa sección: la edición libre regenera una sección sin tocar el resto.</param>
+    private static CvDocument? Assemble(JsonElement item, string language, AiBank bank, CvComposeRequest request, List<string> warnings, OfferAnalysis? analysis = null, string? only = null)
     {
         var limits = CvLimits.For(request.Level, request.Paper, request.Format);
         var labels = CvLabels.For(language == "en");
         var data = bank.Data;
         var records = bank.Records;
 
-        var headline = Ai(CvPolish.Header(TextInput.CleanLine(Str(item, "headline")), data), request);
-        if (CvGuardian.ValidateWritten(headline, HeadlineMax, bank.Numbers, data) is { } headlineReason)
+        var headline = only is null or "headline" ? Ai(CvPolish.Header(TextInput.CleanLine(Str(item, "headline")), data), request) : data.Header.Headline;
+        if (only is null or "headline" && CvGuardian.ValidateWritten(headline, HeadlineMax, bank.Numbers, data) is { } headlineReason)
         {
             warnings.Add($"Titular: {headlineReason} Se conserva el de su perfil.");
             headline = data.Header.Headline;
@@ -248,112 +313,132 @@ internal static class CvAiCompose
             Header = new CvHeader { Name = data.Header.Name, Headline = headline, ContactLine1 = [.. data.Header.ContactLine1], ContactLine2 = [.. data.Header.ContactLine2] },
         };
 
-        var summary = Ai(CvPolish.Header(TextInput.CleanLine(Str(item, "summary")), data), request);
-        if (CvGuardian.ValidateWritten(summary, int.MaxValue, bank.Numbers, data) is { } summaryReason)
+        if (only is null or "summary")
         {
-            warnings.Add($"Perfil: {summaryReason}");
-        }
-        else
-        {
-            doc.Summary = summary;
-        }
-
-        doc.Experience = Experiences(item, language, bank, limits, warnings, request.HighlightAi);
-
-        // Proyectos: en el orden de importancia de la IA (ninguno en los formatos de competencias y combinado: su tope es 0).
-        var projectIds = new HashSet<Guid>();
-        foreach (var entry in Items(item, "projects"))
-        {
-            if (doc.Projects.Count >= limits.ProjectCount || !Guid.TryParse(Str(entry, "id"), out var id)
-                || records.Projects.SingleOrDefault(p => p.Id == id) is not { } project || !projectIds.Add(id))
+            var summary = Ai(CvPolish.Header(TextInput.CleanLine(Str(item, "summary")), data), request);
+            if (CvGuardian.ValidateWritten(summary, int.MaxValue, bank.Numbers, data) is { } summaryReason)
             {
-                continue;
+                warnings.Add($"Perfil: {summaryReason}");
             }
-
-            var cv = new CvEntry
+            else
             {
-                Title = project.Name,
-                Subtitle = StackOf(entry, project.Stack, bank, request.HighlightAi),
-                LineBudget = doc.Projects.Count < limits.ProjectLines.Count ? limits.ProjectLines[doc.Projects.Count] : 0,
-                Bullets = Bullets(entry, [project.Id], project.Name, bank, limits, warnings, request.HighlightAi),
-            };
-            if (cv.Bullets.Count > 0)
-            {
-                doc.Projects.Add(cv);
+                doc.Summary = summary;
             }
         }
 
-        doc.Skills = Skills(item, bank, limits, warnings);
-        if (!request.HighlightAi)
+        if (only is null or "experience")
         {
-            foreach (var group in doc.Skills)
+            doc.Experience = Experiences(item, language, bank, limits, warnings, request.HighlightAi);
+        }
+
+        if (only is null or "projects")
+        {
+            // Proyectos: en el orden de importancia de la IA (ninguno en los formatos de competencias y combinado: su tope es 0).
+            var projectIds = new HashSet<Guid>();
+            foreach (var entry in Items(item, "projects"))
             {
-                group.Items.RemoveAll(CvPolish.IsAiSkill);
+                if (doc.Projects.Count >= limits.ProjectCount || !Guid.TryParse(Str(entry, "id"), out var id)
+                    || records.Projects.SingleOrDefault(p => p.Id == id) is not { } project || !projectIds.Add(id))
+                {
+                    continue;
+                }
+
+                var cv = new CvEntry
+                {
+                    Title = project.Name,
+                    Subtitle = StackOf(entry, project.Stack, bank, request.HighlightAi),
+                    LineBudget = doc.Projects.Count < limits.ProjectLines.Count ? limits.ProjectLines[doc.Projects.Count] : 0,
+                    Bullets = Bullets(entry, [project.Id], project.Name, bank, limits, warnings, request.HighlightAi),
+                };
+                if (cv.Bullets.Count > 0)
+                {
+                    doc.Projects.Add(cv);
+                }
+            }
+        }
+
+        if (only is null or "skills")
+        {
+            doc.Skills = Skills(item, bank, limits, warnings);
+            if (!request.HighlightAi)
+            {
+                foreach (var group in doc.Skills)
+                {
+                    group.Items.RemoveAll(CvPolish.IsAiSkill);
+                }
+
+                doc.Skills.RemoveAll(g => g.Items.Count == 0);
             }
 
-            doc.Skills.RemoveAll(g => g.Items.Count == 0);
+            CompleteSkills(doc, bank, limits, analysis, warnings, request.HighlightAi);
         }
 
-        CompleteSkills(doc, bank, limits, analysis, warnings, request.HighlightAi);
-        doc.Competencies = request.HasCompetencies ? Competencies(item, bank, limits, labels, warnings, request.HighlightAi) : [];
+        doc.Competencies = request.HasCompetencies && only is null or "competencies" ? Competencies(item, bank, limits, labels, warnings, request.HighlightAi) : [];
 
-        var seenEducation = new HashSet<Guid>();
-        foreach (var entry in Items(item, "education"))
+        if (only is null or "education")
         {
-            if (doc.Education.Count >= limits.EducationCount || !Guid.TryParse(Str(entry, "id"), out var id)
-                || records.Educations.SingleOrDefault(e => e.Id == id) is not { } education || !seenEducation.Add(id))
+            var seenEducation = new HashSet<Guid>();
+            foreach (var entry in Items(item, "education"))
             {
-                continue;
+                if (doc.Education.Count >= limits.EducationCount || !Guid.TryParse(Str(entry, "id"), out var id)
+                    || records.Educations.SingleOrDefault(e => e.Id == id) is not { } education || !seenEducation.Add(id))
+                {
+                    continue;
+                }
+
+                var degree = TextInput.CleanLine(Str(entry, "degree"));
+                var detail = TextInput.CleanLine(Str(entry, "detail"));
+                doc.Education.Add(new CvEducation
+                {
+                    Degree = degree.Length is > 0 and <= TitleMax && !TermMatcher.Fold(degree).Contains(TermMatcher.Fold(education.Institution), StringComparison.Ordinal) ? degree : education.Degree,
+                    Institution = education.Institution,
+                    Dates = CvComposer.YearRange(education.StartYear, education.EndYear),
+                    Detail = detail.Length is > 0 and <= 90 && !CvComposer.RepeatsEducation(detail, education.Institution, CvComposer.YearRange(education.StartYear, education.EndYear)) && CvGuardian.ValidateWritten(detail, 90, bank.Numbers, data) is null && doc.Education.Count == 0 && limits.Level != "senior" ? detail : null,
+                });
+            }
+        }
+
+        if (only is null or "extras")
+        {
+            var seenCertifications = new HashSet<Guid>();
+            var certificationLines = new List<string>();
+            foreach (var entry in Items(item, "certifications"))
+            {
+                if (seenCertifications.Count >= limits.CertificationCount || !Guid.TryParse(Str(entry, "id"), out var id)
+                    || records.Certifications.SingleOrDefault(c => c.Id == id) is not { } certification || !seenCertifications.Add(id))
+                {
+                    continue;
+                }
+
+                var name = TextInput.CleanLine(Str(entry, "name"));
+                name = name.Length is > 0 and <= TitleMax ? name : certification.Name;
+                certificationLines.Add(CvComposer.CertificationLine(name, certification.Issuer, certification.IssuedYear));
             }
 
-            var degree = TextInput.CleanLine(Str(entry, "degree"));
-            var detail = TextInput.CleanLine(Str(entry, "detail"));
-            doc.Education.Add(new CvEducation
+            var spoken = new List<string>();
+            var seenLanguages = new HashSet<Guid>();
+            foreach (var entry in Items(item, "languages"))
             {
-                Degree = degree.Length is > 0 and <= TitleMax && !TermMatcher.Fold(degree).Contains(TermMatcher.Fold(education.Institution), StringComparison.Ordinal) ? degree : education.Degree,
-                Institution = education.Institution,
-                Dates = CvComposer.YearRange(education.StartYear, education.EndYear),
-                Detail = detail.Length is > 0 and <= 90 && !CvComposer.RepeatsEducation(detail, education.Institution, CvComposer.YearRange(education.StartYear, education.EndYear)) && CvGuardian.ValidateWritten(detail, 90, bank.Numbers, data) is null && doc.Education.Count == 0 && limits.Level != "senior" ? detail : null,
-            });
-        }
+                if (!Guid.TryParse(Str(entry, "id"), out var id) || records.Languages.SingleOrDefault(l => l.Id == id) is not { } spokenLanguage || !seenLanguages.Add(id))
+                {
+                    continue;
+                }
 
-        var seenCertifications = new HashSet<Guid>();
-        var certificationLines = new List<string>();
-        foreach (var entry in Items(item, "certifications"))
-        {
-            if (seenCertifications.Count >= limits.CertificationCount || !Guid.TryParse(Str(entry, "id"), out var id)
-                || records.Certifications.SingleOrDefault(c => c.Id == id) is not { } certification || !seenCertifications.Add(id))
-            {
-                continue;
+                var name = TextInput.CleanLine(Str(entry, "language"));
+                var level = TextInput.CleanLine(Str(entry, "level"));
+                spoken.Add($"{(name.Length is > 0 and <= 60 ? name : spokenLanguage.Language)}: {LevelText(level.Length is > 0 and <= 24 ? level : spokenLanguage.Level, language)}");
             }
 
-            var name = TextInput.CleanLine(Str(entry, "name"));
-            name = name.Length is > 0 and <= TitleMax ? name : certification.Name;
-            certificationLines.Add(CvComposer.CertificationLine(name, certification.Issuer, certification.IssuedYear));
-        }
-
-        var spoken = new List<string>();
-        var seenLanguages = new HashSet<Guid>();
-        foreach (var entry in Items(item, "languages"))
-        {
-            if (!Guid.TryParse(Str(entry, "id"), out var id) || records.Languages.SingleOrDefault(l => l.Id == id) is not { } spokenLanguage || !seenLanguages.Add(id))
+            doc.Extras = [.. certificationLines];
+            if (spoken.Count > 0)
             {
-                continue;
+                doc.Extras.Add(string.Join(" | ", spoken));
             }
 
-            var name = TextInput.CleanLine(Str(entry, "language"));
-            var level = TextInput.CleanLine(Str(entry, "level"));
-            spoken.Add($"{(name.Length is > 0 and <= 60 ? name : spokenLanguage.Language)}: {LevelText(level.Length is > 0 and <= 24 ? level : spokenLanguage.Level, language)}");
+            doc.ExtrasLabel = CvComposer.ExtrasLabel(certificationLines.Count, spoken.Count, language);
         }
 
-        doc.Extras = [.. certificationLines];
-        if (spoken.Count > 0)
-        {
-            doc.Extras.Add(string.Join(" | ", spoken));
-        }
-
-        doc.ExtrasLabel = CvComposer.ExtrasLabel(certificationLines.Count, spoken.Count, language);
-        return doc.Experience.Count == 0 && doc.Projects.Count == 0 ? null : doc;
+        return only is null && doc.Experience.Count == 0 && doc.Projects.Count == 0 ? null : doc;
     }
 
     /// <summary>

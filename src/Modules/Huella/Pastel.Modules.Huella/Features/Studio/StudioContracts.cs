@@ -76,5 +76,11 @@ internal sealed record CvVersionView(
 /// <summary>Edición de una línea: <c>Target</c> es <c>summary</c> o <c>bullet</c> (con <c>Section</c> experience|projects, <c>Entry</c> e <c>Index</c>).</summary>
 internal sealed record EditLineInput(string? Target, string? Section, int? Entry, int? Index, string? Text, IReadOnlyList<Guid>? SourceIds);
 
+/// <summary>Regenerar una sección en la edición libre: cuál y cómo está el borrador (para que la IA no repita lo que dicen las demás).</summary>
+internal sealed record CvSectionInput(string? Section, CvDocumentInput? Draft);
+
+/// <summary>La sección regenerada: un documento con solo esa parte llena y lo que se descartó. No se guarda: la persona la revisa y guarda.</summary>
+internal sealed record CvSectionView(string Section, CvDocument Document, IReadOnlyList<string> Warnings);
+
 internal sealed record RenameInput(string? Name);
 

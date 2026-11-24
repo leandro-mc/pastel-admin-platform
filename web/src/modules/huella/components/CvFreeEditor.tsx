@@ -1,12 +1,13 @@
-import { ArrowDown, ArrowUp, ChevronsDownUp, ChevronsUpDown, Plus, Trash2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, ChevronsDownUp, ChevronsUpDown, Plus, RefreshCw, Trash2, X } from "lucide-react";
 import { useId, useState, type ReactNode } from "react";
 import type { Blocker } from "react-router";
 import { useNotify } from "@/core/notifications";
 import { Badge, Button, ConfirmDialog, Panel } from "@/core/ui";
 import { focusClass } from "@/core/ui/styles";
-import { useSaveDocument } from "../api/hooks";
+import { regenerateSection, useOffers, useSaveDocument } from "../api/hooks";
 import type { CvVersion } from "../api/schemas";
 import {
+  applySection,
   move,
   newBullet,
   newCompetency,
@@ -24,8 +25,10 @@ import {
   type EducationRow,
   type EntryRow,
   type Row,
+  type SectionKey,
   type SkillGroupRow,
 } from "../lib/cvDraft";
+import { useAiJob } from "../lib/useAiJob";
 import type { useCvDraft } from "../lib/useCvDraft";
 import { languageName } from "../lib/usePairSync";
 import { strings } from "../strings";
@@ -107,6 +110,9 @@ function Block({
   onToggle,
   onRemove,
   onAdd,
+  onRegenerate,
+  onGenerate,
+  busy = false,
   children,
 }: {
   title: string;
@@ -116,6 +122,11 @@ function Block({
   onToggle: () => void;
   onRemove?: () => void;
   onAdd?: () => void;
+  /** Vuelve a redactar la sección con IA contra la oferta (pide confirmar: se pierde lo anterior). */
+  onRegenerate?: () => void;
+  /** Genera con IA una sección que estaba quitada, en vez de dejarla en blanco. */
+  onGenerate?: () => void;
+  busy?: boolean;
   children: ReactNode;
 }) {
   if (!present) {
@@ -123,10 +134,18 @@ function Block({
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-dashed border-line-strong px-3 py-1.5">
         <span className="text-sm font-semibold text-muted">{title}</span>
         <span className="text-xs text-muted">{f.removedShort}</span>
-        <button type="button" onClick={onAdd} aria-label={`${f.addSection}: ${title}`} className={`${textAction} ml-auto text-accent-strong hover:bg-accent-soft`}>
-          <Plus aria-hidden="true" className="size-3.5" />
-          {f.addSection}
-        </button>
+        <div className="ml-auto flex flex-wrap items-center gap-1">
+          {onGenerate ? (
+            <button type="button" disabled={busy} onClick={onGenerate} aria-label={`${f.ai.generate}: ${title}`} className={`${textAction} text-accent-strong hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-40`}>
+              <RefreshCw aria-hidden="true" className="size-3.5" />
+              {f.ai.generate}
+            </button>
+          ) : null}
+          <button type="button" onClick={onAdd} aria-label={`${f.ai.blank}: ${title}`} className={`${textAction} text-fg-secondary hover:bg-accent-soft`}>
+            <Plus aria-hidden="true" className="size-3.5" />
+            {f.ai.blank}
+          </button>
+        </div>
       </div>
     );
   }
@@ -143,12 +162,20 @@ function Block({
         </>
       }
       actions={
-        onRemove ? (
-          <button type="button" onClick={onRemove} aria-label={`${f.removeSection}: ${title}`} className={`${textAction} text-danger hover:bg-danger-soft`}>
-            <Trash2 aria-hidden="true" className="size-3.5" />
-            {f.removeSection}
-          </button>
-        ) : null
+        <>
+          {onRegenerate ? (
+            <button type="button" disabled={busy} onClick={onRegenerate} aria-label={`${onRemove ? f.ai.regenerate : f.ai.regenerateHeadline}: ${title}`} className={`${textAction} text-accent-strong hover:bg-accent-soft disabled:pointer-events-none disabled:opacity-40`}>
+              <RefreshCw aria-hidden="true" className="size-3.5" />
+              {onRemove ? f.ai.regenerate : f.ai.regenerateHeadline}
+            </button>
+          ) : null}
+          {onRemove ? (
+            <button type="button" onClick={onRemove} aria-label={`${f.removeSection}: ${title}`} className={`${textAction} text-danger hover:bg-danger-soft`}>
+              <Trash2 aria-hidden="true" className="size-3.5" />
+              {f.removeSection}
+            </button>
+          ) : null}
+        </>
       }
     >
       {children}
@@ -387,6 +414,41 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
   const notify = useNotify();
   const [discarding, setDiscarding] = useState(false);
   const [closed, setClosed] = useState<ReadonlySet<string>>(new Set());
+  const job = useAiJob();
+  const offers = useOffers();
+  const [confirming, setConfirming] = useState<SectionKey | null>(null);
+  const offer = offers.data?.find((o) => o.id === version.summary.offerId);
+  const sectionTitle = (key: SectionKey) =>
+    ({
+      header: f.header.title,
+      summary: sectionTitles.summary,
+      skills: sectionTitles.tools,
+      competencies: f.competencies.title,
+      experience: sectionTitles.path,
+      projects: sectionTitles.projects,
+      education: sectionTitles.education,
+      extras: f.extras.title,
+    })[key];
+
+  /**
+   * Vuelve a redactar una sección con IA contra la oferta de este CV (o su enfoque) y el banco, con ventana de progreso. La
+   * sección nueva reemplaza a la del borrador: nada se guarda hasta «Guardar cambios», y «Descartar cambios» la deshace.
+   */
+  const regenerate = async (key: SectionKey) => {
+    await job.start(f.ai.title(sectionTitle(key)), [
+      {
+        label: f.ai.step(sectionTitle(key)),
+        run: async () => {
+          const generated = await regenerateSection(version.summary.id, { section: key, draft: toInput(draft) });
+          // Se aplica aquí (no al terminar la ventana) para que también valga si la persona reintenta tras un fallo.
+          setDraft((d) => applySection(d, key, generated.document));
+          notify(f.ai.done, "success");
+          return { kind: "cv-section", accepted: 1, rejected: generated.warnings, versionIds: [], sections: [key] };
+        },
+      },
+    ]);
+  };
+  const ai = (key: SectionKey) => ({ onRegenerate: () => setConfirming(key), onGenerate: () => void regenerate(key), busy: job.running });
   const patch = (changes: Partial<Draft>) => setDraft((d) => ({ ...d, ...changes }));
   const hasCompetencies = draft.competencies !== null || version.document.format === "competencies" || version.document.format === "combined";
   const nameMissing = draft.name.trim() === "";
@@ -436,7 +498,7 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
         <p className="text-xs text-muted">{f.note}</p>
         {version.pair ? <p className="text-xs text-fg-secondary">{strings.studio.editor.pair.freeNote(languageName(version.pair.twinLanguage))}</p> : null}
 
-        <Block title={f.header.title} present open={open("header")} onToggle={() => toggle("header")}>
+        <Block {...ai("header")} title={f.header.title} present open={open("header")} onToggle={() => toggle("header")}>
           <div className="flex flex-col gap-2">
             <div className="grid gap-2 sm:grid-cols-2">
               <Input label={f.header.name} value={draft.name} error={nameMissing ? f.header.nameRequired : fieldError(save.error, "header.name")} onChange={(name) => patch({ name })} />
@@ -453,16 +515,17 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
           </div>
         </Block>
 
-        <Block title={sectionTitles.summary} present={draft.summary !== null} open={open("summary")} onToggle={() => toggle("summary")} onRemove={() => patch({ summary: null })} onAdd={() => patch({ summary: "" })}>
+        <Block {...ai("summary")} title={sectionTitles.summary} present={draft.summary !== null} open={open("summary")} onToggle={() => toggle("summary")} onRemove={() => patch({ summary: null })} onAdd={() => patch({ summary: "" })}>
           <Area hideLabel label={f.summary.label} value={draft.summary ?? ""} onChange={(summary) => patch({ summary })} />
         </Block>
 
-        <Block title={sectionTitles.tools} count={draft.skills?.length} present={draft.skills !== null} open={open("skills")} onToggle={() => toggle("skills")} onRemove={() => patch({ skills: null })} onAdd={() => patch({ skills: [newSkillGroup()] })}>
+        <Block {...ai("skills")} title={sectionTitles.tools} count={draft.skills?.length} present={draft.skills !== null} open={open("skills")} onToggle={() => toggle("skills")} onRemove={() => patch({ skills: null })} onAdd={() => patch({ skills: [newSkillGroup()] })}>
           <SkillGroups groups={draft.skills ?? []} onChange={(skills) => patch({ skills: skills && skills.length > 0 ? skills : null })} />
         </Block>
 
         {hasCompetencies ? (
           <Block
+            {...ai("competencies")}
             title={f.competencies.title}
             count={draft.competencies?.reduce((n, g) => n + g.items.length, 0)}
             present={draft.competencies !== null}
@@ -482,19 +545,19 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
           </Block>
         ) : null}
 
-        <Block title={sectionTitles.path} count={draft.experience?.length} present={draft.experience !== null} open={open("experience")} onToggle={() => toggle("experience")} onRemove={() => patch({ experience: null })} onAdd={() => patch({ experience: [newEntry()] })}>
+        <Block {...ai("experience")} title={sectionTitles.path} count={draft.experience?.length} present={draft.experience !== null} open={open("experience")} onToggle={() => toggle("experience")} onRemove={() => patch({ experience: null })} onAdd={() => patch({ experience: [newEntry()] })}>
           <Entries entries={draft.experience ?? []} project={false} closed={closed} onToggle={toggle} onChange={setEntries("experience")} />
         </Block>
 
-        <Block title={sectionTitles.projects} count={draft.projects?.length} present={draft.projects !== null} open={open("projects")} onToggle={() => toggle("projects")} onRemove={() => patch({ projects: null })} onAdd={() => patch({ projects: [newEntry()] })}>
+        <Block {...ai("projects")} title={sectionTitles.projects} count={draft.projects?.length} present={draft.projects !== null} open={open("projects")} onToggle={() => toggle("projects")} onRemove={() => patch({ projects: null })} onAdd={() => patch({ projects: [newEntry()] })}>
           <Entries entries={draft.projects ?? []} project closed={closed} onToggle={toggle} onChange={setEntries("projects")} />
         </Block>
 
-        <Block title={sectionTitles.education} count={draft.education?.length} present={draft.education !== null} open={open("education")} onToggle={() => toggle("education")} onRemove={() => patch({ education: null })} onAdd={() => patch({ education: [newEducation()] })}>
+        <Block {...ai("education")} title={sectionTitles.education} count={draft.education?.length} present={draft.education !== null} open={open("education")} onToggle={() => toggle("education")} onRemove={() => patch({ education: null })} onAdd={() => patch({ education: [newEducation()] })}>
           <Educations rows={draft.education ?? []} onChange={(education) => patch({ education: education.length > 0 ? education : null })} />
         </Block>
 
-        <Block title={f.extras.title} count={draft.extras?.items.length} present={draft.extras !== null} open={open("extras")} onToggle={() => toggle("extras")} onRemove={() => patch({ extras: null })} onAdd={() => patch({ extras: { label: "", items: [newRow()] } })}>
+        <Block {...ai("extras")} title={f.extras.title} count={draft.extras?.items.length} present={draft.extras !== null} open={open("extras")} onToggle={() => toggle("extras")} onRemove={() => patch({ extras: null })} onAdd={() => patch({ extras: { label: "", items: [newRow()] } })}>
           <div className="flex flex-col gap-2">
             <Input label={f.extras.label} value={draft.extras?.label ?? ""} onChange={(label) => patch({ extras: { label, items: draft.extras?.items ?? [] } })} />
             <RowList rows={draft.extras?.items ?? []} onChange={(items) => patch({ extras: items.length > 0 ? { label: draft.extras?.label ?? "", items } : null })} label={f.extras.item} addLabel={f.extras.add} />
@@ -515,6 +578,25 @@ export function CvFreeEditor({ version, free, onSaved }: { version: CvVersion; f
           </div>
         </div>
       </div>
+
+      {job.dialog}
+      {confirming ? (
+        <ConfirmDialog
+          title={f.ai.confirmTitle(sectionTitle(confirming))}
+          message={
+            f.ai.confirmMessage(sectionTitle(confirming), offer ? f.ai.targetOffer(offer.company ? `${offer.title} · ${offer.company}` : offer.title) : f.ai.targetFocus) +
+            (confirming === "header" ? f.ai.headlineNote : "")
+          }
+          confirmLabel={f.ai.confirm}
+          cancelLabel={strings.common.cancel}
+          onClose={() => setConfirming(null)}
+          onConfirm={() => {
+            const key = confirming;
+            setConfirming(null);
+            void regenerate(key);
+          }}
+        />
+      ) : null}
 
       {discarding ? (
         <ConfirmDialog

@@ -354,6 +354,13 @@ export const letterSchema = z.object({
   }),
 });
 
+/** Una sección del CV regenerada con IA (no guardada): un documento con solo esa parte llena y lo que se descartó. */
+export const cvSectionSchema = z.object({
+  section: text,
+  document: cvDocumentSchema,
+  warnings: z.array(text),
+});
+
 export const versionSchema = z.object({
   summary: versionSummarySchema,
   document: cvDocumentSchema,
@@ -600,6 +607,7 @@ export type LetterSummary = z.infer<typeof letterSummarySchema>;
 export type Letter = z.infer<typeof letterSchema>;
 export type VersionSummary = z.infer<typeof versionSummarySchema>;
 export type CvDocument = z.infer<typeof cvDocumentSchema>;
+export type CvSection = z.infer<typeof cvSectionSchema>;
 export type PublicProfile = z.infer<typeof publicProfileSchema>;
 export type PublicLocalized = z.infer<typeof publicLocalizedSchema>;
 export type ContentDoc = z.infer<typeof contentDocSchema>;
